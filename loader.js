@@ -39,7 +39,10 @@
 
     Except:
     - "baseURL" is used instead of "baseUrl"
-    - plugin differences
+    - The presence of a ".js" extension does not skip normal normalization rules like RequireJS
+      Only a protocol or absolute path forces the normal normalization rules to be skipped
+    - plugin differences to be determined
+
 
 */
 
