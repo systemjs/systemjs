@@ -53,11 +53,11 @@
     var s = document.createElement('script');
     s.type = "text/javascript";
     s.src = basePath + "es6-loader.js";
-    s.onload = createJSPMLoader();
+    s.onload = createRequire();
     head.appendChild(s);
   }
 
-  function createJSPMLoader() {
+  function createRequire() {
 
     var _config = require._config = {
       waitSeconds: 30,
