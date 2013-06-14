@@ -1,0 +1,104 @@
+<script>
+  // also supports var r6 = ...
+  
+  requireES6.config({
+    baseURL: '//git.jspm.io',
+
+    // override loader hooks
+    // adjusted so they work for plugin resources properly (plugins hack the fetch hook out of necessity)
+    normalize: function(name, o) {
+      // access the super
+      this.normalize(name, o)
+    },
+
+    resolve: function(name, o) {
+    },
+
+    fetch: function(url, o) {
+    },
+
+    translate: function(source, o) {
+    },
+
+    link: function(source, o) {
+    },
+
+    paths: {
+      'app': '//localhost:327'
+    },
+
+    // map config - acts before normalization
+    map: {
+      'jquery': '//code.jquery.com/jquery-1.10.1.min.js',
+      'jquery-2': '//code.jquery.com/jquery-2.10.1.min.js',
+      'css': 'guybedford/require-css/master/css'
+    },
+
+    // global dependencies
+    // applies to module name after normalization
+    deps: {
+      'jquery': ['hbs']
+    },
+
+    // acts at normalization level, after map config
+    // packages sit in canonical name space, so deep names can override
+    // this doesn't apply to map config in the same way
+    packages: {
+      'css': {
+        path: 'guybedford/require-css/master'
+        main: 'css'
+      },
+      'less': {
+        path: 'guybedford/require-less/master',
+        main: './less',
+
+        // package mapping
+        map: {
+          'jquery': 'jquery-2'
+        },
+
+        // for global scripts, set dependencies
+        deps: {
+          'less': 'jquery'
+        }
+      },
+      'less/subpackage': { // allow subpackages for sub-map config etc. most specific wins
+        main: 'googhttps',
+      },
+      'mymodule': {
+        path: 'app',
+        main: 'main'
+      }
+    }
+  });
+</script>
+
+<!-- plugin example -->
+<script>
+  export default = {
+    baseURL: '',
+    // test: try writing: the css plugin, coffeescript plugin and is plugins
+    // to see if the api works here
+    resolve: function(name, o) {
+
+    },
+    fetch: function(url, o) {
+
+    },
+    translate: function(source, o) {
+
+    },
+    link: function(source, o) {
+
+    }
+  };
+</script>
+
+<script>
+  requireES6.load(function(require) {
+    require('!test.css');
+    var $ = require('jquery').jQuery;
+
+    $(document.body).css('color', 'red');      
+  });
+</script>
