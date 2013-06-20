@@ -1,6 +1,6 @@
+<!doctype html>
+<html>
 <script>
-  // also supports var r6 = ...
-  
   requireES6.config({
     baseURL: '//git.jspm.io',
 
@@ -36,7 +36,7 @@
 
     // global dependencies
     // applies to module name after normalization
-    deps: {
+    shimDeps: {
       'jquery': ['hbs']
     },
 
@@ -58,7 +58,7 @@
         },
 
         // for global scripts, set dependencies
-        deps: {
+        shimDeps: {
           'less': 'jquery'
         }
       },

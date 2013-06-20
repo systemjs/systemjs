@@ -1,0 +1,1 @@
+window.p = 'path';

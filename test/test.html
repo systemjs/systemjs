@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<script src="../../es6-loader/es6-loader.js" type="text/javascript"></script>
+<script src="../require-es6.js" type="text/javascript"></script>
+
+<script>
+  requireES6(['test-runner'], function(runner) {
+    runner.execute([
+      {
+        name: 'Global script loading',
+        run: function(complete) {
+          requireES6(['tests/global'], complete);
+        },
+        confirm: function(m) {
+          if (!m.jQuery || !m.another)
+            return 'Global objects not defined';
+          if (window.jQuery || window.another)
+            return 'Global object has leaked';
+        }
+      },
+      {
+        name: 'Global script loading with shimDeps',
+        run: function(complete) {
+          requireES6.config({
+            shimDeps: {
+              'tests/global-with-dep': ['tests/global-dep']
+            }
+          });
+          requireES6(['tests/global-with-dep'], complete);
+        },
+        confirm: function(m) {
+          if (m.jQueryVersion != '1.8.3')
+            return 'Global dependency not defined';
+        }
+      },
+      {
+        name: 'Global paths configuration',
+        run: function(complete) {
+          requireES6.config({
+            paths: {
+              'mypath': 'tests/path'
+            }
+          });
+          requireES6(['mypath'], complete);
+        },
+        confirm: function(m) {
+          if (m.p != 'path')
+            return 'module not loaded';
+        }
+      },
+      {
+        name: 'External URL loading',
+        run: function(complete) {
+          requireES6(['http://code.jquery.com/jquery-1.10.1.min.js'], complete);
+        },
+        confirm: function(m) {
+          if (m.jQuery.fn.jquery != '1.10.1')
+            return 'jQuery not loaded';
+        }
+      },
+      {
+        name: 'Global map configuration',
+        run: function(complete) {
+          requireES6.config({
+            map: {
+              'maptest': 'tests/map-test'
+            }
+          });
+          requireES6(['maptest'], complete)
+        },
+        confirm: function(m) {
+          if (m.maptest != 'maptest')
+            return 'Mapped module not loaded';
+        }
+      },
+      {
+        name: 'Basic package configuration',
+        run: function(complete) {
+          requireES6.config({
+            packages: {
+              myapp: {
+                path: 'tests/package-test',
+                main: 'themain'
+              }
+            }
+          });
+          requireES6(['myapp', 'myapp/sub'], complete)
+        },
+        confirm: function(m1, m2) {
+          if (!m1.package)
+            return 'Package not loaded';
+          if (!m2.package)
+            return 'Package subpath not loaded';
+        }
+      },
+      {
+        name: 'Package map configuration',
+        run: function(complete) {
+          requireES6.config({
+            packages: {
+              myapp: {
+                map: {
+                  'jquery': 'myapp/jquery-mapped'
+                }
+              }
+            }
+          });
+          requireES6(['myapp/map-test'], complete);
+        },
+        confirm: function(m) {
+          if (!m.mapDep)
+            return 'Mapped package dependency not loaded';
+        }
+      },
+      {
+        name: 'Package paths configuration',
+        run: function(complete) {
+          requireES6.config({
+            packages: {
+              myapp: {
+                paths: {
+                  'jquery-cdn': "http://code.jquery.com/jquery-1.8.1.js"
+                }
+              }
+            }
+          });
+          requireES6(['myapp/path-test'], complete);
+        },
+        confirm: function(m) {
+          if (m.jQuery.fn.jquery != '1.8.1')
+            return 'jQuery not defined';
+        }
+      },
+      {
+        name: 'Package shimDep configuration',
+        run: function(complete) {
+          requireES6.config({
+            packages: {
+              myapp: {
+                paths: {
+                  'jquery-1.8.2': "http://code.jquery.com/jquery-1.8.2.js"
+                },
+                shimDeps: {
+                  'shim-test': ['jquery-1.8.2']
+                }
+              }
+            }
+          });
+          requireES6(['myapp/shim-test'], complete);
+        },
+        confirm: function(m) {
+          if (m.myPlugin.jQuery.fn.jquery != '1.8.2')
+            return 'Wrong jQuery version';
+        }
+      },
+      {
+        name: 'Plugin modules',
+        run: function(complete) {
+          complete();
+        },
+        confirm: function(m) {
+          return 'Tests to be implemented';
+        }
+      },
+      {
+        name: 'Custom loader hooks',
+        run: function(complete) {
+          complete();
+        },
+        confirm: function(m) {
+          return 'Tests to be implemented';
+        }
+      }
+    ]);
+  });
+</script>

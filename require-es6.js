@@ -48,7 +48,7 @@
       var nameParts = name.split('/');
       if (prefixParts.length > nameParts.length)
         return false;
-      for (var i = 0; i < prefixParts.length; i++) {
+      for (var i = 0; i < prefixParts.length; i++)
         if (nameParts[i] != prefixParts[i])
           return false;
       return true;
@@ -56,6 +56,8 @@
 
     // get the configuration package for a given module name
     var getPackage = function(name) {
+      if (!name)
+        return '';
       var p = '';
       for (var _p in config.packages) {
         if (!prefixMatch(name, _p))
@@ -92,7 +94,7 @@
     // hooks without plugin logic
     var loaderHooks = {
       normalize: function(name, options) {
-        var parentName = options.referer.name;
+        var parentName = options.referer && options.referer.name;
 
         // if the extension is js, and not an absolute URL, remove the extension
         if (name.substr(name.length - 3, 3) == '.js' && !name.match(absUrlRegEx))
@@ -127,40 +129,56 @@
         // do standard normalization
         name = System.normalize(name, options);
 
+        return name;
+      },
+      resolve: function(name, options) {
+        var parentName = options.referer && options.referer.name;
+
+        // store the normalized name
+        options.normalizedName = name;
+
         // do package config
         var p = getPackage(name);
         if (p) {
           // a sub-package path
           if (name.length > p.length)
-            name = config.packages[p].path + '/' + name.substr(p.length);
+            name = config.packages[p].path + name.substr(p.length);
 
           // the exact package - the main call
           else {
-            var main = config.packages[i].main || 'index';
+            var main = config.packages[p].main || 'index';
 
             // ensure that main is a relative ID if not a plugin form
             if (main.indexOf('!') == -1 && (main.substr(0, 2) != '..' || main.substr(0, 2) != './'))
               main = './' + main;
 
             // normalize the main
-            name = this.normalize(main, { referer: { name: name } });
+            name = this.normalize(main, { referer: { name: config.packages[p].path + '/' } });
           }
         }
 
-        return name + pluginArgument;
-      },
-      resolve: function(name, options) {
-        // store the normalized name
-        options.normalizedName = name;
-
         // paths configuration
-        for (var p in config.paths) {
-          if (!prefixMatch(name, p))
-            continue;
+        // check the parent package first
+        var parentPackage = config.packages[getPackage(parentName)];
+        var appliedParentPaths = false;
+        if (parentPackage && parentPackage.paths) {
+          for (var p in parentPackage.paths) {
+            if (!prefixMatch(name, p))
+              continue;
 
-          name = config.paths[p] + name.substr(p.length);
-          break;
+            name = parentPackage.paths[p] + name.substr(p.length);
+            appliedParentPaths = true;
+            break;
+          }
         }
+        if (!appliedParentPaths)
+          for (var p in config.paths) {
+            if (!prefixMatch(name, p))
+              continue;
+
+            name = config.paths[p] + name.substr(p.length);
+            break;
+          }
 
         // then just use standard resolution
         return System.resolve(name);
@@ -180,56 +198,82 @@
         }
         System.fetch(url, options);
       },
-      translate: function(source, options) {
+      link: function(source, options) {
         // check if there are any import syntax. If not, use the global shim config
         if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
           return;
 
+        var shimDeps;
+
         // apply shim configuration with careful global management
-        var p = getPackage(name);
-        if (p.shimDeps)
-          for (var s in p.shimDeps) {
-            if (!prefixMatch(options.normalizedName, s))
+        var p = getPackage(options.normalizedName);
+        if (p)
+          for (var s in config.packages[p].shimDeps) {
+            if (!prefixMatch(options.normalizedName, p + '/' + s))
               continue;
 
-            options.shimDeps = p.shimDeps[s];
+            shimDeps = config.packages[p].shimDeps[s];
             break;
           }
+        
         else
           for (var s in config.shimDeps) {
             if (!prefixMatch(options.normalizedName, s))
               continue;
 
-            options.shimDeps = config.shimDeps[s];
+            shimDeps = config.shimDeps[s];
             break;
           }
 
-        // normalize deps
-        for (var i = 0; i < options.shimDeps.length; i++)
-          options.shimDeps[i] = loader.normalize(options.shimDeps[i], { referer: { name: options.normalizedName } });
-
-        // add adjustments to the source to prepare the global
-        // and then retrieve global changes after the module
-        source = 
-          "requireES6.__setGlobal(" + JSON.stringify(shimDeps) + ");" + 
-          source +
-          "requireES6.set('" + options.normalizedName + "', requireES6.__getGlobal());";
-
-        return source;
-      },
-      link: function(source, options) {
-        if (!options.shimDeps)
-          return;
-
         return {
-          imports: options.shimDeps
+          imports: shimDeps || [],
+          execute: function(deps) {
+            setGlobal(deps);
+            loader.eval(source);
+            return new Module(getGlobal());
+          }
         };
       }
     };
 
+    // given a module's global dependencies, prepare the global object
+    // to contain the union of the defined properties of its dependent modules
+    var globalObj = {};
+    function setGlobal(deps) {
+      // first, we add all the dependency module properties to the global
+      if (deps) {
+        for (var i = 0; i < deps.length; i++) {
+          var dep = deps[i];
+          for (var m in dep)
+            loader.global[m] = dep[m];
+        }
+      }
+
+      // now we store a complete copy of the global object
+      // in order to detect changes
+      for (var g in loader.global) {
+        if (loader.global.hasOwnProperty(g))
+          globalObj[g] = loader.global[g];
+      }
+    }
+
+    // go through the global object to find any changes
+    // the differences become the returned global for this object
+    // the global object is left as is
+    function getGlobal() {
+      var moduleGlobal = {};
+
+      for (var g in loader.global) {
+        if (loader.global.hasOwnProperty(g) && g != 'window' && globalObj[g] != loader.global[g])
+          moduleGlobal[g] = loader.global[g];
+      }
+      return moduleGlobal;
+    }
+
+
 
     var loader = new Loader({
-      baseUrl: config.baseURL,
+      baseURL: config.baseURL,
       normalize: function(name, options) {
         
         // plugin shorthand
@@ -240,7 +284,7 @@
         }
 
         // plugin normalization
-        option.pluginArgument = '';
+        options.pluginArgument = '';
         var pluginIndex = name.indexOf('!');
         if (pluginIndex != -1) {
           options.pluginArgument = name.substr(pluginIndex);
@@ -301,7 +345,7 @@
         if (config.translate)
           return config.translate.call(loaderHooks, source, options);
         else
-          return loaderHooks.translate(source, options);
+          return source;
       },
       link: function(source, options) {
         if (config.link)
@@ -334,46 +378,9 @@
     requireES6.set = loader.set.bind(loader);
     requireES6.has = loader.has.bind(loader);
     requireES6.delete = loader.delete.bind(loader);
+
+    requireES6.loader = loader;
     
-    // global shim functions
-
-    // given a module's global dependencies, prepare the global object
-    // to contain the union of the defined properties of its dependent modules
-    var globalObj = {};
-    requireES6.__setGlobal = function(deps) {
-      // first, we add all the dependency module properties to the global
-      if (deps) {
-        for (var i = 0; i < deps.length; i++) {
-          var dep = requireES6.get(deps[i]);
-          for (var m in dep)
-            loader.global[m] = dep[m];
-        }
-      }
-
-      // now we store a complete copy of the global object
-      // in order to detect changes
-      for (var g in loader.global) {
-        if (!loader.global.hasOwnProperty(g))
-          globalObj[g] = loader.global[g];
-      }
-    }
-
-    // go through the global object to find any changes
-    // the differences become the returned global for this object
-    // the global object is left as is
-    requireES6.__getGlobal = function() {
-
-      var moduleGlobal = {};
-
-      for (var g in loader.global) {
-        if (!loader.global.hasOwnProperty(g))
-          if (globalObj[g] != loader.global[g])
-            moduleGlobal[g] = loader.global[g];
-      }
-
-      return moduleGlobal;
-    }
-
     var cjsRequireRegExp = /[^.]\s*require\s*\(\s*["']([^'"\s]+)['"]\s*\)/g;
 
     loader.set('__require', require);
