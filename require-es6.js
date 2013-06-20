@@ -93,8 +93,8 @@
 
     // hooks without plugin logic
     var loaderHooks = {
-      normalize: function(name, options) {
-        var parentName = options.referer && options.referer.name;
+      normalize: function(name, referer) {
+        var parentName = referer && referer.name;
 
         // if the extension is js, and not an absolute URL, remove the extension
         if (name.substr(name.length - 3, 3) == '.js' && !name.match(absUrlRegEx))
@@ -127,15 +127,12 @@
           }
 
         // do standard normalization
-        name = System.normalize(name, options);
+        name = System.normalize(name, referer);
 
         return name;
       },
       resolve: function(name, options) {
         var parentName = options.referer && options.referer.name;
-
-        // store the normalized name
-        options.normalizedName = name;
 
         // do package config
         var p = getPackage(name);
@@ -153,7 +150,7 @@
               main = './' + main;
 
             // normalize the main
-            name = this.normalize(main, { referer: { name: config.packages[p].path + '/' } });
+            name = this.normalize(main, { name: config.packages[p].path + '/' });
           }
         }
 
@@ -181,22 +178,25 @@
           }
 
         // then just use standard resolution
-        return System.resolve(name);
+        return System.resolve(name, options);
       },
-      fetch: function(url, options) {
+      fetch: function(url, callback, errback, options) {
         // do a fetch with a timeout
+        var rejected = false;
         if (config.waitSeconds) {
           var waitTime = 0;
           setTimeout(function() {
             waitTime++;
             if (waitTime >= config.waitSeconds) {
-              options.reject();
-              // in case it does still arrive, cancel fulfillment
-              options.fulfill = function(){}
+              rejected = true;
+              errback();
             }
           }, 1000);
         }
-        System.fetch(url, options);
+        System.fetch(url, function(source) {
+          if (!rejected)
+            callback(source);
+        }, errback, options);
       },
       link: function(source, options) {
         // check if there are any import syntax. If not, use the global shim config
@@ -206,10 +206,10 @@
         var shimDeps;
 
         // apply shim configuration with careful global management
-        var p = getPackage(options.normalizedName);
+        var p = getPackage(options.normalized);
         if (p)
           for (var s in config.packages[p].shimDeps) {
-            if (!prefixMatch(options.normalizedName, p + '/' + s))
+            if (!prefixMatch(options.normalized, p + '/' + s))
               continue;
 
             shimDeps = config.packages[p].shimDeps[s];
@@ -218,7 +218,7 @@
         
         else
           for (var s in config.shimDeps) {
-            if (!prefixMatch(options.normalizedName, s))
+            if (!prefixMatch(options.normalized, s))
               continue;
 
             shimDeps = config.shimDeps[s];
@@ -274,7 +274,7 @@
 
     var loader = new Loader({
       baseURL: config.baseURL,
-      normalize: function(name, options) {
+      normalize: function(name, referer) {
         
         // plugin shorthand
         if (name.substr(0, 1) == '!') {
@@ -284,42 +284,53 @@
         }
 
         // plugin normalization
-        options.pluginArgument = '';
+        var pluginName = '';
+        var pluginArgument = '';
         var pluginIndex = name.indexOf('!');
         if (pluginIndex != -1) {
-          options.pluginArgument = name.substr(pluginIndex);
+          pluginArgument = name.substr(pluginIndex);
           name = name.substr(0, pluginIndex);
 
           // parse square brackets for plugin argument module names to normalize
           var bracketDepth = 0;
           var nameIndex = 0;
-          for (var i = 0; i < options.pluginArgument.length; i++) {
-            if (options.pluginArgument[i] == '[') {
+          for (var i = 0; i < pluginArgument.length; i++) {
+            if (pluginArgument[i] == '[') {
               argIndex = i + 1;
               bracketDepth++;
             }
             if (pluginArgument[i] == ']') {
               bracketDepth--;
               if (bracketDepth == 0) {
-                var bracketModuleName = options.pluginArgument.substr(argIndex, i - argIndex - 1);
-                var normalizedBracketModuleName = requireES6.normalize(bracketModuleName, { referer: options.referer });
-                options.pluginArgument = options.pluginArgument.substr(0, argIndex - 1) + normalizedBracketModuleName + options.pluginArgument.substr(i);
+                var bracketModuleName = pluginArgument.substr(argIndex, i - argIndex - 1);
+                var normalizedBracketModuleName = requireES6.normalize(bracketModuleName, referer);
+                pluginArgument = pluginArgument.substr(0, argIndex - 1) + normalizedBracketModuleName + pluginArgument.substr(i);
                 i += normalizeBracketModuleName.length - bracketModuleName.length;
               }
             }
           }
-          options.pluginName = name;
+          pluginName = name;
         }
 
         // hook normalize function
+        var out;
         if (config.normalize)
-          return config.normalize.call(loaderHooks, name, options) + options.pluginArgument;
+          out = config.normalize.call(loaderHooks, name, referer) + pluginArgument;
         else
-          return loaderHooks.normalize(name, options) + options.pluginArgument;
+          out = loaderHooks.normalize(name, referer) + pluginArgument;
+
+        if (typeof out == 'string')
+          out = { normalized: out };
+
+        out.metadata = out.metadata || {};
+        out.metadata.pluginName = pluginName;
+        out.metadata.plugingArgument = pluginArgument;
+
+        return out;
       },
       resolve: function(name, options) {
         // if it is a plugin resource, don't resolve
-        if (options.pluginName)
+        if (options.metadata.pluginName)
           return name;
         
         if (config.resolve)
@@ -327,19 +338,19 @@
         else
           return loaderHooks.resolve(name, options);
       },
-      fetch: function(url, options) {
-        if (!options.pluginName) {
+      fetch: function(url, callback, errback, options) {
+        if (!options.metadata.pluginName) {
           if (config.fetch)
-            return config.fetch.call(loaderHooks, url, options);
+            return config.fetch.call(loaderHooks, url, callback, errback, options);
           else
-            return loaderHooks.fetch(url, options);
+            return loaderHooks.fetch(url, callback, errback, options);
         }
 
         // for plugins, we first need to load the plugin module itself
-        this.import(options.pluginName, function(pluginModule) {
+        this.import(options.metadata.pluginName, function(pluginModule) {
           // then run the plugin load, which returns the 'effective source' for the plugin
-          pluginModule.load(options.pluginArgument.substr(1), loader, options);
-        }, options.reject); 
+          pluginModule.load(options.metadata.pluginArgument.substr(1), loader, callback, errback);
+        }, errback); 
       },
       translate: function(source, options) {
         if (config.translate)
