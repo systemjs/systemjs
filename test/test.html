@@ -154,12 +154,15 @@
         }
       },
       {
-        name: 'Plugin modules',
+        name: 'Simple compiler Plugin',
         run: function(complete) {
-          complete();
+          requireES6(['tests/compiler-plugin!tests/compiler-test'], complete);
         },
         confirm: function(m) {
-          return 'Tests to be implemented';
+          if (m.output != 'plugin output')
+            return 'Plugin not working.';
+          if (m.extra != 'yay!')
+            return 'Compiler not working.';
         }
       },
       {

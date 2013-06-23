@@ -275,38 +275,49 @@
     var loader = new Loader({
       baseURL: config.baseURL,
       normalize: function(name, referer) {
-        
+
         // plugin shorthand
         if (name.substr(0, 1) == '!') {
           var ext = name.substr(name.indexOf('.') + 1);
           if (ext.length != name.length)
-            name = ext + name;
+            name = ext + '[' + name + ']';
         }
 
         // plugin normalization
+        var pluginIndex = name.indexOf('!');
         var pluginName = '';
         var pluginArgument = '';
-        var pluginIndex = name.indexOf('!');
+        var pluginArguments = [];
         if (pluginIndex != -1) {
           pluginArgument = name.substr(pluginIndex);
           name = name.substr(0, pluginIndex);
 
-          // parse square brackets for plugin argument module names to normalize
+          // parse square brackets as separators of normalization parts in arguments
+          // p!something[plugin]here
+          // -> p-normalized!something/normalized[plugin]here/normalized
           var bracketDepth = 0;
-          var nameIndex = 0;
-          for (var i = 0; i < pluginArgument.length; i++) {
-            if (pluginArgument[i] == '[') {
-              argIndex = i + 1;
-              bracketDepth++;
-            }
-            if (pluginArgument[i] == ']') {
-              bracketDepth--;
-              if (bracketDepth == 0) {
-                var bracketModuleName = pluginArgument.substr(argIndex, i - argIndex - 1);
-                var normalizedBracketModuleName = requireES6.normalize(bracketModuleName, referer);
-                pluginArgument = pluginArgument.substr(0, argIndex - 1) + normalizedBracketModuleName + pluginArgument.substr(i);
-                i += normalizeBracketModuleName.length - bracketModuleName.length;
+          var argIndex = 1;
+          for (var i = 1; i < pluginArgument.length; i++) {
+            if (i == pluginArgument.length - 1 || (pluginArgument.substr(i, 1) == '[' && bracketDepth++ == 0)) {
+              // normalize anything up to the bracket
+              var argumentPart = pluginArgument.substr(argIndex, i);
+
+              if (argumentPart) {
+                var normalized = loader.normalize(argumentPart, referer);
+                var resolved = loader.resolve(normalized.normalized || normalized, {
+                  referer: referer,
+                  metadata: normalized.metadata || null
+                });
+                var len = pluginArgument.length;
+                pluginArgument = pluginArgument.substr(0, argIndex) + (normalized.normalized || normalized) + pluginArgument.substr(i + 1);
+                i += len - pluginArgument.length;
+                pluginArguments.push({ name: argumentPart, normalized: normalized.normalized || normalized, address: resolved.address || resolved });
+                argIndex = i;
               }
+            }
+            if (pluginArgument.substr(i, 1) == ']' && --bracketDepth == 0) {
+              pluginArguments.push({ value: pluginArgument.substr(argIndex + 1, i - 1) });
+              argIndex = i + 1;
             }
           }
           pluginName = name;
@@ -323,15 +334,21 @@
           out = { normalized: out };
 
         out.metadata = out.metadata || {};
-        out.metadata.pluginName = pluginName;
-        out.metadata.plugingArgument = pluginArgument;
+        
+        // store the unnormalized plugin name and arguments
+        // we will renormalize later to avoid double normalization
+        if (pluginIndex != -1) {
+          out.metadata.pluginName = name;
+          out.metadata.pluginArguments = pluginArguments;
+        }
 
         return out;
       },
       resolve: function(name, options) {
-        // if it is a plugin resource, don't resolve
+        // if it is a plugin resource, let the resolve function return
+        // the resolved name of the plugin module
         if (options.metadata.pluginName)
-          return name;
+          name = options.metadata.pluginName;
         
         if (config.resolve)
           return config.resolve.call(loaderHooks, name, options);
@@ -339,7 +356,9 @@
           return loaderHooks.resolve(name, options);
       },
       fetch: function(url, callback, errback, options) {
-        if (!options.metadata.pluginName) {
+        options = options || {};
+        // do the fetch
+        if (!options.metadata || !options.metadata.pluginName) {
           if (config.fetch)
             return config.fetch.call(loaderHooks, url, callback, errback, options);
           else
@@ -347,10 +366,12 @@
         }
 
         // for plugins, we first need to load the plugin module itself
-        this.import(options.metadata.pluginName, function(pluginModule) {
-          // then run the plugin load, which returns the 'effective source' for the plugin
-          pluginModule.load(options.metadata.pluginArgument.substr(1), loader, callback, errback);
-        }, errback); 
+        loader.import(options.metadata.pluginName, function(pluginModule) {
+
+          // run the plugin load hook.. the callback will return the effective source
+          pluginModule.load(options.metadata.pluginArguments, loader, callback, errback, options.referer);
+
+        }, errback, options.referer); 
       },
       translate: function(source, options) {
         if (config.translate)
