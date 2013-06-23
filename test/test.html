@@ -168,10 +168,44 @@
       {
         name: 'Custom loader hooks',
         run: function(complete) {
-          complete();
+          window.hooks = {};
+          requireES6.config({
+            normalize: function(name, options) {
+              if (name == 'normalize-hook-test') {
+                hooks.normalize = true;
+                return name;
+              }
+            },
+            resolve: function(name) {
+              if (name == 'normalize-hook-test') {
+                hooks.resolve = true;
+                return name;
+              }
+            },
+            fetch: function(url, callback) {
+              if (url == 'normalize-hook-test') {
+                hooks.fetch = true;
+                callback(url);
+              }
+            },
+            translate: function(source) {
+              if (source == 'normalize-hook-test') {
+                hooks.translate = true;
+                return '';
+              }
+            }
+          });
+          requireES6(['normalize-hook-test'], complete);
         },
         confirm: function(m) {
-          return 'Tests to be implemented';
+          if (!hooks.normalize)
+            return 'normalize hook failed';
+          if (!hooks.resolve)
+            return 'resolve hook failed';
+          if (!hooks.fetch)
+            return 'fetch hook failed';
+          if (!hooks.translate)
+            return 'translate hook failed';
         }
       }
     ]);
