@@ -216,13 +216,13 @@
           // just eval to get the array.. we know it is an array.
           eval('_imports = ' + _imports);
           
-          var requireIndex, exportsIndex;
+          var requireIndex, exportsIndex, moduleIndex;
           if ((requireIndex = _imports.indexOf('require')) != -1)
             _imports.splice(requireIndex, 1);
           if ((exportsIndex = _imports.indexOf('exports')) != -1)
             _imports.splice(exportsIndex, 1);
-          if (_imports.indexOf('module') != -1)
-            throw 'RequireJS Module ID "module" not compatible.';
+          if ((exportsIndex = _imports.indexOf('module')) != -1)
+            _imports.splice(moduleIndex, 1);
 
           return {
             imports: _imports.concat([]),
@@ -236,6 +236,8 @@
                 depMap.require = function(d) { return depMap[d]; }
               if (exportsIndex != -1)
                 depMap.exports = {};
+              if (moduleIndex != -1)
+                depMap.module = { id: options.normalized, uri: options.address };
 
               var output;
               eval('var require = requireES6; var define = function(_deps, factory) { output = factory.apply(window, deps); }; define.amd = true; ' + source);
@@ -258,8 +260,14 @@
             imports: _imports.concat([]),
             execute: function() {
               var depMap = {};
-              for (var i = 0; i < _imports.length; i++)
+              var module = false;
+              for (var i = 0; i < _imports.length; i++) {
                 depMap[_imports[i]] = arguments[i];
+                if (arguments[i] == 'module')
+                  module = true;
+              }
+              if (module)
+                depMap.module = { id: options.normalized, uri: options.address };
               var output;
               var exports = {};
               eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source);
