@@ -26,6 +26,12 @@
     var exportRegEx = /^\s*export\s+(\{|\*|var|class|function|default)/m;
     var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
+    // AMD and CommonJS regexs for support
+    var amdDefineRegEx = /define\s*\(\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])/;
+    var cjsDefineRegEx = /define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+    var cjsRequireRegEx = /require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+    var cjsExportsRegEx = /exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*/;
+
     // regex to check absolute urls
     var absUrlRegEx = /^\/|([^\:\/]*:)/;
 
@@ -199,9 +205,96 @@
         }, errback, options);
       },
       link: function(source, options) {
-        // check if there are any import syntax. If not, use the global shim config
+        // check if there is any import syntax.
         if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
           return;
+
+        // check if this module uses AMD form
+        // define([.., .., ..], ...)
+        if (source.match(amdDefineRegEx)) {
+          var _imports = source.match(amdDefineRegEx)[1];
+          // just eval to get the array.. we know it is an array.
+          eval('_imports = ' + _imports);
+          
+          var requireIndex, exportsIndex;
+          if ((requireIndex = _imports.indexOf('require')) != -1)
+            _imports.splice(requireIndex, 1);
+          if ((exportsIndex = _imports.indexOf('exports')) != -1)
+            _imports.splice(exportsIndex, 1);
+          if (_imports.indexOf('module') != -1)
+            throw 'RequireJS Module ID "module" not compatible.';
+
+          return {
+            imports: _imports.concat([]),
+            execute: function() {
+              var deps = arguments;
+              var depMap = {};
+              for (var i = 0; i < _imports.length; i++)
+                depMap[_imports[i]] = arguments[i];
+
+              if (requireIndex != -1)
+                depMap.require = function(d) { return depMap[d]; }
+              if (exportsIndex != -1)
+                depMap.exports = {};
+
+              var output;
+              eval('var require = requireES6; var define = function(_deps, factory) { output = factory.apply(window, deps); }; define.amd = true; ' + source);
+              if (output && typeof output != 'object')
+                throw "AMD modules returning non-objects can't be used as modules. Module Name: " + options.normalized;
+              return new Module(output);
+            }
+          };
+        }
+
+        // check if it uses the AMD CommonJS form
+        // define(varName); || define(function() {}); || define({})
+        if (source.match(cjsDefineRegEx)) {
+          var _imports = [];
+          var match;
+          while (match = cjsRequireRegEx.exec(source))
+            _imports.push(match[2] || match[3]);
+
+          return {
+            imports: _imports.concat([]),
+            execute: function() {
+              var depMap = {};
+              for (var i = 0; i < _imports.length; i++)
+                depMap[_imports[i]] = arguments[i];
+              var output;
+              var exports = {};
+              eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source);
+              if (output && typeof output != 'object')
+                throw "AMD modules returning non-objects can't be used as modules. Module Name: " + options.normalized;
+              output = output || exports;
+              return new Module(output);
+            }
+          };
+        }
+        
+        // CommonJS
+        // require('...') || exports[''] = ... || exports.asd = ...
+        if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
+          var _imports = [];
+          var match;
+          while (match = cjsRequireRegEx.exec(source))
+            _imports.push(match[2] || match[3]);
+          return {
+            imports: _imports.concat([]), // clone the array as we still need it
+            execute: function() {
+              var depMap = {};
+              for (var i = 0; i < _imports.length; i++)
+                depMap[_imports[i]] = arguments[i];
+              var exports = {};
+              var require = function(d) {
+                return depMap[d];
+              }
+              eval(source);
+              return new Module(exports);
+            }
+          };
+        }
+
+        // If none of the above, use the global shim config
 
         var shimDeps;
 
@@ -393,7 +486,6 @@
 
     window.requireES6 = function(arg, callback, errback) {
       // RequireJS-style ES6 loader
-      // supports string, array and commonJS-style loads
       return require.call(this, arg, callback, errback);
     }
     requireES6._config = config;
@@ -412,25 +504,15 @@
     requireES6.delete = loader.delete.bind(loader);
 
     requireES6.loader = loader;
-    
-    var cjsRequireRegExp = /[^.]\s*require\s*\(\s*["']([^'"\s]+)['"]\s*\)/g;
 
     loader.set('__require', require);
 
     function require(arg, callback, errback) {
-      if ((typeof arg == 'string' && arguments.length > 1) || arg instanceof Array) {
-        loader.import(arg, callback, errback);
-      }
-      else if (typeof arg == 'string' && arguments.length == 1) {
+      if ((typeof arg == 'string' && arguments.length > 1) || arg instanceof Array)
+        return loader.import(arg, callback, errback);
+      
+      if (typeof arg == 'string' && arguments.length == 1)
         return loader.get(arg);
-      }
-      else if (typeof arg == 'function') {
-        var deps = ['__require'];
-        arg.toString().replace(cjsRequireRegExp, function(match, dep) {
-          deps.push(dep);
-        });
-        require(deps, callback, errback);
-      }
     }
   }
 })();

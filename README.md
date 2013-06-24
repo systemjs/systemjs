@@ -3,20 +3,25 @@ require-es6
 
 RequireJS-style ES6 loader.
 
-Provides a similar configuration interface to RequireJS but for ES6 module loading.
+Provides as ES6 module loader that can load ES6, AMD, CommonJS and global modules.
+
+Uses a similar interface to RequireJS including paths, map and package config.
 
 Designed to work with the [ES6-loader polyfill](https://github.com/guybedford/es6-loader).
 
 Including
 ---
 
-Include `es6-loader.js` and `esprima-es6.js` in the same folder as `require-es6.js`.
+Include `es6-loader.js` and `esprima-es6.js` (from [ES6-loader polyfill](https://github.com/guybedford/es6-loader)) in the same folder as `require-es6.js`.
 
 Then include it with a `<script>` tag:
 
 ```html
   <script src="path/to/require-es6.js"></script>
 ```
+
+The 70KB Esprima parser is dynamically included when loading an ES6 module only.
+Without the parser, the polyfill and loader are 20KB combined and minified.
 
 Usage
 ---

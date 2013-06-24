@@ -154,6 +154,40 @@
         }
       },
       {
+        name: 'Loading an AMD module',
+        run: function(complete) {
+          requireES6(['tests/amd-module'], complete);
+        },
+        confirm: function(m) {
+          if (m.amd != true)
+            return 'Incorrect module';
+          if (m.dep.amd != 'dep')
+            return 'Dependency not defined';
+        }
+      },
+      {
+        name: 'Loading AMD CommonJS form',
+        run: function(complete) {
+          requireES6(['tests/amd-cjs-module'], complete);
+        },
+        confirm: function(m) {
+          if (m.test != 'hi')
+            return 'Not defined';
+        }
+      },
+      {
+        name: 'Loading a CommonJS module',
+        run: function(complete) {
+          requireES6(['tests/common-js-module'], complete);
+        },
+        confirm: function(m) {
+          if (m.hello != 'world')
+            return 'module value not defined';
+          if (m.first != 'this is a dep')
+            return 'dep value not defined';
+        }
+      },
+      {
         name: 'Simple compiler Plugin',
         run: function(complete) {
           requireES6(['tests/compiler-plugin!tests/compiler-test'], complete);
