@@ -1,4 +1,4 @@
-require-es6
+jspm loader
 ===========
 
 RequireJS-style ES6 loader.
@@ -17,7 +17,7 @@ Include `es6-loader.js` and `esprima-es6.js` (from [ES6-loader polyfill](https:/
 Then include it with a `<script>` tag:
 
 ```html
-  <script src="path/to/require-es6.js"></script>
+  <script src="path/to/jspm-loader.js"></script>
 ```
 
 The 70KB Esprima parser is dynamically included when loading an ES6 module only.
@@ -28,19 +28,19 @@ Usage
 
 ### Requiring
 
-Requiring works identically to RequireJS:
+The loader is simply a custom ES6 module loader, and can be used as one:
 
 ```javascript
-  requireES6(['some', 'modules'], function(some, modules) {
+  jspm.import(['some', 'modules'], function(some, modules) {
   });
 ```
 
 ### Configuration
 
-Just like RequireJS, provide configuration by setting the requireES6 variable before the script is loaded, or call the `requireES6.config` function:
+Just like RequireJS, provide configuration by setting the `jspm` variable before the script is loaded, or call the `jspm.config` function:
 
 ```javascript
-  requireES6.config({
+  jspm.config({
     baseURL: 'http://www.mysite.com',
     paths: {
       'app': 'http://www.anothersite.com'
@@ -56,7 +56,7 @@ Just like RequireJS, provide configuration by setting the requireES6 variable be
 Package configuration is designed to be entirely modular. `map`, `paths` and `shimDep` configurations are set at the per package level:
 
 ```javascript
-  requireES6.config({
+  jspm.config({
     packages: {
       mypackage: {
         path: 'package/path',
@@ -68,7 +68,7 @@ Package configuration is designed to be entirely modular. `map`, `paths` and `sh
     }
   });
   
-  requireES6('mypackage/jquery');
+  jspm.import('mypackage/jquery');
 ```
 
 ### Shim Configuration
@@ -95,7 +95,7 @@ To provide dependencies for global modules, use the `shimDep` configuration.
 ### All Configuration Options
 
 ```javascript
-  requireES6.config({
+  jspm.config({
     baseURL: '//git.jspm.io',
 
     // override loader hooks
