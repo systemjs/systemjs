@@ -9,7 +9,7 @@
  *
  */
 (function() {
-  var config = window.requireES6 || {};
+  var config = window.jspm || {};
 
   // these exactly as in RequireJS
   config.waitSeconds = 20;
@@ -240,7 +240,7 @@
                 depMap.module = { id: options.normalized, uri: options.address };
 
               var output;
-              eval('var require = requireES6; var define = function(_deps, factory) { output = factory.apply(window, deps); }; define.amd = true; ' + source);
+              eval('var require = jspm.import; var define = function(_deps, factory) { output = factory.apply(window, deps); }; define.amd = true; ' + source);
               if (output && typeof output != 'object')
                 throw "AMD modules returning non-objects can't be used as modules. Module Name: " + options.normalized;
               return new Module(output);
@@ -330,7 +330,7 @@
           imports: shimDeps || [],
           execute: function(deps) {
             setGlobal(deps);
-            loader.eval(source);
+            jspm.eval(source);
             return new Module(getGlobal());
           }
         };
@@ -346,15 +346,15 @@
         for (var i = 0; i < deps.length; i++) {
           var dep = deps[i];
           for (var m in dep)
-            loader.global[m] = dep[m];
+            jspm.global[m] = dep[m];
         }
       }
 
       // now we store a complete copy of the global object
       // in order to detect changes
-      for (var g in loader.global) {
-        if (loader.global.hasOwnProperty(g))
-          globalObj[g] = loader.global[g];
+      for (var g in jspm.global) {
+        if (jspm.global.hasOwnProperty(g))
+          globalObj[g] = jspm.global[g];
       }
     }
 
@@ -364,16 +364,16 @@
     function getGlobal() {
       var moduleGlobal = {};
 
-      for (var g in loader.global) {
-        if (loader.global.hasOwnProperty(g) && g != 'window' && globalObj[g] != loader.global[g])
-          moduleGlobal[g] = loader.global[g];
+      for (var g in jspm.global) {
+        if (jspm.global.hasOwnProperty(g) && g != 'window' && globalObj[g] != jspm.global[g])
+          moduleGlobal[g] = jspm.global[g];
       }
       return moduleGlobal;
     }
 
 
 
-    var loader = new Loader({
+    window.jspm = new Loader({
       baseURL: config.baseURL,
       normalize: function(name, referer) {
 
@@ -404,8 +404,8 @@
               var argumentPart = pluginArgument.substr(argIndex, i);
 
               if (argumentPart) {
-                var normalized = loader.normalize(argumentPart, referer);
-                var resolved = loader.resolve(normalized.normalized || normalized, {
+                var normalized = jspm.normalize(argumentPart, referer);
+                var resolved = jspm.resolve(normalized.normalized || normalized, {
                   referer: referer,
                   metadata: normalized.metadata || null
                 });
@@ -467,10 +467,10 @@
         }
 
         // for plugins, we first need to load the plugin module itself
-        loader.import(options.metadata.pluginName, function(pluginModule) {
+        jspm.import(options.metadata.pluginName, function(pluginModule) {
 
           // run the plugin load hook.. the callback will return the effective source
-          pluginModule.load(options.metadata.pluginArguments, loader, callback, errback, options.referer);
+          pluginModule.load(options.metadata.pluginArguments, jspm, callback, errback, options.referer);
 
         }, errback, options.referer); 
       },
@@ -489,38 +489,18 @@
     });
 
     // ondemand functionality
-    loader.ondemandTable = {};
-    loader.ondemand = System.ondemand;
+    jspm.ondemandTable = {};
+    jspm.ondemand = System.ondemand;
 
-    window.requireES6 = function(arg, callback, errback) {
-      // RequireJS-style ES6 loader
-      return require.call(this, arg, callback, errback);
-    }
-    requireES6._config = config;
-    requireES6.config = function(newConfig) {
+    jspm._config = config;
+    jspm.config = function(newConfig) {
       extend(config, newConfig);
 
       if (newConfig.baseURL)
-        loader.baseURL = newConfig.baseURL;
+        jspm.baseURL = newConfig.baseURL;
     }
-    requireES6.ondemand = function(resolvers) {
-      loader.ondemand(resolvers);
-    }
-    requireES6.get = loader.get.bind(loader);
-    requireES6.set = loader.set.bind(loader);
-    requireES6.has = loader.has.bind(loader);
-    requireES6.delete = loader.delete.bind(loader);
-
-    requireES6.loader = loader;
-
-    loader.set('__require', require);
-
-    function require(arg, callback, errback) {
-      if ((typeof arg == 'string' && arguments.length > 1) || arg instanceof Array)
-        return loader.import(arg, callback, errback);
-      
-      if (typeof arg == 'string' && arguments.length == 1)
-        return loader.get(arg);
+    jspm.ondemand = function(resolvers) {
+      jspm.ondemand(resolvers);
     }
   }
 })();

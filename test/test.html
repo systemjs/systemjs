@@ -1,15 +1,15 @@
 <!doctype html>
 <html>
 <script src="../../es6-loader/es6-loader.js" type="text/javascript"></script>
-<script src="../require-es6.js" type="text/javascript"></script>
+<script src="../jspm-loader.js" type="text/javascript"></script>
 
 <script>
-  requireES6(['test-runner'], function(runner) {
+  jspm.import(['test-runner'], function(runner) {
     runner.execute([
       {
         name: 'Global script loading',
         run: function(complete) {
-          requireES6(['tests/global'], complete);
+          jspm.import(['tests/global'], complete);
         },
         confirm: function(m) {
           if (!m.jQuery || !m.another)
@@ -21,12 +21,12 @@
       {
         name: 'Global script loading with shimDeps',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             shimDeps: {
               'tests/global-with-dep': ['tests/global-dep']
             }
           });
-          requireES6(['tests/global-with-dep'], complete);
+          jspm.import(['tests/global-with-dep'], complete);
         },
         confirm: function(m) {
           if (m.jQueryVersion != '1.8.3')
@@ -36,12 +36,12 @@
       {
         name: 'Global paths configuration',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             paths: {
               'mypath': 'tests/path'
             }
           });
-          requireES6(['mypath'], complete);
+          jspm.import(['mypath'], complete);
         },
         confirm: function(m) {
           if (m.p != 'path')
@@ -51,7 +51,7 @@
       {
         name: 'External URL loading',
         run: function(complete) {
-          requireES6(['http://code.jquery.com/jquery-1.10.1.min.js'], complete);
+          jspm.import(['http://code.jquery.com/jquery-1.10.1.min.js'], complete);
         },
         confirm: function(m) {
           if (m.jQuery.fn.jquery != '1.10.1')
@@ -61,12 +61,12 @@
       {
         name: 'Global map configuration',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             map: {
               'maptest': 'tests/map-test'
             }
           });
-          requireES6(['maptest'], complete)
+          jspm.import(['maptest'], complete)
         },
         confirm: function(m) {
           if (m.maptest != 'maptest')
@@ -76,7 +76,7 @@
       {
         name: 'Basic package configuration',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             packages: {
               myapp: {
                 path: 'tests/package-test',
@@ -84,7 +84,7 @@
               }
             }
           });
-          requireES6(['myapp', 'myapp/sub'], complete)
+          jspm.import(['myapp', 'myapp/sub'], complete)
         },
         confirm: function(m1, m2) {
           if (!m1.package)
@@ -96,7 +96,7 @@
       {
         name: 'Package map configuration',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             packages: {
               myapp: {
                 map: {
@@ -105,7 +105,7 @@
               }
             }
           });
-          requireES6(['myapp/map-test'], complete);
+          jspm.import(['myapp/map-test'], complete);
         },
         confirm: function(m) {
           if (!m.mapDep)
@@ -115,7 +115,7 @@
       {
         name: 'Package paths configuration',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             packages: {
               myapp: {
                 paths: {
@@ -124,7 +124,7 @@
               }
             }
           });
-          requireES6(['myapp/path-test'], complete);
+          jspm.import(['myapp/path-test'], complete);
         },
         confirm: function(m) {
           if (m.jQuery.fn.jquery != '1.8.1')
@@ -134,7 +134,7 @@
       {
         name: 'Package shimDep configuration',
         run: function(complete) {
-          requireES6.config({
+          jspm.config({
             packages: {
               myapp: {
                 paths: {
@@ -146,7 +146,7 @@
               }
             }
           });
-          requireES6(['myapp/shim-test'], complete);
+          jspm.import(['myapp/shim-test'], complete);
         },
         confirm: function(m) {
           if (m.myPlugin.jQuery.fn.jquery != '1.8.2')
@@ -156,7 +156,7 @@
       {
         name: 'Loading an AMD module',
         run: function(complete) {
-          requireES6(['tests/amd-module'], complete);
+          jspm.import(['tests/amd-module'], complete);
         },
         confirm: function(m) {
           if (m.amd != true)
@@ -168,7 +168,7 @@
       {
         name: 'Loading AMD CommonJS form',
         run: function(complete) {
-          requireES6(['tests/amd-cjs-module'], complete);
+          jspm.import(['tests/amd-cjs-module'], complete);
         },
         confirm: function(m) {
           if (m.test != 'hi')
@@ -178,7 +178,7 @@
       {
         name: 'Loading a CommonJS module',
         run: function(complete) {
-          requireES6(['tests/common-js-module'], complete);
+          jspm.import(['tests/common-js-module'], complete);
         },
         confirm: function(m) {
           if (m.hello != 'world')
@@ -190,7 +190,7 @@
       {
         name: 'Simple compiler Plugin',
         run: function(complete) {
-          requireES6(['tests/compiler-plugin!tests/compiler-test'], complete);
+          jspm.import(['tests/compiler-plugin!tests/compiler-test'], complete);
         },
         confirm: function(m) {
           if (m.output != 'plugin output')
@@ -203,7 +203,7 @@
         name: 'Custom loader hooks',
         run: function(complete) {
           window.hooks = {};
-          requireES6.config({
+          jspm.config({
             normalize: function(name, options) {
               if (name == 'normalize-hook-test') {
                 hooks.normalize = true;
@@ -229,7 +229,7 @@
               }
             }
           });
-          requireES6(['normalize-hook-test'], complete);
+          jspm.import(['normalize-hook-test'], complete);
         },
         confirm: function(m) {
           if (!hooks.normalize)

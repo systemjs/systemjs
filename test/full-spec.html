@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <script>
-  requireES6.config({
+  jspm.config({
     baseURL: '//git.jspm.io',
 
     // override loader hooks
@@ -95,7 +95,7 @@
 </script>
 
 <script>
-  requireES6.load(function(require) {
+  jspm.import(function(require) {
     require('!test.css');
     var $ = require('jquery').jQuery;
 
