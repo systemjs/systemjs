@@ -95,7 +95,8 @@
   else
     createLoader();
 
-  function createLoader() {
+  window.createLoader = function() {
+    delete window.createLoader;
 
     // hooks without plugin logic
     var loaderHooks = {
