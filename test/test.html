@@ -190,7 +190,12 @@
       {
         name: 'Simple compiler Plugin',
         run: function(complete) {
-          jspm.import(['tests/compiler-plugin!tests/compiler-test'], complete);
+          jspm.config({
+            map: {
+              'coffee': 'tests/compiler-plugin'
+            }
+          });
+          jspm.import(['tests/compiler-test.coffee!'], complete);
         },
         confirm: function(m) {
           if (m.output != 'plugin output')
@@ -200,46 +205,18 @@
         }
       },
       {
-        name: 'Custom loader hooks',
+        name: 'onLoad hook',
         run: function(complete) {
-          window.hooks = {};
           jspm.config({
-            normalize: function(name, options) {
-              if (name == 'normalize-hook-test') {
-                hooks.normalize = true;
-                return name;
-              }
-            },
-            resolve: function(name) {
-              if (name == 'normalize-hook-test') {
-                hooks.resolve = true;
-                return name;
-              }
-            },
-            fetch: function(url, callback) {
-              if (url == 'normalize-hook-test') {
-                hooks.fetch = true;
-                callback(url);
-              }
-            },
-            translate: function(source) {
-              if (source == 'normalize-hook-test') {
-                hooks.translate = true;
-                return '';
-              }
-            }
+            onLoad: complete
           });
-          jspm.import(['normalize-hook-test'], complete);
+          jspm.import(['tests/normalize-hook-test']);
         },
-        confirm: function(m) {
-          if (!hooks.normalize)
-            return 'normalize hook failed';
-          if (!hooks.resolve)
-            return 'resolve hook failed';
-          if (!hooks.fetch)
-            return 'fetch hook failed';
-          if (!hooks.translate)
-            return 'translate hook failed';
+        confirm: function(name, source, options) {
+          if (name != 'tests/normalize-hook-test')
+            return 'normalize hook has incorrect name';
+          if (source != '"hello world";')
+            return 'invalid source';
         }
       }
     ]);

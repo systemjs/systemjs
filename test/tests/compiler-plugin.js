@@ -1,5 +1,3 @@
-export function load(args, loader, callback, errback, referer) {
-  loader.fetch(args[0].address, function(source) {
-    callback(source + ' export var extra = "yay!";');
-  }, errback, referer);
+export function translate(source, options) {
+  return 'export var extra = "yay!"; \n' + source;
 }

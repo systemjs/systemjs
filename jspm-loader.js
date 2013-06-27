@@ -3,7 +3,7 @@
  *
  * Supports RequireJS-inspired map, packages and plugins.
  *
- * https://github.com/guybedford/require-es6
+ * https://github.com/jspm/jspm-loader
  * 
  * MIT
  *
@@ -376,115 +376,53 @@
     window.jspm = new Loader({
       baseURL: config.baseURL,
       normalize: function(name, referer) {
-
         // plugin shorthand
-        if (name.substr(0, 1) == '!') {
-          var ext = name.substr(name.indexOf('.') + 1);
-          if (ext.length != name.length)
-            name = ext + '[' + name + ']';
-        }
-
-        // plugin normalization
-        var pluginIndex = name.indexOf('!');
-        var pluginName = '';
-        var pluginArgument = '';
-        var pluginArguments = [];
-        if (pluginIndex != -1) {
-          pluginArgument = name.substr(pluginIndex);
-          name = name.substr(0, pluginIndex);
-
-          // parse square brackets as separators of normalization parts in arguments
-          // p!something[plugin]here
-          // -> p-normalized!something/normalized[plugin]here/normalized
-          var bracketDepth = 0;
-          var argIndex = 1;
-          for (var i = 1; i < pluginArgument.length; i++) {
-            if (i == pluginArgument.length - 1 || (pluginArgument.substr(i, 1) == '[' && bracketDepth++ == 0)) {
-              // normalize anything up to the bracket
-              var argumentPart = pluginArgument.substr(argIndex, i);
-
-              if (argumentPart) {
-                var normalized = jspm.normalize(argumentPart, referer);
-                var resolved = jspm.resolve(normalized.normalized || normalized, {
-                  referer: referer,
-                  metadata: normalized.metadata || null
-                });
-                var len = pluginArgument.length;
-                pluginArgument = pluginArgument.substr(0, argIndex) + (normalized.normalized || normalized) + pluginArgument.substr(i + 1);
-                i += len - pluginArgument.length;
-                pluginArguments.push({ name: argumentPart, normalized: normalized.normalized || normalized, address: resolved.address || resolved });
-                argIndex = i;
-              }
-            }
-            if (pluginArgument.substr(i, 1) == ']' && --bracketDepth == 0) {
-              pluginArguments.push({ value: pluginArgument.substr(argIndex + 1, i - 1) });
-              argIndex = i + 1;
-            }
-          }
-          pluginName = name;
-        }
+        var pluginExt;
+        if (name.substr(name.length - 1, 1) == '!')
+          pluginExt = name.substr(name.indexOf('.') + 1);
 
         // hook normalize function
-        var out;
-        if (config.normalize)
-          out = config.normalize.call(loaderHooks, name, referer) + pluginArgument;
+        var normalized = loaderHooks.normalize(name, referer);
+
+        if (pluginExt)
+          return { normalized: normalized, metadata: { plugin: pluginExt.substr(0, pluginExt.length - 1) } };
         else
-          out = loaderHooks.normalize(name, referer) + pluginArgument;
-
-        if (typeof out == 'string')
-          out = { normalized: out };
-
-        out.metadata = out.metadata || {};
-        
-        // store the unnormalized plugin name and arguments
-        // we will renormalize later to avoid double normalization
-        if (pluginIndex != -1) {
-          out.metadata.pluginName = name;
-          out.metadata.pluginArguments = pluginArguments;
-        }
-
-        return out;
+          return normalized;
       },
       resolve: function(name, options) {
-        // if it is a plugin resource, let the resolve function return
-        // the resolved name of the plugin module
-        if (options.metadata.pluginName)
-          name = options.metadata.pluginName;
-        
-        if (config.resolve)
-          return config.resolve.call(loaderHooks, name, options);
-        else
-          return loaderHooks.resolve(name, options);
+        var resolved = loaderHooks.resolve(name, options);
+        if (options.metadata && options.metadata.plugin) {
+          if (resolved.address)
+            resolved.address = resolved.address.substr(0, resolved.address.length - 1);
+          else
+            resolved = resolved.substr(0, resolved.length - 1);
+        }
+        return resolved;
       },
       fetch: function(url, callback, errback, options) {
         options = options || {};
+
         // do the fetch
-        if (!options.metadata || !options.metadata.pluginName) {
-          if (config.fetch)
-            return config.fetch.call(loaderHooks, url, callback, errback, options);
-          else
-            return loaderHooks.fetch(url, callback, errback, options);
-        }
+        if (!options.metadata || !options.metadata.plugin)
+          return loaderHooks.fetch(url, callback, errback, options);
 
         // for plugins, we first need to load the plugin module itself
-        jspm.import(options.metadata.pluginName, function(pluginModule) {
+        jspm.import(options.metadata.plugin, function(plugin) {
 
-          // run the plugin load hook.. the callback will return the effective source
-          pluginModule.load(options.metadata.pluginArguments, jspm, callback, errback, options.referer);
+          // then fetch the resource
+          loaderHooks.fetch(url, function(source) {
+
+            // now let the plugin do translation
+            callback(plugin.translate(source, options));
+
+          }, errback, options);
 
         }, errback, options.referer); 
       },
-      translate: function(source, options) {
-        if (config.translate)
-          return config.translate.call(loaderHooks, source, options);
-        else
-          return source;
-      },
       link: function(source, options) {
-        if (config.link)
-          return config.link.call(loaderHooks, source, options);
-        else
-          return loaderHooks.link(source, options);
+        if (config.onLoad)
+          config.onLoad(options.normalized, source, options);
+        return loaderHooks.link(source, options);
       }
     });
 
