@@ -78,22 +78,7 @@
 
   // -- /helpers --
 
-  // determine the current script path as the base path
-  var scripts = document.getElementsByTagName('script');
-  var head = document.getElementsByTagName('head')[0];
-  var curPath = scripts[scripts.length - 1].src;
-  var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
-
-  config.baseURL = config.baseURL || basePath;
-
-  // dynamically polyfill the es6 loader if necessary
-  if (!window.Loader)
-    document.write(
-      '<' + 'script type="text/javascript" src="' + basePath + 'es6-loader.js">' + '<' + '/script>' +
-      '<' + 'script type="text/javascript">' + 'createLoader();' + '<' + '/script>'
-    );
-  else
-    createLoader();
+  config.baseURL = config.baseURL || System.baseURL;
 
   window.createLoader = function() {
     delete window.createLoader;
@@ -375,7 +360,6 @@
 
 
     window.jspm = new Loader({
-      baseURL: config.baseURL,
       normalize: function(name, referer) {
         // plugin shorthand
         var pluginExt;
@@ -427,6 +411,8 @@
       }
     });
 
+    jspm.baseURL = config.baseURL;
+
     // ondemand functionality
     jspm.ondemandTable = {};
     jspm.ondemand = System.ondemand;
@@ -442,4 +428,21 @@
       jspm.ondemand(resolvers);
     }
   }
+
+
+
+  // dynamically polyfill the es6 loader if necessary
+  if (!window.Loader) {
+    // determine the current script path as the base path
+    var scripts = document.getElementsByTagName('script');
+    var head = document.getElementsByTagName('head')[0];
+    var curPath = scripts[scripts.length - 1].src;
+    var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+    document.write(
+      '<' + 'script type="text/javascript" src="' + basePath + 'es6-loader.js">' + '<' + '/script>' +
+      '<' + 'script type="text/javascript">' + 'createLoader();' + '<' + '/script>'
+    );
+  }
+  else
+    createLoader();
 })();
