@@ -95,7 +95,8 @@
   else
     createLoader();
 
-  function createLoader() {
+  window.createLoader = function() {
+    delete window.createLoader;
 
     // hooks without plugin logic
     var loaderHooks = {
@@ -184,7 +185,7 @@
           }
 
         // then just use standard resolution
-        return System.resolve(name, options);
+        return System.resolve.call(this, name, options);
       },
       fetch: function(url, callback, errback, options) {
         // do a fetch with a timeout
@@ -390,7 +391,7 @@
           return normalized;
       },
       resolve: function(name, options) {
-        var resolved = loaderHooks.resolve(name, options);
+        var resolved = loaderHooks.resolve.call(this, name, options);
         if (options.metadata && options.metadata.plugin) {
           if (resolved.address)
             resolved.address = resolved.address.substr(0, resolved.address.length - 1);
