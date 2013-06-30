@@ -263,7 +263,7 @@
               var module = false;
               for (var i = 0; i < _imports.length; i++) {
                 depMap[_imports[i]] = arguments[i];
-                if (arguments[i] == 'module')
+                if (_imports[i] == 'module')
                   module = true;
               }
               if (module)

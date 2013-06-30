@@ -1,10 +1,10 @@
 <!doctype html>
 <html>
-<script src="../../es6-loader/es6-loader.js" type="text/javascript"></script>
+<script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
 <script src="../jspm-loader.js" type="text/javascript"></script>
 
 <script>
-  jspm.import(['test-runner'], function(runner) {
+  jspm.import('test-runner', function(runner) {
     runner.execute([
       {
         name: 'Global script loading',
