@@ -78,10 +78,10 @@
 
   // -- /helpers --
 
-  config.baseURL = config.baseURL || System.baseURL;
-
   window.createLoader = function() {
     delete window.createLoader;
+
+    config.baseURL = config.baseURL || System.baseURL;
 
     // hooks without plugin logic
     var loaderHooks = {
