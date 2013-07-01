@@ -439,7 +439,7 @@
     var curPath = scripts[scripts.length - 1].src;
     var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
     document.write(
-      '<' + 'script type="text/javascript" src="' + basePath + 'es6-loader.js">' + '<' + '/script>' +
+      '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js">' + '<' + '/script>' +
       '<' + 'script type="text/javascript">' + 'createLoader();' + '<' + '/script>'
     );
   }
