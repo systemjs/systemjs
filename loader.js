@@ -81,7 +81,7 @@
   window.createLoader = function() {
     delete window.createLoader;
 
-    config.baseURL = config.baseURL || 'http://git.jspm.io';
+    config.baseURL = config.baseURL || document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1);
 
     // hooks without plugin logic
     var loaderHooks = {
