@@ -213,6 +213,9 @@
           jspm.import(['tests/normalize-hook-test']);
         },
         confirm: function(name, source, options) {
+          jspm.config({
+            onLoad: null
+          });
           if (name != 'tests/normalize-hook-test')
             return 'normalize hook has incorrect name';
           if (source != '"hello world";')
