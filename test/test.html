@@ -19,10 +19,10 @@
         }
       },
       {
-        name: 'Global script loading with shimDeps',
+        name: 'Global script loading with shim',
         run: function(complete) {
           jspm.config({
-            shimDeps: {
+            shim: {
               'tests/global-with-dep': ['tests/global-dep']
             }
           });
@@ -34,18 +34,33 @@
         }
       },
       {
-        name: 'Global paths configuration',
+        name: 'Location configuration',
         run: function(complete) {
           jspm.config({
-            paths: {
-              'mypath': 'tests/path'
+            locations: {
+              'mypath': 'tests'
             }
           });
-          jspm.import(['mypath'], complete);
+          jspm.import(['mypath:path'], complete);
         },
         confirm: function(m) {
           if (m.p != 'path')
             return 'module not loaded';
+        }
+      },
+      {
+        name: 'Location relative resolution',
+        run: function(complete) {
+          jspm.config({
+            locations: {
+              'mylocation': 'tests/location'
+            }
+          });
+          jspm.import(['mylocation:main'], complete)
+        },
+        confirm: function(m) {
+          if (m.p != 'yay')
+            return 'relative location not loaded';
         }
       },
       {
@@ -59,7 +74,7 @@
         }
       },
       {
-        name: 'Global map configuration',
+        name: 'Map configuration',
         run: function(complete) {
           jspm.config({
             map: {
@@ -74,17 +89,14 @@
         }
       },
       {
-        name: 'Basic package configuration',
+        name: 'Package shorthand',
         run: function(complete) {
           jspm.config({
-            packages: {
-              myapp: {
-                path: 'tests/package-test',
-                main: 'themain'
-              }
+            map: {
+              'myapp': 'tests/my-app'
             }
           });
-          jspm.import(['myapp', 'myapp/sub'], complete)
+          jspm.import(['myapp/', 'myapp/sub'], complete)
         },
         confirm: function(m1, m2) {
           if (!m1.package)
@@ -97,11 +109,9 @@
         name: 'Package map configuration',
         run: function(complete) {
           jspm.config({
-            packages: {
-              myapp: {
-                map: {
-                  'jquery': 'myapp/jquery-mapped'
-                }
+            map: {
+              'tests/my-app': {
+                'jquery': 'tests/my-app/jquery-mapped'
               }
             }
           });
@@ -110,47 +120,6 @@
         confirm: function(m) {
           if (!m.mapDep)
             return 'Mapped package dependency not loaded';
-        }
-      },
-      {
-        name: 'Package paths configuration',
-        run: function(complete) {
-          jspm.config({
-            packages: {
-              myapp: {
-                paths: {
-                  'jquery-cdn': "http://code.jquery.com/jquery-1.8.1.js"
-                }
-              }
-            }
-          });
-          jspm.import(['myapp/path-test'], complete);
-        },
-        confirm: function(m) {
-          if (m.jQuery.fn.jquery != '1.8.1')
-            return 'jQuery not defined';
-        }
-      },
-      {
-        name: 'Package shimDep configuration',
-        run: function(complete) {
-          jspm.config({
-            packages: {
-              myapp: {
-                paths: {
-                  'jquery-1.8.2': "http://code.jquery.com/jquery-1.8.2.js"
-                },
-                shimDeps: {
-                  'shim-test': ['jquery-1.8.2']
-                }
-              }
-            }
-          });
-          jspm.import(['myapp/shim-test'], complete);
-        },
-        confirm: function(m) {
-          if (m.myPlugin.jQuery.fn.jquery != '1.8.2')
-            return 'Wrong jQuery version';
         }
       },
       {
@@ -192,10 +161,10 @@
         run: function(complete) {
           jspm.config({
             map: {
-              'coffee': 'tests/compiler-plugin'
+              'plugin:coffee': 'tests/compiler-plugin'
             }
           });
-          jspm.import(['tests/compiler-test.coffee!'], complete);
+          jspm.import(['tests/compiler-test!coffee'], complete);
         },
         confirm: function(m) {
           if (m.output != 'plugin output')

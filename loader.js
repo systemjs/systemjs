@@ -11,6 +11,7 @@
  /*
   ToDo
   - '/' shorthand for packages, ignoring '@'
+  - data-cnf
   - test new changes
 
  */
@@ -26,6 +27,7 @@
     delete window.createLoader;
 
     config.baseURL = config.baseURL || document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1);
+    config.locations.plugin = config.locations.plugin || config.baseURL;
 
     // -- helpers --
 
@@ -80,14 +82,21 @@
       // given a resolved module name and normalized parent name,
       // apply the map configuration
       var applyMap = function(name, parentName) {
-        // if it has a location, and it matches the parent location, remove it before applying map config
+        parentName = parentName || '';
+        
         var location = getLocation(name);
         var parentLocation = getLocation(parentName);
-        if (location == getLocation(parentName))
+
+        // if it has a location, and it matches the parent location, remove it before applying map config
+        if (location && location == getLocation(parentName))
           name = name.substr(location.length + 1);
 
+        // if there is a parent location, and it doesnt match the location, add it
+        if (parentLocation && !location)
+          name = parentLocation + ':' + name;
+
         // check for most specific map config
-        var prefixMatch = ''; // the matching prefix
+        var parentPrefixMatch = ''; // the matching parent refix
         var mapPrefixMatch = ''; // the matching map prefix
         var mapMatch = ''; // the matching map value
 
@@ -118,10 +127,10 @@
               continue;
 
             // then the most specific prefixMatch on the parent name
-            if (_p.length == mapPrefixMatch.length && p.length < prefixMatch.length)
+            if (_p.length == mapPrefixMatch.length && p.length < parentPrefixMatch.length)
               continue;
 
-            prefixMatch = p;
+            parentPrefixMatch = p;
             mapPrefixMatch = _p;
             mapMatch = curMap[_p];
           }
@@ -227,16 +236,39 @@
           return name;
       },
       resolve: function(name, options) {
+        var pluginMatch = name.match(pluginRegEx);
+        if (pluginMatch) {
+          // remove plugin part
+          name = name.substr(0, name.length - pluginMatch[2].length - 1);
+          // add extension as plugin name if not present
+          if (name.split('/').pop().split('.').length == 1)
+            name += '.' + pluginMatch[2];
+        }
+
+        // ondemand
+        for (var r in this.ondemandTable)
+          if (this.ondemandTable[r].indexOf(name) != -1)
+            return name;
+
+        if (name.match(absUrlRegEx))
+          return name;
+
         // locations
         var location = getLocation(name);
         if (location)
-          name = config.locations[location] + name.substring(location.length + 1)
+          name = config.locations[location] + (config.locations[location].substr(config.locations[location].length - 1, 1) != '/' ? '/' : '') + name.substring(location.length + 1);
+        else
+          name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;
 
-        // then just use standard resolution
-        return System.resolve.call(this, name, options);
+        // js extension
+        if (name.split('/').pop().indexOf('.') == -1)
+          name += '.js';
+
+        return name;
       },
       fetch: function(url, callback, errback, options) {
-        var pluginMatch = options.normalized.match(pluginRegEx);
+        options = options || {};
+        var pluginMatch = (options.normalized || '').match(pluginRegEx);
 
         if (!pluginMatch) {
           // do a fetch with a timeout
@@ -262,10 +294,15 @@
         var pluginName = pluginMatch[2];
         jspm.import(pluginName, function(plugin) {
 
-          // allow the plugin to do what it will
-          plugin.load.call(jspm, url, callback, errback, options);
+          // then fetch the resource
+          jspm.fetch(url, function(source) {
+            
+            // allow the plugin to do what it will
+            plugin.load(source, callback, errback, options);
+              
+          }, errback);
 
-        }, errback, { name: 'plugin:'}); 
+        }, errback, { name: 'plugin:'});
       },
       link: function(source, options) {
         if (config.onLoad)
