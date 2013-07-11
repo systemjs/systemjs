@@ -1,18 +1,18 @@
 jspm loader
 ===========
 
-RequireJS-style ES6 loader.
+RequireJS-style ES6 dynamic module loader.
 
-Provides as ES6 module loader that can load ES6, AMD, CommonJS and global modules.
+A ~20KB module loader written to work for ES6 modules, but that can load AMD, CommonJS and global scripts detecting the format automatically.
 
-Uses a similar interface to RequireJS including paths, map and package config.
+The loader itself is 10KB, and it is built on top of the 12KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
-Designed to work with the [ES6-loader polyfill](https://github.com/guybedford/es6-loader).
+Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths (locations).
 
 Including
 ---
 
-Include `es6-loader.js` and `esprima-es6.js` (from [ES6-loader polyfill](https://github.com/guybedford/es6-loader)) in the same folder as `require-es6.js`.
+Include `es6-loader.js` and `esprima-es6.js` (from [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader)) in the same folder as `require-es6.js`.
 
 Then include it with a `<script>` tag:
 
@@ -20,8 +20,9 @@ Then include it with a `<script>` tag:
   <script src="path/to/jspm-loader.js"></script>
 ```
 
-The 70KB Esprima parser is dynamically included when loading an ES6 module only.
-Without the parser, the polyfill and loader are 20KB combined and minified.
+The 60KB Esprima parser is dynamically included when loading an ES6 module format only.
+
+Without the parser, the polyfill and loader are roughly 20KB combined and minified.
 
 Usage
 ---
@@ -35,134 +36,190 @@ The loader is simply a custom ES6 module loader, and can be used as one:
   });
 ```
 
-### Configuration
+### Setting the baseURL
 
-Just like RequireJS, provide configuration by setting the `jspm` variable before the script is loaded, or call the `jspm.config` function:
+Just like RequireJS, provide configuration by setting the `jspm` global variable before the script is loaded, or call the `jspm.config` function:
 
 ```javascript
   jspm.config({
-    baseURL: 'http://www.mysite.com',
-    paths: {
-      'app': 'http://www.anothersite.com'
-    },
+    baseURL: 'http://www.mysite.com'
+  });
+```
+
+### Loading Global Scripts
+
+When loading a global script, any global variables declared are returned on the module object by the `import` function.
+
+some-global.js:
+```javascript
+  window.globalVar = 'hello';
+  this.anotherGlobal = 'world';
+```
+
+```javascript
+  jspm.import(['some-global'], function(someGlobal) {
+    console.log(someGlobal.globalVar);
+    console.log(someGlobal.anotherGlobal);
+  });
+```
+
+Global script dependencies can be set using the [shim configuration](#Shim Configuration). The dependency global variables will then be present on the global object. When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery). Globals never actually touch the `window` object directly, they get a carefully managed global object passed into them ensuring the `window` object remains unchanged.
+
+### Loading CommonJS & AMD
+
+When loading a script that contains `AMD` or `CommonJS` module syntax, the loader will detect these statements and treat any imports and exports accordingly.
+
+amd.js:
+```javascript
+  define(['./some-dep'], function(dep) {
+    return { property: 'object' };
+  });
+```
+
+cjs.js:
+```javascript
+  var dep = require('./some-dep');
+
+  exports.property = 'object';
+```
+
+Note that `exports` must be an object to be supported as the `Module` needs to be an object for ES6 loaders. Any other `exports` value will throw an error.
+
+### Loading ES6
+
+Modules defined with ES6 syntax will be parsed with the Esprima harmony parser, which is downloaded as needed.
+
+es6.js:
+```javascript
+  import { some: thing } from './some-dep';
+
+  export var exportName = 'value';
+```
+
+This is currently an older ES6 syntax, pending https://github.com/ModuleLoader/es6-module-loader/issues/10.
+
+When in a production environment, the goal would be to use a build system that would rewrite this in ES5 with something like the following.
+
+es6-built.js:
+```javascript
+  (function() {
+    var some = System.get('normalized/some-dep').thing;
+    System.set('normalized/name', new Module({
+      exportName: 'value'
+    }));
+  })();
+```
+
+### Map Configuration
+
+```javascript
+  jspm.config({
     map: {
-      'jquery': 'app/jquery'
+      'jquery': 'lib/jquery',
+      'backbone': 'lib/backbone/backbone'
     }
   });
 ```
 
-### Package Configuration
+Map configuration simply provides an alias, so that any require of the form `jquery` or `jquery/sub-module` will resolve to `lib/jquery` and `lib/jquery/sub-module` respectively.
+Relative paths of the form `./dependency` within modules will be respected with the map config, just like in RequireJS.
 
-Package configuration is designed to be entirely modular. `map`, `paths` and `shimDep` configurations are set at the per package level:
+Contextual map configurations are also supported, allowing path-specific maps just like RequireJS.
 
 ```javascript
   jspm.config({
-    packages: {
-      mypackage: {
-        path: 'package/path',
-        main: 'themain',
-        map: {
-          jquery: 'jquery-1.3.2' // map config for all modules in the package
-        }
+    map: {
+      'some/module': {
+        'jquery': 'lib/jquery-1.8.3'
       }
     }
   });
-  
-  jspm.import('mypackage/jquery');
 ```
+
+This is useful for multi-version support.
+
+### Package Shorthand
+
+Often, when storing modules in separate folders, one ends up repeating requires like `jspm.import('some-module/some-module')`, since the main entry point name is often the module name.
+
+To provide a simple shorthand for this, the package shorthand is simply to use `jspm.import('some-module/')`, which will result in an equivalent load.
 
 ### Shim Configuration
 
-When loading a global script, the script is run such that its global definitions are contained to the loader global
-and do not leak out onto the window object.
-
-The defined globals are then turned into the defined module for that script.
+Shim configuration allows dependencies to be specified. It can be applied to scripts using any module format to enforce dependencies.
 
 In this way, one can load a global script naturally like any other script. This process is done automatically.
 
 Example:
 
 ```javascript
-  import { $: jQuery } from 'http://code.jquery.com/jquery-1.10.1.min.js';
-  
-  // ...
+  jspm.config({
+    shim: {
+      'bootstrap': ['jquery']
+    }
+  });
+  jspm.import('bootstrap');
 ```
 
-the above works without any configuration because jQuery defines the `jQuery` global which is turned into a module variable automatically.
+### Locations
 
-To provide dependencies for global modules, use the `shimDep` configuration.
+Instead of paths
 
-### All Configuration Options
+### ondemand
+
+The `ondemand` functionality as provided by the `System` loader in the modules spec, is provided equally for the loader, allowing definition scripts to be routed on resolution.
+
+```javascript
+  jspm.ondemand({
+    'jquery': 'http://code.jquery.com/jquery-1.10.1.min.js'
+  });
+```
+
+### Transpiler Plugins
+
+Transpiler plugins are supported for loading templates or languages that compile to JavaScript.
+
+These are different from RequireJS in that they are extension-based plugin names.
+
+```javascript
+  jspm.import('some/module!coffee')
+```
+
+Where `some/module.coffee` is a CoffeeScript file.
+
+The plugin itself is loaded from the resource name `plugin:coffee`. This can either be mapped to the plugin module, or provided at the `plugin:` location.
 
 ```javascript
   jspm.config({
-    baseURL: '//git.jspm.io',
-
-    // override loader hooks
-    // adjusted so they work for plugin resources properly (plugins hack the fetch hook out of necessity)
-    normalize: function(name, o) {
-      // access the super
-      this.normalize(name, o)
-    },
-
-    resolve: function(name, o) {
-    },
-
-    fetch: function(url, o) {
-    },
-
-    translate: function(source, o) {
-    },
-
-    link: function(source, o) {
-    },
-
-    paths: {
-      'app': '//localhost:327'
-    },
-
-    // map config - acts before normalization
-    map: {
-      'jquery': '//code.jquery.com/jquery-1.10.1.min.js',
-      'jquery-2': '//code.jquery.com/jquery-2.10.1.min.js',
-      'css': 'guybedford/require-css/master/css'
-    },
-
-    // global dependencies
-    // applies to module name after normalization
-    shimDeps: {
-      'jquery': ['hbs']
-    },
-
-    // acts at normalization level, after map config
-    // packages sit in canonical name space, so deep names can override
-    // this doesn't apply to map config in the same way
-    packages: {
-      'css': {
-        path: 'guybedford/require-css/master'
-        main: 'css'
-      },
-      'less': {
-        path: 'guybedford/require-less/master',
-        main: './less',
-
-        // package mapping
-        map: {
-          'jquery': 'jquery-2'
-        },
-
-        // for global scripts, set dependencies
-        shimDeps: {
-          'less': 'jquery'
-        }
-      },
-      'less/subpackage': { // allow subpackages for sub-map config etc. most specific wins
-        main: 'googhttps',
-      },
-      'mymodule': {
-        path: 'app',
-        main: 'main'
-      }
+    locations: {
+      'plugin': 'lib/plugins/'
     }
   });
 ```
+
+lib/plugins/coffee.js:
+```javascript
+  import { CoffeeScript: CoffeeScript } from './coffee-script';
+
+  export function load(source, callback, errback, options) {
+    callback(CoffeeScript.compile(source));
+  }
+```
+
+### onLoad Hook
+
+A simple meta-API for hooking all module imports is provided by the `onLoad` hook:
+
+```javascript
+  jspm.config({
+    onLoad: function(name, source, options) {
+      console.log('loaded ' + name);
+    }
+  });
+```
+
+License
+---
+
+MIT
+
