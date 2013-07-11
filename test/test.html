@@ -157,6 +157,16 @@
         }
       },
       {
+        name: 'Loading a UMD module',
+        run: function(complete) {
+          jspm.import(['tests/umd'], complete);
+        },
+        confirm: function(m) {
+          if (m.d != 'hi')
+            return 'module value not defined';
+        }
+      },
+      {
         name: 'Simple compiler Plugin',
         run: function(complete) {
           jspm.config({
