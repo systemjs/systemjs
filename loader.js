@@ -8,13 +8,6 @@
  * MIT
  *
  */
- /*
-  ToDo
-  - '/' shorthand for packages, ignoring '@'
-  - data-cnf
-  - test new changes
-
- */
 (function() {
   var config = window.jspm || {};
 
