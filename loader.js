@@ -431,7 +431,7 @@
     // add convenience locations
     jspm.config({
       locations: {
-        github: 'http://github.jspm.io/'
+        github: 'https://api.jspm.io/'
       }
     });
 
