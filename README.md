@@ -163,7 +163,24 @@ Example:
 
 ### Locations
 
-Instead of paths
+Custom `locations` can be defined, allowing loading from separate base folder locations.
+
+```javascript
+  jspm.config({
+    baseURL: 'http://mysite.com/js'
+    locations: {
+      'lib': 'http://mysite.com/lib',
+    }
+  });
+
+  jspm.import('lib:some-module');
+```
+
+Imports within a module from another location will have their global dependencies loaded from that same location.
+
+Thus an import of `jquery` inside `lib/some-module.js`, will resolve to `lib/jquery.js` instead of `js/jquery.js`.
+
+Locations can be mapped with map configuration, just like any other resource.
 
 ### ondemand
 
