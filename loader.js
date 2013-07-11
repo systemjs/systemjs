@@ -9,8 +9,9 @@
  *
  */
 (function() {
-  var config = window.jspm || {};
+  var startConfig = window.jspm || {};
 
+  var config = {};
   config.waitSeconds = 20;
   config.map = config.map || {};
   config.locations = config.locations || {};
@@ -426,8 +427,17 @@
     jspm.ondemand = function(resolvers) {
       jspm.ondemand(resolvers);
     }
-  }
 
+    // add convenience locations
+    jspm.config({
+      locations: {
+        github: 'http://github.jspm.io/'
+      }
+    });
+
+    // add initial config
+    jspm.config(startConfig);
+  }
 
   // dynamically polyfill the es6 loader if necessary
   if (!window.Loader) {
