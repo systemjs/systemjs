@@ -81,11 +81,7 @@
         var location = getLocation(name);
         var parentLocation = getLocation(parentName);
 
-        // if it has a location, and it matches the parent location, remove it before applying map config
-        if (location && location == getLocation(parentName))
-          name = name.substr(location.length + 1);
-
-        // if there is a parent location, and it doesnt match the location, add it
+        // if there is a parent location, and there is no location, add it here
         if (parentLocation && !location)
           name = parentLocation + ':' + name;
 
@@ -141,10 +137,6 @@
         // apply map config
         if (mapPrefixMatch)
           name = mapMatch + name.substr(mapPrefixMatch.length);
-
-        // now add location to name
-        if (!getLocation(name) && !name.match(absUrlRegEx) && parentLocation)
-          name = parentLocation + ':' + name;
 
         return name;
       }
