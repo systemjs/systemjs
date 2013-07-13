@@ -128,6 +128,7 @@
           jspm.import(['tests/amd-module'], complete);
         },
         confirm: function(m) {
+          m = m.default;
           if (m.amd != true)
             return 'Incorrect module';
           if (m.dep.amd != 'dep')
@@ -140,6 +141,7 @@
           jspm.import(['tests/amd-cjs-module'], complete);
         },
         confirm: function(m) {
+          m = m.default;
           if (m.test != 'hi')
             return 'Not defined';
         }
@@ -150,6 +152,7 @@
           jspm.import(['tests/common-js-module'], complete);
         },
         confirm: function(m) {
+          m = m.default;
           if (m.hello != 'world')
             return 'module value not defined';
           if (m.first != 'this is a dep')
@@ -162,6 +165,7 @@
           jspm.import(['tests/umd'], complete);
         },
         confirm: function(m) {
+          m = m.default;
           if (m.d != 'hi')
             return 'module value not defined';
         }

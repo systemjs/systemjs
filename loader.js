@@ -317,6 +317,9 @@
             imports: _imports.concat([]),
             execute: function() {
               var deps = arguments;
+              for (var i = 0; i < deps.length; i++)
+                deps[i] = deps[i]['default'] || deps[i];
+
               var depMap = {};
               for (var i = 0; i < _imports.length; i++)
                 depMap[_imports[i]] = arguments[i];
@@ -329,10 +332,12 @@
                 depMap.module = { id: options.normalized, uri: options.address };
 
               var output;
-              eval('var require = jspm.import; var define = function(_deps, factory) { output = factory.apply(window, deps); }; define.amd = true; ' + source);
-              if (output && typeof output != 'object')
-                throw "AMD modules returning non-objects can't be used as modules. Module Name: " + options.normalized;
-              return new Module(output);
+              var define = function(_deps, factory) {
+                output = factory.apply(window, deps);
+              }
+              define.amd = true;
+              eval('var require = jspm.import; ' + source);
+              return new Module({ 'default': output });
             }
           };
         }
@@ -351,7 +356,7 @@
               var depMap = {};
               var module = false;
               for (var i = 0; i < _imports.length; i++) {
-                depMap[_imports[i]] = arguments[i];
+                depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
                 if (_imports[i] == 'module')
                   module = true;
               }
@@ -360,10 +365,7 @@
               var output;
               var exports = {};
               eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source);
-              if (output && typeof output != 'object')
-                throw "AMD modules returning non-objects can't be used as modules. Module Name: " + options.normalized;
-              output = output || exports;
-              return new Module(output);
+              return new Module({ 'default': output || exports });
             }
           };
         }
@@ -380,13 +382,13 @@
             execute: function() {
               var depMap = {};
               for (var i = 0; i < _imports.length; i++)
-                depMap[_imports[i]] = arguments[i];
+                depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
               var exports = {};
               var require = function(d) {
                 return depMap[d];
               }
               eval(source);
-              return new Module(exports);
+              return new Module({ 'default': exports });
             }
           };
         }
