@@ -83,7 +83,14 @@ cjs.js:
   exports.property = 'object';
 ```
 
-Note that `exports` must be an object to be supported as the `Module` needs to be an object for ES6 loaders. Any other `exports` value will throw an error.
+All export formats are supported by defining the module as `new Module({ 'default': exports })`. When using the module loader, this means accessing the `default` property for CommonJS
+and AMD modules:
+
+```javascript
+  jspm.import(['cjs'], function(cjsModule) {
+    var cjsModuleValue = cjsModule.default;
+  });
+```
 
 ### Loading ES6
 
