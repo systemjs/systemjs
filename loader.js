@@ -247,7 +247,7 @@
           name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;
 
         // js extension
-        if (name.split('/').pop().indexOf('.') == -1)
+        //if (name.split('/').pop().indexOf('.') == -1)
           name += '.js';
 
         return name;
@@ -336,7 +336,7 @@
                 output = factory.apply(window, deps);
               }
               define.amd = true;
-              eval('var require = jspm.import; ' + source);
+              eval('var require = jspm.import; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': output });
             }
           };
@@ -364,7 +364,7 @@
                 depMap.module = { id: options.normalized, uri: options.address };
               var output;
               var exports = {};
-              eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source);
+              eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': output || exports });
             }
           };
@@ -387,7 +387,7 @@
               var require = function(d) {
                 return depMap[d];
               }
-              eval(source);
+              eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': exports });
             }
           };
