@@ -221,7 +221,7 @@ The plugin itself is loaded from the resource name `plugin:coffee`. This can eit
 
 lib/plugins/coffee.js:
 ```javascript
-  import { CoffeeScript: CoffeeScript } from './coffee-script';
+  import { CoffeeScript } from './coffee-script';
 
   export function load(source, callback, errback, options) {
     callback(CoffeeScript.compile(source));
