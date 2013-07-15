@@ -98,12 +98,10 @@ Modules defined with ES6 syntax will be parsed with the Esprima harmony parser, 
 
 es6.js:
 ```javascript
-  import { some: thing } from './some-dep';
+  import { dep as d } from './some-dep';
 
   export var exportName = 'value';
 ```
-
-This is currently an older ES6 syntax, pending https://github.com/ModuleLoader/es6-module-loader/issues/10.
 
 When in a production environment, the goal would be to use a build system that would rewrite this in ES5 with something like the following.
 

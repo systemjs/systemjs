@@ -1,3 +1,3 @@
-import { jQuery: jQuery } from 'jquery';
+import { jQuery } from 'jquery';
 
 export var mapDep = jQuery.fn.jquery;

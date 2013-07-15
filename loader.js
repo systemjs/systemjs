@@ -247,7 +247,7 @@
           name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;
 
         // js extension
-        //if (name.split('/').pop().indexOf('.') == -1)
+        if (!pluginMatch && name.substr(name.length - 3, 3) != '.js')
           name += '.js';
 
         return name;
