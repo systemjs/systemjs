@@ -1,4 +1,1 @@
-import { dep as d } from './map-test-dep';
-
-export var maptest = d;
-
+export { dep as maptest } from './map-test-dep';
