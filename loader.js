@@ -210,7 +210,7 @@
         // allow for '/' package main referencing
         // 'some-package@0.0.1/' -> 'some-package@0.0.1/some-package'
         if (name.substr(name.length - 1, 1) == '/') {
-          var parts = name.split('/');
+          var parts = name.indexOf(':') != -1 ? name.substr(name.indexOf(':') + 1).split('/') : name.split('/');
           var lastPart = parts[parts.length - 2];
           var lastPartName = lastPart.split('@')[0];
           name = name + lastPartName;
