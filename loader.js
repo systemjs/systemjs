@@ -364,8 +364,9 @@
                 depMap.module = { id: options.normalized, uri: options.address };
               var output;
               var exports = {};
+              var module = {};
               eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': output || exports });
+              return new Module({ 'default': output || module.exports || exports });
             }
           };
         }
