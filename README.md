@@ -5,7 +5,7 @@ RequireJS-style ES6 dynamic module loader.
 
 A ~20KB module loader written to work for ES6 modules, but that can load AMD, CommonJS and global scripts detecting the format automatically.
 
-The loader itself is 10KB, and it is built on top of the 12KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
+The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
 Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths (locations).
 
@@ -63,7 +63,9 @@ some-global.js:
   });
 ```
 
-Global script dependencies can be set using the [shim configuration](#Shim Configuration). The dependency global variables will then be present on the global object. When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery). Globals never actually touch the `window` object directly, they get a carefully managed global object passed into them ensuring the `window` object remains unchanged.
+Global script dependencies can be set using the [shim configuration](#shim-configuration). The global variables declared by any dependencies will then be present on the global object.
+
+When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery). Globals never actually touch the `window` object directly, they get a carefully managed global object passed into them ensuring the `window` object remains unchanged.
 
 ### Loading CommonJS & AMD
 
@@ -108,7 +110,7 @@ When in a production environment, the goal would be to use a build system that w
 es6-built.js:
 ```javascript
   (function() {
-    var some = System.get('normalized/some-dep').thing;
+    var d = System.get('normalized/some-dep').dep;
     System.set('normalized/name', new Module({
       exportName: 'value'
     }));
@@ -219,9 +221,19 @@ The plugin itself is loaded from the resource name `plugin:coffee`. This can eit
   });
 ```
 
+or
+
+```javascript
+  jspm.config({
+    map: {
+      'plugin:coffee': 'lib/plugins/coffee'
+    }
+  });
+```
+
 lib/plugins/coffee.js:
 ```javascript
-  import { CoffeeScript: CoffeeScript } from './coffee-script';
+  import { CoffeeScript } from './coffee-script';
 
   export function load(source, callback, errback, options) {
     callback(CoffeeScript.compile(source));

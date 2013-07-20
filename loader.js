@@ -210,7 +210,7 @@
         // allow for '/' package main referencing
         // 'some-package@0.0.1/' -> 'some-package@0.0.1/some-package'
         if (name.substr(name.length - 1, 1) == '/') {
-          var parts = name.split('/');
+          var parts = name.indexOf(':') != -1 ? name.substr(name.indexOf(':') + 1).split('/') : name.split('/');
           var lastPart = parts[parts.length - 2];
           var lastPartName = lastPart.split('@')[0];
           name = name + lastPartName;
@@ -364,8 +364,9 @@
                 depMap.module = { id: options.normalized, uri: options.address };
               var output;
               var exports = {};
+              var module = {};
               eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': output || exports });
+              return new Module({ 'default': output || module.exports || exports });
             }
           };
         }
@@ -387,8 +388,9 @@
               var require = function(d) {
                 return depMap[d];
               }
+              var module = { exports: exports };
               eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': exports });
+              return new Module({ 'default': module.exports });
             }
           };
         }
@@ -425,7 +427,8 @@
     // add convenience locations
     jspm.config({
       locations: {
-        github: 'https://api.jspm.io/'
+        github: 'https://github.jspm.io',
+        npm: 'https://npm.jspm.io'
       }
     });
 
