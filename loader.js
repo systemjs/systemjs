@@ -388,8 +388,9 @@
               var require = function(d) {
                 return depMap[d];
               }
+              var module = { exports: exports };
               eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': exports });
+              return new Module({ 'default': module.exports });
             }
           };
         }
