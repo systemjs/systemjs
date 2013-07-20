@@ -34,7 +34,7 @@
       var amdDefineRegEx = /define\s*\(\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])/;
       var cjsDefineRegEx = /define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
       var cjsRequireRegEx = /require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
-      var cjsExportsRegEx = /exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*/;
+      var cjsExportsRegEx = /exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/;
 
       // regex to check absolute urls
       var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
@@ -389,6 +389,13 @@
                 return depMap[d];
               }
               var module = { exports: exports };
+              var global = {
+                process: {
+                  nextTick: function(fn) {
+                    setTimeout(fn, 7);
+                  }
+                }
+              };
               eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': module.exports });
             }
