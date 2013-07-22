@@ -189,7 +189,7 @@
         run: function(complete) {
           jspm.config({
             map: {
-              'plugin:coffee': 'tests/compiler-plugin'
+              'plugin/coffee': 'tests/compiler-plugin'
             }
           });
           jspm.import(['tests/compiler-test!coffee'], complete);
@@ -199,6 +199,34 @@
             return 'Plugin not working.';
           if (m.extra != 'yay!')
             return 'Compiler not working.';
+        }
+      },
+      {
+        name: 'Text plugin',
+        run: function(complete) {
+          jspm.import('tests/some-text.txt!text', complete);
+        },
+        confirm: function(m) {
+          if (m.default != 'this is some text\n')
+            return 'Text not defined.';
+        }
+      },
+      {
+        name: 'JSON plugin',
+        run: function(complete) {
+          jspm.import('tests/some-json!json', complete);
+        },
+        confirm: function(m) {
+          if (m.default.some != 'json')
+            return 'JSON not defined.';
+        }
+      },
+      {
+        name: 'Image plugin',
+        run: function(complete) {
+          jspm.import('http://octodex.github.com/images/codercat.jpg!image', complete);
+        },
+        confirm: function(m) {
         }
       },
       {

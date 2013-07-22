@@ -283,11 +283,11 @@
 
         // for plugins, we first need to load the plugin module itself
         var pluginName = pluginMatch[2];
-        jspm.import(pluginName, function(plugin) {
+        jspm.import('plugin/' + pluginName, function(plugin) {
 
           plugin.default(options.normalized.substr(0, options.normalized.indexOf('!')), url, jspm.fetch, callback, errback);
 
-        }, errback, { name: 'plugin:'});
+        });
       },
       link: function(source, options) {
         source = source || '';
@@ -408,7 +408,7 @@
           imports: config.shim[options.normalized] || [],
           execute: function(deps) {
             if (source == '')
-              return new Module();
+              return new Module({});
             setGlobal(deps);
             jspm.eval(source);
             return new Module(getGlobal());
@@ -438,7 +438,10 @@
     jspm.config({
       locations: {
         github: 'https://github.jspm.io',
-        npm: 'https://npm.jspm.io'
+        npm: 'https://npm.jspm.io',
+      },
+      map: {
+        plugin: 'github:jspm/plugins'
       }
     });
 
