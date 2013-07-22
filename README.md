@@ -235,8 +235,10 @@ lib/plugins/coffee.js:
 ```javascript
   import { CoffeeScript } from './coffee-script';
 
-  export function load(source, callback, errback, options) {
-    callback(CoffeeScript.compile(source));
+  export default = function(name, url, fetch, callback, errback) {
+    fetch(url, function(source) {
+      callback(CoffeeScript.compile(source));
+    }, errback);
   }
 ```
 
