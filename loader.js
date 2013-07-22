@@ -8,6 +8,11 @@
  * MIT
  *
  */
+
+ // TODO
+ // - separate plugin system from doing a default fetch ( considering preloaders with alterative fetch processes )
+ // - example is an image loader plugin
+ // - but the idea is that we can allow 'null' loads
 (function() {
   var startConfig = window.jspm || {};
 
@@ -280,17 +285,12 @@
         var pluginName = pluginMatch[2];
         jspm.import(pluginName, function(plugin) {
 
-          // then fetch the resource
-          jspm.fetch(url, function(source) {
-            
-            // allow the plugin to do what it will
-            plugin.load(source, callback, errback, options);
-              
-          }, errback);
+          plugin.default(options.normalized.substr(0, options.normalized.indexOf('!')), url, jspm.fetch, callback, errback);
 
         }, errback, { name: 'plugin:'});
       },
       link: function(source, options) {
+        source = source || '';
         if (config.onLoad)
           config.onLoad(options.normalized, source, options);
 
@@ -337,7 +337,7 @@
               }
               define.amd = true;
               eval('var require = jspm.import; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': output });
+              return new Module({ 'default': output, 'type': 'AMD' });
             }
           };
         }
@@ -366,13 +366,13 @@
               var exports = {};
               var module = {};
               eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': output || module.exports || exports });
+              return new Module({ 'default': output || module.exports || exports, type: 'AMD' });
             }
           };
         }
         
         // CommonJS
-        // require('...') || exports[''] = ... || exports.asd = ...
+        // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
         if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
           var _imports = [];
           var match;
@@ -380,7 +380,8 @@
             _imports.push(match[2] || match[3]);
           return {
             imports: _imports.concat([]), // clone the array as we still need it
-            execute: function() {
+            execute: function(deps) {
+              setGlobal(deps);
               var depMap = {};
               for (var i = 0; i < _imports.length; i++)
                 depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
@@ -397,7 +398,7 @@
                 }
               };
               eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': module.exports });
+              return new Module({ 'default': module.exports, 'type': 'CommonJS' });
             }
           };
         }
@@ -406,6 +407,8 @@
           // apply shim config
           imports: config.shim[options.normalized] || [],
           execute: function(deps) {
+            if (source == '')
+              return new Module();
             setGlobal(deps);
             jspm.eval(source);
             return new Module(getGlobal());

@@ -1,0 +1,1 @@
+export default var p = 'default3';

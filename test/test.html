@@ -7,6 +7,20 @@
   jspm.import('test-runner', function(runner) {
     runner.execute([
       {
+        name: 'Basic exporting & importing',
+        run: function(complete) {
+          jspm.import(['tests/default1', 'tests/default2', 'tests/default3'], complete)
+        },
+        confirm: function(m1, m2, m3) {
+          if (m1.default != 'default1')
+            return 'Error defining default 1';
+          if (m2.default != 'default2')
+            return 'Error defining default 2';
+          if (m3.default != 'default3')
+            return 'Error defining default 3';
+        }
+      },
+      {
         name: 'Global script loading',
         run: function(complete) {
           jspm.import(['tests/global'], complete);
@@ -69,7 +83,7 @@
           jspm.import(['http://code.jquery.com/jquery-1.10.1.min.js'], complete);
         },
         confirm: function(m) {
-          if (m.jQuery.fn.jquery != '1.10.1')
+          if (m.default.fn.jquery != '1.10.1')
             return 'jQuery not loaded';
         }
       },
