@@ -211,12 +211,12 @@ These are different from RequireJS in that they are extension-based plugin names
 
 Where `some/module.coffee` is a CoffeeScript file.
 
-The plugin itself is loaded from the resource name `plugin:coffee`. This can either be mapped to the plugin module, or provided at the `plugin:` location.
+The plugin itself is loaded from the resource name `plugin/coffee`. This can then be mapped with standard map configuration:
 
 ```javascript
   jspm.config({
-    locations: {
-      'plugin': 'lib/plugins/'
+    map: {
+      'plugin': 'lib/plugins'
     }
   });
 ```
@@ -226,7 +226,7 @@ or
 ```javascript
   jspm.config({
     map: {
-      'plugin:coffee': 'lib/plugins/coffee'
+      'plugin/coffee': 'lib/plugins/coffee'
     }
   });
 ```
