@@ -8,11 +8,6 @@
  * MIT
  *
  */
-
- // TODO
- // - separate plugin system from doing a default fetch ( considering preloaders with alterative fetch processes )
- // - example is an image loader plugin
- // - but the idea is that we can allow 'null' loads
 (function() {
   var startConfig = window.jspm || {};
 
@@ -36,7 +31,7 @@
       var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
       // AMD and CommonJS regexs for support
-      var amdDefineRegEx = /define\s*\(\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])/;
+      var amdDefineRegEx = /define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])?/;
       var cjsDefineRegEx = /define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
       var cjsRequireRegEx = /require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
       var cjsExportsRegEx = /exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/;
@@ -298,10 +293,12 @@
         if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
           return;
 
+        var match;
+
         // check if this module uses AMD form
         // define([.., .., ..], ...)
-        if (source.match(amdDefineRegEx)) {
-          var _imports = source.match(amdDefineRegEx)[1];
+        if (match = source.match(amdDefineRegEx)) {
+          var _imports = match[2] || '[]';
           // just eval to get the array.. we know it is an array.
           eval('_imports = ' + _imports);
           
@@ -333,6 +330,13 @@
 
               var output;
               var define = function(_deps, factory) {
+                if (typeof _deps == 'string') {
+                  _deps = factory;
+                  factory = arguments[2];
+                }
+                if (!(_deps instanceof Array)) {
+                  factory = _deps;
+                }
                 output = factory.apply(window, deps);
               }
               define.amd = true;

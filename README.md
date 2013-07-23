@@ -3,6 +3,8 @@ jspm loader
 
 RequireJS-style ES6 dynamic module loader.
 
+For the loader documentation read below. For a complete overview of features, see [https://jspm.io](https://jspm.io).
+
 A ~20KB module loader written to work for ES6 modules, but that can load AMD, CommonJS and global scripts detecting the format automatically.
 
 The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
