@@ -178,13 +178,6 @@
       var pluginRegEx = /(\.[^\/\.]+)?!(.+)/;
 
     // -- /helpers --
-    var nodeGlobal = {
-      process: {
-        nextTick: function(fn) {
-          setTimeout(fn, 7);
-        }
-      }
-    };
 
     window.jspm = new Loader({
       normalize: function(name, referer) {
@@ -320,7 +313,6 @@
           return {
             imports: _imports.concat([]),
             execute: function() {
-              console.log('amd: ' + options.address);
               var deps = arguments;
               for (var i = 0; i < deps.length; i++)
                 deps[i] = deps[i]['default'] || deps[i];
@@ -409,7 +401,6 @@
         // CommonJS
         // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
         if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
-          console.log('cjs: ' + options.address);
           var _imports = [];
           var match;
           while (match = cjsRequireRegEx.exec(source))
@@ -417,17 +408,26 @@
           return {
             imports: _imports.concat([]), // clone the array as we still need it
             execute: function(deps) {
-              setGlobal(deps);
               var depMap = {};
               for (var i = 0; i < _imports.length; i++)
                 depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
               var exports = {};
-              var require = function(d) {
-                return depMap[d];
+              
+              var dirname = options.address.split('/');
+              dirname.pop();
+              dirname = dirname.join('/');
+              var global = {
+                process: nodeProcess,
+                console: console,
+                require: function(d) {
+                  return depMap[d]
+                },
+                __filename: options.address,
+                __dirname: dirname,
+                module: { exports: exports },
+                exports: exports
               }
-              var module = { exports: exports };
-              var global = nodeGlobal;
-              eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
+              eval('with(global) { ' + source + '}' + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': module.exports, 'type': 'CommonJS' });
             }
           };
