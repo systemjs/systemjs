@@ -327,12 +327,18 @@
               for (var i = 0; i < _imports.length; i++)
                 depMap[_imports[i]] = arguments[i];
 
-              if (requireIndex != -1)
-                depMap.require = function(d) { return depMap[d]; }
-              if (exportsIndex != -1)
-                depMap.exports = {};
-              if (moduleIndex != -1)
+              if (moduleIndex != -1) {
                 depMap.module = { id: options.normalized, uri: options.address };
+                deps.splice(moduleIndex, 0, depMap.module);
+              }
+              if (exportsIndex != -1) {
+                depMap.exports = {};
+                deps.splice(exportsIndex, 0, depMap.exports);
+              }
+              if (requireIndex != -1) {
+                depMap.require = function(d) { return depMap[d]; }
+                deps.splice(requireIndex, 0, depMap.require);
+              }
 
               var output;
               var define = function(_deps, factory) {
