@@ -434,7 +434,7 @@
                 exports: exports
               }
               eval('with(global) { ' + source + '}' + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': module.exports, 'type': 'CommonJS' });
+              return new Module({ 'default': global.module.exports, 'type': 'CommonJS' });
             }
           };
         }
