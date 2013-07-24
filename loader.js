@@ -304,7 +304,7 @@
 
         // check if this module uses AMD form
         // define([.., .., ..], ...)
-        if (match = source.match(amdDefineRegEx) && (match[2] || match[1])) {
+        if ((match = source.match(amdDefineRegEx)) && (match[2] || match[1])) {
           var _imports = match[2] || '[]';
           // just eval to get the array.. we know it is an array.
           eval('_imports = ' + _imports);
