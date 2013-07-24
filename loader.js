@@ -31,10 +31,10 @@
       var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
       // AMD and CommonJS regexs for support
-      var amdDefineRegEx = /define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])?/;
-      var cjsDefineRegEx = /define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
-      var cjsRequireRegEx = /require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
-      var cjsExportsRegEx = /exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/;
+      var amdDefineRegEx = /\s+define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])?/;
+      var cjsDefineRegEx = /\s+define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+      var cjsRequireRegEx = /\s+require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+      var cjsExportsRegEx = /\s+exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/;
 
       // regex to check absolute urls
       var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
@@ -181,7 +181,7 @@
         nextTick: function(f) {
           setTimeout(f, 7);
         }
-      }
+      };
 
     // -- /helpers --
 
@@ -313,7 +313,7 @@
             _imports.splice(requireIndex, 1);
           if ((exportsIndex = _imports.indexOf('exports')) != -1)
             _imports.splice(exportsIndex, 1);
-          if ((exportsIndex = _imports.indexOf('module')) != -1)
+          if ((moduleIndex = _imports.indexOf('module')) != -1)
             _imports.splice(moduleIndex, 1);
 
           return {
@@ -361,7 +361,8 @@
                 }, errback);
               }
               eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-              return new Module({ 'default': output, 'type': 'AMD' });
+
+              return new Module({ 'default': output || depMap.exports, 'type': 'AMD' });
             }
           };
         }
@@ -424,7 +425,6 @@
               for (var i = 0; i < _imports.length; i++)
                 depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
               var exports = {};
-              
               var dirname = options.address.split('/');
               dirname.pop();
               dirname = dirname.join('/');
@@ -438,8 +438,14 @@
                 __dirname: dirname,
                 module: { exports: exports },
                 exports: exports
-              }
-              eval('with(global) { ' + source + '}' + (options.address ? '\n//# sourceURL=' + options.address : ''));
+              };
+              var process = global.process;
+              var require = global.require;
+              var __filename = global.__filename;
+              var __dirname = global.__dirname;
+              var module = global.module;
+              var exports = global.exports;
+              eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': global.module.exports, 'type': 'CommonJS' });
             }
           };
