@@ -178,6 +178,13 @@
       var pluginRegEx = /(\.[^\/\.]+)?!(.+)/;
 
     // -- /helpers --
+    var nodeGlobal = {
+      process: {
+        nextTick: function(fn) {
+          setTimeout(fn, 7);
+        }
+      }
+    };
 
     window.jspm = new Loader({
       normalize: function(name, referer) {
@@ -297,7 +304,7 @@
 
         // check if this module uses AMD form
         // define([.., .., ..], ...)
-        if (match = source.match(amdDefineRegEx)) {
+        if (match = source.match(amdDefineRegEx) && (match[2] || match[1])) {
           var _imports = match[2] || '[]';
           // just eval to get the array.. we know it is an array.
           eval('_imports = ' + _imports);
@@ -340,7 +347,15 @@
                 output = factory.apply(window, deps);
               }
               define.amd = true;
-              eval('var require = jspm.import; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
+              var require = function(deps, callback, errback) {
+                jspm.import(deps, function() {
+                  var out = [];
+                  for (var i = 0; i < arguments.length; i++)
+                    out.push(arguments[i].default);
+                  callback.apply(null, out);
+                }, errback);
+              }
+              eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': output, 'type': 'AMD' });
             }
           };
@@ -369,7 +384,22 @@
               var output;
               var exports = {};
               var module = {};
-              eval('var define = function(factory) { output = typeof factory == "function" ? factory.call(window, function(d) { return depMap[d]; }, exports) : factory; }; define.amd = true; ' + source + (options.address ? '\n//# sourceURL=' + options.address : ''));
+              depMap.exports = exports;
+              var define = function(factory) { 
+                output = typeof factory == "function" ? factory.call(window, function(d) { 
+                  return depMap[d]; 
+                }, exports) : factory; 
+              };
+              define.amd = true;
+              var require = function(deps, callback, errback) {
+                jspm.import(deps, function() {
+                  var out = [];
+                  for (var i = 0; i < arguments.length; i++)
+                    out.push(arguments[i].default);
+                  callback.apply(null, out);
+                }, errback);
+              }
+              eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': output || module.exports || exports, type: 'AMD' });
             }
           };
@@ -394,13 +424,7 @@
                 return depMap[d];
               }
               var module = { exports: exports };
-              var global = {
-                process: {
-                  nextTick: function(fn) {
-                    setTimeout(fn, 7);
-                  }
-                }
-              };
+              var global = nodeGlobal;
               eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
               return new Module({ 'default': module.exports, 'type': 'CommonJS' });
             }
