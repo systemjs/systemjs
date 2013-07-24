@@ -31,7 +31,7 @@
       var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
       // AMD and CommonJS regexs for support
-      var amdDefineRegEx = /\s+define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])?/;
+      var amdDefineRegEx = /define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])?/;
       var cjsDefineRegEx = /\s+define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
       var cjsRequireRegEx = /\s+require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
       var cjsExportsRegEx = /\s+exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/;
@@ -303,6 +303,7 @@
 
         // check if this module uses AMD form
         // define([.., .., ..], ...)
+        console.log(source.match(amdDefineRegEx));
         if ((match = source.match(amdDefineRegEx)) && (match[2] || match[1])) {
           var _imports = match[2] || '[]';
           // just eval to get the array.. we know it is an array.
