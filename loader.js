@@ -320,6 +320,7 @@
           return {
             imports: _imports.concat([]),
             execute: function() {
+              console.log('amd: ' + options.address);
               var deps = arguments;
               for (var i = 0; i < deps.length; i++)
                 deps[i] = deps[i]['default'] || deps[i];
@@ -408,6 +409,7 @@
         // CommonJS
         // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
         if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
+          console.log('cjs: ' + options.address);
           var _imports = [];
           var match;
           while (match = cjsRequireRegEx.exec(source))
