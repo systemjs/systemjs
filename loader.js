@@ -329,15 +329,15 @@
 
               if (moduleIndex != -1) {
                 depMap.module = { id: options.normalized, uri: options.address };
-                deps.splice(moduleIndex, 0, depMap.module);
+                Array.prototype.splice.call(deps, moduleIndex, 0, depMap.module);
               }
               if (exportsIndex != -1) {
                 depMap.exports = {};
-                deps.splice(exportsIndex, 0, depMap.exports);
+                Array.prototype.splice.call(deps, exportsIndex, 0, depMap.exports);
               }
               if (requireIndex != -1) {
                 depMap.require = function(d) { return depMap[d]; }
-                deps.splice(requireIndex, 0, depMap.require);
+                Array.prototype.splice.call(deps, requireIndex, 0, depMap.require);
               }
 
               var output;
