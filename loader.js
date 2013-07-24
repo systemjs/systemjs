@@ -177,6 +177,12 @@
 
       var pluginRegEx = /(\.[^\/\.]+)?!(.+)/;
 
+      var nodeProcess = {
+        nextTick: function(f) {
+          setTimeout(f, 7);
+        }
+      }
+
     // -- /helpers --
 
     window.jspm = new Loader({
