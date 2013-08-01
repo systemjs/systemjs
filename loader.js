@@ -390,7 +390,7 @@
                   if (name && name != options.normalized)
                       jspm.set(name, { default: output });
                 }
-                jspm.global.define.amd = true;
+                jspm.global.define.amd = {};
 
                 scopedEval(source, jspm.global, options.address);
 
@@ -430,7 +430,7 @@
                     return depMap[d]; 
                   }, exports) : factory; 
                 };
-                jspm.global.define.amd = true;
+                jspm.global.define.amd = {};
 
                 scopedEval(source, jspm.global, options.address);
 
