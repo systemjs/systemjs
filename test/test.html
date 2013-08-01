@@ -12,11 +12,11 @@
           jspm.import(['tests/default1', 'tests/default2', 'tests/default3'], complete)
         },
         confirm: function(m1, m2, m3) {
-          if (m1.default != 'default1')
+          if (m1 != 'default1')
             return 'Error defining default 1';
-          if (m2.default != 'default2')
+          if (m2 != 'default2')
             return 'Error defining default 2';
-          if (m3.default != 'default3')
+          if (m3 != 'default3')
             return 'Error defining default 3';
         }
       },
@@ -45,6 +45,16 @@
         confirm: function(m) {
           if (m.jQueryVersion != '1.8.3')
             return 'Global dependency not defined';
+        }
+      },
+      {
+        name: 'Inline shim configuration',
+        run: function(complete) {
+          jspm.import('tests/inline-shim | tests/inline-shim-dep', complete);
+        },
+        confirm: function(m) {
+          if (m.dep != 'dep')
+            return 'Inline shim dependency not defined';
         }
       },
       {
@@ -83,7 +93,7 @@
           jspm.import(['http://code.jquery.com/jquery-1.10.1.min.js'], complete);
         },
         confirm: function(m) {
-          if (m.default.fn.jquery != '1.10.1')
+          if (m.fn.jquery != '1.10.1')
             return 'jQuery not loaded';
         }
       },
@@ -142,7 +152,6 @@
           jspm.import(['tests/amd-module'], complete);
         },
         confirm: function(m) {
-          m = m.default;
           if (m.amd != true)
             return 'Incorrect module';
           if (m.dep.amd != 'dep')
@@ -155,7 +164,6 @@
           jspm.import(['tests/amd-cjs-module'], complete);
         },
         confirm: function(m) {
-          m = m.default;
           if (m.test != 'hi')
             return 'Not defined';
         }
@@ -166,7 +174,6 @@
           jspm.import(['tests/common-js-module'], complete);
         },
         confirm: function(m) {
-          m = m.default;
           if (m.hello != 'world')
             return 'module value not defined';
           if (m.first != 'this is a dep')
@@ -179,7 +186,6 @@
           jspm.import(['tests/umd'], complete);
         },
         confirm: function(m) {
-          m = m.default;
           if (m.d != 'hi')
             return 'module value not defined';
         }
@@ -207,7 +213,7 @@
           jspm.import('tests/some-text.txt!text', complete);
         },
         confirm: function(m) {
-          if (m.default != 'this is some text\n')
+          if (m != 'this is some text\n')
             return 'Text not defined.';
         }
       },
@@ -217,7 +223,7 @@
           jspm.import('tests/some-json!json', complete);
         },
         confirm: function(m) {
-          if (m.default.some != 'json')
+          if (m.some != 'json')
             return 'JSON not defined.';
         }
       },
