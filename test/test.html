@@ -236,6 +236,14 @@
         }
       },
       {
+        name: 'CSS plugin',
+        run: function(complete) {
+          jspm.import('tests/css!css', complete);
+        },
+        confirm: function(m) {
+        }
+      },
+      {
         name: 'onLoad hook',
         run: function(complete) {
           jspm.config({
