@@ -96,6 +96,20 @@ and AMD modules:
   });
 ```
 
+### AMD Compatibility
+
+The goal is to support as much of the RequireJS test suite as possible.
+
+To create the `requirejs` and `require` globals as AMD globals, simply include the following `<script>` tag immediately after the inclusion of the jspm loader:
+
+```html
+  <script>
+    require = requirejs = jspm.require;
+  </script>
+```
+
+This should replicate much RequireJS functionality, and more will be covered in future.
+
 ### Loading ES6
 
 Modules defined with ES6 syntax will be parsed with the Esprima harmony parser, which is downloaded as needed.
