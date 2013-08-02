@@ -326,7 +326,7 @@
           var match;
 
           // shim config
-          var _imports = config.shim[options.normalized] ? config.shim[options.normalized] : [];
+          var _imports = config.shim[options.normalized] ? [].concat(config.shim[options.normalized]) : [];
 
           // check if this module uses AMD form
           // define([.., .., ..], ...)
