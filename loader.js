@@ -333,7 +333,7 @@
           // define('modulename', [.., ..., ..])
           if ((match = source.match(amdDefineRegEx)) && (match[2] || match[1])) {
             
-            _imports = _imports.concat(eval(match[2] || '[]');
+            _imports = _imports.concat(eval(match[2] || '[]'));
 
             // remove any reserved words
             var requireIndex, exportsIndex, moduleIndex;

@@ -88,16 +88,6 @@
         }
       },
       {
-        name: 'External URL loading',
-        run: function(complete) {
-          jspm.import(['http://code.jquery.com/jquery-1.10.1.min.js'], complete);
-        },
-        confirm: function(m) {
-          if (m.fn.jquery != '1.10.1')
-            return 'jQuery not loaded';
-        }
-      },
-      {
         name: 'Map configuration',
         run: function(complete) {
           jspm.config({
