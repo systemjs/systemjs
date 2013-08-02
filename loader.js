@@ -320,22 +320,20 @@
           if (config.onLoad)
             config.onLoad(options.normalized, source, options);
 
-          // check if there is any import syntax.
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
             return;
 
           var match;
 
-          // firstly, check if we have a configuration comment
-
+          // shim config
+          var _imports = config.shim[options.normalized] ? config.shim[options.normalized] : [];
 
           // check if this module uses AMD form
           // define([.., .., ..], ...)
           // define('modulename', [.., ..., ..])
           if ((match = source.match(amdDefineRegEx)) && (match[2] || match[1])) {
-            var _imports = match[2] || '[]';
-            // just eval to get the array.. we know it is an array.
-            eval('_imports = ' + _imports);
+            
+            _imports = _imports.concat(eval(match[2] || '[]');
 
             // remove any reserved words
             var requireIndex, exportsIndex, moduleIndex;
@@ -406,7 +404,6 @@
           // check if it uses the AMD CommonJS form
           // define(varName); || define(function() {}); || define({})
           if (source.match(cjsDefineRegEx)) {
-            var _imports = [];
             var match;
             while (match = cjsRequireRegEx.exec(source))
               _imports.push(match[2] || match[3]);
@@ -447,12 +444,11 @@
           // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
           if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
             // NB replace the require statements with the normalized dependency requires
-            var _imports = [];
             var match;
             while (match = cjsRequireRegEx.exec(source))
               _imports.push(match[2] || match[3]);
             return {
-              imports: _imports.concat([]), // clone the array as we still need it
+              imports: _imports, // clone the array as we still need it
               execute: function(deps) {
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
@@ -486,7 +482,7 @@
 
           return {
             // apply shim config
-            imports: config.shim[options.normalized] || [],
+            imports: _imports,
             execute: function(deps) {
               if (source == '')
                 return new Module({});
