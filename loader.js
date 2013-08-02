@@ -580,6 +580,7 @@
         locations: {
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
+          jspm: 'https://github.jspm.io/jspm/registry@master'
         },
         map: {
           plugin: 'github:jspm/plugins'
