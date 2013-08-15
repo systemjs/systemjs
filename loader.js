@@ -12,7 +12,10 @@
 
   (function() {
 
-    var startConfig = window.jspm || {};
+    var isBrowser = typeof window != 'undefined';
+    var global = isBrowser ? window : exports;
+
+    var startConfig = global.jspm || {};
 
     var config = {};
     config.waitSeconds = 20;
@@ -20,10 +23,10 @@
     config.locations = config.locations || {};
     config.shim = config.shim || {};
 
-    window.createLoader = function() {
-      delete window.createLoader;
+    global.createLoader = function(Module, Loader, System) {
+      delete global.createLoader;
 
-      config.baseURL = config.baseURL || document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1);
+      config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1) : './';
       config.locations.plugin = config.locations.plugin || config.baseURL;
 
       // -- helpers --
@@ -190,7 +193,7 @@
 
       // -- /helpers --
 
-      window.jspm = new Loader({
+      global.jspm = new Loader({
         normalize: function(name, referer) {
           // allow inline shim configuration
           var inlineShim;
@@ -380,7 +383,7 @@
 
                   // run the factory function
                   if (typeof factory == 'function')
-                    output = factory.apply(window, deps);
+                    output = factory.apply(jspm.global, deps);
                   // otherwise factory is the value
                   else
                     output = factory;
@@ -480,6 +483,7 @@
             };
           }
 
+          // global script
           return {
             // apply shim config
             imports: _imports,
@@ -487,7 +491,7 @@
               if (source == '')
                 return new Module({});
               setGlobal(deps);
-              jspm.eval(source);
+              scopedEval(source, jspm.global, options.address);
               return new Module(getGlobal());
             }
           };
@@ -592,7 +596,11 @@
     }
 
     // dynamically polyfill the es6 loader if necessary
-    if (!window.Loader) {
+    if (!global.Loader) {
+      if (!isBrowser) {
+        var loader = require('./es6-module-loader');
+        createLoader(loader.Module, loader.Loader, loader.System);
+      }
       // determine the current script path as the base path
       var scripts = document.getElementsByTagName('script');
       var head = document.getElementsByTagName('head')[0];
@@ -600,11 +608,11 @@
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js">' + '<' + '/script>' +
-        '<' + 'script type="text/javascript">' + 'createLoader();' + '<' + '/script>'
+        '<' + 'script type="text/javascript">' + 'createLoader(Module, Loader, System);' + '<' + '/script>'
       );
     }
     else
-      createLoader();
+      createLoader(Module, Loader, System);
 
   })();
 
