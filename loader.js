@@ -193,7 +193,7 @@
 
       // -- /helpers --
 
-      global.jspm = new Loader({
+      var jspm = global.jspm = new Loader({
         normalize: function(name, referer) {
           // allow inline shim configuration
           var inlineShim;
@@ -599,7 +599,8 @@
     if (!global.Loader) {
       if (!isBrowser) {
         var loader = require('es6-module-loader');
-        createLoader(loader.Module, loader.Loader, loader.System);
+        global.createLoader(loader.Module, loader.Loader, loader.System);
+        return;
       }
       // determine the current script path as the base path
       var scripts = document.getElementsByTagName('script');
