@@ -598,7 +598,7 @@
     // dynamically polyfill the es6 loader if necessary
     if (!global.Loader) {
       if (!isBrowser) {
-        var loader = require('./es6-module-loader');
+        var loader = require('es6-module-loader');
         createLoader(loader.Module, loader.Loader, loader.System);
       }
       // determine the current script path as the base path
