@@ -253,13 +253,9 @@
         },
         resolve: function(name, options) {
           var pluginMatch = name.match(pluginRegEx);
-          if (pluginMatch) {
-            // remove plugin part
+          // remove plugin part
+          if (pluginMatch)
             name = name.substr(0, name.length - pluginMatch[2].length - 1);
-            // add extension as plugin name if not present
-            if (name.split('/').pop().split('.').length == 1)
-              name += '.' + pluginMatch[2];
-          }
 
           // ondemand
           for (var r in this.ondemandTable)
