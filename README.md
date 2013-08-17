@@ -1,7 +1,7 @@
 jspm loader
 ===========
 
-RequireJS-style ES6 dynamic module loader.
+RequireJS-style ES6 dynamic module loader, with out-the-box plugin support.
 
 For the loader documentation read below. For a complete overview of features, see [https://jspm.io](https://jspm.io).
 
@@ -10,6 +10,15 @@ A ~20KB module loader written to work for ES6 modules, but that can load AMD, Co
 The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
 Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths (locations).
+
+Supported Plugins:
+
+* CSS `jspm.import('my/file.css!')`
+* Image `jspm.import('some/image.png!image')`
+* JSON `jspm.import('some/data.json!')`
+* Text `jspm.import('some/text.txt!text')`
+
+To submit or request a new plugin, create an issue or pull request on the [Plugin Repository](https://github.com/jspm/plugins).
 
 Including
 ---
@@ -87,12 +96,9 @@ cjs.js:
   exports.property = 'object';
 ```
 
-All export formats are supported by defining the module as `new Module({ 'default': exports })`. When using the module loader, this means accessing the `default` property for CommonJS
-and AMD modules:
-
 ```javascript
   jspm.import(['cjs'], function(cjsModule) {
-    var cjsModuleValue = cjsModule.default;
+    // ...
   });
 ```
 
@@ -219,55 +225,42 @@ The `ondemand` functionality as provided by the `System` loader in the modules s
 
 Transpiler plugins are supported for loading templates or languages that compile to JavaScript.
 
-These are different from RequireJS in that they are extension-based plugin names.
+These are different from RequireJS in that they are extension-based plugin names:
 
 ```javascript
-  jspm.import('some/module!coffee')
+  jspm.import('some/module.coffee!')
 ```
 
 Where `some/module.coffee` is a CoffeeScript file.
 
-The plugin itself is loaded from the resource name `plugin/coffee`. This can then be mapped with standard map configuration:
+The plugin name can also be specified if not identical to the extension:
+
+```javascript
+  jspm.import('some/module.cs!coffee');
+```
+
+The plugin itself is loaded from the resource name `plugin/[pluginname]`. This `plugin` folder location or plugin itself can be mapped with standard map configuration:
 
 ```javascript
   jspm.config({
     map: {
-      'plugin': 'lib/plugins'
+      'plugin/coffee': 'my/coffee/plugin',
+      'plugin': 'my/custom/plugins/folder'
     }
   });
 ```
 
-or
-
-```javascript
-  jspm.config({
-    map: {
-      'plugin/coffee': 'lib/plugins/coffee'
-    }
-  });
-```
+### Writing a Plugin
 
 lib/plugins/coffee.js:
 ```javascript
-  import { CoffeeScript } from './coffee-script';
+  var CoffeeScript = require('./coffee-script');
 
-  export default = function(name, url, fetch, callback, errback) {
+  module.exports = function(name, url, fetch, callback, errback) {
     fetch(url, function(source) {
       callback(CoffeeScript.compile(source));
     }, errback);
   }
-```
-
-### onLoad Hook
-
-A simple meta-API for hooking all module imports is provided by the `onLoad` hook:
-
-```javascript
-  jspm.config({
-    onLoad: function(name, source, options) {
-      console.log('loaded ' + name);
-    }
-  });
 ```
 
 License
