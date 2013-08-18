@@ -221,21 +221,25 @@
               name = name.substr(0, name.length - pluginMatch[1].length - pluginName.length - 1);
             else
               name = name.substr(0, name.length - pluginName.length - 1);
+
           }
 
-          // do standard normalization (resolve relative module name)
-          name = System.normalize(name, referer);
+          if (name.substr(0, 1) != '#') {
 
-          // do map config
-          name = applyMap(name, parentName);
+            // do standard normalization (resolve relative module name)
+            name = System.normalize(name, referer);
 
-          // allow for '/' package main referencing
-          // 'some-package@0.0.1/' -> 'some-package@0.0.1/some-package'
-          if (name.substr(name.length - 1, 1) == '/') {
-            var parts = name.indexOf(':') != -1 ? name.substr(name.indexOf(':') + 1).split('/') : name.split('/');
-            var lastPart = parts[parts.length - 2];
-            var lastPartName = lastPart.split('@')[0];
-            name = name + lastPartName;
+            // do map config
+            name = applyMap(name, parentName);
+
+            // allow for '/' package main referencing
+            // 'some-package@0.0.1/' -> 'some-package@0.0.1/some-package'
+            if (name.substr(name.length - 1, 1) == '/') {
+              var parts = name.indexOf(':') != -1 ? name.substr(name.indexOf(':') + 1).split('/') : name.split('/');
+              var lastPart = parts[parts.length - 2];
+              var lastPartName = lastPart.split('@')[0];
+              name = name + lastPartName;
+            }
           }
 
           if (pluginName)
