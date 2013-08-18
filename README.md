@@ -17,6 +17,7 @@ Supported Plugins:
 * Image `jspm.import('some/image.png!image')`
 * JSON `jspm.import('some/data.json!')`
 * Text `jspm.import('some/text.txt!text')`
+* WebFont `jspm.import('@google Port Lligat Slab, Droid Sans !font')`
 
 To submit or request a new plugin, create an issue or pull request on the [Plugin Repository](https://github.com/jspm/plugins).
 
