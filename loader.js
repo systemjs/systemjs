@@ -587,9 +587,7 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           jspm: 'https://github.jspm.io/jspm/registry@master'
-        },
-        map: {
-          plugin: 'github:jspm/plugins@0.0.4'
+          plugin: 'https://github.jspm.io/plugins@0.0.4'
         }
       });
 
