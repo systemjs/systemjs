@@ -195,6 +195,9 @@
 
       var jspm = global.jspm = new Loader({
         normalize: function(name, referer) {
+          
+          name = name.trim();
+
           // allow inline shim configuration
           var inlineShim;
           if (name.indexOf('|') != -1) {
@@ -225,6 +228,10 @@
           }
 
           if (name.substr(0, 1) != '#') {
+
+            // treat an initial '/' as location relative
+            if (name.substr(0, 1) == '/')
+              name = name.substr(1);
 
             // do standard normalization (resolve relative module name)
             name = System.normalize(name, referer);
@@ -450,10 +457,10 @@
           // CommonJS
           // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
           if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
-            // NB replace the require statements with the normalized dependency requires
             var match;
             while (match = cjsRequireRegEx.exec(source))
               _imports.push(match[2] || match[3]);
+
             return {
               imports: _imports, // clone the array as we still need it
               execute: function(deps) {
@@ -576,7 +583,7 @@
         
         // commonjs require
         else if (typeof names == 'string')
-          return jspm.get(jspm.normalize(names, referer));
+          return jspm.get(names);
 
         else
           throw 'Invalid require';
@@ -591,7 +598,7 @@
           jspm: 'https://github.jspm.io/jspm/registry@master'
         },
         map: {
-          plugin: 'github:jspm/plugins'
+          plugin: 'github:jspm/plugins@0.0.4'
         }
       });
 
