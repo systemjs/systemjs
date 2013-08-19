@@ -75,7 +75,7 @@ some-global.js:
   });
 ```
 
-Global script dependencies can be set using the [shim configuration](#shim-configuration). The global variables declared by any dependencies will then be present on the global object.
+Global script dependencies can be set using the shim [depends configuration](#depends-configuration). The global variables declared by any dependencies will then be present on the global object.
 
 When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery). Globals never actually touch the `window` object directly, they get a carefully managed global object passed into them ensuring the `window` object remains unchanged.
 
@@ -184,7 +184,7 @@ Example:
 
 ```javascript
   jspm.config({
-    shim: {
+    depends: {
       'bootstrap': ['jquery']
     }
   });

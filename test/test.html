@@ -33,10 +33,10 @@
         }
       },
       {
-        name: 'Global script loading with shim',
+        name: 'Global script loading with depends',
         run: function(complete) {
           jspm.config({
-            shim: {
+            depends: {
               'tests/global-with-dep': ['tests/global-dep']
             }
           });
@@ -48,13 +48,13 @@
         }
       },
       {
-        name: 'Inline shim configuration',
+        name: 'Inline depends configuration',
         run: function(complete) {
-          jspm.import('tests/inline-shim | tests/inline-shim-dep', complete);
+          jspm.import('tests/inline-depends | tests/inline-depends-dep', complete);
         },
         confirm: function(m) {
           if (m.dep != 'dep')
-            return 'Inline shim dependency not defined';
+            return 'Inline depends dependency not defined';
         }
       },
       {

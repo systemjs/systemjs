@@ -21,7 +21,7 @@
     config.waitSeconds = 20;
     config.map = config.map || {};
     config.locations = config.locations || {};
-    config.shim = config.shim || {};
+    config.depends = config.depends || {};
 
     global.createLoader = function(Module, Loader, System) {
       delete global.createLoader;
@@ -198,7 +198,7 @@
           
           name = name.trim();
 
-          // allow inline shim configuration
+          // allow inline depends configuration
           var inlineShim;
           if (name.indexOf('|') != -1) {
             var inlineShim = name.split('|');
@@ -247,16 +247,16 @@
           if (pluginName)
             name = name + '!' + pluginName;
 
-          // apply inline shim configuration
+          // apply inline depends configuration
           if (inlineShim) {
-            // normalize inline shim
+            // normalize inline depends
             for (var i = 0; i < inlineShim.length; i++)
               inlineShim[i] = jspm.normalize(inlineShim[i], { name: name });
             
             var sConfig = {};
             sConfig[name] = [inlineShim];
 
-            jspm.config({ shim: sConfig });
+            jspm.config({ depends: sConfig });
           }
 
           return name;
@@ -330,8 +330,8 @@
 
           var match;
 
-          // shim config
-          var _imports = config.shim[options.normalized] ? [].concat(config.shim[options.normalized]) : [];
+          // depends config
+          var _imports = config.depends[options.normalized] ? [].concat(config.depends[options.normalized]) : [];
 
           // check if this module uses AMD form
           // define([.., .., ..], ...)
@@ -487,7 +487,7 @@
 
           // global script
           return {
-            // apply shim config
+            // apply depends config
             imports: _imports,
             execute: function(deps) {
               if (source == '')
