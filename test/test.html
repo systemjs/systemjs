@@ -185,7 +185,7 @@
         run: function(complete) {
           jspm.config({
             map: {
-              'plugin/coffee': 'tests/compiler-plugin'
+              'plugin:coffee': 'tests/compiler-plugin'
             }
           });
           jspm.import(['tests/compiler-test.coffee!'], complete);
