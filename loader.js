@@ -181,7 +181,7 @@
           return moduleGlobal;
         }
 
-        var pluginRegEx = /(\.[^\/\.]+)?!(.+)/;
+        var pluginRegEx = /(\.[^\/\.]+)?!(.*)/;
 
         var nodeProcess = {
           nextTick: function(f) {
@@ -216,15 +216,10 @@
           var pluginMatch = name.match(pluginRegEx);
 
           // if a plugin, remove the plugin part to do normalization
-          // if the extension matches the plugin name, remove the resource extension as well
           var pluginName;
           if (pluginMatch) {
-            pluginName = pluginMatch[2];
-            if (pluginMatch[1] && pluginMatch[1] == '.' + pluginName)
-              name = name.substr(0, name.length - pluginMatch[1].length - pluginName.length - 1);
-            else
-              name = name.substr(0, name.length - pluginName.length - 1);
-
+            pluginName = pluginMatch[2] || pluginMatch[1].substr(1);
+            name = name.substr(0, name.length - pluginMatch[2].length - 1);
           }
 
           if (name.substr(0, 1) != '#') {
@@ -268,13 +263,9 @@
         },
         resolve: function(name, options) {
           var pluginMatch = name.match(pluginRegEx);
-          if (pluginMatch) {
-            // remove plugin part
+          // remove plugin part
+          if (pluginMatch)
             name = name.substr(0, name.length - pluginMatch[2].length - 1);
-            // add extension as plugin name if not present
-            if (name.split('/').pop().split('.').length == 1)
-              name += '.' + pluginMatch[2];
-          }
 
           // ondemand
           for (var r in this.ondemandTable)
