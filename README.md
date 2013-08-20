@@ -9,7 +9,7 @@ A ~20KB module loader written to work for ES6 modules, but that can load AMD, Co
 
 The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
-Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths (locations).
+Uses RequireJS-inspired configuration options including baseURL, map, shim (dependency config) and custom paths (locations).
 
 Supported Plugins:
 
@@ -75,7 +75,7 @@ some-global.js:
   });
 ```
 
-Global script dependencies can be set using the shim [depends configuration](#depends-configuration). The global variables declared by any dependencies will then be present on the global object.
+Global script dependencies can be set using the [dependency configuration](#dependency-configuration). The global variables declared by any dependencies will then be present on the global object.
 
 When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery). Globals never actually touch the `window` object directly, they get a carefully managed global object passed into them ensuring the `window` object remains unchanged.
 
@@ -168,17 +168,11 @@ Contextual map configurations are also supported, allowing path-specific maps ju
 
 This is useful for multi-version support.
 
-### Package Shorthand
+### Dependency Configuration
 
-Often, when storing modules in separate folders, one ends up repeating requires like `jspm.import('some-module/some-module')`, since the main entry point name is often the module name.
+Dependency configuration allows dependencies to be specified. It can be applied to scripts using any module format to enforce dependencies.
 
-To provide a simple shorthand for this, the package shorthand is simply to use `jspm.import('some-module/')`, which will result in an equivalent load.
-
-### Shim Configuration
-
-Shim configuration allows dependencies to be specified. It can be applied to scripts using any module format to enforce dependencies.
-
-In this way, one can load a global script naturally like any other script. This process is done automatically.
+It is mostly useful for setting the dependencies of global scripts.
 
 Example:
 
