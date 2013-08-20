@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
+<script src="../loader.js" type="text/javascript"></script>
+
+<script>
+  jspm.config({
+    map: {
+      'github:guybedford/jquery@master/bower_components/sizzle/dist/sizzle': 'github:jquery/sizzle@master/sizzle'
+    }
+  });
+</script>
+
+<script>
+  jspm.import('test-runner', function(runner) {
+    runner.execute([
+      {
+        name: 'Load jQuery from source',
+        run: function(complete) {
+          jspm.import('github:guybedford/jquery@master/src/jquery', complete);
+        },
+        confirm: function($) {
+          if (!$.fn)
+            return 'jQuery not defined'
+        }
+      }
+    ]);
+  });
+</script>

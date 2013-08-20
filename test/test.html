@@ -103,23 +103,6 @@
         }
       },
       {
-        name: 'Package shorthand',
-        run: function(complete) {
-          jspm.config({
-            map: {
-              'myapp': 'tests/my-app'
-            }
-          });
-          jspm.import(['myapp/', 'myapp/sub'], complete)
-        },
-        confirm: function(m1, m2) {
-          if (!m1.package)
-            return 'Package not loaded';
-          if (!m2.package)
-            return 'Package subpath not loaded';
-        }
-      },
-      {
         name: 'Package map configuration',
         run: function(complete) {
           jspm.config({
@@ -129,7 +112,7 @@
               }
             }
           });
-          jspm.import(['myapp/map-test'], complete);
+          jspm.import(['tests/my-app/map-test'], complete);
         },
         confirm: function(m) {
           if (!m.mapDep)
@@ -231,6 +214,15 @@
           jspm.import('tests/css.css!', complete);
         },
         confirm: function(m) {
+        }
+      },
+      {
+        name: 'Font plugin',
+        run: function(complete) {
+          jspm.import('#google Port Lligat Slab, Droid Sans !font', complete);
+        },
+        confirm: function(m) {
+
         }
       },
       {

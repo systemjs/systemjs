@@ -37,13 +37,87 @@
         var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /^\s*define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+'))\])?/m;
+        var amdDefineRegEx = /^\s*define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)\])?/m;
         var cjsDefineRegEx = /^\s*define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/m;
         var cjsRequireRegEx = /\s*require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/gm;
         var cjsExportsRegEx = /\s*exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/m;
 
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
+
+        // function to remove the comments from a string
+        function removeComments(str) {
+          // output
+          var curOutIndex = 0,
+            outString = '';
+
+          // mode variables
+          var singleQuote = false,
+            doubleQuote = false,
+            regex = false,
+            blockComment = false,
+            lineComment = false;
+
+          // character buffer
+          var lastChar, curChar, 
+            nextChar = str.charAt(0);
+
+          for (var i = 0, l = str.length; i < l; i++) {
+            lastChar = curChar;
+            curChar = nextChar;
+            nextChar = str.charAt(i + 1);
+
+            if (singleQuote) {
+              if (curChar === "'" && lastChar !== '\\')
+                singleQuote = false;
+            }
+
+            else if (doubleQuote) {
+              if (curChar === '"' && lastChar !== '\\')
+                doubleQuote = false;
+            }
+
+            else if (regex) {
+              if (curChar === '/'  && lastChar !== '\\')
+                regex = false;
+            }
+
+            else if (blockComment) {
+              if (curChar === '/' && lastChar === '*') {
+                blockComment = false;
+                curOutIndex = i + 1;
+              }
+            }
+            
+            else if (lineComment) {
+              if (nextChar === '\n' || nextChar === '\r') {
+                lineComment = false;
+                curOutIndex = i + 1;
+              }
+            }
+
+            else {
+              doubleQuote = curChar === '"';
+              singleQuote = curChar === "'";
+
+              if (curChar !== '/')
+                continue;
+              
+              if (nextChar === '*') {
+                blockComment = true;
+                outString += str.substring(curOutIndex, i - 1);
+              }
+              else if (nextChar === '/') {
+                lineComment = true;
+                outString += str.substring(curOutIndex, i - 1);
+              }
+              else {
+                regex = true;
+              }
+            }
+          }
+          return outString + str.substr(curOutIndex);
+        }
 
         // configuration object extension
         // objects extend, everything else replaces
@@ -234,14 +308,6 @@
             // do map config
             name = applyMap(name, parentName);
 
-            // allow for '/' package main referencing
-            // 'some-package@0.0.1/' -> 'some-package@0.0.1/some-package'
-            if (name.substr(name.length - 1, 1) == '/') {
-              var parts = name.indexOf(':') != -1 ? name.substr(name.indexOf(':') + 1).split('/') : name.split('/');
-              var lastPart = parts[parts.length - 2];
-              var lastPartName = lastPart.split('@')[0];
-              name = name + lastPartName;
-            }
           }
 
           if (pluginName)
@@ -258,7 +324,7 @@
 
             jspm.config({ depends: sConfig });
           }
-
+          
           return name;
         },
         resolve: function(name, options) {
@@ -283,7 +349,7 @@
             name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;
 
           // js extension
-          if (!pluginMatch && name.substr(name.length - 3, 3) != '.js')
+          if (!pluginMatch)
             name += '.js';
 
           return name;
@@ -327,6 +393,9 @@
 
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
             return;
+
+          // remove comments before doing regular expressions
+          source = removeComments(source);
 
           var match;
 

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://jspm.io/loader.js"></script>
+  <script>
+    jspm.import('npm:spinning', function(Spinning) {
+      var spinner = Spinning().text('loading...').light().size(200);
+      setTimeout(function () {
+        spinner.remove();
+      }, 3000);
+    });
+  </script>
+</head>
+<body>
+  
+</body>
+</html>
