@@ -656,7 +656,7 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           jspm: 'https://github.jspm.io/jspm/registry@master',
-          plugin: 'https://github.jspm.io/jspm/plugins@0.0.4'
+          plugin: 'https://github.jspm.io/jspm/plugins@0.0.5'
         }
       });
 

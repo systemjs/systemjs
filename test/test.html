@@ -4,6 +4,12 @@
 <script src="../loader.js" type="text/javascript"></script>
 
 <script>
+  jspm.config({
+    locations: {
+      plugin: '../../jspm-plugins'
+    }
+  });
+
   jspm.import('test-runner', function(runner) {
     runner.execute([
       {
@@ -178,6 +184,16 @@
             return 'Plugin not working.';
           if (m.extra != 'yay!')
             return 'Compiler not working.';
+        }
+      },
+      {
+        name: 'Handlebars plugin',
+        run: function(complete) {
+          jspm.import('tests/hbs.hbs!', complete);
+        },
+        confirm: function(m) {
+          if (m({ title: 'hello' }) != '<h1>hello</h1>\n')
+            return 'Handlebars template not compiled';
         }
       },
       {
