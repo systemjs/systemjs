@@ -343,14 +343,16 @@
 
           // locations
           var location = getLocation(name);
-          if (location)
-            name = config.locations[location] + (config.locations[location].substr(config.locations[location].length - 1, 1) != '/' ? '/' : '') + name.substring(location.length + 1);
-          else
-            name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;
 
           // js extension
           if (!pluginMatch)
             name += '.js';
+
+          if (location)
+            name = config.locations[location] + (config.locations[location].substr(config.locations[location].length - 1, 1) != '/' ? '/' : '') + name.substring(location.length + 1);
+          else
+            // always cache bust on the local baseURL
+            name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name + '?' + (new Date()).getTime();
 
           return name;
         },
