@@ -24,12 +24,18 @@ To submit or request a new plugin, create an issue or pull request on the [Plugi
 Including
 ---
 
-Include `es6-loader.js` and `esprima-es6.js` (from [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader)) in the same folder as `require-es6.js`.
+For use over the CDN, simply use:
+
+```html
+  <script src="https://jspm.io/loader.js"></script>
+```
+
+To use locally, include [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js) and [`esprima-es6.min.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/esprima-es6.min.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) in the same folder as `loader.js`.
 
 Then include it with a `<script>` tag:
 
 ```html
-  <script src="path/to/jspm-loader.js"></script>
+  <script src="path/to/loader.js"></script>
 ```
 
 The 60KB Esprima parser is dynamically included when loading an ES6 module format only.
