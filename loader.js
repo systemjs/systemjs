@@ -657,7 +657,7 @@
         locations: {
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
-          jspm: 'https://github.jspm.io/jspm/registry@master',
+          jspm: 'https://registry.jspm.io',
           plugin: 'https://github.jspm.io/jspm/plugins@0.0.5'
         }
       });
