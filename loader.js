@@ -269,7 +269,6 @@
 
       var jspm = global.jspm = new Loader({
         normalize: function(name, referer) {
-          
           name = name.trim();
 
           // allow inline depends configuration
@@ -277,7 +276,6 @@
           if (name.indexOf('|') != -1) {
             var inlineShim = name.split('|');
             name = inlineShim.splice(0, 1)[0].trim();
-            inlineShim = inlineShim[0].trim();
           }
 
           var parentName = referer && referer.name;
@@ -320,7 +318,7 @@
               inlineShim[i] = jspm.normalize(inlineShim[i], { name: name });
             
             var sConfig = {};
-            sConfig[name] = [inlineShim];
+            sConfig[name] = inlineShim;
 
             jspm.config({ depends: sConfig });
           }
@@ -352,7 +350,7 @@
             name = config.locations[location] + (config.locations[location].substr(config.locations[location].length - 1, 1) != '/' ? '/' : '') + name.substring(location.length + 1);
           else
             // always cache bust on the local baseURL
-            name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name + '?' + (new Date()).getTime();
+            name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;// + '?' + (new Date()).getTime();
 
           return name;
         },
