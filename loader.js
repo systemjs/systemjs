@@ -655,6 +655,7 @@
         locations: {
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
+          cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
           jspm: 'https://registry.jspm.io',
           plugin: 'https://github.jspm.io/jspm/plugins@0.0.5'
         }
