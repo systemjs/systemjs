@@ -65,8 +65,6 @@
         confirm: function(m) {
           if (!m.jQuery || !m.another)
             return 'Global objects not defined';
-          if (window.jQuery || window.another)
-            return 'Global object has leaked';
         }
       },
       {
