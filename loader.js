@@ -90,7 +90,7 @@
             }
             
             else if (lineComment) {
-              if (nextChar === '\n' || nextChar === '\r') {
+              if (nextChar === '\n' || nextChar === '\r' || nextChar == '') {
                 lineComment = false;
                 curOutIndex = i + 1;
               }
@@ -105,11 +105,11 @@
               
               if (nextChar === '*') {
                 blockComment = true;
-                outString += str.substring(curOutIndex, i - 1);
+                outString += str.substring(curOutIndex, i);
               }
               else if (nextChar === '/') {
                 lineComment = true;
-                outString += str.substring(curOutIndex, i - 1);
+                outString += str.substring(curOutIndex, i);
               }
               else {
                 regex = true;
