@@ -687,10 +687,11 @@
         global.System = es6ModuleLoader.System;
         global.Loader = es6ModuleLoader.Loader;
         global.Module = es6ModuleLoader.Module;
+        createLoader();
       }
     }
     else
-      createLoader(Module, Loader, System);
+      createLoader();
 
   })();
 
