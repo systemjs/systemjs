@@ -341,19 +341,27 @@
             return name;
 
           // locations
-          var location = getLocation(name);
+          var oldBaseURL = this.baseURL;
 
-          // js extension
-          if (!pluginMatch)
-            name += '.js';
+          var location = getLocation(name);
+          if (location) {
+            this.baseURL = config.locations[loation];
+            name = name.substr(location.length + 1);
+          }
+
+          var address = global.System.resolve.call(this, name, options);
+
+          // remove js extension added if a plugin
+          if (pluginMatch)
+            name = name.substr(0, name.length - 3);
+
+          this.baseURL = oldBaseURL;
 
           if (location)
-            name = config.locations[location] + (config.locations[location].substr(config.locations[location].length - 1, 1) != '/' ? '/' : '') + name.substring(location.length + 1);
+            return address;
           else
-            // always cache bust on the local baseURL
-            name = this.baseURL + (this.baseURL.substr(this.baseURL.length - 1, 1) != '/' ? '/' : '') + name;// + '?' + (new Date()).getTime();
-
-          return name;
+            // cache bust local
+            return address;// + '?' + (new Date()).getTime();
         },
         fetch: function(url, callback, errback, options) {
           options = options || {};
