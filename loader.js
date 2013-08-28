@@ -249,7 +249,7 @@
           var moduleGlobal = {};
 
           for (var g in jspm.global) {
-            if (jspm.global.hasOwnProperty(g) && g != 'window' && globalObj[g] != jspm.global[g])
+            if (jspm.global.hasOwnProperty(g) && g != (isBrowser ? 'window' : 'global') && globalObj[g] != jspm.global[g])
               moduleGlobal[g] = jspm.global[g];
           }
           return moduleGlobal;
@@ -689,7 +689,7 @@
 
   // carefully scoped eval with given global
   var scopedEval = function(source, global, sourceURL) {
-    eval('(function(window) { with(global) { ' + source + ' } }).call(global, global);' +  (sourceURL ? '\n//# sourceURL=' + sourceURL : ''));
+    eval('(function(global) { with(global) { ' + source + ' } }).call(global, global);' +  (sourceURL ? '\n//# sourceURL=' + sourceURL : ''));
   }
 
 })();
