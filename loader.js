@@ -13,7 +13,7 @@
   (function() {
 
     var isBrowser = typeof window != 'undefined';
-    var global = isBrowser ? window : exports;
+    var global = isBrowser ? window : {};
 
     var startConfig = global.jspm || {};
 
@@ -23,7 +23,7 @@
     config.locations = config.locations || {};
     config.depends = config.depends || {};
 
-    global.createLoader = function(Module, Loader, System) {
+    global.createLoader = function() {
       delete global.createLoader;
 
       config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1) : './';
@@ -268,6 +268,7 @@
       // -- /helpers --
 
       var jspm = global.jspm = new Loader({
+        global: global,
         normalize: function(name, referer) {
           name = name.trim();
 
@@ -470,7 +471,7 @@
                 delete jspm.global.require;
                 delete jspm.global.requirejs;
 
-                return new Module({ 'default': output || exports });
+                return new global.Module({ 'default': output || exports });
               }
             };
           }
@@ -509,7 +510,7 @@
                 delete jspm.global.requirejs;
                 delete jspm.global.define;
 
-                return new Module({ 'default': output || exports });
+                return new global.Module({ 'default': output || exports });
               }
             };
           }
@@ -531,7 +532,7 @@
                 var dirname = options.address.split('/');
                 dirname.pop();
                 dirname = dirname.join('/');
-                var global = {
+                var _global = {
                   process: nodeProcess,
                   console: console,
                   require: function(d) {
@@ -542,14 +543,14 @@
                   module: { exports: exports },
                   exports: exports
                 };
-                var process = global.process;
-                var require = global.require;
-                var __filename = global.__filename;
-                var __dirname = global.__dirname;
-                var module = global.module;
-                var exports = global.exports;
+                var process = _global.process;
+                var require = _global.require;
+                var __filename = _global.__filename;
+                var __dirname = _global.__dirname;
+                var module = _global.module;
+                var exports = _global.exports;
                 eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-                return new Module({ 'default': global.module.exports });
+                return new global.Module({ 'default': _global.module.exports });
               }
             };
           }
@@ -560,10 +561,10 @@
             imports: _imports,
             execute: function(deps) {
               if (source == '')
-                return new Module({});
+                return new global.Module({});
               setGlobal(deps);
               scopedEval(source, jspm.global, options.address);
-              return new Module(getGlobal());
+              return new global.Module(getGlobal());
             }
           };
         }
@@ -663,24 +664,30 @@
 
       // add initial config
       jspm.config(startConfig);
+
+      if (!isBrowser)
+        module.exports = jspm;
     }
 
     // dynamically polyfill the es6 loader if necessary
     if (!global.Loader) {
-      if (!isBrowser) {
-        var loader = require('es6-module-loader');
-        global.createLoader(loader.Module, loader.Loader, loader.System);
-        return;
+      if (isBrowser) {
+        // determine the current script path as the base path
+        var scripts = document.getElementsByTagName('script');
+        var head = document.getElementsByTagName('head')[0];
+        var curPath = scripts[scripts.length - 1].src;
+        var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+        document.write(
+          '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js">' + '<' + '/script>' +
+          '<' + 'script type="text/javascript">' + 'createLoader();' + '<' + '/script>'
+        );
       }
-      // determine the current script path as the base path
-      var scripts = document.getElementsByTagName('script');
-      var head = document.getElementsByTagName('head')[0];
-      var curPath = scripts[scripts.length - 1].src;
-      var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
-      document.write(
-        '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js">' + '<' + '/script>' +
-        '<' + 'script type="text/javascript">' + 'createLoader(Module, Loader, System);' + '<' + '/script>'
-      );
+      else {
+        var es6ModuleLoader = require('es6-module-loader');
+        global.System = es6ModuleLoader.System;
+        global.Loader = es6ModuleLoader.Loader;
+        global.Module = es6ModuleLoader.Module;
+      }
     }
     else
       createLoader(Module, Loader, System);
