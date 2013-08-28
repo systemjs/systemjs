@@ -267,7 +267,7 @@
 
       // -- /helpers --
 
-      var jspm = global.jspm = new Loader({
+      var jspm = global.jspm = new global.Loader({
         global: global,
         normalize: function(name, referer) {
           name = name.trim();
@@ -302,7 +302,7 @@
               name = name.substr(1);
 
             // do standard normalization (resolve relative module name)
-            name = System.normalize(name, referer);
+            name = global.System.normalize(name, referer);
 
             // do map config
             name = applyMap(name, parentName);
@@ -372,7 +372,7 @@
                 }
               }, 1000);
             }
-            System.fetch(url, function(source) {
+            global.System.fetch(url, function(source) {
               if (!rejected)
                 callback(source);
             }, errback, options);
@@ -597,7 +597,7 @@
 
       // ondemand functionality
       jspm.ondemandTable = {};
-      jspm.ondemand = System.ondemand;
+      jspm.ondemand = global.System.ondemand;
 
       jspm._config = config;
       jspm.config = function(newConfig) {
@@ -687,7 +687,7 @@
         global.System = es6ModuleLoader.System;
         global.Loader = es6ModuleLoader.Loader;
         global.Module = es6ModuleLoader.Module;
-        createLoader();
+        global.createLoader();
       }
     }
     else
