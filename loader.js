@@ -345,7 +345,7 @@
 
           var location = getLocation(name);
           if (location) {
-            this.baseURL = config.locations[loation];
+            this.baseURL = config.locations[location];
             name = name.substr(location.length + 1);
           }
 
