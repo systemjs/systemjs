@@ -56,30 +56,53 @@
             doubleQuote = false,
             regex = false,
             blockComment = false,
+            doubleBackslash = false,
             lineComment = false;
 
           // character buffer
-          var lastChar, curChar, 
-            nextChar = str.charAt(0);
+          var lastChar;
+          var curChar = '';
+          var lastToken;
 
-          for (var i = 0, l = str.length; i < l; i++) {
+          for (var i = 0, l = str.length; i <= l; i++) {
             lastChar = curChar;
-            curChar = nextChar;
-            nextChar = str.charAt(i + 1);
+            curChar = str.charAt(i);
+
+            if (curChar === '\n' || curChar === '\r' || curChar === '') {
+              regex = doubleQuote = singleQuote = doubleBackslash = false;
+              if (lineComment) {
+                curOutIndex = i + 1;
+                lineComment = false;
+              }
+              lastToken = '';
+              continue;
+            }
+
+            if (lastChar !== ' ' && lastChar !== '\t')
+              lastToken = lastChar;
+
+            if (singleQuote || doubleQuote || regex) {
+              if (curChar == '\\' && lastChar == '\\')
+                doubleBackslash = !doubleBackslash;
+            }
 
             if (singleQuote) {
-              if (curChar === "'" && lastChar !== '\\')
-                singleQuote = false;
+              if (curChar === "'" && (lastChar !== '\\' || doubleBackslash))
+                singleQuote = doubleBackslash = false;
             }
 
             else if (doubleQuote) {
-              if (curChar === '"' && lastChar !== '\\')
-                doubleQuote = false;
+              if (curChar === '"' && (lastChar !== '\\' || doubleBackslash))
+                doubleQuote = doubleBackslash = false;
             }
 
             else if (regex) {
-              if (curChar === '/'  && lastChar !== '\\')
-                regex = false;
+              if (curChar === '/'  && (lastChar !== '\\' || doubleBackslash)) {
+                regex = doubleBackslash = false;
+                i++;
+                lastToken = lastChar = curChar;
+                curChar = str.charAt(i);
+              }
             }
 
             else if (blockComment) {
@@ -88,30 +111,26 @@
                 curOutIndex = i + 1;
               }
             }
-            
-            else if (lineComment) {
-              if (nextChar === '\n' || nextChar === '\r' || nextChar == '') {
-                lineComment = false;
-                curOutIndex = i + 1;
-              }
-            }
 
-            else {
+            else if (!lineComment) {
               doubleQuote = curChar === '"';
               singleQuote = curChar === "'";
 
-              if (curChar !== '/')
+              if (lastChar !== '/')
                 continue;
               
-              if (nextChar === '*') {
+              if (curChar === '*') {
                 blockComment = true;
-                outString += str.substring(curOutIndex, i);
+                outString += str.substring(curOutIndex, i - 1);
+                i++;
+                lastChar = curChar;
+                curChar = str.charAt(i);
               }
-              else if (nextChar === '/') {
+              else if (curChar === '/') {
                 lineComment = true;
-                outString += str.substring(curOutIndex, i);
+                outString += str.substring(curOutIndex, i - 1);
               }
-              else {
+              else if (lastToken !== '}' && lastToken !== ')' && lastToken !== ']') {
                 regex = true;
               }
             }
@@ -353,7 +372,7 @@
 
           // remove js extension added if a plugin
           if (pluginMatch)
-            name = name.substr(0, name.length - 3);
+            address = address.substr(0, address.length - 3);
 
           this.baseURL = oldBaseURL;
 
