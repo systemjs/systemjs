@@ -130,7 +130,10 @@
                 lineComment = true;
                 outString += str.substring(curOutIndex, i - 1);
               }
-              else if (lastToken !== '}' && lastToken !== ')' && lastToken !== ']') {
+              else if (lastToken !== '}' && lastToken !== ')' && lastToken !== ']' && !lastToken.match(/\w|\d|'|"|\-|\+/)) {
+                // exceptions not currently handled:
+                // if (x) /foo/.exec('bar')
+                // a++ /foo/.abc
                 regex = true;
               }
             }
