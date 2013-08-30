@@ -78,7 +78,7 @@
           jspm.import(['tests/global-with-dep'], complete);
         },
         confirm: function(m) {
-          if (m.jQueryVersion != '1.8.3')
+          if (m != '1.8.3')
             return 'Global dependency not defined';
         }
       },
@@ -88,7 +88,7 @@
           jspm.import('tests/inline-depends | tests/inline-depends-dep', complete);
         },
         confirm: function(m) {
-          if (m.dep != 'dep')
+          if (m != 'dep')
             return 'Inline depends dependency not defined';
         }
       },
@@ -103,7 +103,7 @@
           jspm.import(['mypath:path'], complete);
         },
         confirm: function(m) {
-          if (m.p != 'path')
+          if (m != 'path')
             return 'module not loaded';
         }
       },

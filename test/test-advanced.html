@@ -6,18 +6,15 @@
 <script>
   jspm.config({
     map: {
-      'github:jquery/jquery@master/bower_components/sizzle/dist/sizzle': 'github:jquery/sizzle@master/dist/sizzle'
+      'github:guybedford/jquery@2.0.4/bower_components/sizzle/dist/sizzle': 'github:jquery/sizzle@1.10.7/dist/sizzle'
     }
   });
-</script>
-
-<script>
   jspm.import('test-runner', function(runner) {
     runner.execute([
       {
         name: 'Load jQuery from source',
         run: function(complete) {
-          jspm.import('github:jquery/jquery@master/src/jquery', complete);
+          jspm.import('github:guybedford/jquery@2.0.4/src/jquery', complete);
         },
         confirm: function($) {
           if (!$.fn)
