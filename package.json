@@ -11,5 +11,6 @@
   "license": "MIT",
   "dependencies": {
     "es6-module-loader": "~0.2.4"
-  }
+  },
+  "files": ["loader.js"]
 }
