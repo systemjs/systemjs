@@ -71,7 +71,7 @@
             if (curChar === '\n' || curChar === '\r' || curChar === '') {
               regex = doubleQuote = singleQuote = doubleBackslash = false;
               if (lineComment) {
-                curOutIndex = i + 1;
+                curOutIndex = i;
                 lineComment = false;
               }
               lastToken = '';
