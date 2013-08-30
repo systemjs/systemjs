@@ -281,7 +281,7 @@
           
           // for a single global, return directly
           if (globalCnt == 1)
-            return moduleGlobal[firstGlobalName];
+            return { default: moduleGlobal[firstGlobalName] };
           else
             return moduleGlobal;
         }
