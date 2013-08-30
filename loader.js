@@ -269,12 +269,21 @@
         // the global object is left as is
         function getGlobal() {
           var moduleGlobal = {};
-
+          var firstGlobalName;
+          var globalCnt = 0;
           for (var g in jspm.global) {
-            if (jspm.global.hasOwnProperty(g) && g != (isBrowser ? 'window' : 'global') && globalObj[g] != jspm.global[g])
+            if (jspm.global.hasOwnProperty(g) && g != (isBrowser ? 'window' : 'global') && globalObj[g] != jspm.global[g]) {
               moduleGlobal[g] = jspm.global[g];
+              firstGlobalName = firstGlobalName || g;
+              globalCnt++;
+            }
           }
-          return moduleGlobal;
+          
+          // for a single global, return directly
+          if (globalCnt == 1)
+            return moduleGlobal[firstGlobalName];
+          else
+            return moduleGlobal;
         }
 
         var pluginRegEx = /(\.[^\/\.]+)?!(.*)/;
