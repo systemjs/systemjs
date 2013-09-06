@@ -37,7 +37,7 @@
         var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /^\s*define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/m;
+        var amdDefineRegEx = /^\s*define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/mg;
         var cjsDefineRegEx = /^\s*define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/m;
         var cjsRequireRegEx = /\s*require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/gm;
         var cjsExportsRegEx = /\s*exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/m;
@@ -445,9 +445,35 @@
           // check if this module uses AMD form
           // define([.., .., ..], ...)
           // define('modulename', [.., ..., ..])
-          if ((match = source.match(amdDefineRegEx)) && (match[2] || match[1])) {
-            
+          amdDefineRegEx.lastIndex = 0;
+
+          if ((match = amdDefineRegEx.exec(source)) && (match[2] || match[1])) {
+
             _imports = _imports.concat(eval(match[2] || '[]'));
+
+            // if its a named define, check for any other named defines in this file
+            if (match[1]) {
+              var defines = [match[1]];
+              
+              while (match = amdDefineRegEx.exec(source)) {
+                if (match[1]) {
+                  defines.push(match[1]);
+                  _imports = _imports.concat(eval(match[2] || '[]'));
+                }
+              }
+
+              // ensure imports are unique
+              for (var i = 0; i < _imports.length; i++) {
+                if (_imports.lastIndexOf(_imports[i]) != i)
+                  _imports.splice(i--, 1);
+              }
+
+              // run through the defined names and remove them from the imports
+              for (var i = 0; i < defines.length; i++) {
+                if (_imports.indexOf(defines[i]) != -1)
+                  _imports.splice(_imports.indexOf(defines[i]), 1);
+              }
+            }
 
             // remove any reserved words
             var requireIndex, exportsIndex, moduleIndex;
