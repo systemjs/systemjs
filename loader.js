@@ -237,8 +237,15 @@
             mapMatch = config.map['*'][_p];
           }
           // apply map config
-          if (mapPrefixMatch)
-            name = mapMatch + name.substr(mapPrefixMatch.length);
+          if (mapPrefixMatch) {
+            // get main specifier (#main)
+            var main;
+            if (mapMatch.indexOf('#') != -1) {
+              main = mapMatch.substr(mapMatch.indexOf('#') + 1);
+              mapMatch = mapMatch.substr(0, mapMatch.length - main.length - 1);
+            }
+            name = mapMatch + name.substr(mapPrefixMatch.length) + (name.length == mapPrefixMatch.length && main ? '/' + main : '');
+          }
 
           return name;
         }
@@ -293,6 +300,7 @@
             setTimeout(f, 7);
           }
         };
+        var nodeGlobals = ['global', 'exports', 'process', 'console', 'require', '__filename', '__dirname', 'module'];
 
 
 
@@ -302,13 +310,6 @@
         global: global,
         normalize: function(name, referer) {
           name = name.trim();
-
-          // allow inline depends configuration
-          var inlineShim;
-          if (name.indexOf('|') != -1) {
-            var inlineShim = name.split('|');
-            name = inlineShim.splice(0, 1)[0].trim();
-          }
 
           var parentName = referer && referer.name;
 
@@ -342,18 +343,6 @@
 
           if (pluginName)
             name = name + '!' + pluginName;
-
-          // apply inline depends configuration
-          if (inlineShim) {
-            // normalize inline depends
-            for (var i = 0; i < inlineShim.length; i++)
-              inlineShim[i] = jspm.normalize(inlineShim[i], { name: name });
-            
-            var sConfig = {};
-            sConfig[name] = inlineShim;
-
-            jspm.config({ depends: sConfig });
-          }
           
           return name;
         },
@@ -376,6 +365,8 @@
 
           var location = getLocation(name);
           if (location) {
+            if (!config.locations[location])
+              throw 'Location "' + location + '" not defined.';
             this.baseURL = config.locations[location];
             name = name.substr(location.length + 1);
           }
@@ -507,8 +498,10 @@
 
                 var output;
 
-                jspm.global.require = jspm.global.requirejs = jspm.require;
-                jspm.global.define = function(name, dependencies, factory) {
+                var g = jspm.global;
+
+                g.require = g.requirejs = jspm.require;
+                g.define = function(name, dependencies, factory) {
                   // anonymous define
                   if (typeof name != 'string') {
                     factory = dependencies;
@@ -520,7 +513,7 @@
 
                   // run the factory function
                   if (typeof factory == 'function')
-                    output = factory.apply(jspm.global, deps);
+                    output = factory.apply(g, deps);
                   // otherwise factory is the value
                   else
                     output = factory;
@@ -528,13 +521,17 @@
                   if (name && name != options.normalized)
                       jspm.set(name, { default: output });
                 }
-                jspm.global.define.amd = {};
+                g.define.amd = {};
 
-                scopedEval(source, jspm.global, options.address);
+                // ensure no NodeJS environment detection
+                delete g.module;
+                delete g.exports;
 
-                delete jspm.global.define;
-                delete jspm.global.require;
-                delete jspm.global.requirejs;
+                scopedEval(source, g, options.address);
+
+                delete g.define;
+                delete g.require;
+                delete g.requirejs;
 
                 return new global.Module({ 'default': output || exports });
               }
@@ -542,7 +539,7 @@
           }
 
           // check if it uses the AMD CommonJS form
-          // define(varName); || define(function() {}); || define({})
+          // define(varName); || define(function(require, exports) {}); || define({})
           if (source.match(cjsDefineRegEx)) {
             var match;
             while (match = cjsRequireRegEx.exec(source))
@@ -558,22 +555,28 @@
                 var exports = {};
                 var module = { id: options.normalized, uri: options.address };
 
-                jspm.global.require = jspm.global.requirejs = jspm.require;
+                var g = jspm.global;
+                g.require = g.requirejs = jspm.require;
 
                 var output;
 
-                jspm.global.define = function(factory) { 
-                  output = typeof factory == "function" ? factory.call(jspm.global, function(d) { 
+                g.define = function(factory) { 
+                  output = typeof factory == "function" ? factory.call(g, function(d) { 
+                    console.log('define');
                     return depMap[d]; 
                   }, exports) : factory; 
                 };
-                jspm.global.define.amd = {};
+                g.define.amd = {};
 
-                scopedEval(source, jspm.global, options.address);
+                // ensure no NodeJS environment detection
+                delete g.module;
+                delete g.exports;
 
-                delete jspm.global.require;
-                delete jspm.global.requirejs;
-                delete jspm.global.define;
+                scopedEval(source, g, options.address);
+
+                delete g.require;
+                delete g.requirejs;
+                delete g.define;
 
                 return new global.Module({ 'default': output || exports });
               }
@@ -593,29 +596,34 @@
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
                   depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
-                var exports = {};
+
                 var dirname = options.address.split('/');
                 dirname.pop();
                 dirname = dirname.join('/');
-                var _global = {
-                  process: nodeProcess,
-                  console: console,
-                  require: function(d) {
-                    return depMap[d]
-                  },
-                  __filename: options.address,
-                  __dirname: dirname,
-                  module: { exports: exports },
-                  exports: exports
+
+                var g = jspm.global;
+
+                g.global = g;
+                g.exports = {};
+                g.process = nodeProcess;
+                g.console = console;
+                g.require = function(d) {
+                  return depMap[d];
+                }
+                g.__filename = options.address;
+                g.__dirname = dirname;
+                g.module = {
+                  exports: g.exports
                 };
-                var process = _global.process;
-                var require = _global.require;
-                var __filename = _global.__filename;
-                var __dirname = _global.__dirname;
-                var module = _global.module;
-                var exports = _global.exports;
-                eval(source + (options.address ? '\n//# sourceURL=' + options.address : ''));
-                return new global.Module({ 'default': _global.module.exports });
+
+                scopedEval(source, g, options.address);
+                
+                var outModule = new global.Module({ 'default': g.module.exports });
+
+                for (var p in nodeGlobals)
+                  delete g[p];
+
+                return outModule;
               }
             };
           }
@@ -668,9 +676,6 @@
       jspm.config = function(newConfig) {
         if (newConfig.paths)
           extend(newConfig.map = newConfig.map || {}, newConfig.paths);
-        
-        if (newConfig.packages)
-          throw 'Package configuration not support';
 
         extend(config, newConfig);
 
@@ -678,6 +683,10 @@
           jspm.baseURL = newConfig.baseURL;
         if (newConfig.baseUrl)
           jspm.baseURL = newConfig.baseUrl;
+
+        if (newConfig.localLibs)
+          for (var l in config.locations)
+            config.locations[l] = newConfig.localLibs + '/' + l;
       }
       jspm.ondemand = function(resolvers) {
         jspm.ondemand(resolvers);
@@ -722,8 +731,8 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-          jspm: 'https://registry.jspm.io',
-          plugin: 'https://github.jspm.io/jspm/plugins@0.0.6'
+          lib: 'https://registry.jspm.io',
+          plugin: 'https://github.jspm.io/jspm/plugins@0.0.7'
         }
       });
 

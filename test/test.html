@@ -83,16 +83,6 @@
         }
       },
       {
-        name: 'Inline depends configuration',
-        run: function(complete) {
-          jspm.import('tests/inline-depends | tests/inline-depends-dep', complete);
-        },
-        confirm: function(m) {
-          if (m != 'dep')
-            return 'Inline depends dependency not defined';
-        }
-      },
-      {
         name: 'Location configuration',
         run: function(complete) {
           jspm.config({
@@ -135,6 +125,23 @@
         confirm: function(m) {
           if (m.maptest != 'maptest')
             return 'Mapped module not loaded';
+        }
+      },
+      {
+        name: 'Map main configuration',
+        run: function(complete) {
+          jspm.config({
+            map: {
+              mapmain: 'tests/my-app#main'
+            }
+          });
+          jspm.import(['mapmain', 'mapmain/submodule'], complete)
+        },
+        confirm: function(m1, m2) {
+          if (!m1.isMain)
+            return 'Main module not loaded';
+          if (!m2.isSubmodule)
+            return 'Submodule not loaded';
         }
       },
       {
@@ -248,7 +255,7 @@
       {
         name: 'Image plugin',
         run: function(complete) {
-          jspm.import('http://octodex.github.com/images/codercat.jpg!image', complete);
+          jspm.import('http://jspm.io/icons.png!image', complete);
         },
         confirm: function(m) {
         }

@@ -1,26 +1,10 @@
 <!doctype html>
 <html>
-<script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
-<script src="../loader.js" type="text/javascript"></script>
+<script src="https://jspm.io/loader.js"></script>
 
 <script>
-  jspm.config({
-    map: {
-      'github:guybedford/jquery@2.0.4/bower_components/sizzle/dist/sizzle': 'github:jquery/sizzle@1.10.7/dist/sizzle'
-    }
-  });
-  jspm.import('test-runner', function(runner) {
-    runner.execute([
-      {
-        name: 'Load jQuery from source',
-        run: function(complete) {
-          jspm.import('github:guybedford/jquery@2.0.4/src/jquery', complete);
-        },
-        confirm: function($) {
-          if (!$.fn)
-            return 'jQuery not defined'
-        }
-      }
-    ]);
+  var startTime = Date.now();
+  jspm.import('github:guybedford/jquery@2.0.4/src/jquery', function($) {
+    document.body.innerHTML += 'Loaded in ' + (Date.now() - startTime) + 'ms.';
   });
 </script>
