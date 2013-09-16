@@ -83,6 +83,16 @@
         }
       },
       {
+        name: 'Global script loading with inline depends',
+        run: function(complete) {
+          jspm.import('tests/global-inline-dep', complete);
+        },
+        confirm: function(m) {
+          if (m != '1.8.3')
+            return 'Global dependency not defined';
+        }
+      },
+      {
         name: 'Location configuration',
         run: function(complete) {
           jspm.config({

@@ -42,6 +42,9 @@
         var cjsRequireRegEx = /\s*require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/gm;
         var cjsExportsRegEx = /\s*exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/m;
 
+        // global dependency specifier, used for shimmed dependencies
+        var globalDependencyRegEx = /^\s*["']import ([^'"]+)["']/mg;
+
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
 
@@ -629,6 +632,13 @@
           }
 
           // global script
+          
+          // check for global shimmed dependencies
+          // specified with eg:
+          // "import lib:jquery";
+          while (match = globalDependencyRegEx.exec(source))
+            _imports.push(match[1]);
+
           return {
             // apply depends config
             imports: _imports,
