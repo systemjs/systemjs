@@ -45,14 +45,20 @@
         // global dependency specifier, used for shimmed dependencies
         var globalDependencyRegEx = /^\s*["']import ([^'"]+)["']/mg;
 
+        var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/m;
+        var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/m;
+
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
 
         // function to remove the comments from a string
         function removeComments(str) {
           // output
+          // block comments replaced with equivalent whitespace
+          // this is to ensure source maps remain valid
           var curOutIndex = 0,
-            outString = '';
+            outString = '',
+            blockCommentWhitespace = '';
 
           // mode variables
           var singleQuote = false,
@@ -77,6 +83,8 @@
                 curOutIndex = i;
                 lineComment = false;
               }
+              if (blockComment)
+                blockCommentWhitespace += curChar;
               lastToken = '';
               continue;
             }
@@ -100,16 +108,24 @@
             }
 
             else if (regex) {
-              if (curChar === '/'  && (lastChar !== '\\' || doubleBackslash)) {
-                regex = doubleBackslash = false;
-                i++;
-                lastToken = lastChar = curChar;
-                curChar = str.charAt(i);
+              if (curChar === '/' && (lastChar !== '\\' || doubleBackslash)) {
+                // a comment inside a regex immediately means we've misread the regex
+                // so switch back to block mode to detect the comment
+                if (str.charAt(i + 1) == '/') {
+                  regex = doubleBackslash = false;
+                }
+                else {
+                  regex = doubleBackslash = false;
+                  i++;
+                  lastToken = lastChar = curChar;
+                  curChar = str.charAt(i);
+                }
               }
             }
 
             else if (blockComment) {
-              if (curChar === '/' && lastChar === '*') {
+              blockCommentWhitespace += ' ';
+              if (curChar === '/' && lastChar === '*' && blockCommentWhitespace.length > 3) {
                 blockComment = false;
                 curOutIndex = i + 1;
               }
@@ -124,24 +140,22 @@
               
               if (curChar === '*') {
                 blockComment = true;
-                outString += str.substring(curOutIndex, i - 1);
-                i++;
-                lastChar = curChar;
-                curChar = str.charAt(i);
+                outString += blockCommentWhitespace + str.substring(curOutIndex, i - 1);
+                blockCommentWhitespace = '  ';
               }
               else if (curChar === '/') {
                 lineComment = true;
-                outString += str.substring(curOutIndex, i - 1);
+                outString += blockCommentWhitespace + str.substring(curOutIndex, i - 1);
+                blockCommentWhitespace = '';
               }
               else if (lastToken !== '}' && lastToken !== ')' && lastToken !== ']' && !lastToken.match(/\w|\d|'|"|\-|\+/)) {
-                // exceptions not currently handled:
-                // if (x) /foo/.exec('bar')
-                // a++ /foo/.abc
+                // detection not perfect - careful comment detection within regex is used to compensate
+                // without sacrificing global comment removal accuracy
                 regex = true;
               }
             }
           }
-          return outString + str.substr(curOutIndex);
+          return outString + blockCommentWhitespace + str.substr(curOutIndex);
         }
 
         // configuration object extension
@@ -428,6 +442,14 @@
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
             return;
 
+          // detect any source map comments
+          var sourceMappingURL = source.match(sourceMappingURLRegEx);
+          if (sourceMappingURL)
+            sourceMappingURL = sourceMappingURL[1];
+
+          var sourceURL = source.match(sourceURLRegEx);
+          sourceURL = sourceURL ? sourceURL[1] : options.address;
+
           // remove comments before doing regular expressions
           source = removeComments(source);
 
@@ -530,7 +552,7 @@
                 delete g.module;
                 delete g.exports;
 
-                scopedEval(source, g, options.address);
+                __scopedEval(source, g, sourceURL, sourceMappingURL);
 
                 delete g.define;
                 delete g.require;
@@ -575,7 +597,7 @@
                 delete g.module;
                 delete g.exports;
 
-                scopedEval(source, g, options.address);
+                __scopedEval(source, g, sourceURL, sourceMappingURL);
 
                 delete g.require;
                 delete g.requirejs;
@@ -619,7 +641,7 @@
                   exports: g.exports
                 };
 
-                scopedEval(source, g, options.address);
+                __scopedEval(source, g, sourceURL, sourceMappingURL);
                 
                 var outModule = new global.Module({ 'default': g.module.exports });
 
@@ -646,7 +668,7 @@
               if (source == '')
                 return new global.Module({});
               setGlobal(deps);
-              scopedEval(source, jspm.global, options.address);
+              __scopedEval(source, jspm.global, options.address, sourceMappingURL);
               return new global.Module(getGlobal());
             }
           };
@@ -780,8 +802,10 @@
   })();
 
   // carefully scoped eval with given global
-  var scopedEval = function(source, global, sourceURL) {
-    eval('(function(global) { with(global) { ' + source + ' } }).call(global, global);' +  (sourceURL ? '\n//# sourceURL=' + sourceURL : ''));
+  var __scopedEval = function(__source, global, __sourceURL, __sourceMappingURL) {
+    eval('(function(global) { with(global) { ' + __source + ' } }).call(global, global);' + (__sourceMappingURL 
+      ? '\n//# sourceMappingURL=' + __sourceMappingURL 
+      : (__sourceURL ? '\n//# sourceURL=' + __sourceURL : '')));
   }
 
 })();
