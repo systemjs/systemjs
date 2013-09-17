@@ -317,7 +317,7 @@
             setTimeout(f, 7);
           }
         };
-        var nodeGlobals = ['global', 'exports', 'process', 'console', 'require', '__filename', '__dirname', 'module'];
+        var nodeGlobals = ['global', 'exports', 'process', 'require', '__filename', '__dirname', 'module'];
 
 
 
@@ -631,7 +631,6 @@
                 g.global = g;
                 g.exports = {};
                 g.process = nodeProcess;
-                g.console = console;
                 g.require = function(d) {
                   return depMap[d];
                 }

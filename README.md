@@ -83,7 +83,7 @@ some-global.js:
 
 Global script dependencies can be set using the [dependency configuration](#dependency-configuration). The global variables declared by any dependencies will then be present on the global object.
 
-When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery). Globals never actually touch the `window` object directly, they get a carefully managed global object passed into them ensuring the `window` object remains unchanged.
+When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery).
 
 ### Loading CommonJS & AMD
 
