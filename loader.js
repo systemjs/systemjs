@@ -442,7 +442,11 @@
           });
         },
         link: function(originalSource, options) {
-          var source = originalSource || '';
+          // plugins provide empty source
+          if (!originalSource)
+            return new global.Module({});
+
+          var source = originalSource;
           if (config.onLoad)
             config.onLoad(options.normalized, source, options);
 
@@ -462,7 +466,7 @@
 
           if (!source) {
             // comments not removed - use original source
-            source = originalSource || '';
+            source = originalSource;
             // dont add the sourceURL and sourceMappingURL now
             sourceMappingURL = null;
             sourceURL = sourceURL ? null : options.address;
@@ -575,7 +579,12 @@
                 delete g.require;
                 delete g.requirejs;
 
-                return new global.Module({ 'default': output || exports });
+                output = output || exports;
+
+                if (typeof output == 'object' && !(output instanceof Array))
+                  return new global.Module(output);
+                else
+                  return new global.Module({ 'default': output });
               }
             };
           }
@@ -619,7 +628,12 @@
                 delete g.requirejs;
                 delete g.define;
 
-                return new global.Module({ 'default': output || exports });
+                output = output || exports;
+
+                if (typeof output == 'object' && !(output instanceof Array))
+                  return new global.Module(output);
+                else
+                  return new global.Module({ 'default': output });
               }
             };
           }
@@ -657,8 +671,13 @@
                 };
 
                 __scopedEval(source, g, sourceURL, sourceMappingURL);
-                
-                var outModule = new global.Module({ 'default': g.module.exports });
+
+                var outModule;
+
+                if (typeof g.module.exports == 'object' && !(g.module.exports instanceof Array))
+                  outModule = new global.Module(g.module.exports);
+                else
+                  outModule = new global.Module({ 'default': g.module.exports });
 
                 for (var p in nodeGlobals)
                   delete g[p];
@@ -684,6 +703,7 @@
                 return new global.Module({});
               setGlobal(deps);
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
+
               return new global.Module(getGlobal());
             }
           };
