@@ -538,7 +538,7 @@
             return {
               imports: _imports,
               execute: function() {
-                var deps = Array.prototype.splice.call(arguments, 0);
+                var deps = checkDefaultOnly(arguments);
 
                 // add system dependencies
                 var exports;
@@ -614,7 +614,7 @@
               execute: function() {
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
-                  depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
+                  depMap[_imports[i]] = checkDefaultOnly(arguments[i]);
                 
                 var exports = {};
                 var module = { id: options.normalized, uri: options.address };
@@ -663,7 +663,7 @@
               execute: function() {
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
-                  depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
+                  depMap[_imports[i]] = checkDefaultOnly(arguments[i]);
 
                 var dirname = options.address.split('/');
                 dirname.pop();
@@ -712,7 +712,7 @@
             // apply depends config
             imports: _imports,
             execute: function() {
-              setGlobal(arguments);
+              setGlobal(checkDefaultOnly(arguments));
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
 
               return new global.Module(getGlobal());
@@ -721,26 +721,28 @@
         }
       });
 
+      // go through a module list or module and if the only
+      // export is the default, then provide it directly
+      // useful for module.exports = function() {} handling
+      var checkDefaultOnly = function(module) {
+        if (!(module instanceof global.Module)) {
+          var out = [];
+          for (var i = 0; i < module.length; i++)
+            out[i] = checkDefaultOnly(module[i]);
+          return out;
+        }
+        for (var q in module) {
+          if (module.hasOwnProperty(q) && q != 'default')
+            return module;
+        }
+        return module['default'] ? module['default'] : module;
+      }
+
       var _import = jspm.import;
       jspm.import = function(name, callback, errback, referer) {
-        _import.call(jspm, name, function() {          
-          var newArgs = [];
-          for (var i = 0; i < arguments.length; i++) {
-            var isDefaultOnly = true;
-            for (var q in arguments[i])
-              if (arguments[i].hasOwnProperty(q)) {
-                if (q != 'default') {
-                  isDefaultOnly = false;
-                  break;
-                }
-              }
-            if (isDefaultOnly && arguments[i] && arguments[i].default)
-              newArgs[i] = arguments[i].default;
-            else
-              newArgs[i] = arguments[i];
-          }
+        _import.call(jspm, name, function() {
           if (callback)
-            callback.apply(null, newArgs);
+            callback.apply(null, checkDefaultOnly(arguments));
         }, errback, referer);
       }
 
