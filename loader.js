@@ -53,6 +53,12 @@
 
         // function to remove the comments from a string
         function removeComments(str) {
+
+          // if it is uglified code, skip
+          var lineCnt = str.match(/\n/g).length;
+          if (str.length / lineCnt > 200)
+            return str;
+
           // output
           // block comments replaced with equivalent whitespace
           // this is to ensure source maps remain valid
