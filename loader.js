@@ -32,9 +32,9 @@
       // -- helpers --
 
         // es6 module regexs to check if it is a module or a global script
-        var importRegEx = /^\s*import\s+./m;
-        var exportRegEx = /^\s*export\s+(\{|\*|var|class|function|default)/m;
-        var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
+        var importRegEx = /(?:^\s*|[}{\(\);,\n]\s*)import\s+./;
+        var exportRegEx = /(?:^\s*|[}{\(\);,\n]\s*)export\s+(\{|\*|var|class|function|default)/;
+        var moduleRegEx = /(?:^\s*|[}{\(\);,\n]\s*)module\s+("[^"]+"|'[^']+')\s*\{/;
 
         // AMD and CommonJS regexs for support
         var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
