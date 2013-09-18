@@ -216,6 +216,16 @@
         }
       },
       {
+        name: 'Wrapper module support',
+        run: function(complete) {
+          jspm.import('tests/wrapper', complete);
+        },
+        confirm: function(m) {
+          if (m != 'default1')
+            return 'Wrapper module not defined.';
+        }
+      },
+      {
         name: 'Simple compiler Plugin',
         run: function(complete) {
           jspm.config({
@@ -281,7 +291,7 @@
       {
         name: 'Font plugin',
         run: function(complete) {
-          jspm.import('#google Port Lligat Slab !font', complete);
+          jspm.import('#google Port Lligat Slab, Droid Sans !font', complete);
         },
         confirm: function(m) {
         }

@@ -48,6 +48,8 @@
         var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
         var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
 
+        var wrapperRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
+
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
 
@@ -450,6 +452,20 @@
           if (config.onLoad)
             config.onLoad(options.normalized, source, options);
 
+          var match;
+
+          // check if it is a "wrapper" module
+          // import * from 'jquery';
+          if (match = source.match(wrapperRegEx)) {
+            return {
+              imports: [match[1] || match[2]],
+              execute: function(dep) {
+                console.log(dep);
+                return new global.Module(dep);
+              }
+            };
+          }
+
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
             return;
 
@@ -473,8 +489,6 @@
           }
           else
             sourceURL = sourceURL || options.address;
-
-          var match;
 
           // depends config
           var _imports = config.depends[options.normalized] ? [].concat(config.depends[options.normalized]) : [];
@@ -647,7 +661,7 @@
 
             return {
               imports: _imports, // clone the array as we still need it
-              execute: function(deps) {
+              execute: function() {
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
                   depMap[_imports[i]] = arguments[i]['default'] || arguments[i];
@@ -698,10 +712,8 @@
           return {
             // apply depends config
             imports: _imports,
-            execute: function(deps) {
-              if (source == '')
-                return new global.Module({});
-              setGlobal(deps);
+            execute: function() {
+              setGlobal(arguments);
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
 
               return new global.Module(getGlobal());
