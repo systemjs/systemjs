@@ -37,16 +37,16 @@
         var moduleRegEx = /^\s*module\s+("[^"]+"|'[^']+')\s*\{/m;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /^\s*define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/mg;
-        var cjsDefineRegEx = /^\s*define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/m;
-        var cjsRequireRegEx = /\s*require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/gm;
-        var cjsExportsRegEx = /\s*exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/m;
+        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
+        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
+        var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:]\s*)exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/g;
 
         // global dependency specifier, used for shimmed dependencies
-        var globalDependencyRegEx = /^\s*["']import ([^'"]+)["']/mg;
+        var globalDependencyRegEx = /["']import ([^'"]+)["']/g;
 
-        var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/m;
-        var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/m;
+        var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
+        var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
 
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
@@ -58,7 +58,7 @@
           var newlines = str.match(/\n/g);
           var lineCnt = newlines && newlines.length || 0;
           if (str.length / lineCnt > 200)
-            return str;
+            return false;
 
           // output
           // block comments replaced with equivalent whitespace
@@ -441,8 +441,8 @@
 
           });
         },
-        link: function(source, options) {
-          source = source || '';
+        link: function(originalSource, options) {
+          var source = originalSource || '';
           if (config.onLoad)
             config.onLoad(options.normalized, source, options);
 
@@ -455,10 +455,20 @@
             sourceMappingURL = sourceMappingURL[1];
 
           var sourceURL = source.match(sourceURLRegEx);
-          sourceURL = sourceURL ? sourceURL[1] : options.address;
+          sourceURL = sourceURL ? sourceURL[1] : null;
 
           // remove comments before doing regular expressions
           source = removeComments(source);
+
+          if (!source) {
+            // comments not removed - use original source
+            source = originalSource || '';
+            // dont add the sourceURL and sourceMappingURL now
+            sourceMappingURL = null;
+            sourceURL = sourceURL ? null : options.address;
+          }
+          else
+            sourceURL = sourceURL || options.address;
 
           var match;
 
@@ -594,7 +604,6 @@
 
                 g.define = function(factory) { 
                   output = typeof factory == "function" ? factory.call(g, function(d) { 
-                    console.log('define');
                     return depMap[d]; 
                   }, exports) : factory; 
                 };
@@ -674,7 +683,7 @@
               if (source == '')
                 return new global.Module({});
               setGlobal(deps);
-              __scopedEval(source, jspm.global, options.address, sourceMappingURL);
+              __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
               return new global.Module(getGlobal());
             }
           };
@@ -809,14 +818,10 @@
 
   // carefully scoped eval with given global
   var __scopedEval = function(__source, global, __sourceURL, __sourceMappingURL) {
-    try {
-      eval('(function(global) { with(global) { ' + __source + ' } }).call(global, global);' + (__sourceMappingURL 
-        ? '\n//# sourceMappingURL=' + __sourceMappingURL 
-        : (__sourceURL ? '\n//# sourceURL=' + __sourceURL : '')));
-    }
-    catch(e) {
-      throw 'Unable to evaluate "' + __sourceURL + '".\n' + e;
-    }
+    eval('(function(global) { with(global) { ' + __source + ' \n } }).call(global, global);' + (__sourceMappingURL 
+      ? '\n//# sourceMappingURL=' + __sourceMappingURL 
+      : (__sourceURL ? '\n//# sourceURL=' + __sourceURL : '')));
   }
 
 })();
+
