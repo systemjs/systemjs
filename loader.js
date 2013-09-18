@@ -55,7 +55,8 @@
         function removeComments(str) {
 
           // if it is uglified code, skip
-          var lineCnt = str.match(/\n/g).length;
+          var newlines = str.match(/\n/g);
+          var lineCnt = newlines && newlines.length || 0;
           if (str.length / lineCnt > 200)
             return str;
 
