@@ -595,7 +595,7 @@
 
                 output = output || exports;
 
-                if (typeof output == 'object' && !(output instanceof Array))
+                if (typeof output == 'object' && output.constructor == Object)
                   return new global.Module(output);
                 else
                   return new global.Module({ 'default': output });
@@ -644,7 +644,7 @@
 
                 output = output || exports;
 
-                if (typeof output == 'object' && !(output instanceof Array))
+                if (typeof output == 'object' && output.constructor == Object)
                   return new global.Module(output);
                 else
                   return new global.Module({ 'default': output });
@@ -688,7 +688,7 @@
 
                 var outModule;
 
-                if (typeof g.module.exports == 'object' && !(g.module.exports instanceof Array))
+                if (typeof g.module.exports == 'object' && g.module.exports.constructor == Object)
                   outModule = new global.Module(g.module.exports);
                 else
                   outModule = new global.Module({ 'default': g.module.exports });
