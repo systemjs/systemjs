@@ -460,8 +460,7 @@
             return {
               imports: [match[1] || match[2]],
               execute: function(dep) {
-                console.log(dep);
-                return new global.Module(dep);
+                return dep;
               }
             };
           }
