@@ -802,9 +802,14 @@
 
   // carefully scoped eval with given global
   var __scopedEval = function(__source, global, __sourceURL, __sourceMappingURL) {
-    eval('(function(global) { with(global) { ' + __source + ' } }).call(global, global);' + (__sourceMappingURL 
-      ? '\n//# sourceMappingURL=' + __sourceMappingURL 
-      : (__sourceURL ? '\n//# sourceURL=' + __sourceURL : '')));
+    try {
+      eval('(function(global) { with(global) { ' + __source + ' } }).call(global, global);' + (__sourceMappingURL 
+        ? '\n//# sourceMappingURL=' + __sourceMappingURL 
+        : (__sourceURL ? '\n//# sourceURL=' + __sourceURL : '')));
+    }
+    catch(e) {
+      throw 'Unable to evaluate "' + __sourceURL + '".\n' + e;
+    }
   }
 
 })();
