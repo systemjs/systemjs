@@ -50,9 +50,13 @@ Usage
 The loader is simply a custom ES6 module loader, and can be used as one:
 
 ```javascript
-  jspm.import(['some', 'modules'], function(some, modules) {
+  jspm.import(['jquery', './some', './modules'], function($, some, modules) {
   });
 ```
+
+By default modules with relative syntax (`./` or `../`) are loaded relative to the current page URL.
+
+Modules without relative syntax (eg `jquery`) are loaded from the [JSPM Registry](https://github.com/jspm/registry).
 
 ### Setting the baseURL
 
@@ -62,6 +66,8 @@ Just like RequireJS, provide configuration by setting the `jspm` global variable
   jspm.config({
     baseURL: 'http://www.mysite.com'
   });
+  jspm.import('./test');
+  //loads http://www.mysite.com/test.js
 ```
 
 ### Loading Global Scripts
@@ -75,7 +81,7 @@ some-global.js:
 ```
 
 ```javascript
-  jspm.import(['some-global'], function(someGlobal) {
+  jspm.import(['./some-global'], function(someGlobal) {
     console.log(someGlobal.globalVar);
     console.log(someGlobal.anotherGlobal);
   });
@@ -104,7 +110,7 @@ cjs.js:
 ```
 
 ```javascript
-  jspm.import(['cjs'], function(cjsModule) {
+  jspm.import(['./cjs'], function(cjsModule) {
     // ...
   });
 ```
@@ -134,51 +140,29 @@ es6.js:
   export var exportName = 'value';
 ```
 
-When in a production environment, the goal would be to use a build system that would rewrite this in ES5 with something like the following.
-
-es6-built.js:
-```javascript
-  (function() {
-    var d = System.get('normalized/some-dep').dep;
-    System.set('normalized/name', new Module({
-      exportName: 'value'
-    }));
-  })();
-```
-
 ### Map Configuration
 
 ```javascript
   jspm.config({
     map: {
-      'jquery': 'lib/jquery',
-      'backbone': 'lib/backbone/backbone'
+      'jquery': './lib/jquery',
+      'backbone': './lib/backbone#backbone'
     }
   });
+  
+  jspm.import('jquery');          // loads ./lib/jquery.js
+  
+  jspm.import('backbone');        // loads ./lib/backbone/backbone.js
+  jspm.import('backbone/module'); // loads ./lib/backbone/module.js
 ```
 
-Map configuration simply provides an alias, so that any require of the form `jquery` or `jquery/sub-module` will resolve to `lib/jquery` and `lib/jquery/sub-module` respectively.
-Relative paths of the form `./dependency` within modules will be respected with the map config, just like in RequireJS.
+Map configuration simply provides an alias to a module.
 
-Contextual map configurations are also supported, allowing path-specific maps just like RequireJS.
-
-```javascript
-  jspm.config({
-    map: {
-      'some/module': {
-        'jquery': 'lib/jquery-1.8.3'
-      }
-    }
-  });
-```
-
-This is useful for multi-version support.
+Optionally a main entry point can be specified with a `#` symbol. This works like the RequireJS package configuration, allowing the main module to be loaded directly by name while also supporting submodules as with `backbone` in the example above.
 
 ### Dependency Configuration
 
-Dependency configuration allows dependencies to be specified. It can be applied to scripts using any module format to enforce dependencies.
-
-It is mostly useful for setting the dependencies of global scripts.
+Dependency configuration allows dependencies to be specified for existing legacy scripts, mostly to ensure global script load ordering.
 
 Example:
 
@@ -188,39 +172,22 @@ Example:
       'bootstrap': ['jquery']
     }
   });
-  jspm.import('bootstrap');
+  
+  // loads jquery first, even though bootstrap has no module syntax
+  jspm.import('bootstrap'); 
 ```
 
-### Locations
+### ondemand / paths
 
-Custom `locations` can be defined, allowing loading from separate base folder locations.
-
-```javascript
-  jspm.config({
-    baseURL: 'http://mysite.com/js'
-    locations: {
-      'lib': 'http://mysite.com/lib',
-    }
-  });
-
-  jspm.import('lib:some-module');
-```
-
-Imports within a module from another location will have their global dependencies loaded from that same location.
-
-Thus an import of `jquery` inside `lib/some-module.js`, will resolve to `lib/jquery.js` instead of `js/jquery.js`.
-
-Locations can be mapped with map configuration, just like any other resource.
-
-### ondemand
-
-The `ondemand` functionality as provided by the `System` loader in the modules spec, is provided equally for the loader, allowing definition scripts to be routed on resolution.
+The `ondemand` functionality provides what are paths configuration in RequireJS, defined by the ES6 `System` loader spec.
 
 ```javascript
   jspm.ondemand({
     'jquery': 'http://code.jquery.com/jquery-1.10.1.min.js'
   });
 ```
+
+This syntax is likely still subject to change due to the specification being unconfirmed here.
 
 ### Transpiler Plugins
 
