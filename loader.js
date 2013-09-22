@@ -27,6 +27,7 @@
       delete global.createLoader;
 
       config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1) : './';
+      config.registry = 'https://registry.jspm.io';
       config.locations.plugin = config.locations.plugin || config.baseURL;
 
       // -- helpers --
@@ -396,6 +397,8 @@
             this.baseURL = config.locations[location];
             name = name.substr(location.length + 1);
           }
+          else if (name.substr(0, 2) != './' && name.substr(0, 3) != '../')
+            this.baseURL = config.registry;
 
           var address = global.System.resolve.call(this, name, options);
 
@@ -405,11 +408,7 @@
 
           this.baseURL = oldBaseURL;
 
-          if (location)
-            return address;
-          else
-            // cache bust local
-            return address;// + '?' + (new Date()).getTime();
+          return address;
         },
         fetch: function(url, callback, errback, options) {
           options = options || {};
@@ -812,7 +811,6 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-          lib: 'https://registry.jspm.io',
           plugin: 'https://github.jspm.io/jspm/plugins@0.0.7'
         }
       });
