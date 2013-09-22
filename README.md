@@ -189,6 +189,24 @@ The `ondemand` functionality provides what are paths configuration in RequireJS,
 
 This syntax is likely still subject to change due to the specification being unconfirmed here.
 
+### Locations
+
+While the `ondemand` functionality is in flux, the locations configuration option provides a more flexible
+paths configuration mechanism:
+
+```javascript
+  jspm.config({
+    baseURL: 'http://mysite.com/js'
+    locations: {
+      'lib': 'http://mysite.com/lib',
+    }
+  });
+
+  jspm.import('lib:some-module');
+```
+
+This will merge with the ondemand functionality in due course.
+
 ### Transpiler Plugins
 
 Transpiler plugins are supported for loading templates or languages that compile to JavaScript.
