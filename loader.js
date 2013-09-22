@@ -590,7 +590,7 @@
                 output = output || exports;
 
                 if (isTranspiled || (typeof output == 'object' && output.constructor == Object))
-                  return new global.Module(output);
+                  return new global.Module(output || {});
                 else
                   return new global.Module({ 'default': output });
               }
