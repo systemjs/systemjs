@@ -27,7 +27,7 @@
       delete global.createLoader;
 
       config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1) : './';
-      config.registry = 'https://registry.jspm.io';
+      config.registryURL = 'https://registry.jspm.io';
       config.locations.plugin = config.locations.plugin || config.baseURL;
 
       // -- helpers --
@@ -398,7 +398,7 @@
             name = name.substr(location.length + 1);
           }
           else if (name.substr(0, 2) != './' && name.substr(0, 3) != '../')
-            this.baseURL = config.registry;
+            this.baseURL = config.registryURL;
 
           var address = global.System.resolve.call(this, name, options);
 
