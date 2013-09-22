@@ -9,7 +9,7 @@ A ~20KB module loader written to work for ES6 modules, but that can load AMD, Co
 
 The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
-Uses RequireJS-inspired configuration options including baseURL, map, shim (dependency config) and custom paths (locations).
+Uses RequireJS-inspired configuration options including baseURL, map, shim (dependency config) and custom paths.
 
 Supported Plugins:
 
