@@ -1,7 +1,7 @@
 jspm loader
 ===========
 
-RequireJS-style ES6 dynamic module loader, with out-the-box plugin support.
+RequireJS-style ES6 dynamic module loader, with out-the-box registry and plugin support.
 
 For the loader documentation read below. For a complete overview of features, see [https://jspm.io](https://jspm.io).
 
