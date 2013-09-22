@@ -1,12 +1,9 @@
 /*
- * ES6 RequireJS-style module loader
- *
- * Supports RequireJS-inspired map, packages and plugins.
- *
- * https://github.com/jspm/jspm-loader
+ * JSPM Loader
+ * https://jspm.io
  * 
- * MIT
- *
+ * Copyright (c) 2013 Guy Bedford
+ * MIT License
  */
 (function() {
 
