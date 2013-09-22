@@ -207,13 +207,6 @@
         var applyMap = function(name, parentName) {
           parentName = parentName || '';
           
-          var location = getLocation(name);
-          var parentLocation = getLocation(parentName);
-
-          // if there is a parent location, and there is no location, add it here
-          if (parentLocation && !location)
-            name = parentLocation + ':' + name;
-
           // check for most specific map config
           var parentPrefixMatch = ''; // the matching parent refix
           var mapPrefixMatch = ''; // the matching map prefix
@@ -811,7 +804,7 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-          plugin: 'https://github.jspm.io/jspm/plugins@0.0.7'
+          plugin: 'https://github.jspm.io/jspm/plugins@0.0.8'
         }
       });
 

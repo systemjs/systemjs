@@ -1,3 +1,3 @@
-'import tests/global-dep';
+'import ./global-dep';
 
 window.newDep = jQuery.v;

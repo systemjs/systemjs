@@ -10,7 +10,7 @@
     }
   });
 
-  jspm.import('test-runner', function(runner) {
+  jspm.import('./test-runner', function(runner) {
     runner.execute([
       {
         name: 'Basic exporting & importing',
@@ -20,30 +20,30 @@
             if (m1 && m2 && m3 && err)
               complete(m1, m2, m3);
           }
-          jspm.import(['tests/default1'], function(_m1) {
+          jspm.import(['./tests/default1'], function(_m1) {
             if (m1 === undefined)
               m1 = null;
             else
               m1 = _m1;
             checkComplete();
           });
-          jspm.import(['tests/default1'], function(_m1) {
+          jspm.import(['./tests/default1'], function(_m1) {
             if (m1 === undefined)
               m1 = null;
             else
               m1 = _m1;
             checkComplete();
           });
-          jspm.import(['tests/default2'], function(_m2) {
+          jspm.import(['./tests/default2'], function(_m2) {
             m2 = _m2;
             checkComplete();
           });
-          jspm.import(['tests/asdf'], function() {
+          jspm.import(['./tests/asdf'], function() {
           }, function(_err) {
             err = _err;
             checkComplete();
           });
-          jspm.import('tests/default3', function(_m3) {
+          jspm.import('./tests/default3', function(_m3) {
             m3 = _m3;
             checkComplete();
           });
@@ -60,7 +60,7 @@
       {
         name: 'Global script loading',
         run: function(complete) {
-          jspm.import(['tests/global'], complete);
+          jspm.import(['./tests/global'], complete);
         },
         confirm: function(m) {
           if (!m.jQuery || !m.another)
@@ -72,10 +72,10 @@
         run: function(complete) {
           jspm.config({
             depends: {
-              'tests/global-with-dep': ['tests/global-dep']
+              './tests/global-with-dep': ['./global-dep']
             }
           });
-          jspm.import(['tests/global-with-dep'], complete);
+          jspm.import(['./tests/global-with-dep'], complete);
         },
         confirm: function(m) {
           if (m != '1.8.3')
@@ -85,7 +85,7 @@
       {
         name: 'Global script loading with inline depends',
         run: function(complete) {
-          jspm.import('tests/global-inline-dep', complete);
+          jspm.import('./tests/global-inline-dep', complete);
         },
         confirm: function(m) {
           if (m != '1.8.3')
@@ -97,7 +97,7 @@
         run: function(complete) {
           jspm.config({
             locations: {
-              'mypath': 'tests'
+              'mypath': './tests'
             }
           });
           jspm.import(['mypath:path'], complete);
@@ -108,26 +108,11 @@
         }
       },
       {
-        name: 'Location relative resolution',
-        run: function(complete) {
-          jspm.config({
-            locations: {
-              'mylocation': 'tests/location'
-            }
-          });
-          jspm.import(['mylocation:main'], complete)
-        },
-        confirm: function(m) {
-          if (m.p != 'yay')
-            return 'relative location not loaded';
-        }
-      },
-      {
         name: 'Map configuration',
         run: function(complete) {
           jspm.config({
             map: {
-              'maptest': 'tests/map-test'
+              'maptest': './tests/map-test'
             }
           });
           jspm.import(['maptest'], complete)
@@ -142,7 +127,7 @@
         run: function(complete) {
           jspm.config({
             map: {
-              mapmain: 'tests/my-app#main'
+              mapmain: './tests/my-app#main'
             }
           });
           jspm.import(['mapmain', 'mapmain/submodule'], complete)
@@ -159,12 +144,12 @@
         run: function(complete) {
           jspm.config({
             map: {
-              'tests/my-app': {
-                'jquery': 'tests/my-app/jquery-mapped'
+              './tests/my-app': {
+                'jquery': './tests/my-app/jquery-mapped'
               }
             }
           });
-          jspm.import(['tests/my-app/map-test'], complete);
+          jspm.import(['./tests/my-app/map-test'], complete);
         },
         confirm: function(m) {
           if (!m.mapDep)
@@ -174,7 +159,7 @@
       {
         name: 'Loading an AMD module',
         run: function(complete) {
-          jspm.import(['tests/amd-module'], complete);
+          jspm.import(['./tests/amd-module'], complete);
         },
         confirm: function(m) {
           if (m.amd != true)
@@ -186,7 +171,7 @@
       {
         name: 'Loading AMD CommonJS form',
         run: function(complete) {
-          jspm.import(['tests/amd-cjs-module'], complete);
+          jspm.import(['./tests/amd-cjs-module'], complete);
         },
         confirm: function(m) {
           if (m.test != 'hi')
@@ -196,7 +181,7 @@
       {
         name: 'Loading a CommonJS module',
         run: function(complete) {
-          jspm.import(['tests/common-js-module'], complete);
+          jspm.import(['./tests/common-js-module'], complete);
         },
         confirm: function(m) {
           if (m.hello != 'world')
@@ -208,7 +193,7 @@
       {
         name: 'Loading a UMD module',
         run: function(complete) {
-          jspm.import(['tests/umd'], complete);
+          jspm.import(['./tests/umd'], complete);
         },
         confirm: function(m) {
           if (m.d != 'hi')
@@ -218,7 +203,7 @@
       {
         name: 'Wrapper module support',
         run: function(complete) {
-          jspm.import('tests/wrapper', complete);
+          jspm.import('./tests/wrapper', complete);
         },
         confirm: function(m) {
           if (m != 'default1')
@@ -230,10 +215,10 @@
         run: function(complete) {
           jspm.config({
             map: {
-              'plugin:coffee': 'tests/compiler-plugin'
+              'plugin:coffee': './tests/compiler-plugin'
             }
           });
-          jspm.import(['tests/compiler-test.coffee!'], complete);
+          jspm.import(['./tests/compiler-test.coffee!'], complete);
         },
         confirm: function(m) {
           if (m.output != 'plugin output')
@@ -245,7 +230,7 @@
       {
         name: 'Handlebars plugin',
         run: function(complete) {
-          jspm.import('tests/hbs.hbs!', complete);
+          jspm.import('./tests/hbs.hbs!', complete);
         },
         confirm: function(m) {
           if (m({ title: 'hello' }) != '<h1>hello</h1>\n')
@@ -255,7 +240,7 @@
       {
         name: 'Text plugin',
         run: function(complete) {
-          jspm.import('tests/some-text.txt!text', complete);
+          jspm.import('./tests/some-text.txt!text', complete);
         },
         confirm: function(m) {
           if (m != 'this is some text\n')
@@ -265,7 +250,7 @@
       {
         name: 'JSON plugin',
         run: function(complete) {
-          jspm.import('tests/some-json.json!', complete);
+          jspm.import('./tests/some-json.json!', complete);
         },
         confirm: function(m) {
           if (m.some != 'json')
@@ -283,7 +268,7 @@
       {
         name: 'CSS plugin',
         run: function(complete) {
-          jspm.import('tests/css.css!', complete);
+          jspm.import('./tests/css.css!', complete);
         },
         confirm: function(m) {
         }
@@ -302,13 +287,13 @@
           jspm.config({
             onLoad: complete
           });
-          jspm.import(['tests/normalize-hook-test']);
+          jspm.import(['./tests/normalize-hook-test']);
         },
         confirm: function(name, source, options) {
           jspm.config({
             onLoad: null
           });
-          if (name != 'tests/normalize-hook-test')
+          if (name != './tests/normalize-hook-test')
             return 'normalize hook has incorrect name';
           if (source != '"hello world";')
             return 'invalid source';
