@@ -54,7 +54,7 @@ The loader is simply a custom ES6 module loader, and can be used as one:
   });
 ```
 
-By default modules with relative syntax (`./` or `../`) are loaded relative to the current page URL.
+By default modules with relative syntax (`./` or `../`) are loaded relative to the current page URL (the default `baseURL`).
 
 Modules without relative syntax (eg `jquery`) are loaded from the [JSPM Registry](https://github.com/jspm/registry).
 
