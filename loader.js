@@ -45,6 +45,9 @@
 
         // global dependency specifier, used for shimmed dependencies
         var globalDependencyRegEx = /["']import ([^'"]+)["']/g;
+        
+        // default switch - disable auto-default
+        var transpileRegEx = /["']es6-transpile['"];/;
 
         var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
         var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
@@ -527,11 +530,13 @@
               _imports.splice(exportsIndex, 1);
             if ((moduleIndex = _imports.indexOf('module')) != -1)
               _imports.splice(moduleIndex, 1);
+              
+            var isTranspiled = source.match(transpileRegEx);
 
             return {
               imports: _imports,
               execute: function() {
-                var deps = checkDefaultOnly(arguments);
+                var deps = isTranspiled ? Array.prototype.splice.call(arguments, 0) : checkDefaultOnly(arguments);
 
                 // add system dependencies
                 var exports;
@@ -587,7 +592,7 @@
 
                 output = output || exports;
 
-                if (typeof output == 'object' && output.constructor == Object)
+                if (isTranspiled || (typeof output == 'object' && output.constructor == Object))
                   return new global.Module(output);
                 else
                   return new global.Module({ 'default': output });
