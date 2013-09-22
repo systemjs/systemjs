@@ -347,11 +347,9 @@
             name = name.substr(0, name.length - pluginMatch[2].length - 1);
           }
 
+          // module names starting with '#' are never normalized
+          // useful for plugins where the import doesn't represent a real path
           if (name.substr(0, 1) != '#') {
-
-            // treat an initial '/' as location relative
-            if (name.substr(0, 1) == '/')
-              name = name.substr(1);
 
             // do standard normalization (resolve relative module name)
             name = global.System.normalize(name, referer);
