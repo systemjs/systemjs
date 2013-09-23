@@ -551,8 +551,8 @@
                     if (typeof d == 'string')
                       return depMap[d];
                     if (typeof d == 'object' && !(d instanceof Array))
-                      return g.require.apply(null, Array.prototype.splice.call(arguments, 1));
-                    return g.require(d, callback, errback, { name: options.normalized, address: options.address });
+                      return jspm.require.apply(null, Array.prototype.splice.call(arguments, 1));
+                    return jspm.require(d, callback, errback, { name: options.normalized, address: options.address });
                   }
 
                 if (moduleIndex != -1)
