@@ -1,6 +1,6 @@
 {
   "name": "jspm-loader",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "AMD, CommonJS and ES6 module loader",
   "main": "loader.js",
   "repository": {
@@ -10,7 +10,7 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "es6-module-loader": "~0.2.4"
+    "es6-module-loader": "~0.3.0"
   },
   "files": ["loader.js"]
 }
