@@ -770,9 +770,9 @@
         if (newConfig.baseUrl)
           jspm.baseURL = newConfig.baseUrl;
 
-        if (newConfig.localLibs)
+        if (newConfig.jspmPackages)
           for (var l in config.locations)
-            config.locations[l] = newConfig.localLibs + '/' + l;
+            config.locations[l] = newConfig.jspmPackages + '/' + l;
       }
       jspm.ondemand = function(resolvers) {
         jspm.ondemand(resolvers);
