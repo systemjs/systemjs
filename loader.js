@@ -460,8 +460,9 @@
             // comments not removed - use original source
             source = originalSource;
             // dont add the sourceURL and sourceMappingURL now
+            if (sourceMappingURL)
+              sourceURL = null;
             sourceMappingURL = null;
-            sourceURL = sourceURL ? null : options.address;
           }
           else
             sourceURL = sourceURL || options.address;
