@@ -533,20 +533,30 @@
               execute: function() {
                 var deps = isTranspiled ? Array.prototype.splice.call(arguments, 0) : checkDefaultOnly(arguments);
 
+                var depMap = {};
+                for (var i = 0; i < _imports.length; i++)
+                  depMap[_imports[i]] = deps[i];
+
                 // add system dependencies
                 var exports;
+                var module;
+                var require;
+
+                if ((!deps.length && typeof factory == 'function') || moduleIndex != -1)
+                  module = { id: options.normalized, uri: options.address };
+                if ((!deps.length && typeof factory == 'function') || exportsIndex != -1)
+                  exports = {};
+                if ((!deps.length && typeof factory == 'function') || requireIndex != -1)
+                  require = function(d) { 
+                    return depMap[d];
+                  }
 
                 if (moduleIndex != -1)
-                  deps.splice(moduleIndex, 0, { id: options.normalized, uri: options.address });
+                  deps.splice(moduleIndex, 0, module);
                 if (exportsIndex != -1)
-                  deps.splice(exportsIndex, 0, exports = {});
+                  deps.splice(exportsIndex, 0, exports);
                 if (requireIndex != -1)
-                  deps.splice(requireIndex, 0, function(names, callback, errback) {
-                    if (typeof names == 'object' && !(names instanceof Array))
-                      return require.apply(null, Array.prototype.splice.call(arguments, 1));
-
-                    return jspm.require(names, callback, errback, { name: options.normalized, address: options.address });
-                  });
+                  deps.splice(requireIndex, 0, require);
 
                 var output;
 
@@ -565,7 +575,7 @@
 
                   // run the factory function
                   if (typeof factory == 'function')
-                    output = factory.apply(g, deps);
+                    output = factory.apply(g, deps.length ? deps : [require, exports, module]) || exports;
                   // otherwise factory is the value
                   else
                     output = factory;
@@ -584,8 +594,6 @@
                 delete g.define;
                 delete g.require;
                 delete g.requirejs;
-
-                output = output || exports;
 
                 if (isTranspiled || (typeof output == 'object' && output.constructor == Object))
                   return new global.Module(output || {});
@@ -620,7 +628,7 @@
                 g.define = function(factory) { 
                   output = typeof factory == "function" ? factory.call(g, function(d) { 
                     return depMap[d]; 
-                  }, exports) : factory; 
+                  }, exports, module) : factory; 
                 };
                 g.define.amd = {};
 
