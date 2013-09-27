@@ -209,6 +209,43 @@ paths configuration mechanism:
 
 This will merge with the ondemand functionality in due course.
 
+### CDN Locations
+
+By default, the following CDN locations are already provided:
+
+```
+jspm.config({
+  locations: {
+    github: 'https://github.jspm.io',
+    npm: 'https://npm.jspm.io',
+    cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
+  }
+});
+```
+
+To submit a new CDN location, feel free to provide a pull request.
+
+The Github and NPM automatically use SPDY push to provide module dependencies. The endpoints have the following URL format:
+
+```
+  https://npm.jspm.io/[module name]@[version]/[file path]
+  https://github.jspm.io/[username]/[repo]@[version]/[file path]
+```
+
+Thus scripts can be loaded directly from NPM with:
+
+```javascript
+  jspm.import('npm:underscore@2.0');
+```
+
+Typically a minor version is specified only (eg @2.2), which will load the latest revision. This is the recommended way of loading a resource as it allows patches but not breaking changes in the dependency tree.
+
+If no version is specified, the latest stable version is loaded. Otherwise a complete version or tagname can also be provided.
+
+The CDN endpoints don't need to be used with the JSPM loader, they can also be used with scripts, stylesheets or HTML imports in the page.
+
+The benefits of having SPDY push dependencies mean that imported resources in styles, scripts and HTML imports don't require a separate round trip. Script dependencies are traced automatically and provided with this support.
+
 ### Plugins
 
 Supported Plugins:
