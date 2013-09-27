@@ -213,7 +213,7 @@ This will merge with the ondemand functionality in due course.
 
 By default, the following CDN locations are already provided:
 
-```
+```javascript
 jspm.config({
   locations: {
     github: 'https://github.jspm.io',
