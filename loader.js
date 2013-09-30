@@ -737,9 +737,13 @@
             out[i] = checkDefaultOnly(module[i]);
           return out;
         }
+        var defCnt = 0;
         for (var q in module) {
-          if (module.hasOwnProperty(q) && q != 'default')
-            return module;
+          if (module.hasOwnProperty(q)) {
+            defCnt++;
+            if (defCnt > 1)
+              return module;
+          }
         }
         return module['default'] ? module['default'] : module;
       }
