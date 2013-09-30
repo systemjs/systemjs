@@ -1,6 +1,6 @@
 {
   "name": "jspm-loader",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AMD, CommonJS and ES6 module loader",
   "main": "loader.js",
   "repository": {
