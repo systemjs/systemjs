@@ -35,10 +35,10 @@
         var moduleRegEx = /(?:^\s*|[}{\(\);,\n]\s*)module\s+("[^"]+"|'[^']+')\s*\{/;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
-        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
-        var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
-        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:]\s*)exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/g;
+        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
+        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
+        var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/g;
 
         // global dependency specifier, used for shimmed dependencies
         var globalDependencyRegEx = /["']import ([^'"]+)["']/g;
@@ -774,9 +774,9 @@
         if (newConfig.baseUrl)
           jspm.baseURL = newConfig.baseUrl;
 
-        if (newConfig.localLibs)
+        if (newConfig.jspmPackages)
           for (var l in config.locations)
-            config.locations[l] = newConfig.localLibs + '/' + l;
+            config.locations[l] = newConfig.jspmPackages + '/' + l;
       }
       jspm.ondemand = function(resolvers) {
         jspm.ondemand(resolvers);

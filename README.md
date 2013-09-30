@@ -1,7 +1,7 @@
 jspm loader
 ===========
 
-RequireJS-style ES6 dynamic module loader, with out-the-box registry and plugin support.
+RequireJS-style ES6 dynamic module loader, with optional out-the-box registry and plugin support.
 
 For the loader documentation read below. For a complete overview of features, see [https://jspm.io](https://jspm.io).
 
@@ -11,26 +11,10 @@ The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfi
 
 Uses RequireJS-inspired configuration options including baseURL, map, shim (dependency config) and custom paths.
 
-Supported Plugins:
-
-* CSS `jspm.import('my/file.css!')`
-* Image `jspm.import('some/image.png!image')`
-* JSON `jspm.import('some/data.json!')`
-* Text `jspm.import('some/text.txt!text')`
-* WebFont `jspm.import('#google Port Lligat Slab, Droid Sans !font')`
-
-To submit or request a new plugin, create an issue or pull request on the [Plugin Repository](https://github.com/jspm/plugins).
-
 Including
 ---
 
-For use over the CDN, simply use:
-
-```html
-  <script src="https://jspm.io/loader.js"></script>
-```
-
-To use locally, include [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js) and [`esprima-es6.min.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/esprima-es6.min.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) in the same folder as `loader.js`.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js) and [`esprima-es6.min.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/esprima-es6.min.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) and locate them in the same folder as `loader.js` from this repo.
 
 Then include it with a `<script>` tag:
 
@@ -41,6 +25,12 @@ Then include it with a `<script>` tag:
 The 60KB Esprima parser is dynamically included when loading an ES6 module format only.
 
 Without the parser, the polyfill and loader are roughly 20KB combined and minified.
+
+Alternatively include the CDN version of this code:
+
+```html
+  <script src="https://jspm.io/loader.js"></script>
+```
 
 Usage
 ---
@@ -56,9 +46,9 @@ The loader is simply a custom ES6 module loader, and can be used as one:
 
 By default modules with relative syntax (`./` or `../`) are loaded relative to the current page URL (the default `baseURL`).
 
-Modules without relative syntax (eg `jquery`) are loaded from the [JSPM Registry](https://github.com/jspm/registry).
+Modules without relative syntax (eg `jquery`) are loaded from the registry URL.
 
-### Setting the baseURL
+### Setting the baseURL and registryURL
 
 Just like RequireJS, provide configuration by setting the `jspm` global variable before the script is loaded, or call the `jspm.config` function:
 
@@ -69,6 +59,18 @@ Just like RequireJS, provide configuration by setting the `jspm` global variable
   jspm.import('./test');
   //loads http://www.mysite.com/test.js
 ```
+
+The registry URL can also be customized with
+
+```javascript
+  jspm.config({
+    registryURL: 'http://www.mysite.com/lib'
+  });
+  jspm.import('jquery');
+  // loads http://www.mysite.com/lib/jquery.js
+```
+
+By default the registry URL is set to the [JSPM CDN registry](https://github.com/jspm/registry).
 
 ### Loading Global Scripts
 
@@ -206,6 +208,57 @@ paths configuration mechanism:
 ```
 
 This will merge with the ondemand functionality in due course.
+
+### CDN Locations
+
+By default, the following CDN locations are already provided:
+
+```javascript
+jspm.config({
+  locations: {
+    github: 'https://github.jspm.io',
+    npm: 'https://npm.jspm.io',
+    cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
+  }
+});
+```
+
+To submit a new CDN location, feel free to provide a pull request.
+
+The Github and NPM automatically use SPDY push to provide module dependencies. The endpoints have the following URL format:
+
+```
+  https://npm.jspm.io/[module name]@[version]/[file path]
+  https://github.jspm.io/[username]/[repo]@[version]/[file path]
+```
+
+Thus scripts can be loaded directly from NPM with:
+
+```javascript
+  jspm.import('npm:underscore@2.0');
+```
+
+Typically a minor version is specified only (eg @2.2), which will load the latest revision. This is the recommended way of loading a resource as it allows patches but not breaking changes in the dependency tree.
+
+If no version is specified, the latest stable version is loaded. Otherwise a complete version or tagname can also be provided.
+
+The CDN endpoints don't need to be used with the JSPM loader, they can also be used with scripts, stylesheets or HTML imports in the page.
+
+The benefits of having SPDY push dependencies mean that imported resources in styles, scripts and HTML imports don't require a separate round trip. Script dependencies are traced automatically and provided with this support.
+
+### Plugins
+
+Supported Plugins:
+
+* CSS `jspm.import('my/file.css!')`
+* Image `jspm.import('some/image.png!image')`
+* JSON `jspm.import('some/data.json!')`
+* Text `jspm.import('some/text.txt!text')`
+* WebFont `jspm.import('#google Port Lligat Slab, Droid Sans !font')`
+
+By default, plugins are loaded from the [JSPM plugin repository](https://github.com/jspm/plugins), but this location can also be customized locally.
+
+To submit or request a new plugin, create an issue or pull request at the plugin repository page.
 
 ### Transpiler Plugins
 
