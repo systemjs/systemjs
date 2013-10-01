@@ -68,6 +68,16 @@
         }
       },
       {
+        name: 'Global script with multiple objects the same',
+        run: function(complete) {
+          jspm.import(['./tests/global-multi'], complete);
+        },
+        confirm: function(m) {
+          if (m.jquery != 'here')
+            return 'Multi globals not detected';
+        }
+      },
+      {
         name: 'Global script loading with depends',
         run: function(complete) {
           jspm.config({
