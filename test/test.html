@@ -13,6 +13,16 @@
   jspm.import('./test-runner', function(runner) {
     runner.execute([
       {
+        name: 'Wrapper module support',
+        run: function(complete) {
+          jspm.import('./tests/wrapper', complete);
+        },
+        confirm: function(m) {
+          if (m != 'default1')
+            return 'Wrapper module not defined.';
+        }
+      },
+      {
         name: 'Basic exporting & importing',
         run: function(complete) {
           var m1, m2, m3, err;
@@ -208,16 +218,6 @@
         confirm: function(m) {
           if (m.d != 'hi')
             return 'module value not defined';
-        }
-      },
-      {
-        name: 'Wrapper module support',
-        run: function(complete) {
-          jspm.import('./tests/wrapper', complete);
-        },
-        confirm: function(m) {
-          if (m != 'default1')
-            return 'Wrapper module not defined.';
         }
       },
       {

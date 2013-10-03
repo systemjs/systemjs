@@ -698,8 +698,8 @@
                 else
                   outModule = new global.Module({ 'default': g.module.exports });
 
-                for (var p in nodeGlobals)
-                  delete g[p];
+                for (var i = 0; i < nodeGlobals.length; i++)
+                  delete g[nodeGlobals[i]];
 
                 return outModule;
               }

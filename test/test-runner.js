@@ -26,7 +26,7 @@ TestPage.prototype = {
   }
 };
 
-export function execute(tests) {
+exports.execute = function(tests) {
   // draw the test table
   document.body.innerHTML = TestPage.render({
     id: 'test-table',
