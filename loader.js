@@ -359,8 +359,6 @@
             else
               name = global.System.normalize(name, referer);
 
-            console.log(name);
-
             // do map config
             name = applyMap(name, parentName);
 
@@ -827,7 +825,7 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-          plugin: 'https://github.jspm.io/jspm/plugins@master'
+          plugin: 'https://github.jspm.io/jspm/plugins@0.0.8'
         }
       });
 
