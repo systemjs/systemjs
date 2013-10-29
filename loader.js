@@ -350,9 +350,16 @@
           // module names starting with '#' are never normalized
           // useful for plugins where the import doesn't represent a real path
           if (name.substr(0, 1) != '#') {
+            
+            // location relative normalization
+            if (name.substr(0, 2) == './' && referer && referer.name && referer.name.indexOf(':') != -1)
+              name = referer.name.substr(0, referer.name.indexOf(':') + 1) + name.substr(2);
 
             // do standard normalization (resolve relative module name)
-            name = global.System.normalize(name, referer);
+            else
+              name = global.System.normalize(name, referer);
+
+            console.log(name);
 
             // do map config
             name = applyMap(name, parentName);
@@ -361,7 +368,6 @@
 
           if (pluginName)
             name = name + '!' + pluginName;
-          
           return name;
         },
         resolve: function(name, options) {
@@ -821,7 +827,7 @@
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-          plugin: 'https://github.jspm.io/jspm/plugins@0.0.8'
+          plugin: 'https://github.jspm.io/jspm/plugins@master'
         }
       });
 

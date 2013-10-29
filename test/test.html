@@ -123,6 +123,7 @@
           jspm.import(['mypath:path'], complete);
         },
         confirm: function(m) {
+          console.log(m);
           if (m != 'path')
             return 'module not loaded';
         }

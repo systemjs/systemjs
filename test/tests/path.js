@@ -1,1 +1,2 @@
-window.p = 'path';
+require('./dep');
+module.exports = 'path';
