@@ -120,10 +120,9 @@
               'mypath': './tests'
             }
           });
-          jspm.import(['mypath:path'], complete);
+          jspm.import(['mypath:path', 'mypath:deep/deep'], complete);
         },
         confirm: function(m) {
-          console.log(m);
           if (m != 'path')
             return 'module not loaded';
         }

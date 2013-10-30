@@ -350,9 +350,10 @@
           // module names starting with '#' are never normalized
           // useful for plugins where the import doesn't represent a real path
           if (name.substr(0, 1) != '#') {
-            
+            console.log(name);
+            console.log(referer && referer.name);
             // location relative normalization
-            if (name.substr(0, 2) == './' && referer && referer.name && referer.name.indexOf(':') != -1)
+            if (name.substr(0, 2) == './' && referer && referer.name && referer.name.indexOf(':') != -1 && referer.name.indexOf('/') == -1)
               name = referer.name.substr(0, referer.name.indexOf(':') + 1) + name.substr(2);
 
             // do standard normalization (resolve relative module name)
@@ -361,7 +362,7 @@
 
             // do map config
             name = applyMap(name, parentName);
-
+            console.log(name);
           }
 
           if (pluginName)
