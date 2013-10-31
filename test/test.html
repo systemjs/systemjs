@@ -25,10 +25,10 @@
       {
         name: 'Basic exporting & importing',
         run: function(complete) {
-          var m1, m2, m3, err;
+          var m1, m2, m3, m4, err;
           var checkComplete = function() {
-            if (m1 && m2 && m3 && err)
-              complete(m1, m2, m3);
+            if (m1 && m2 && m3 && m4 && err)
+              complete(m1, m2, m3, m4);
           }
           jspm.import(['./tests/default1'], function(_m1) {
             if (m1 === undefined)
@@ -57,14 +57,20 @@
             m3 = _m3;
             checkComplete();
           });
+          jspm.import('./tests/module', function(_m4) {
+            m4 = _m4;
+            checkComplete();
+          });
         },
-        confirm: function(m1, m2, m3) {
+        confirm: function(m1, m2, m3, m4) {
           if (m1 != 'default1')
             return 'Error defining default 1';
           if (m2 != 'default2')
             return 'Error defining default 2';
           if (m3 != 'default3')
             return 'Error defining default 3';
+          if (m4.test != 'default3')
+            return 'Error defining module';
         }
       },
       {

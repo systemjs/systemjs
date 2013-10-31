@@ -49,8 +49,6 @@
         var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
         var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
 
-        var wrapperRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
-
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
 
@@ -468,17 +466,6 @@
           }
           else
             sourceURL = sourceURL || options.address;
-
-          // check if it is a "wrapper" module
-          // import * from 'jquery';
-          if (match = source.match(wrapperRegEx)) {
-            return {
-              imports: [match[1] || match[2]],
-              execute: function(dep) {
-                return dep;
-              }
-            };
-          }
 
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
             return;
