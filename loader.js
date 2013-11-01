@@ -668,7 +668,7 @@
 
                 g.global = g;
                 g.exports = {};
-                g.process = nodeProcess;
+                g._process = nodeProcess;
                 g.require = function(d) {
                   return depMap[d];
                 }
@@ -677,6 +677,8 @@
                 g.module = {
                   exports: g.exports
                 };
+
+                source = 'var process = _process;' + source;
 
                 __scopedEval(source, g, sourceURL, sourceMappingURL);
 
