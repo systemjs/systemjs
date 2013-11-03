@@ -17,8 +17,9 @@
     var config = {};
     config.waitSeconds = 20;
     config.map = config.map || {};
+    config.main = config.main || {};
     config.locations = config.locations || {};
-    config.depends = config.depends || {};
+    config.shim = config.shim || {};
 
     global.createLoader = function() {
       delete global.createLoader;
@@ -38,13 +39,14 @@
         var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
         var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
         var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
-        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=/g;
+        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
 
         // global dependency specifier, used for shimmed dependencies
-        var globalDependencyRegEx = /["']import ([^'"]+)["']/g;
+        var globalShimRegEx = /^\s*["']import/;
+        var globalImportRegEx = /\s*["']import ([^'"]+)["']/gm;
         
         // default switch - disable auto-default
-        var transpileRegEx = /["']es6-transpile['"];/;
+        var transpileRegEx = /\s*["']es6-transpile['"];/m;
 
         var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
         var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
@@ -52,15 +54,14 @@
         // regex to check absolute urls
         var absUrlRegEx = /^\/|([^\:\/]*:\/\/)/;
 
+        // determine if the source is minified - don't remove comments in this case
+        function isMinified(str) {
+          var newlines = str.match(/\n/g);
+          return str.length / (newlines && newlines.length || 1) > 200;
+        }
+
         // function to remove the comments from a string
         function removeComments(str) {
-
-          // if it is uglified code, skip
-          var newlines = str.match(/\n/g);
-          var lineCnt = newlines && newlines.length || 0;
-          if (str.length / lineCnt > 200)
-            return false;
-
           // output
           // block comments replaced with equivalent whitespace
           // this is to ensure source maps remain valid
@@ -255,15 +256,12 @@
             mapMatch = config.map['*'][_p];
           }
           // apply map config
-          if (mapPrefixMatch) {
-            // get main specifier (#main)
-            var main;
-            if (mapMatch.indexOf('#') != -1) {
-              main = mapMatch.substr(mapMatch.indexOf('#') + 1);
-              mapMatch = mapMatch.substr(0, mapMatch.length - main.length - 1);
-            }
-            name = mapMatch + name.substr(mapPrefixMatch.length) + (name.length == mapPrefixMatch.length && main ? '/' + main : '');
-          }
+          if (mapPrefixMatch)
+            name = mapMatch + name.substr(mapPrefixMatch.length);
+          
+          // apply main config
+          if (config.main[name])
+            name = name + '/' + config.main[name];
 
           return name;
         }
@@ -433,52 +431,42 @@
 
           });
         },
-        link: function(originalSource, options) {
+        link: function(source, options) {
           if (config.onLoad)
-            config.onLoad(options.normalized, originalSource, options);
+            config.onLoad(options.normalized, source, options);
 
           // plugins provide empty source
-          if (!originalSource)
+          if (!source)
             return new global.Module({});
 
-          var source = originalSource;
+          var sourceMappingURL = sourceURL = null;
 
-          var match;
-
-          // detect any source map comments
-          var sourceMappingURL = source.match(sourceMappingURLRegEx);
-          if (sourceMappingURL)
-            sourceMappingURL = sourceMappingURL[1];
-
-          var sourceURL = source.match(sourceURLRegEx);
-          sourceURL = sourceURL ? sourceURL[1] : null;
-
-          // remove comments before doing regular expressions
-          source = removeComments(source);
-
-          if (!source) {
-            // comments not removed - use original source
-            source = originalSource;
-            // dont add the sourceURL and sourceMappingURL now
+          if (!isMinified(source)) {
+            // detect any source map comments (as we're about to remove comments)
+            sourceMappingURL = source.match(sourceMappingURLRegEx);
             if (sourceMappingURL)
-              sourceURL = null;
-            sourceMappingURL = null;
-          }
-          else
-            sourceURL = sourceURL || options.address;
+              sourceMappingURL = sourceMappingURL[1];
 
+            sourceURL = source.match(sourceURLRegEx);
+            sourceURL = sourceURL ? sourceURL[1] : options.address;
+
+            // remove comments before doing regular expressions
+            source = removeComments(source);
+          } 
+
+          // es6 module format
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
             return;
 
-          // depends config
-          var _imports = config.depends[options.normalized] ? [].concat(config.depends[options.normalized]) : [];
+          var match, _imports = [];
+
+          var shim = config.shim[options.normalized];
 
           // check if this module uses AMD form
           // define([.., .., ..], ...)
           // define('modulename', [.., ..., ..])
           amdDefineRegEx.lastIndex = 0;
-
-          if ((match = amdDefineRegEx.exec(source)) && (match[2] || match[1])) {
+          if (!shim && (match = amdDefineRegEx.exec(source)) && (match[2] || match[1])) {
 
             _imports = _imports.concat(eval(match[2] || '[]'));
 
@@ -599,8 +587,10 @@
 
           // check if it uses the AMD CommonJS form
           // define(varName); || define(function(require, exports) {}); || define({})
-          if (source.match(cjsDefineRegEx)) {
-            var match;
+          cjsDefineRegEx.lastIndex = 0;
+          if (!shim && (match = cjsDefineRegEx.exec(source))) {
+            if (match[2] || match[3])
+              _imports.push(match[2] || match[3]);
             while (match = cjsRequireRegEx.exec(source))
               _imports.push(match[2] || match[3]);
 
@@ -648,8 +638,11 @@
           
           // CommonJS
           // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
-          if (source.match(cjsExportsRegEx) || source.match(cjsRequireRegEx)) {
-            var match;
+          cjsExportsRegEx.lastIndex = 0;
+          cjsRequireRegEx.lastIndex = 0;
+          if (!shim && ((match = cjsRequireRegEx.exec(source)) || source.match(cjsExportsRegEx))) {
+            if (match)
+              _imports.push(match[2] || match[3]);
             while (match = cjsRequireRegEx.exec(source))
               _imports.push(match[2] || match[3]);
 
@@ -697,12 +690,16 @@
             };
           }
 
-          // global script
-          
+          // global script          
+          // add shim imports and exports
+          if (shim && shim instanceof Array)
+            _imports = _imports.concat(shim);
+
           // check for global shimmed dependencies
           // specified with eg:
           // "import lib:jquery";
-          while (match = globalDependencyRegEx.exec(source))
+          globalImportRegEx.lastIndex = 0;
+          while (match = globalImportRegEx.exec(source))
             _imports.push(match[1]);
 
           return {
@@ -711,7 +708,6 @@
             execute: function() {
               setGlobal(checkDefaultOnly(arguments));
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
-
               return new global.Module(getGlobal());
             }
           };

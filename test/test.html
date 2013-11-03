@@ -97,7 +97,7 @@
         name: 'Global script loading with depends',
         run: function(complete) {
           jspm.config({
-            depends: {
+            shim: {
               './tests/global-with-dep': ['./global-dep']
             }
           });
@@ -153,7 +153,10 @@
         run: function(complete) {
           jspm.config({
             map: {
-              mapmain: './tests/my-app#main'
+              mapmain: './tests/my-app'
+            },
+            main: {
+              './tests/my-app': 'main'
             }
           });
           jspm.import(['mapmain', 'mapmain/submodule'], complete)

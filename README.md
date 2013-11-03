@@ -1,15 +1,14 @@
 jspm loader
 ===========
 
-RequireJS-style ES6 dynamic module loader, with optional out-the-box registry and plugin support.
+RequireJS-style ES6 dynamic module loader, built on top the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
 For the loader documentation read below. For a complete overview of features, see [https://jspm.io](https://jspm.io).
 
-A ~20KB module loader written to work for ES6 modules, but that can load AMD, CommonJS and global scripts detecting the format automatically.
-
-The loader itself is 10KB, and it is built on top of the 11KB [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
-
-Uses RequireJS-inspired configuration options including baseURL, map, shim (dependency config) and custom paths.
+* ~10KB module loader built on top of the ~11KB polyfill.
+* Loads ES6 modules, AMD, CommonJS and global scripts detecting the format automatically and efficiently.
+* Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths.
+* Optional default CDN registry and plugin support configured out of the box. Load `jquery` or `bootstrap` without any installation necessary.
 
 Including
 ---
@@ -89,7 +88,7 @@ some-global.js:
   });
 ```
 
-Global script dependencies can be set using the [dependency configuration](#dependency-configuration). The global variables declared by any dependencies will then be present on the global object.
+Global script dependencies can be set using the [shim configuration](#shim-configuration). The global variables declared by any dependencies will then be present on the global object.
 
 When setting global script dependencies, the globals are carefully stored and retrieved so that multiple versions of the same global name can be used by different global scripts (for example having multiple versions of jQuery).
 
@@ -144,38 +143,60 @@ es6.js:
 
 ### Map Configuration
 
+Map configuration simply provides an alias to a module.
+
+For example:
+
 ```javascript
   jspm.config({
     map: {
       'jquery': './lib/jquery',
-      'backbone': './lib/backbone#backbone'
+      'backbone': './lib/backbone'
     }
   });
   
-  jspm.import('jquery');          // loads ./lib/jquery.js
-  
-  jspm.import('backbone');        // loads ./lib/backbone/backbone.js
-  jspm.import('backbone/module'); // loads ./lib/backbone/module.js
+  jspm.import('jquery');          // loads [baseURL]/lib/jquery.js
+  jspm.import('backbone/module'); // loads [baseURL]/lib/backbone/module.js
 ```
 
-Map configuration simply provides an alias to a module.
+### Main Configuration
 
-Optionally a main entry point can be specified with a `#` symbol. This works like the RequireJS package configuration, allowing the main module to be loaded directly by name while also supporting submodules as with `backbone` in the example above.
+A main entry point for a package can be specified with the `main` config option.
 
-### Dependency Configuration
+```javascript
+  jspm.config({
+    map: {
+      'bootstrap': './lib/bootstrap'
+    },
+    main: {
+      './lib/bootstrap': 'js/bootstrap'
+    }
+  });
 
-Dependency configuration allows dependencies to be specified for existing legacy scripts, mostly to ensure global script load ordering.
+  jspm.import('bootstrap');         // loads [baseURL]/lib/bootstrap/js/bootstrap.js
+  jspm.import('bootstrap/module');  // loads [baseURL]/lib/bootstrap/module.js
+```
+
+This is just like the RequireJS package configuration, allowing the main module to be loaded directly by name while also supporting submodules as in the example above.
+
+### Shim Configuration
+
+Shim configuration allows dependencies to be specified for existing global legacy scripts, to ensure global script load ordering.
+
+This is mostly identical to the RequireJS shim configuration
 
 Example:
 
 ```javascript
   jspm.config({
-    depends: {
-      'bootstrap': ['jquery']
+    shim: {
+      './lib/jquery': true,
+      './lib/bootstrap/js/bootstrap': ['jquery']
     }
   });
   
-  // loads jquery first, even though bootstrap has no module syntax
+  // loads jquery first, before loading bootstrap
+  // ensures that jquery is executed as a global script, not as AMD
   jspm.import('bootstrap'); 
 ```
 
