@@ -312,7 +312,7 @@
           return singleGlobal ? { default: singleGlobal } : moduleGlobal;
         }
 
-        var pluginRegEx = /(\.[^\/\.]+)?!(.*)/;
+        var pluginRegEx = /(\.[^\/\.]+|.)!(.*)/;
 
         var nodeProcess = {
           nextTick: function(f) {
