@@ -35,6 +35,9 @@
         var exportRegEx = /(?:^\s*|[}{\(\);,\n]\s*)export\s+(\{|\*|var|class|function|default)/;
         var moduleRegEx = /(?:^\s*|[}{\(\);,\n]\s*)module\s+("[^"]+"|'[^']+')\s*\{/;
 
+        // es6 module forwarding - allow detecting without Esprima
+        var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
+
         // AMD and CommonJS regexs for support
         var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
         var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
@@ -453,6 +456,17 @@
             // remove comments before doing regular expressions
             source = removeComments(source);
           } 
+
+          // check if it is an es6 alias module
+          // eg import * from 'jquery';
+          if (match = source.match(aliasRegEx)) {
+             return {
+               imports: [match[1] || match[2]],
+               execute: function(dep) {
+                 return dep;
+               }
+             };
+           }
 
           // es6 module format
           if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
