@@ -428,7 +428,7 @@
 
           // for plugins, we first need to load the plugin module itself
           var pluginName = pluginMatch[2];
-          jspm.import('plugin:' + pluginName, function(plugin) {
+          jspm.import('!' + pluginName, function(plugin) {
 
             plugin(options.normalized.substr(0, options.normalized.indexOf('!')), url, jspm.fetch, callback, errback);
 
@@ -821,8 +821,7 @@
         locations: {
           github: 'https://github.jspm.io',
           npm: 'https://npm.jspm.io',
-          cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-          plugin: 'https://github.jspm.io/jspm/plugins@0.0.8'
+          cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
         }
       });
 

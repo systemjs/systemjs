@@ -267,7 +267,7 @@ The CDN endpoints don't need to be used with the JSPM loader, they can also be u
 
 The benefits of having SPDY push dependencies mean that imported resources in styles, scripts and HTML imports don't require a separate round trip. Script dependencies are traced automatically and provided with this support.
 
-### Plugins
+### Included Plugins
 
 Supported Plugins:
 
@@ -277,13 +277,13 @@ Supported Plugins:
 * Text `jspm.import('some/text.txt!text')`
 * WebFont `jspm.import('#google Port Lligat Slab, Droid Sans !font')`
 
-By default, plugins are loaded from the [JSPM plugin repository](https://github.com/jspm/plugins), but this location can also be customized locally.
+By default, plugins are loaded from the [JSPM registry](https://github.com/jspm/registry), as the name `!pluginName`.
 
-To submit or request a new plugin, create an issue or pull request at the plugin repository page.
+To submit a plugin, create a pull request on the registry page.
 
-### Transpiler Plugins
+### Custom Plugins
 
-Transpiler plugins are supported for loading templates or languages that compile to JavaScript.
+Custom transpiler plugins allow for loading templates or languages that compile to JavaScript.
 
 These are different from RequireJS in that they are extension-based plugin names:
 
@@ -299,22 +299,21 @@ The plugin name can also be specified if not identical to the extension:
   jspm.import('some/module.cs!coffee');
 ```
 
-The plugin itself is loaded from the resource name `plugin:[pluginname]`. This `plugin` location or plugin itself can be mapped with standard configurations:
+The plugin itself is loaded from the resource name `![pluginname]`. This name itself can be mapped with standard configuration:
 
 ```javascript
   jspm.config({
     map: {
-      'plugin:coffee': 'my/coffee/plugin',
-    },
-    locations: {
-      'plugin': 'my/custom/plugins/folder'
+      '!coffee': 'my/custom/coffee/plugin',
     }
   });
 ```
 
+Otherwise, plugins are loaded from the registry.
+
 ### Writing a Plugin
 
-lib/plugins/coffee.js:
+[baseURL]/my/custom/coffee/plugin.js:
 ```javascript
   var CoffeeScript = require('./coffee-script');
 
