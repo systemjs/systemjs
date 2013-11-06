@@ -428,7 +428,7 @@
 
           // for plugins, we first need to load the plugin module itself
           var pluginName = pluginMatch[2];
-          jspm.import('!' + pluginName, function(plugin) {
+          jspm.import(pluginName, function(plugin) {
 
             plugin(options.normalized.substr(0, options.normalized.indexOf('!')), url, jspm.fetch, callback, errback);
 
