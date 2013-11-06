@@ -271,6 +271,20 @@ The CDN endpoints don't need to be used with the JSPM loader, they can also be u
 
 The benefits of having SPDY push dependencies mean that imported resources in styles, scripts and HTML imports don't require a separate round trip. Script dependencies are traced automatically and provided with this support.
 
+### Cache Busting
+
+When developing locally, you may want to automatically cache bust the local URLs.
+
+For this, set the `urlArgs` configuration option:
+
+```javascript
+  jspm.config({
+    urlArgs: '?bust=' + new Date().getTime()
+  });
+
+  jspm.import('./test');  // requests [baseURL]/test.js?bust=1383745775497
+```
+
 ### Included Plugins
 
 Supported Plugins:
