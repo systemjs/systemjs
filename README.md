@@ -183,7 +183,11 @@ This is just like the RequireJS package configuration, allowing the main module 
 
 Shim configuration allows dependencies to be specified for existing global legacy scripts, to ensure global script load ordering.
 
-This is mostly identical to the RequireJS shim configuration
+This is mostly identical to the RequireJS shim configuration.
+
+When a script is shimmed, it is treated as a global script only, and no AMD, CJS or ES6 processing is done.
+
+Setting the shim to `true` can be useful to ensure a script is treated as a global exporter.
 
 Example:
 
