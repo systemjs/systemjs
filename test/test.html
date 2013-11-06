@@ -4,6 +4,9 @@
 <script src="../loader.js" type="text/javascript"></script>
 
 <script>
+  jspm.config({
+    urlArgs: '?test'
+  });
 
   jspm.import('./test-runner', function(runner) {
     runner.execute([
@@ -229,7 +232,7 @@
         run: function(complete) {
           jspm.config({
             map: {
-              '!coffee': './tests/compiler-plugin'
+              'coffee': './tests/compiler-plugin'
             }
           });
           jspm.import(['./tests/compiler-test.coffee!'], complete);

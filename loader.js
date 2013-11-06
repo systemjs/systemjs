@@ -20,6 +20,7 @@
     config.main = config.main || {};
     config.locations = config.locations || {};
     config.shim = config.shim || {};
+    config.urlArgs = config.urlArgs || '';
 
     global.createLoader = function() {
       delete global.createLoader;
@@ -383,6 +384,7 @@
           var oldBaseURL = this.baseURL;
 
           var location = getLocation(name);
+          var urlArgs = '';
           if (location) {
             if (!config.locations[location])
               throw 'Location "' + location + '" not defined.';
@@ -391,6 +393,8 @@
           }
           else if (name.substr(0, 2) != './' && name.substr(0, 3) != '../')
             this.baseURL = config.registryURL;
+          else
+            urlArgs = config.urlArgs;
 
           var address = global.System.resolve.call(this, name, options);
 
@@ -400,7 +404,7 @@
 
           this.baseURL = oldBaseURL;
 
-          return address;
+          return address + urlArgs;
         },
         fetch: function(url, callback, errback, options) {
           options = options || {};
