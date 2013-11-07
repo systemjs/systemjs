@@ -61,7 +61,7 @@
         // determine if the source is minified - don't remove comments in this case
         function isMinified(str) {
           var newlines = str.match(/\n/g);
-          return str.length / (newlines && newlines.length || 1) > 200;
+          return str.length / (newlines && newlines.length || 1) > 100;
         }
 
         // function to remove the comments from a string
@@ -448,18 +448,19 @@
 
           var sourceMappingURL = sourceURL = null;
 
+          // detect any source map comments (as we're about to remove comments)
+          sourceMappingURL = source.match(sourceMappingURLRegEx);
+          if (sourceMappingURL)
+            sourceMappingURL = sourceMappingURL[1];
+
+          sourceURL = source.match(sourceURLRegEx);
+          sourceURL = sourceURL ? sourceURL[1] : options.address;
+          
+
           if (!isMinified(source)) {
-            // detect any source map comments (as we're about to remove comments)
-            sourceMappingURL = source.match(sourceMappingURLRegEx);
-            if (sourceMappingURL)
-              sourceMappingURL = sourceMappingURL[1];
-
-            sourceURL = source.match(sourceURLRegEx);
-            sourceURL = sourceURL ? sourceURL[1] : options.address;
-
             // remove comments before doing regular expressions
             source = removeComments(source);
-          } 
+          }
 
           // check if it is an es6 alias module
           // eg import * from 'jquery';
