@@ -432,7 +432,7 @@
 
           // for plugins, we first need to load the plugin module itself
           var pluginName = pluginMatch[2];
-          jspm.import(pluginName, function(plugin) {
+          jspm['import'](pluginName, function(plugin) {
 
             plugin(options.normalized.substr(0, options.normalized.indexOf('!')), url, jspm.fetch, callback, errback);
 
@@ -754,8 +754,8 @@
         return module['default'] ? module['default'] : module;
       }
 
-      var _import = jspm.import;
-      jspm.import = function(name, callback, errback, referer) {
+      var _import = jspm['import'];
+      jspm['import'] = function(name, callback, errback, referer) {
         _import.call(jspm, name, function() {
           if (callback)
             callback.apply(null, checkDefaultOnly(arguments));
@@ -810,7 +810,7 @@
 
         // amd require
         if (names instanceof Array)
-          return jspm.import(names, callback, errback, referer);
+          return jspm['import'](names, callback, errback, referer);
         
         // commonjs require
         else if (typeof names == 'string')
@@ -846,8 +846,7 @@
         var curPath = scripts[scripts.length - 1].src;
         var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
         document.write(
-          '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js">' + '<' + '/script>' +
-          '<' + 'script type="text/javascript">' + 'createLoader();' + '<' + '/script>'
+          '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="createLoader">' + '<' + '/script>'
         );
       }
       else {
