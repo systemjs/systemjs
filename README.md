@@ -317,12 +317,12 @@ The plugin name can also be specified if not identical to the extension:
   jspm.import('some/module.cs!coffee');
 ```
 
-The plugin itself is loaded from the resource name `![pluginname]`. This name itself can be mapped with standard configuration:
+The plugin itself is loaded from the resource name `[pluginname]`. This name itself can be mapped with standard configuration:
 
 ```javascript
   jspm.config({
     map: {
-      '!coffee': 'my/custom/coffee/plugin',
+      'coffee': 'my/custom/coffee/plugin',
     }
   });
 ```
