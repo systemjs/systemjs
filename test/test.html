@@ -92,7 +92,7 @@
         }
       },
       {
-        name: 'Global script loading with depends',
+        name: 'Global script loading with imports',
         run: function(complete) {
           jspm.config({
             shim: {
@@ -107,7 +107,7 @@
         }
       },
       {
-        name: 'Global script loading with inline depends',
+        name: 'Global script loading with inline imports',
         run: function(complete) {
           jspm.import('./tests/global-inline-dep', complete);
         },
@@ -117,10 +117,37 @@
         }
       },
       {
-        name: 'Location configuration',
+        name: 'Global script with export specified',
         run: function(complete) {
           jspm.config({
-            locations: {
+            shim: {
+              './tests/global-with-export': {
+                exports: 'window.q.r'
+              }
+            }
+          });
+          jspm.import(['./tests/global-with-export'], complete);
+        },
+        confirm: function(m) {
+          if (m != 'r')
+            return 'Exports value not correct'
+        }
+      },
+      {
+        name: 'Global script with inline exports',
+        run: function(complete) {
+          jspm.import('./tests/global-inline-export', complete);
+        },
+        confirm: function(m) {
+          if (m != 'r')
+            return 'Inline export not applied'
+        }
+      },
+      {
+        name: 'Endpoint configuration',
+        run: function(complete) {
+          jspm.config({
+            endpoints: {
               'mypath': './tests'
             }
           });
@@ -129,6 +156,25 @@
         confirm: function(m) {
           if (m != 'path')
             return 'module not loaded';
+        }
+      },
+      {
+        name: 'Endpoint main config',
+        run: function(complete) {
+          jspm.config({
+            endpoints: {
+              'ep': {
+                location: './tests/ep',
+                repoDepth: 1,
+                main: 'main'
+              }
+            }
+          });
+          jspm.import(['ep:some-repo'], complete);
+        },
+        confirm: function(m) {
+          if (!m.main)
+            return 'incorrect module';
         }
       },
       {
@@ -286,16 +332,6 @@
           jspm.import('#google Port Lligat Slab !font', complete);
         },
         confirm: function(m) {
-        }
-      },
-      {
-        name: 'Handlebars plugin',
-        run: function(complete) {
-          jspm.import('./tests/hbs.hbs!', complete);
-        },
-        confirm: function(m) {
-          if (m({ title: 'hello' }) != '<h1>hello</h1>\n')
-            return 'Handlebars template not compiled';
         }
       },
       {

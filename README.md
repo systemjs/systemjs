@@ -183,12 +183,6 @@ This is just like the RequireJS package configuration, allowing the main module 
 
 Shim configuration allows dependencies to be specified for existing global legacy scripts, to ensure global script load ordering.
 
-This is mostly identical to the RequireJS shim configuration.
-
-When a script is shimmed, it is treated as a global script only, and no AMD, CJS or ES6 processing is done.
-
-Setting the shim to `true` can be useful to ensure a script is treated as a global exporter.
-
 Example:
 
 ```javascript
@@ -204,6 +198,26 @@ Example:
   jspm.import('bootstrap'); 
 ```
 
+When a script is shimmed, it is treated as a global script only, and no AMD, CJS or ES6 processing is done. Setting the shim to `true` can be useful to ensure a script is treated as a global exporter.
+
+This is mostly identical to the RequireJS shim configuration.
+
+The global object defined by the library is detected automatically, but this can also be specified:
+
+```javascript
+  jspm.config({
+    shim: {
+      './lib/jquery': {
+        exports: 'jQuery'
+      },
+      './lib/jquery-plugin': {
+        imports: ['./lib/jquery']
+        exports: 'jQuery.somePlugin'
+      }
+    }
+  });
+```
+
 ### ondemand / paths
 
 The `ondemand` functionality provides what are paths configuration in RequireJS, defined by the ES6 `System` loader spec.
@@ -216,15 +230,14 @@ The `ondemand` functionality provides what are paths configuration in RequireJS,
 
 This syntax is likely still subject to change due to the specification being unconfirmed here.
 
-### Locations
+### Endpoints
 
-While the `ondemand` functionality is in flux, the locations configuration option provides a more flexible
-paths configuration mechanism:
+The endpoints configuration option allows for custom server paths:
 
 ```javascript
   jspm.config({
     baseURL: 'http://mysite.com/js'
-    locations: {
+    endpoints: {
       'lib': 'http://mysite.com/lib',
     }
   });
@@ -232,15 +245,33 @@ paths configuration mechanism:
   jspm.import('lib:some-module');
 ```
 
-This will merge with the ondemand functionality in due course.
+Endpoints can also be configured to a module format, and a main entry point default.
+
+```javascript
+  jspm.config({
+    endpoints: {
+      'node': {
+        location: 'node-modules',
+        repoDepth: 1,
+        main: 'index',
+        format: 'cjs'
+      }
+    }
+  });
+
+  jspm.import('node:some-module') // loads [baseURL]/node-modules/some-module/index.js as commonJS
+```
+
+The benefit of specifying the module format for a location is that the script format detection scripts
+can be skipped, saving on a little processing.
 
 ### CDN Locations
 
-By default, the following CDN locations are already provided:
+By default, the following CDN endpoints are already provided:
 
 ```javascript
 jspm.config({
-  locations: {
+  endpoints: {
     github: 'https://github.jspm.io',
     npm: 'https://npm.jspm.io',
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
@@ -248,7 +279,7 @@ jspm.config({
 });
 ```
 
-To submit a new CDN location, feel free to provide a pull request.
+To submit a new CDN endpoint, feel free to provide a pull request.
 
 The Github and NPM automatically use SPDY push to provide module dependencies. The endpoints have the following URL format:
 
@@ -341,6 +372,8 @@ Otherwise, plugins are loaded from the registry.
     }, errback);
   }
 ```
+
+Note the plugin here is written as CommonJS for an example only - any module format will work.
 
 License
 ---

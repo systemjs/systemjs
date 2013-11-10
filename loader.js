@@ -18,7 +18,7 @@
     config.waitSeconds = 20;
     config.map = config.map || {};
     config.main = config.main || {};
-    config.locations = config.locations || {};
+    config.endpoints = config.endpoints || {};
     config.shim = config.shim || {};
     config.urlArgs = config.urlArgs || '';
 
@@ -27,7 +27,6 @@
 
       config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1) : './';
       config.registryURL = 'https://registry.jspm.io';
-      config.locations.plugin = config.locations.plugin || config.baseURL;
 
       // -- helpers --
 
@@ -40,17 +39,17 @@
         var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
+        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])/g;
         var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
         var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
         var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
 
         // global dependency specifier, used for shimmed dependencies
-        var globalShimRegEx = /^\s*["']import/;
-        var globalImportRegEx = /\s*["']import ([^'"]+)["']/gm;
+        var globalShimRegEx = /^\s*(["']global["'];?\s*)?((['"]import [^'"]+['"];?\s*)*)(['"]export ([^'"]+)["'])?/;
+        var globalImportRegEx = /(["']import [^'"]+)+/g;
         
         // default switch - disable auto-default
-        var transpileRegEx = /\s*["']es6-transpile['"];/m;
+        var transpileRegEx = /["']es6-transpile['"];/;
 
         var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
         var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
@@ -198,11 +197,11 @@
           return true;
         }
 
-        // check if the module is defined on a location
-        var getLocation = function(name) {
-          var locationParts = name.split(':');
+        // check if the module is defined on an endpoint
+        var getEndpoint = function(name) {
+          var endpointParts = name.split(':');
 
-          return locationParts[1] !== undefined && !name.match(absUrlRegEx) ? locationParts[0] : '';
+          return endpointParts[1] !== undefined && !name.match(absUrlRegEx) ? endpointParts[0] : '';
         }
 
         // given a resolved module name and normalized parent name,
@@ -266,6 +265,13 @@
           // apply main config
           if (config.main[name])
             name = name + '/' + config.main[name];
+          // apply endpoint main config if given
+          else if (name.indexOf(':') != -1) {
+            var endpoint = config.endpoints[name.substr(0, name.indexOf(':'))];
+            var repoDepth = name.substr(name.indexOf(':') + 1).split('/').length;
+            if (typeof endpoint == 'object' && endpoint.main && endpoint.repoDepth == repoDepth)
+              name = name + '/' + endpoint.main;
+          }
 
           return name;
         }
@@ -294,18 +300,23 @@
         // go through the global object to find any changes
         // the differences become the returned global for this object
         // the global object is left as is
-        function getGlobal() {
-          var moduleGlobal = {};
-          var singleGlobal;
-          for (var g in jspm.global) {
-            if (jspm.global.hasOwnProperty(g) && g != (isBrowser ? 'window' : 'global') && globalObj[g] != jspm.global[g]) {
-              moduleGlobal[g] = jspm.global[g];
-              if (singleGlobal) {
-                if (singleGlobal !== jspm.global[g])
-                  singleGlobal = false;
+        // optional propertyName of the form 'some.object.here'
+        function getGlobal(propertyName) {
+          var singleGlobal, moduleGlobal;
+          if (propertyName)
+            singleGlobal = eval(propertyName);
+          else {
+            moduleGlobal = {};
+            for (var g in jspm.global) {
+              if (jspm.global.hasOwnProperty(g) && g != (isBrowser ? 'window' : 'global') && globalObj[g] != jspm.global[g]) {
+                moduleGlobal[g] = jspm.global[g];
+                if (singleGlobal) {
+                  if (singleGlobal !== jspm.global[g])
+                    singleGlobal = false;
+                }
+                else if (singleGlobal !== false)
+                  singleGlobal = jspm.global[g];
               }
-              else if (singleGlobal !== false)
-                singleGlobal = jspm.global[g];
             }
           }
           
@@ -333,10 +344,6 @@
 
           var parentName = referer && referer.name;
 
-          // if it has a js extension, and not a url or plugin, remove the js extension
-          if (!pluginMatch && name.substr(name.length - 3, 3) == '.js' && !name.match(absUrlRegEx))
-            name = name.substr(0, name.length - 3);
-
           // check for a plugin (some/name!plugin)
           var pluginMatch = name.match(pluginRegEx);
 
@@ -350,7 +357,8 @@
           // module names starting with '#' are never normalized
           // useful for plugins where the import doesn't represent a real path
           if (name.substr(0, 1) != '#') {
-            // location relative normalization
+
+            // endpoint relative normalization
             if (name.substr(0, 2) == './' && referer && referer.name && referer.name.indexOf(':') != -1 && referer.name.indexOf('/') == -1)
               name = referer.name.substr(0, referer.name.indexOf(':') + 1) + name.substr(2);
 
@@ -380,16 +388,16 @@
           if (name.match(absUrlRegEx))
             return name;
 
-          // locations
+          // endpoints
           var oldBaseURL = this.baseURL;
 
-          var location = getLocation(name);
+          var endpoint = getEndpoint(name);
           var urlArgs = '';
-          if (location) {
-            if (!config.locations[location])
-              throw 'Location "' + location + '" not defined.';
-            this.baseURL = config.locations[location];
-            name = name.substr(location.length + 1);
+          if (endpoint) {
+            if (!config.endpoints[endpoint])
+              throw 'Endpoint "' + endpoint + '" not defined.';
+            this.baseURL = config.endpoints[endpoint].location || config.endpoints[endpoint];
+            name = name.substr(endpoint.length + 1);
           }
           else if (name.substr(0, 2) != './' && name.substr(0, 3) != '../')
             this.baseURL = config.registryURL;
@@ -442,75 +450,78 @@
           if (config.onLoad)
             config.onLoad(options.normalized, source, options);
 
+          var name = options.normalized;
+
           // plugins provide empty source
           if (!source)
             return new global.Module({});
 
+          // check if the endpoint specifies a format
+          var endpoint = name.indexOf(':') != -1 && config.endpoints[name.substr(0, name.indexOf(':'))];
+          var format = endpoint && typeof endpoint.format == 'string' && endpoint.format.toLowerCase();
+          var shim = config.shim[name];
+
+          // knowing the format, we can minimise the processing cost of regular expressions
+          var isAMD = format == 'amd';
+          var isES6 = format == 'es6';
+          var isCJS = format == 'cjs';
+          var detect = !(isAMD || isES6 || isCJS || format == 'global' || shim);
+
           var sourceMappingURL = sourceURL = null;
 
-          // detect any source map comments (as we're about to remove comments)
-          sourceMappingURL = source.match(sourceMappingURLRegEx);
+          // detect any source map comments to reinsert at the end of the new wrappings
+          // for efficiency, only apply the regex to the last 500 characters of the source
+          var last500 = source.length < 500 ? source : source.substr(source.length - 500);
+          sourceMappingURL = last500.match(sourceMappingURLRegEx);
           if (sourceMappingURL)
             sourceMappingURL = sourceMappingURL[1];
 
-          sourceURL = source.match(sourceURLRegEx);
+          sourceURL = last500.match(sourceURLRegEx);
           sourceURL = sourceURL ? sourceURL[1] : options.address;
           
-
-          if (!isMinified(source)) {
-            // remove comments before doing regular expressions
+          if ((detect || (isES6 && source.match(aliasRegEx))) && !isMinified(source)) {
+            // remove comments before doing regular expression detection
             source = removeComments(source);
+
+            // check if it is (still) an es6 alias module
+            // eg import * from 'jquery';
+            if (isES6 && (match = source.match(aliasRegEx))) {
+              return {
+                imports: [match[1] || match[2]],
+                execute: function(dep) {
+                  return dep;
+                }
+              };
+            }
           }
 
-          // check if it is an es6 alias module
-          // eg import * from 'jquery';
-          if (match = source.match(aliasRegEx)) {
-             return {
-               imports: [match[1] || match[2]],
-               execute: function(dep) {
-                 return dep;
-               }
-             };
-           }
-
           // es6 module format
-          if (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx))
+          if (isES6 || detect && (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx)))
             return;
 
           var match, _imports = [];
 
-          var shim = config.shim[options.normalized];
 
-          // check if this module uses AMD form
+          // AMD
           // define([.., .., ..], ...)
-          // define('modulename', [.., ..., ..])
           amdDefineRegEx.lastIndex = 0;
-          if (!shim && (match = amdDefineRegEx.exec(source)) && (match[2] || match[1])) {
+          
+          // define(varName); || define(function(require, exports) {}); || define({})
+          cjsDefineRegEx.lastIndex = 0;
+          var cjsAMD = false;
 
-            _imports = _imports.concat(eval(match[2] || '[]'));
+          if (isAMD || detect && (
+            (match = amdDefineRegEx.exec(source)) && match[1] ||
+            (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true)
+          )) {
 
-            // if its a named define, check for any other named defines in this file
-            if (match[1]) {
-              var defines = [match[1]];
-              
-              while (match = amdDefineRegEx.exec(source)) {
-                if (match[1]) {
-                  defines.push(match[1]);
-                  _imports = _imports.concat(eval(match[2] || '[]'));
-                }
-              }
-
-              // ensure imports are unique
-              for (var i = 0; i < _imports.length; i++) {
-                if (_imports.lastIndexOf(_imports[i]) != i)
-                  _imports.splice(i--, 1);
-              }
-
-              // run through the defined names and remove them from the imports
-              for (var i = 0; i < defines.length; i++) {
-                if (_imports.indexOf(defines[i]) != -1)
-                  _imports.splice(_imports.indexOf(defines[i]), 1);
-              }
+            if (cjsAMD) {
+              _imports = ['require', 'exports', 'module'];
+              while (match = cjsRequireRegEx.exec(source))
+                _imports.push(match[2] || match[3]);
+            }
+            else {
+              _imports = _imports.concat(eval(match[1]));
             }
 
             // remove any reserved words
@@ -529,27 +540,24 @@
               imports: _imports,
               execute: function() {
                 var deps = isTranspiled ? Array.prototype.splice.call(arguments, 0) : checkDefaultOnly(arguments);
-
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
-                  depMap[_imports[i]] = deps[i];
+                  depMap[_imports[i]] = checkDefaultOnly(arguments[i]);
 
                 // add system dependencies
                 var exports;
                 var module;
                 var require;
 
-                if ((!deps.length && typeof factory == 'function') || moduleIndex != -1)
-                  module = { id: options.normalized, uri: options.address };
-                if ((!deps.length && typeof factory == 'function') || exportsIndex != -1)
+                if (moduleIndex != -1)
+                  module = { id: name, uri: options.address };
+                if (exportsIndex != -1)
                   exports = {};
-                if ((!deps.length && typeof factory == 'function') || requireIndex != -1)
-                  require = function(d, callback, errback) { 
-                    if (typeof d == 'string')
-                      return depMap[d];
-                    if (typeof d == 'object' && !(d instanceof Array))
-                      return jspm.require.apply(null, Array.prototype.splice.call(arguments, 1));
-                    return jspm.require(d, callback, errback, { name: options.normalized, address: options.address });
+                if (requireIndex != -1)
+                  require = function(name, callback, errback) {
+                    if (typeof name == 'string' && name in depMap)
+                      return depMap[name];
+                    return jspm.require(name, callback, errback, { name: name, address: options.address });
                   }
 
                 if (moduleIndex != -1)
@@ -564,25 +572,20 @@
                 var g = jspm.global;
 
                 g.require = g.requirejs = jspm.require;
-                g.define = function(name, dependencies, factory) {
-                  // anonymous define
-                  if (typeof name != 'string') {
-                    factory = dependencies;
-                    name = undefined;
-                  }
+                g.define = function(dependencies, factory) {
+                  if (typeof dependencies == 'string')
+                    throw 'Named defines for AMD not supported in JSPM.';
+
                   // no dependencies
                   if (!(dependencies instanceof Array))
                     factory = dependencies;
 
                   // run the factory function
                   if (typeof factory == 'function')
-                    output = factory.apply(g, deps.length ? deps : [require, exports, module]) || exports;
+                    output = factory.apply(g, deps) || exports;
                   // otherwise factory is the value
                   else
                     output = factory;
-                  
-                  if (name && name != options.normalized)
-                      jspm.set(name, { default: output });
                 }
                 g.define.amd = {};
 
@@ -603,63 +606,12 @@
               }
             };
           }
-
-          // check if it uses the AMD CommonJS form
-          // define(varName); || define(function(require, exports) {}); || define({})
-          cjsDefineRegEx.lastIndex = 0;
-          if (!shim && (match = cjsDefineRegEx.exec(source))) {
-            if (match[2] || match[3])
-              _imports.push(match[2] || match[3]);
-            while (match = cjsRequireRegEx.exec(source))
-              _imports.push(match[2] || match[3]);
-
-            return {
-              imports: _imports,
-              execute: function() {
-                var depMap = {};
-                for (var i = 0; i < _imports.length; i++)
-                  depMap[_imports[i]] = checkDefaultOnly(arguments[i]);
-                
-                var exports = {};
-                var module = { id: options.normalized, uri: options.address };
-
-                var g = jspm.global;
-                g.require = g.requirejs = jspm.require;
-
-                var output;
-
-                g.define = function(factory) { 
-                  output = typeof factory == "function" ? factory.call(g, function(d) { 
-                    return depMap[d]; 
-                  }, exports, module) : factory; 
-                };
-                g.define.amd = {};
-
-                // ensure no NodeJS environment detection
-                delete g.module;
-                delete g.exports;
-
-                __scopedEval(source, g, sourceURL, sourceMappingURL);
-
-                delete g.require;
-                delete g.requirejs;
-                delete g.define;
-
-                output = output || exports;
-
-                if (typeof output == 'object' && output.constructor == Object)
-                  return new global.Module(output);
-                else
-                  return new global.Module({ 'default': output });
-              }
-            };
-          }
           
           // CommonJS
           // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
           cjsExportsRegEx.lastIndex = 0;
           cjsRequireRegEx.lastIndex = 0;
-          if (!shim && ((match = cjsRequireRegEx.exec(source)) || source.match(cjsExportsRegEx))) {
+          if (isCJS || detect && ((match = cjsRequireRegEx.exec(source)) || source.match(cjsExportsRegEx))) {
             if (match)
               _imports.push(match[2] || match[3]);
             while (match = cjsRequireRegEx.exec(source))
@@ -709,25 +661,27 @@
             };
           }
 
-          // global script          
+          // Global
           // add shim imports and exports
-          if (shim && shim instanceof Array)
-            _imports = _imports.concat(shim);
-
-          // check for global shimmed dependencies
-          // specified with eg:
-          // "import lib:jquery";
-          globalImportRegEx.lastIndex = 0;
-          while (match = globalImportRegEx.exec(source))
-            _imports.push(match[1]);
-
+          var exports;
+          if (shim) {
+            _imports = _imports.concat(shim instanceof Array ? shim : shim.imports || []);
+            exports = shim.exports;
+          }
+          else if (match = source.match(globalShimRegEx)) {
+            var imports = match[2].match(globalImportRegEx);
+            if (imports)
+              for (var i = 0; i < imports.length; i++)
+                _imports.push(imports[i].substr(8));
+            exports = match[5];
+          }
           return {
             // apply depends config
             imports: _imports,
             execute: function() {
               setGlobal(checkDefaultOnly(arguments));
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
-              return new global.Module(getGlobal());
+              return new global.Module(getGlobal(exports));
             }
           };
         }
@@ -781,8 +735,12 @@
           jspm.baseURL = newConfig.baseUrl;
 
         if (newConfig.jspmPackages)
-          for (var l in config.locations)
-            config.locations[l] = newConfig.jspmPackages + '/' + l;
+          for (var l in config.endpoints) {
+            if (config.endpoints[l].location)
+              config.endpoints[l].location = newConfig.jspmPackages + '/' + l;
+            else
+              config.endpoints[l] = newConfig.jspmPackages + '/' + l;
+          }
       }
       jspm.ondemand = function(resolvers) {
         jspm.ondemand(resolvers);
@@ -814,18 +772,21 @@
         
         // commonjs require
         else if (typeof names == 'string')
-          return jspm.get(names);
+          return checkDefaultOnly(jspm.get(names));
 
         else
           throw 'Invalid require';
       }
       jspm.require.config = jspm.config;
 
-      // add convenience locations
+      // add convenience endpoints
       jspm.config({
-        locations: {
+        endpoints: {
           github: 'https://github.jspm.io',
-          npm: 'https://npm.jspm.io',
+          npm: {
+            location: 'https://npm.jspm.io',
+            format: 'cjs'
+          },
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
         }
       });
