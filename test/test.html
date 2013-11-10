@@ -242,6 +242,16 @@
         }
       },
       {
+        name: 'Loading an AMD named define',
+        run: function(complete) {
+          jspm.import(['github:coreyti/showdown@0.3.1/src/showdown'], complete);
+        },
+        confirm: function(m) {
+          if (!m.converter)
+            return 'Showdown not loaded!';
+        }
+      },
+      {
         name: 'Loading AMD CommonJS form',
         run: function(complete) {
           jspm.import(['./tests/amd-cjs-module'], complete);

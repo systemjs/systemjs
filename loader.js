@@ -39,8 +39,8 @@
         var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])/g;
-        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
+        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
+        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(("[^"]+"\s*,|'[^']+'\s*,)?("[^"]+"\s*,|'[^']+'\s*,)?function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
         var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
         var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
 
@@ -516,17 +516,18 @@
           var cjsAMD = false;
 
           if (isAMD || detect && (
-            (match = amdDefineRegEx.exec(source)) && match[1] ||
+            (match = amdDefineRegEx.exec(source)) && (match[1] || match[2]) ||
             (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true)
           )) {
 
             if (cjsAMD) {
               _imports = ['require', 'exports', 'module'];
               while (match = cjsRequireRegEx.exec(source))
-                _imports.push(match[2] || match[3]);
+                _imports.push(match[3] || match[4]);
             }
             else {
-              _imports = _imports.concat(eval(match[1]));
+              if (match[2])
+                _imports = _imports.concat(eval(match[2]));
             }
 
             // remove any reserved words
@@ -578,8 +579,10 @@
 
                 g.require = g.requirejs = jspm.require;
                 g.define = function(dependencies, factory) {
-                  if (typeof dependencies == 'string')
-                    throw 'Named defines for AMD not supported in JSPM.';
+                  if (typeof dependencies == 'string') {
+                    dependencies = arguments[1];
+                    factory = arguments[2];
+                  }
 
                   // no dependencies
                   if (!(dependencies instanceof Array))
