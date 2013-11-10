@@ -344,6 +344,10 @@
 
           var parentName = referer && referer.name;
 
+          // if it has a js extension, and not a url or plugin, remove the js extension
+          if (!pluginMatch && name.substr(name.length - 3, 3) == '.js' && !name.match(absUrlRegEx))
+            name = name.substr(0, name.length - 3);
+
           // check for a plugin (some/name!plugin)
           var pluginMatch = name.match(pluginRegEx);
 
