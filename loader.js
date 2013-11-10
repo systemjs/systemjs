@@ -269,7 +269,7 @@
           else if (name.indexOf(':') != -1) {
             var endpoint = config.endpoints[name.substr(0, name.indexOf(':'))];
             var repoDepth = name.substr(name.indexOf(':') + 1).split('/').length;
-            if (typeof endpoint == 'object' && endpoint.main && endpoint.repoDepth == repoDepth)
+            if (typeof endpoint == 'object' && endpoint.main && (endpoint.repoDepth || 1) == repoDepth)
               name = name + '/' + endpoint.main;
           }
 
@@ -473,6 +473,8 @@
 
           var sourceMappingURL = sourceURL = null;
 
+          var match, _imports = [];
+
           // detect any source map comments to reinsert at the end of the new wrappings
           // for efficiency, only apply the regex to the last 500 characters of the source
           var last500 = source.length < 500 ? source : source.substr(source.length - 500);
@@ -503,8 +505,6 @@
           // es6 module format
           if (isES6 || detect && (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx)))
             return;
-
-          var match, _imports = [];
 
 
           // AMD

@@ -252,7 +252,6 @@ Endpoints can also be configured to a module format, and a main entry point defa
     endpoints: {
       'node': {
         location: 'node-modules',
-        repoDepth: 1,
         main: 'index',
         format: 'cjs'
       }
