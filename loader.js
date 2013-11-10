@@ -483,13 +483,14 @@
           sourceURL = last500.match(sourceURLRegEx);
           sourceURL = sourceURL ? sourceURL[1] : options.address;
           
-          if ((detect || (isES6 && source.match(aliasRegEx))) && !isMinified(source)) {
+          if (detect) {
             // remove comments before doing regular expression detection
-            source = removeComments(source);
+            if (!isMinified(source))
+              source = removeComments(source);
 
             // check if it is (still) an es6 alias module
             // eg import * from 'jquery';
-            if (isES6 && (match = source.match(aliasRegEx))) {
+            if (match = source.match(aliasRegEx)) {
               return {
                 imports: [match[1] || match[2]],
                 execute: function(dep) {
