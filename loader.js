@@ -561,7 +561,7 @@
                   require = function(names, callback, errback) {
                     if (typeof names == 'string' && names in depMap)
                       return depMap[names];
-                    return jspm.require(names, callback, errback, { normalized: name, address: options.address });
+                    return jspm.require(names, callback, errback, { name: name, address: options.address });
                   }
 
                 if (moduleIndex != -1)
