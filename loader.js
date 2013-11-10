@@ -561,7 +561,7 @@
                   require = function(name, callback, errback) {
                     if (typeof name == 'string' && name in depMap)
                       return depMap[name];
-                    return jspm.require(name, callback, errback, { name: name, address: options.address });
+                    return jspm.require(name, callback, errback, { normalized: name, address: options.address });
                   }
 
                 if (moduleIndex != -1)
@@ -772,7 +772,7 @@
 
         // amd require
         if (names instanceof Array)
-          return jspm.require(names, callback, errback, referer);
+          return jspm['import'](names, callback, errback, referer);
         
         // commonjs require
         else if (typeof names == 'string')
