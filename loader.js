@@ -558,10 +558,10 @@
                 if (exportsIndex != -1)
                   exports = {};
                 if (requireIndex != -1)
-                  require = function(name, callback, errback) {
-                    if (typeof name == 'string' && name in depMap)
-                      return depMap[name];
-                    return jspm.require(name, callback, errback, { normalized: name, address: options.address });
+                  require = function(names, callback, errback) {
+                    if (typeof names == 'string' && names in depMap)
+                      return depMap[names];
+                    return jspm.require(names, callback, errback, { normalized: name, address: options.address });
                   }
 
                 if (moduleIndex != -1)
