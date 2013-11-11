@@ -45,7 +45,7 @@
         var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
 
         // global dependency specifier, used for shimmed dependencies
-        var globalShimRegEx = /^\s*(["']global["'];?\s*)?((['"]import [^'"]+['"];?\s*)*)(['"]export ([^'"]+)["'])?/;
+        var globalShimRegEx = /^[!\s\S]{0,500}(["']global["'];?\s*)((['"]import [^'"]+['"];?\s*)*)(['"]export ([^'"]+)["'])?/;
         var globalImportRegEx = /(["']import [^'"]+)+/g;
         
         // default switch - disable auto-default
@@ -459,17 +459,46 @@
           // check if the endpoint specifies a format
           var endpoint = name.indexOf(':') != -1 && config.endpoints[name.substr(0, name.indexOf(':'))];
           var format = endpoint && typeof endpoint.format == 'string' && endpoint.format.toLowerCase();
-          var shim = config.shim[name];
+          
 
           // knowing the format, we can minimise the processing cost of regular expressions
           var isAMD = format == 'amd';
           var isES6 = format == 'es6';
           var isCJS = format == 'cjs';
-          var detect = !(isAMD || isES6 || isCJS || format == 'global' || shim);
+          var detect = !(isAMD || isES6 || isCJS || format == 'global');
 
           var sourceMappingURL = sourceURL = null;
 
           var match, _imports = [];
+
+          // alias check is based on a "simple form" only
+          // eg import * from 'jquery';
+          if (match = source.match(aliasRegEx)) {
+            return {
+              imports: [match[1] || match[2]],
+              execute: function(dep) {
+                return dep;
+              }
+            };
+          }
+
+          // global check, also based on a "simple form" regex
+          var shim = config.shim[name];
+          if (match = source.match(globalShimRegEx)) {
+            var imports = match[2].match(globalImportRegEx);
+            if (imports)
+              for (var i = 0; i < imports.length; i++)
+                imports[i] = imports[i].substr(8);
+            shim = {
+              imports: imports,
+              exports: match[5]
+            };
+            detect = false;
+          }
+
+          // es6 module format
+          if (isES6 || detect && (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx)))
+            return;
 
           // detect any source map comments to reinsert at the end of the new wrappings
           // for efficiency, only apply the regex to the last 500 characters of the source
@@ -481,26 +510,9 @@
           sourceURL = last500.match(sourceURLRegEx);
           sourceURL = sourceURL ? sourceURL[1] : options.address;
           
-          if (detect) {
-            // remove comments before doing regular expression detection
-            if (!isMinified(source))
-              source = removeComments(source);
-
-            // check if it is (still) an es6 alias module
-            // eg import * from 'jquery';
-            if (match = source.match(aliasRegEx)) {
-              return {
-                imports: [match[1] || match[2]],
-                execute: function(dep) {
-                  return dep;
-                }
-              };
-            }
-          }
-
-          // es6 module format
-          if (isES6 || detect && (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx)))
-            return;
+          // remove comments before doing regular expression detection
+          if (detect && !isMinified(source))
+            source = removeComments(source);
 
 
           // AMD
@@ -544,7 +556,7 @@
                 var deps = isTranspiled ? Array.prototype.splice.call(arguments, 0) : checkDefaultOnly(arguments);
                 var depMap = {};
                 for (var i = 0; i < _imports.length; i++)
-                  depMap[_imports[i]] = checkDefaultOnly(arguments[i]);
+                  depMap[_imports[i]] = deps[i];
 
                 // add system dependencies
                 var exports;
@@ -666,26 +678,13 @@
           }
 
           // Global
-          // add shim imports and exports
-          var exports;
-          if (shim) {
-            _imports = _imports.concat(shim instanceof Array ? shim : shim.imports || []);
-            exports = shim.exports;
-          }
-          else if (match = source.match(globalShimRegEx)) {
-            var imports = match[2].match(globalImportRegEx);
-            if (imports)
-              for (var i = 0; i < imports.length; i++)
-                _imports.push(imports[i].substr(8));
-            exports = match[5];
-          }
           return {
-            // apply depends config
-            imports: _imports,
+            // apply shim config
+            imports: shim ? _imports.concat(shim instanceof Array ? shim : shim.imports || []) : _imports,
             execute: function() {
               setGlobal(checkDefaultOnly(arguments));
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
-              return new global.Module(getGlobal(exports));
+              return new global.Module(getGlobal(shim && shim.exports));
             }
           };
         }

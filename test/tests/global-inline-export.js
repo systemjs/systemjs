@@ -1,3 +1,4 @@
+"global";
 "export window.p.r";
 
 window.p = {
