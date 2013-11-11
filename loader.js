@@ -450,7 +450,7 @@
           if (config.onLoad)
             config.onLoad(options.normalized, source, options);
 
-          var name = options.normalized;
+          var name = options.normalized || '';
 
           // plugins provide empty source
           if (!source)
