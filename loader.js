@@ -483,17 +483,19 @@
           }
 
           // global check, also based on a "simple form" regex
-          var shim = config.shim[name];
-          if (match = source.match(globalShimRegEx)) {
-            var imports = match[2].match(globalImportRegEx);
-            if (imports)
-              for (var i = 0; i < imports.length; i++)
-                imports[i] = imports[i].substr(8);
-            shim = {
-              imports: imports,
-              exports: match[5]
-            };
-            detect = false;
+          if (detect) {
+            var shim = config.shim[name];
+            if (match = source.match(globalShimRegEx)) {
+              var imports = match[2].match(globalImportRegEx);
+              if (imports)
+                for (var i = 0; i < imports.length; i++)
+                  imports[i] = imports[i].substr(8);
+              shim = {
+                imports: imports,
+                exports: match[5]
+              };
+              detect = false;
+            }
           }
 
           // es6 module format
@@ -523,7 +525,7 @@
           cjsDefineRegEx.lastIndex = 0;
           var cjsAMD = false;
 
-          if (isAMD || detect && (
+          if ((isAMD || detect) && (
             (match = amdDefineRegEx.exec(source)) && (match[1] || match[2]) ||
             (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true)
           )) {
@@ -534,6 +536,7 @@
                 _imports.push(match[3] || match[4]);
             }
             else {
+              
               if (match[2])
                 _imports = _imports.concat(eval(match[2]));
             }
