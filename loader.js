@@ -649,7 +649,7 @@
 
                 var g = jspm.global;
 
-                g._globals = {
+                var globals = g._globals = {
                   global: g,
                   exports: {},
                   process: nodeProcess,
