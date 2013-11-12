@@ -324,7 +324,6 @@
             setTimeout(f, 7);
           }
         };
-        var nodeGlobals = ['global', 'exports', 'process', 'require', '__filename', '__dirname', 'module'];
 
 
 
@@ -673,13 +672,10 @@
 
                 var outModule;
 
-                if (typeof g.module.exports == 'object' && g.module.exports.constructor == Object)
-                  outModule = new global.Module(g.module.exports);
+                if (typeof globals.module.exports == 'object' && globals.module.exports.constructor == Object)
+                  return new global.Module(globals.module.exports);
                 else
-                  outModule = new global.Module({ 'default': g.module.exports });
-
-                for (var i = 0; i < nodeGlobals.length; i++)
-                  delete g[nodeGlobals[i]];
+                  return new global.Module({ 'default': globals.module.exports });
 
                 return outModule;
               }
