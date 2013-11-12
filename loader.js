@@ -649,7 +649,7 @@
 
                 var g = jspm.global;
 
-                var globals = {
+                g._globals = {
                   global: g,
                   exports: {},
                   process: nodeProcess,
@@ -662,14 +662,14 @@
                 globals.module = { exports: globals.exports };
 
                 var glString = '';
-                for (var _g in globals) {
-                  g[_g] = globals[g];
-                  glString = 'var ' + _g + ' = global.' + _g + ';\n';
-                }
+                for (var _g in globals)
+                  glString = 'var ' + _g + ' = _globals.' + _g + ';\n';
 
                 source = glString + source;
 
                 __scopedEval(source, g, sourceURL, sourceMappingURL);
+
+                delete g._globals;
 
                 var outModule;
 
