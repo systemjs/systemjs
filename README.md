@@ -9,7 +9,7 @@ For the loader documentation read below. For a complete overview of features, se
 * Loads ES6 modules, AMD, CommonJS and global scripts detecting the format automatically and efficiently.
 * Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths.
 
-Can be used as a stand-alone ES6 RequireJS-style module loader, but also comes with JSPM registry and CDN support out of the box optionally.
+Can be used as a stand-alone ES6 RequireJS-style module loader, but also comes with [jspm registry](https://github.com/jspm/registry) and CDN support out of the box optionally.
 
 This allows loading say `jquery`, `npm:underscore@1.5` or `github:my/custom-repo/name` without any installation necessary.
 
@@ -76,9 +76,9 @@ The registry URL can also be customized with
   // loads http://www.mysite.com/lib/jquery.js
 ```
 
-By default the registry URL is set to the [JSPM CDN registry](https://github.com/jspm/registry).
+By default the registry URL is set to the [jspm CDN registry](https://github.com/jspm/registry).
 
-### CDN Locations
+### CDN Endpoints
 
 By default, the following CDN endpoints are already provided:
 
@@ -111,7 +111,7 @@ Typically a minor version is specified only (eg @2.2), which will load the lates
 
 If no version is specified, the latest stable version is loaded. Otherwise a complete version or tagname can also be provided.
 
-The CDN endpoints don't need to be used with the JSPM loader, they can also be used with scripts, stylesheets or HTML imports in the page.
+The CDN endpoints don't need to be used with the jspm loader, they can also be used with scripts, stylesheets or HTML imports in the page.
 
 The benefits of having SPDY push dependencies mean that imported resources in styles, scripts and HTML imports don't require a separate round trip. Script dependencies are traced automatically and provided with this support.
 
@@ -253,7 +253,7 @@ Supported Plugins:
 * Text `jspm.import('some/text.txt!text')`
 * WebFont `jspm.import('#google Port Lligat Slab, Droid Sans !font')`
 
-By default, plugins are loaded from the [JSPM registry](https://github.com/jspm/registry), as the name `!pluginName`.
+By default, plugins are loaded from the [jspm registry](https://github.com/jspm/registry), as the name `!pluginName`.
 
 To submit a plugin, create a pull request on the registry page.
 
