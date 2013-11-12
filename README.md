@@ -9,7 +9,7 @@ For the loader documentation read below. For a complete overview of features, se
 * Loads ES6 modules, AMD, CommonJS and global scripts detecting the format automatically and efficiently.
 * Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths.
 
-Can be used as a stand-along ES6 RequireJS-style module loader, but also comes with JSPM registry and CDN support out of the box optionally.
+Can be used as a stand-alone ES6 RequireJS-style module loader, but also comes with JSPM registry and CDN support out of the box optionally.
 
 This allows loading say `jquery`, `npm:underscore@1.5` or `github:my/custom-repo/name` without any installation necessary.
 
