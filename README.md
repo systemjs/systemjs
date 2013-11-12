@@ -245,14 +245,22 @@ The endpoints configuration option allows for custom server paths:
   jspm.import('lib:some-module');
 ```
 
-Endpoints can also be configured to a module format, and a main entry point default.
+Endpoints can also be configured to a module format, and a custom normalization function.
 
 ```javascript
   jspm.config({
     endpoints: {
       'node': {
         location: 'node-modules',
-        main: 'index',
+        normalize: function(name) {
+          // auto add index.js as the main entry point
+          if (name.split('/').length == 1)
+            name = name + '/index';
+          // allow .js extensions in require names
+          if (name.substr(name.length - 3, 3) == '.js')
+            name = name.substr(0, name.length - 3);
+          return name;
+        },
         format: 'cjs'
       }
     }

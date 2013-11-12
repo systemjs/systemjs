@@ -159,14 +159,17 @@
         }
       },
       {
-        name: 'Endpoint main config',
+        name: 'Endpoint config with custom main normalize',
         run: function(complete) {
           jspm.config({
             endpoints: {
               'ep': {
                 location: './tests/ep',
-                repoDepth: 1,
-                main: 'main'
+                normalize: function(name) {
+                  if (name.split('/').length == 1)
+                    name = name + '/main'
+                  return name;
+                }
               }
             }
           });

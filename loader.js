@@ -265,13 +265,6 @@
           // apply main config
           if (config.main[name])
             name = name + '/' + config.main[name];
-          // apply endpoint main config if given
-          else if (name.indexOf(':') != -1) {
-            var endpoint = config.endpoints[name.substr(0, name.indexOf(':'))];
-            var repoDepth = name.substr(name.indexOf(':') + 1).split('/').length;
-            if (typeof endpoint == 'object' && endpoint.main && (endpoint.repoDepth || 1) == repoDepth)
-              name = name + '/' + endpoint.main;
-          }
 
           return name;
         }
@@ -365,6 +358,13 @@
             // do standard normalization (resolve relative module name)
             else
               name = global.System.normalize(name, referer);
+
+            // check endpoint config if given
+            if (name.indexOf(':') != -1) {
+              var endpoint = config.endpoints[name.substr(0, name.indexOf(':'))];
+              if (typeof endpoint == 'object' && endpoint.normalize)
+                  name = endpoint.normalize(name, referer);
+            }
 
             // do map config
             name = applyMap(name, parentName);
@@ -791,7 +791,12 @@
           github: 'https://github.jspm.io',
           npm: {
             location: 'https://npm.jspm.io',
-            format: 'cjs'
+            format: 'cjs',
+            normalize: function(name) {
+              if (name.substr(name.length - 3, 3) == '.js')
+                return name.substr(0, name.length - 3);
+              return name;
+            }
           },
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
         }
