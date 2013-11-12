@@ -8,10 +8,16 @@ For the loader documentation read below. For a complete overview of features, se
 * ~10KB module loader built on top of the ~11KB polyfill.
 * Loads ES6 modules, AMD, CommonJS and global scripts detecting the format automatically and efficiently.
 * Uses RequireJS-inspired configuration options including baseURL, map, shim and custom paths.
-* Optional default CDN registry and plugin support configured out of the box. Load `jquery` or `bootstrap` without any installation necessary.
+
+Can be used as a stand-along ES6 RequireJS-style module loader, but also comes with JSPM registry and CDN support out of the box optionally.
+
+This allows loading say `jquery`, `npm:underscore@1.5` or `github:my/custom-repo/name` without any installation necessary.
 
 Including
 ---
+
+**CDN Version**
+
 
 Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js) and [`esprima-es6.min.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/esprima-es6.min.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) and locate them in the same folder as `loader.js` from this repo.
 
@@ -24,12 +30,6 @@ Then include it with a `<script>` tag:
 The 60KB Esprima parser is dynamically included when loading an ES6 module format only.
 
 Without the parser, the polyfill and loader are roughly 20KB combined and minified.
-
-Alternatively include the CDN version of this code:
-
-```html
-  <script src="https://jspm.io/loader.js"></script>
-```
 
 Usage
 ---
