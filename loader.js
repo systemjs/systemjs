@@ -649,19 +649,25 @@
 
                 var g = jspm.global;
 
-                g.global = g;
-                g.exports = {};
-                g._process = nodeProcess;
-                g.require = function(d) {
-                  return depMap[d];
-                }
-                g.__filename = options.address;
-                g.__dirname = dirname;
-                g.module = {
-                  exports: g.exports
+                var globals = {
+                  global: g,
+                  exports: {},
+                  process: nodeProcess,
+                  require: function(d) {
+                    return depMap[d];
+                  },
+                  __filename: options.address,
+                  __dirname: dirname,
                 };
+                globals.module = { exports: globals.exports };
 
-                source = 'var process = _process;' + source;
+                var glString = '';
+                for (var _g in globals) {
+                  g[_g] = globals[g];
+                  glString = 'var ' + _g + ' = global.' + _g + ';\n';
+                }
+
+                source = glString + source;
 
                 __scopedEval(source, g, sourceURL, sourceMappingURL);
 
