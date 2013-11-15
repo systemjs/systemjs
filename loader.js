@@ -39,10 +39,10 @@
         var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
 
         // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
-        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?]\s*)define\s*\(\s*(("[^"]+"\s*,|'[^']+'\s*,)?("[^"]+"\s*,|'[^']+'\s*,)?function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
-        var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
-        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
+        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
+        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*(("[^"]+"\s*,|'[^']+'\s*,)?("[^"]+"\s*,|'[^']+'\s*,)?function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
+        var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
 
         // global dependency specifier, used for shimmed dependencies
         var globalShimRegEx = /^[!\s\S]{0,500}(["']global["'];?\s*)((['"]import [^'"]+['"];?\s*)*)(['"]export ([^'"]+)["'])?/;
@@ -523,7 +523,6 @@
           // define(varName); || define(function(require, exports) {}); || define({})
           cjsDefineRegEx.lastIndex = 0;
           var cjsAMD = false;
-
           if ((isAMD || detect) && (
             (match = amdDefineRegEx.exec(source)) && (match[1] || match[2]) ||
             (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true)
