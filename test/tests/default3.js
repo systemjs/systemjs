@@ -1,1 +1,1 @@
-export default var p = 'default3';
+export default 'default3';
