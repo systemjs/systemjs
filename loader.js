@@ -45,7 +45,7 @@
         var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
 
         // global dependency specifier, used for shimmed dependencies
-        var globalShimRegEx = /^[!\s\S]{0,500}(["']global["'];?\s*)((['"]import [^'"]+['"];?\s*)*)(['"]export ([^'"]+)["'])?/;
+        var globalShimRegEx = /(["']global["'];\s*)((['"]import [^'"]+['"];\s*)*)(['"]export ([^'"]+)["'])?/;
         var globalImportRegEx = /(["']import [^'"]+)+/g;
         
         // default switch - disable auto-default
@@ -484,7 +484,8 @@
           // global check, also based on a "simple form" regex
           if (detect) {
             var shim = config.shim[name];
-            if (match = source.match(globalShimRegEx)) {
+            var first500 = source.substr(0, 500);
+            if (match = first500.match(globalShimRegEx)) {
               var imports = match[2].match(globalImportRegEx);
               if (imports)
                 for (var i = 0; i < imports.length; i++)
