@@ -272,13 +272,15 @@
         // given a module's global dependencies, prepare the global object
         // to contain the union of the defined properties of its dependent modules
         var globalObj = {};
-        function setGlobal(deps) {
+        var moduleGlobals = {};
+        function setGlobal(depNames) {
           // first, we add all the dependency module properties to the global
-          if (deps) {
-            for (var i = 0; i < deps.length; i++) {
-              var dep = deps[i];
-              for (var m in dep)
-                jspm.global[m] = dep[m];
+          if (depNames) {
+            for (var i = 0; i < depNames.length; i++) {
+              var depGlobal = moduleGlobals[depNames[i]];
+              if (depGlobal)
+                for (var m in depGlobal)
+                  jspm.global[m] = depGlobal[m];
             }
           }
 
@@ -294,10 +296,13 @@
         // the differences become the returned global for this object
         // the global object is left as is
         // optional propertyName of the form 'some.object.here'
-        function getGlobal(propertyName) {
+        function getGlobal(name, propertyName) {
           var singleGlobal, moduleGlobal;
-          if (propertyName)
+          if (propertyName) {
             singleGlobal = eval(propertyName);
+            moduleGlobal = {};
+            moduleGlobal[propertyName.split('.')[0]] = singleGlobal;
+          }
           else {
             moduleGlobal = {};
             for (var g in jspm.global) {
@@ -312,7 +317,7 @@
               }
             }
           }
-          
+          moduleGlobals[name] = moduleGlobal;
           // make the module the first found global
           return singleGlobal ? { default: singleGlobal } : moduleGlobal;
         }
@@ -482,20 +487,19 @@
           }
 
           // global check, also based on a "simple form" regex
-          if (detect) {
-            var shim = config.shim[name];
-            var first500 = source.substr(0, 500);
-            if (match = first500.match(globalShimRegEx)) {
-              var imports = match[2].match(globalImportRegEx);
-              if (imports)
-                for (var i = 0; i < imports.length; i++)
-                  imports[i] = imports[i].substr(8);
-              shim = {
-                imports: imports,
-                exports: match[5]
-              };
-              detect = false;
-            }
+          var shim = config.shim[name];
+          var first500 = source.substr(0, 500);
+          if (match = first500.match(globalShimRegEx)) {
+            var imports = match[2].match(globalImportRegEx);
+            if (imports)
+              for (var i = 0; i < imports.length; i++)
+                imports[i] = imports[i].substr(8);
+            shim = {
+              imports: imports,
+              exports: match[5]
+            };
+            detect = false;
+            isCJS = isES6 = isAMD = false;
           }
 
           // es6 module format
@@ -509,8 +513,10 @@
           if (sourceMappingURL)
             sourceMappingURL = sourceMappingURL[1];
 
-          sourceURL = last500.match(sourceURLRegEx);
+          var sourceURL = last500.match(sourceURLRegEx);
           sourceURL = sourceURL ? sourceURL[1] : options.address;
+
+
           
           // remove comments before doing regular expression detection
           if (detect && !isMinified(source))
@@ -681,13 +687,16 @@
           }
 
           // Global
+          _imports = shim ? _imports.concat(shim instanceof Array ? shim : shim.imports || []) : _imports;
           return {
             // apply shim config
-            imports: shim ? _imports.concat(shim instanceof Array ? shim : shim.imports || []) : _imports,
+            imports: _imports,
             execute: function() {
-              setGlobal(checkDefaultOnly(arguments));
+              for (var i = 0; i < _imports.length; i++)
+                _imports[i] = global.jspm.normalize(_imports[i], { name: name, address: options.address });
+              setGlobal(_imports);
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
-              return new global.Module(getGlobal(shim && shim.exports));
+              return new global.Module(getGlobal(name, shim && shim.exports));
             }
           };
         }
