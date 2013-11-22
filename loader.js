@@ -31,9 +31,7 @@
       // -- helpers --
 
         // es6 module regexs to check if it is a module or a global script
-        var importRegEx = /(?:^\s*|[}{\(\);,\n]\s*)import\s+./;
-        var exportRegEx = /(?:^\s*|[}{\(\);,\n]\s*)export\s+(\{|\*|var|class|function|default)/;
-        var moduleRegEx = /(?:^\s*|[}{\(\);,\n]\s*)module\s+("[^"]+"|'[^']+')\s*\{/;
+        var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import|export|module\s*[^\s+]+\s*from)\s+./;
 
         // es6 module forwarding - allow detecting without Esprima
         var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
@@ -503,7 +501,7 @@
           }
 
           // es6 module format
-          if (isES6 || detect && (source.match(importRegEx) || source.match(exportRegEx) || source.match(moduleRegEx)))
+          if (isES6 || detect && source.match(es6RegEx))
             return;
 
           // detect any source map comments to reinsert at the end of the new wrappings
