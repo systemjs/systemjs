@@ -26,7 +26,7 @@ Include the following script in the page:
 
 **Locally Hosted**
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/lib/es6-module-loader.js) and [`esprima-es6.min.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/esprima-es6.min.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) and locate them in the same folder as `loader.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/traceur.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) and locate them in the same folder as `loader.js` from this repo.
 
 Then include `loader.js` with a script tag:
 
@@ -34,7 +34,7 @@ Then include `loader.js` with a script tag:
   <script src="/path/to/loader.js"></script>
 ```
 
-The 60KB Esprima parser is dynamically included when loading an ES6 module format only.
+The [Traceur](https://github.com/google/traceur-compiler) parser is dynamically included when loading an ES6 module format only.
 
 Without the parser, the polyfill and loader are roughly 20KB combined and minified.
 
@@ -177,7 +177,7 @@ This should replicate much RequireJS functionality, and more will be covered in 
 
 ### Loading ES6
 
-Modules defined with ES6 syntax will be parsed with the Esprima harmony parser, which is downloaded as needed.
+Modules defined with ES6 syntax will be parsed with the Traceur parser, which is downloaded as needed.
 
 es6.js:
 ```javascript
