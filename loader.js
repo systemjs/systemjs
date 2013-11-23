@@ -843,7 +843,7 @@
 
   // carefully scoped eval with given global
   var __scopedEval = function(__source, global, __sourceURL, __sourceMappingURL) {
-    eval('(function(global) { with(global) { ' + __source + ' \n } }).call(global, global);' + (__sourceMappingURL 
+    eval('with(global) { (function() { ' + __source + ' \n }).call(global); }' + (__sourceMappingURL 
       ? '\n//# sourceMappingURL=' + __sourceMappingURL 
       : (__sourceURL ? '\n//# sourceURL=' + __sourceURL : '')));
   }
