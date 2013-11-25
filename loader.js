@@ -496,6 +496,8 @@
               imports: imports,
               exports: match[5]
             };
+          }
+          if (shim) {
             detect = false;
             isCJS = isES6 = isAMD = false;
           }
