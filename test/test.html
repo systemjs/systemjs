@@ -72,6 +72,15 @@
         }
       },
       {
+        name: 'Error handling',
+        run: function(complete) {
+          jspm.import('./tests/error', complete);
+        },
+        confirm: function() {
+          return;
+        }
+      },
+      {
         name: 'Global script loading',
         run: function(complete) {
           jspm.import(['./tests/global'], complete);

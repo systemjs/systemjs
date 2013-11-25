@@ -845,9 +845,16 @@
 
   // carefully scoped eval with given global
   var __scopedEval = function(__source, global, __sourceURL, __sourceMappingURL) {
-    eval('with(global) { (function() { ' + __source + ' \n }).call(global); }'
-      + (__sourceURL && !__source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=(.+)/)
-      ? '\n//# sourceURL=' + __sourceURL : ''));
+    try {
+      eval('with(global) { (function() { ' + __source + ' \n }).call(global); }'
+        + (__sourceURL && !__source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=(.+)/)
+        ? '\n//# sourceURL=' + __sourceURL : ''));
+    }
+    catch(e) {
+      if (e.name == 'SyntaxError')
+        e.message = 'Evaluating ' + __sourceURL + '\n\t' + e.message;
+      throw e;
+    }
   }
 
 })();
