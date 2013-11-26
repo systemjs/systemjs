@@ -271,7 +271,7 @@
         // to contain the union of the defined properties of its dependent modules
         var globalObj = {};
         var moduleGlobals = {};
-        function setGlobal(depNames) {
+        function setGlobal(propertyName, depNames) {
           // first, we add all the dependency module properties to the global
           if (depNames) {
             for (var i = 0; i < depNames.length; i++) {
@@ -288,6 +288,9 @@
             if (jspm.global.hasOwnProperty(g))
               globalObj[g] = jspm.global[g];
           }
+          // then prime the globals to objects
+          if (propertyName)
+            jspm.global[propertyName.split('.')[0]] = {};
         }
 
         // go through the global object to find any changes
