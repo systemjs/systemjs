@@ -271,7 +271,7 @@
         // to contain the union of the defined properties of its dependent modules
         var globalObj = {};
         var moduleGlobals = {};
-        function setGlobal(propertyName, depNames) {
+        function setGlobal(depNames, propertyName) {
           // first, we add all the dependency module properties to the global
           if (depNames) {
             for (var i = 0; i < depNames.length; i++) {
@@ -697,7 +697,7 @@
             execute: function() {
               for (var i = 0; i < _imports.length; i++)
                 _imports[i] = global.jspm.normalize(_imports[i], { name: name, address: options.address });
-              setGlobal(_imports);
+              setGlobal(_imports, shim && shim.exports);
               __scopedEval(source, jspm.global, sourceURL, sourceMappingURL);
               return new global.Module(getGlobal(name, shim && shim.exports));
             }
