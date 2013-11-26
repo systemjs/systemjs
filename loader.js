@@ -531,10 +531,9 @@
           cjsDefineRegEx.lastIndex = 0;
           var cjsAMD = false;
           if ((isAMD || detect) && (
-            (match = amdDefineRegEx.exec(source)) && (match[1] || match[2]) ||
-            (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true)
+            (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true) ||
+            (match = amdDefineRegEx.exec(source)) && (match[1] || match[2])
           )) {
-
             if (cjsAMD) {
               _imports = ['require', 'exports', 'module'];
               while (match = cjsRequireRegEx.exec(source))
@@ -572,7 +571,7 @@
                 var require;
 
                 if (moduleIndex != -1)
-                  module = { id: name, uri: options.address };
+                  module = { id: name, uri: options.address, config: function() { return {}; } };
                 if (exportsIndex != -1)
                   exports = {};
                 if (requireIndex != -1)
