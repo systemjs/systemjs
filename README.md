@@ -80,6 +80,16 @@ By default the registry URL is set to the [jspm CDN registry](https://github.com
 
 ### CDN Endpoints
 
+Thus scripts can be loaded directly from NPM with:
+
+```javascript
+  jspm.import('npm:underscore@2.0');
+```
+
+Most NPM modules designed for the browser can be loaded in this way.
+
+This simply corresponds to the URL `https://npm.jspm.io/underscore@2.0.js`, which is the endpoint CDN providing the NodeJS modules.
+
 By default, the following CDN endpoints are already provided:
 
 ```javascript
@@ -99,12 +109,6 @@ The Github and NPM automatically use SPDY push to provide module dependencies. T
 ```
   https://npm.jspm.io/[module name]@[version]/[file path]
   https://github.jspm.io/[username]/[repo]@[version]/[file path]
-```
-
-Thus scripts can be loaded directly from NPM with:
-
-```javascript
-  jspm.import('npm:underscore@2.0');
 ```
 
 Typically a minor version is specified only (eg @2.2), which will load the latest revision. This is the recommended way of loading a resource as it allows patches but not breaking changes in the dependency tree.
@@ -204,6 +208,26 @@ For example:
   jspm.import('backbone/module'); // loads [baseURL]/lib/backbone/module.js
 ```
 
+This is useful for setting versions:
+```javascript
+  jspm.config({
+    map: {
+      'jquery': 'jquery@2.0'
+    }
+  });
+```
+
+Or for skipping the registry request when in production:
+```javascript
+  jspm.config({
+    map: {
+      'jquery': 'github:components/jquery@2.0.0'
+    }
+  });
+```
+
+The [jspm CLI](https://github.com/jspm/jspm-cli) will automatically populate this map configuration for versions and registry maps when using it to download modules.
+
 ### Shim Configuration
 
 Shim configuration allows dependencies to be specified for existing global legacy scripts, to ensure global script load ordering.
@@ -282,48 +306,6 @@ The `ondemand` functionality provides what are paths configuration in RequireJS,
 ```
 
 This syntax is likely still subject to change due to the specification being unconfirmed here.
-
-### Endpoints
-
-The endpoints configuration option allows for custom server paths:
-
-```javascript
-  jspm.config({
-    baseURL: 'http://mysite.com/js'
-    endpoints: {
-      'lib': 'http://mysite.com/lib',
-    }
-  });
-
-  jspm.import('lib:some-module');
-```
-
-Endpoints can also be configured to a module format, and a custom normalization function.
-
-```javascript
-  jspm.config({
-    endpoints: {
-      'node': {
-        location: 'node-modules',
-        normalize: function(name) {
-          // auto add index.js as the main entry point
-          if (name.split('/').length == 1)
-            name = name + '/index';
-          // allow .js extensions in require names
-          if (name.substr(name.length - 3, 3) == '.js')
-            name = name.substr(0, name.length - 3);
-          return name;
-        },
-        format: 'cjs'
-      }
-    }
-  });
-
-  jspm.import('node:some-module') // loads [baseURL]/node-modules/some-module/index.js as commonJS
-```
-
-The benefit of specifying the module format for a location is that the script format detection scripts
-can be skipped, saving on a little processing.
 
 ### Custom Plugins
 
