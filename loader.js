@@ -17,9 +17,8 @@
     var config = {};
     config.waitSeconds = 20;
     config.map = config.map || {};
-    config.main = config.main || {};
     config.endpoints = config.endpoints || {};
-    config.shim = config.shim || {};
+    config.packages = config.packages || {};
     config.urlArgs = config.urlArgs || '';
 
     global.createLoader = function() {
@@ -31,7 +30,7 @@
       // -- helpers --
 
         // es6 module regexs to check if it is a module or a global script
-        var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import|export|module\s*[^\s+]+\s*from)\s+./;
+        var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)((import|module)\s+[^"']+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
         // es6 module forwarding - allow detecting without Esprima
         var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
@@ -179,22 +178,6 @@
           }
         }
 
-        // check if a module name starts with a given prefix
-        // the key check is not to match the prefix 'jquery'
-        // to the module name jquery-ui/some/thing, and only
-        // to jquery/some/thing or jquery:some/thing
-        // (multiple ':'s is a module name error)
-        var prefixMatch = function(name, prefix) {
-          var prefixParts = prefix.split(/[\/:]/);
-          var nameParts = name.split(/[\/:]/);
-          if (prefixParts.length > nameParts.length)
-            return false;
-          for (var i = 0; i < prefixParts.length; i++)
-            if (nameParts[i] != prefixParts[i])
-              return false;
-          return true;
-        }
-
         // check if the module is defined on an endpoint
         var getEndpoint = function(name) {
           var endpointParts = name.split(':');
@@ -202,67 +185,106 @@
           return endpointParts[1] !== undefined && !name.match(absUrlRegEx) ? endpointParts[0] : '';
         }
 
+        var separatorRegEx = /[\/:]/;
+        // choose to allow prefix match and wildcards
+        var getMatch = function(name, matches, prefix, wildcards) {
+          var curMatch = '';
+          var curMatchSuffix = '';
+          wildcards = wildcards && [];
+          
+          main:
+          for (var p in matches) {
+            var matchParts = p.split(separatorRegEx);
+            var nameParts = name.split(separatorRegEx);
+            if (matchParts.length > nameParts.length)
+              continue;
+            if (!prefix && nameParts.length > matchParts.length)
+              continue;
+
+            for (var i = 0; i < matchParts.length; i++) {
+              // do wildcard matching on individual parts if necessary
+              if (wildcards && matchParts[i].indexOf('*') != -1) {
+                // check against the equivalent regex from the wildcard statement
+                var match = nameParts[i].match(new RegExp(matchParts[i].replace(/([^*\w])/g, '\\$1').replace(/(\*)/g, '(.*)')));
+                if (!match)
+                  continue main;
+                // store the wildcard matches
+                match.shift();
+                wildcards = wildcards.concat(match);
+              }
+              else if (nameParts[i] != matchParts[i])
+                continue main;
+            }
+          
+            if (p.length <= curMatch.length)
+              continue;
+
+            curMatch = p;
+            curMatchSuffix = name.substr(nameParts.splice(0, matchParts.length).join('/').length);
+          }
+          return wildcards ? curMatch && { match: curMatch, suffix: curMatchSuffix, wildcards: wildcards } : curMatch;
+        }
+
+        var replaceWildcards = function(target, wildcards) {
+          return target.replace(/\*/g, function() {
+            return wildcards.shift();
+          });
+        }
+
+        var getPackage = function(name) {
+          return getMatch(name, config.packages, true, false);
+        }
+
+        var mapName = function(name, maps) {
+          var match = getMatch(name, maps, true, true);
+          if (match)
+            return replaceWildcards(maps[match.match], match.wildcards) + match.suffix;
+          return name;
+        }
+
+        var getShim = function(name, pkg) {
+          if (!pkg || !config.packages[pkg])
+            return;
+          
+          var subname = name.substr(pkg.length + 1);
+          var match = getMatch(subname, config.packages[pkg].shim, false, true);
+          if (!match)
+            return;
+
+          var shimConfig = config.packages[pkg].shim[match.match];
+          if (typeof shimConfig == 'string')
+            shimConfig = [shimConfig];
+          if (shimConfig instanceof Array)
+            shimConfig = { imports: shimConfig };
+          if (shimConfig.imports)
+            for (var i = 0; i < shimConfig.imports; i++)
+              shimConfig.imports[i] = replaceWildcards(shimConfig.imports[i], match.wildcards);
+          return shimConfig;
+        }
+
         // given a resolved module name and normalized parent name,
         // apply the map configuration
         var applyMap = function(name, parentName) {
           parentName = parentName || '';
-          
-          // check for most specific map config
-          var parentPrefixMatch = ''; // the matching parent refix
-          var mapPrefixMatch = ''; // the matching map prefix
-          var mapMatch = ''; // the matching map value
 
-          for (var p in config.map) {
-            var curMap = config.map[p];
-            // do the global map check
-            if (p == '*')
-              continue;
-            if (typeof curMap == 'string') {
-              if (!prefixMatch(name, p))
-                continue;
-              if (p.length <= mapPrefixMatch.length)
-                continue;
-              mapPrefixMatch = p;
-              mapMatch = curMap;
-            }
-
-            if (!prefixMatch(parentName, p))
-              continue;
-
-            // now check if this matches our current name
-            for (var _p in curMap) {
-              if (!prefixMatch(name, _p))
-                continue;
-
-              // the most specific mapPrefix wins first
-              if (_p.length < mapPrefixMatch.length)
-                continue;
-
-              // then the most specific prefixMatch on the parent name
-              if (_p.length == mapPrefixMatch.length && p.length < parentPrefixMatch.length)
-                continue;
-
-              parentPrefixMatch = p;
-              mapPrefixMatch = _p;
-              mapMatch = curMap[_p];
-            }
+          // 1. apply parent map
+          var parentPackage = getPackage(parentName);
+          var parentConfig = config.packages[parentPackage];
+          if (parentConfig && parentConfig.map) {
+            name = mapName(name, parentConfig.map);
+            // map can be package relative
+            if (name.substr(0, 1) == '.')
+              name = global.System.normalize(name, { name: parentPackage + '/' })
           }
-          // now compare against the global map config
-          for (var _p in config.map['*'] || {}) {
-            if (!prefixMatch(name, _p))
-              continue;
-            if (_p.length <= mapPrefixMatch.length)
-              continue;
-            mapPrefixMatch = _p;
-            mapMatch = config.map['*'][_p];
-          }
-          // apply map config
-          if (mapPrefixMatch)
-            name = mapMatch + name.substr(mapPrefixMatch.length);
           
-          // apply main config
-          if (config.main[name])
-            name = name + '/' + config.main[name];
+          // 2. apply global map config
+          name = mapName(name, config.map);
+
+          var pkg = getPackage(name);
+
+          // 3. apply package main
+          if (pkg && pkg.length == name.length && config.packages[pkg].main)
+            name = name + '/' + config.packages[pkg].main;
 
           return name;
         }
@@ -361,13 +383,6 @@
             else
               name = global.System.normalize(name, referer);
 
-            // check endpoint config if given
-            if (name.indexOf(':') != -1) {
-              var endpoint = config.endpoints[name.substr(0, name.indexOf(':'))];
-              if (typeof endpoint == 'object' && endpoint.normalize)
-                  name = endpoint.normalize(name, referer);
-            }
-
             // do map config
             name = applyMap(name, parentName);
           }
@@ -391,30 +406,25 @@
             return name;
 
           // endpoints
-          var oldBaseURL = this.baseURL;
+          var address;
 
           var endpoint = getEndpoint(name);
           var urlArgs = '';
           if (endpoint) {
             if (!config.endpoints[endpoint])
               throw 'Endpoint "' + endpoint + '" not defined.';
-            this.baseURL = config.endpoints[endpoint].location || config.endpoints[endpoint];
+            address = config.endpoints[endpoint];
             name = name.substr(endpoint.length + 1);
           }
-          else if (name.substr(0, 2) != './' && name.substr(0, 3) != '../')
-            this.baseURL = config.registryURL;
-          else
+          else if (name.substr(0, 2) == '~/') {
+            name = name.substr(2);
+            address = config.baseURL;
             urlArgs = config.urlArgs;
+          }
+          else
+            address = config.registryURL;
 
-          var address = global.System.resolve.call(this, name, options);
-
-          // remove js extension added if a plugin
-          if (pluginMatch)
-            address = address.substr(0, address.length - 3);
-
-          this.baseURL = oldBaseURL;
-
-          return address + urlArgs;
+          return address + (address.charAt(address.length - 1) == '/' ? '' : '/') + name + (!pluginMatch ? '.js' : '') + urlArgs;
         },
         fetch: function(url, callback, errback, options) {
           options = options || {};
@@ -458,9 +468,9 @@
           if (!source)
             return new global.Module({});
 
-          // check if the endpoint specifies a format
-          var endpoint = name.indexOf(':') != -1 && config.endpoints[name.substr(0, name.indexOf(':'))];
-          var format = endpoint && typeof endpoint.format == 'string' && endpoint.format.toLowerCase();
+          // check if the package specifies a format
+          var pkg = getPackage(name);
+          var format = pkg && config.packages[pkg].format;
           
 
           // knowing the format, we can minimise the processing cost of regular expressions
@@ -485,7 +495,7 @@
           }
 
           // global check, also based on a "simple form" regex
-          var shim = config.shim[name];
+          var shim = getShim(name, pkg);
           var first500 = source.substr(0, 500);
           if (match = first500.match(globalShimRegEx)) {
             var imports = match[2].match(globalImportRegEx);
@@ -536,8 +546,9 @@
           )) {
             if (cjsAMD) {
               _imports = ['require', 'exports', 'module'];
+
               while (match = cjsRequireRegEx.exec(source))
-                _imports.push(match[3] || match[4]);
+                _imports.push(match[2] || match[3]);
             }
             else {
               
@@ -686,7 +697,7 @@
           }
 
           // Global
-          _imports = shim ? _imports.concat(shim instanceof Array ? shim : shim.imports || []) : _imports;
+          _imports = shim ? _imports.concat(shim.imports || []) : _imports;
           return {
             // apply shim config
             imports: _imports,
@@ -800,15 +811,7 @@
       jspm.config({
         endpoints: {
           github: 'https://github.jspm.io',
-          npm: {
-            location: 'https://npm.jspm.io',
-            format: 'cjs',
-            normalize: function(name) {
-              if (name.substr(name.length - 3, 3) == '.js')
-                return name.substr(0, name.length - 3);
-              return name;
-            }
-          },
+          npm: 'https://npm.jspm.io',
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
         }
       });
