@@ -25,7 +25,7 @@ Getting Started
 7. [Installing Libraries Locally](#installing-libraries-locally)
 8. [Package Configuration](#package-configuration)
 9. [Cache Busting](#cache-busting)
-10.[Plugins](#plugins)
+10. [Plugins](#plugins)
 
 ### Including the Loader
 
