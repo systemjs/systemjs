@@ -169,9 +169,9 @@ Endpoints provide collections of packages that can be downloaded or served over 
 
 Currently the following endpoints are supported:
 
-* GitHub: `jspm.import('github:name/repo@version')
-* npm: `jspm.import('npm:repo@version')
-* cdnJS: `jspm.import('cdnjs:name/version')
+* GitHub: `jspm.import('github:name/repo@version')`
+* npm: `jspm.import('npm:repo@version')`
+* cdnJS: `jspm.import('cdnjs:name/version')`
 
 Use of these endpoints is entirely optional, and custom endpoints can easily be created or overrided in the loader.
 
@@ -198,7 +198,7 @@ In the above examples, the following module names are converted directly into th
 <pre>
   npm:lodash-node/modern/objects/isEqual -> https://npm.jspm.io/lodash-node/modern/objects/isEqual.js
   github:twbs/bootstrap/js/bootstrap     -> https://github.jspm.io/twbs/bootstrap/js/bootstrap.js
-  github:components/jquery@2.0/jquery  -> https://github.jspm.io/components/jquery@2.0/jquery.js
+  github:components/jquery@2.0/jquery    -> https://github.jspm.io/components/jquery@2.0/jquery.js
 </pre>
 
 The endpoint servers then provide the correct modular code from the package and version specified.
@@ -224,7 +224,7 @@ To create a custom endpoint, use the configuration:
 
 Instead of writing `github:components/jquery@2.0`, typically one would write `jquery` in all local application code.
 
-We then _map_ `jquery -> `github:components/jquery@2.0` with global map config for out application.
+We then _map_ `jquery -> github:components/jquery@2.0` with global map config for out application.
 
 ```javascript
   jspm.config({
