@@ -416,7 +416,7 @@
             address = config.endpoints[endpoint];
             name = name.substr(endpoint.length + 1);
           }
-          else if (name.substr(0, 2) == '~/') {
+          else if (name.substr(0, 2) == '~/' || name.substr(0, 2) == './') {
             name = name.substr(2);
             address = config.baseURL;
             urlArgs = config.urlArgs;
