@@ -165,10 +165,15 @@
         run: function(complete) {
           jspm.config({
             endpoints: {
-              'mypath': './tests'
+              'mypath': {
+                location: './tests',
+                depth: 1,
+                main: 'deep',
+                format: 'cjs'
+              }
             }
           });
-          jspm.import(['mypath:path', 'mypath:deep/deep'], complete);
+          jspm.import(['mypath:path', 'mypath:deep'], complete);
         },
         confirm: function(m) {
           if (m != 'path')

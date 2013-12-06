@@ -262,7 +262,7 @@
           return shimConfig;
         }
 
-        // given a resolved module name and normalized parent name,
+        // given a relative-resolved module name and normalized parent name,
         // apply the map configuration
         var applyMap = function(name, parentName) {
           parentName = parentName || '';
@@ -285,6 +285,19 @@
           // 3. apply package main
           if (pkg && pkg.length == name.length && config.packages[pkg].main)
             name = name + '/' + config.packages[pkg].main;
+
+          // 4. apply endpoint main
+          else {
+            var endpointName = getEndpoint(name);
+            if (endpointName) {
+              var endpoint = config.endpoints[endpointName];
+              var depth = endpoint && endpoint.depth || 1;
+              var main = endpoint && endpoint.main;
+
+              if (main && name.split('/').length == depth)
+                name = name + '/' + main;
+            }
+          }
 
           return name;
         }
@@ -414,6 +427,7 @@
             if (!config.endpoints[endpoint])
               throw 'Endpoint "' + endpoint + '" not defined.';
             address = config.endpoints[endpoint];
+            address = address.location ? address.location : address;
             name = name.substr(endpoint.length + 1);
           }
           else if (name.substr(0, 2) == '~/' || name.substr(0, 2) == './') {
@@ -471,6 +485,13 @@
           // check if the package specifies a format
           var pkg = getPackage(name);
           var format = pkg && config.packages[pkg].format;
+
+          // otherwise check the endpoint for a format
+          if (!format) {
+            var endpoint = getEndpoint(name);
+            if (endpoint)
+              format = config.endpoints[endpoint].format;
+          }
           
 
           // knowing the format, we can minimise the processing cost of regular expressions
@@ -810,8 +831,15 @@
       // add convenience endpoints
       jspm.config({
         endpoints: {
-          github: 'https://github.jspm.io',
-          npm: 'https://npm.jspm.io',
+          github: {
+            location: 'https://github.jspm.io',
+            depth: 2
+          },
+          npm: {
+            location: 'https://npm.jspm.io',
+            format: 'cjs',
+            main: 'index'
+          },
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
         }
       });
