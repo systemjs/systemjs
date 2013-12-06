@@ -9,7 +9,7 @@ Next-generation module loading in all browsers today.
 * Built on top of the standards-compliant [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 * ~25KB total size minified, ~15KB for loader.js and ~11KB for es6-module-loader.js.
 
-For the loader documentation and getting started guide read below. 
+For the loader documentation and getting started guide, read below. 
 
 For a basic introduction and explanation with examples, see [https://jspm.io](https://jspm.io).
 
@@ -163,7 +163,7 @@ This provides careful protection against global collisions, allowing global scri
 
 Most global scripts will still need some [shim configuration](#shim-configuration) as in RequireJS to set their dependencies.
 
-### Loading Extenal Packages from Endpoints
+### Loading External Packages from Endpoints
 
 Endpoints provide collections of packages that can be downloaded or served over CDN.
 
@@ -224,7 +224,7 @@ To create a custom endpoint, use the configuration:
 
 Instead of writing `github:components/jquery@2.0`, typically one would write `jquery` in all local application code.
 
-We then _map_ `jquery -> github:components/jquery@2.0` with global map config for out application.
+We then _map_ `jquery -> github:components/jquery@2.0` with global map config for our application.
 
 ```javascript
   jspm.config({
@@ -235,7 +235,7 @@ We then _map_ `jquery -> github:components/jquery@2.0` with global map config fo
   });
 ```
 
-This means that any require to `jquery` in any module will not get the exact jQuery version we want.
+This means that any import/require for `jquery` in any module will now get the exact jQuery version we want.
 
 This is far better than specifying the full endpoint directly as it makes it very easy to update jQuery to a new version or endpoint. This is the most important configuration option for dependency-managed packages.
 
@@ -267,7 +267,7 @@ Use of the [jspm registry](https://github.com/jspm/registry) is also entirely op
   });
 ```
 
-> The registry is still growing, and a list of the modules currently in the registry can be [found here](https://github.com/jspm/registry/blob/master/registry.json. Additions can be made with pull requests, or requested as issues.
+> The registry is still growing, and a list of the modules currently in the registry can be [found here](https://github.com/jspm/registry/blob/master/registry.json). Additions can be made with pull requests, or requested as issues.
 
 #### Setting Package Sources and Versions
 
@@ -302,7 +302,7 @@ This supports both version names and semvers:
   jspm.import('bootstrap@3.0.1');
 ```
 
-Generally it is advised to write requires without any version or endpoint specified, and then use the package map configuration to set the endpoint and minor version.
+Generally it is advised to write import/requires without any version or endpoint specified, and then use the package map configuration to set the endpoint and minor version.
 
 This provides the most flexibility.
 
@@ -372,7 +372,7 @@ This sets the _main entry point_ for the package. When the package is requested 
   jspm.import('bootstrap')
 ```
 
-This will then load `js/bootstrap.js`, as if we had written:
+this will then load `js/bootstrap.js`, as if we had written:
 
 ```javascript
   jspm.import('bootstrap/js/bootstrap')
