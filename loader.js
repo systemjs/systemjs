@@ -837,8 +837,7 @@
           },
           npm: {
             location: 'https://npm.jspm.io',
-            format: 'cjs',
-            main: 'index'
+            format: 'cjs'
           },
           cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs'
         }
