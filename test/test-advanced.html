@@ -2,7 +2,17 @@
 <html>
 <script src="../../es6-module-loader/lib/es6-module-loader.js"></script>
   <script src="../loader.js"></script>
-
+<script>
+  jspm.config({
+    packages: {
+      'github:jquery/jquery@master': {
+        map: {
+          sizzle: 'github:jquery/sizzle@master/src/sizzle'
+        }
+      }
+    }
+  });
+</script>
 <script>
   var startTime = Date.now();
   jspm.import('github:jquery/jquery@master/jquery', function($) {
