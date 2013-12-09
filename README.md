@@ -151,7 +151,22 @@ Note that AMD-style plugins are not supported.
 
 #### Loading ES6 Modules
 
-jspm is an ES6 module loader. It will detect and load ES6 modules, parsing them with Traceur dynamically. This allows for dynamic loading of ES6 without a build step, although a build step still needs to be run to transpile ES6 back to ES5 and AMD for production. This use case will grow over time.
+jspm is an ES6 module loader. It will detect and load ES6 modules, parsing them with Traceur dynamically. This allows for dynamic loading of ES6 without a build step, although a build step still needs to be run to transpile ES6 back to ES5 and AMD for production.
+
+The CDN and CLI provide support for converting ES6 modules into ES5 with AMD. Simply add the following to the package.json:
+
+```javascript
+{
+  "buildConfig": {
+    "traceur": true,
+    "uglify": true
+  }
+}
+```
+
+Then either run a CLI build with `jspm build`, or upload the package to the CDN to have the build done there.
+
+The CLI build configuration is explained further at the [project page](https://github.com/jspm/jspm-cli#building-application-code), there is also a [sample repo demonstrating the ES6 build here](https://github.com/jspm/demo-es6).
 
 Read more about ES6 modules and module loaders at the [ES6 Module Loader polyfill repo](https://github.com/ModuleLoader/es6-module-loader).
 
