@@ -22,7 +22,7 @@ Getting Started
 4. [Loading External Packages from Endpoints](#loading-external-packages-from-endpoints)
 5. [Map Configuration](#map-configuration)
 6. [Loading External Packages from the jspm Registry](#loading-external-packages-from-the-jspm-registry)
-7. [Installing Libraries Locally](#installing-libraries-locally)
+7. [Installing Packages Locally](#installing-packages-locally)
 8. [Package Configuration](#package-configuration)
 9. [Cache Busting](#cache-busting)
 10. [Plugins](#plugins)
@@ -151,7 +151,22 @@ Note that AMD-style plugins are not supported.
 
 #### Loading ES6 Modules
 
-jspm is an ES6 module loader. It will detect and load ES6 modules, parsing them with Traceur dynamically. This allows for dynamic loading of ES6 without a build step, although a build step still needs to be run to transpile ES6 back to ES5 and AMD for production. This use case will grow over time.
+jspm is an ES6 module loader. It will detect and load ES6 modules, parsing them with Traceur dynamically. This allows for dynamic loading of ES6 without a build step, although a build step still needs to be run to transpile ES6 back to ES5 and AMD for production.
+
+The CDN and CLI provide support for converting ES6 modules into ES5 with AMD. Simply add the following to the package.json:
+
+```javascript
+{
+  "buildConfig": {
+    "traceur": true,
+    "uglify": true
+  }
+}
+```
+
+Then either run a CLI build with `jspm build`, or upload the package to the CDN to have the build done there.
+
+The CLI build configuration is explained further at the [project page](https://github.com/jspm/jspm-cli#building-application-code), there is also a [sample repo demonstrating the ES6 build here](https://github.com/jspm/demo-es6).
 
 Read more about ES6 modules and module loaders at the [ES6 Module Loader polyfill repo](https://github.com/ModuleLoader/es6-module-loader).
 
@@ -243,7 +258,7 @@ This is far better than specifying the full endpoint directly as it makes it ver
 
 It can be difficult to know exactly what the most maintained endpoint is for a specific package and remember this endpoint each time.
 
-Instead of needing to know `github:twbs/bootstrap` is the maintained package endpoint for Bootstrap, the jspm registry provides a simple service to remember the main endpoint for libraries.
+Instead of needing to know `github:twbs/bootstrap` is the maintained package endpoint for Bootstrap, the jspm registry provides a simple service to remember the main endpoint for a package.
 
 We simply write:
 
@@ -320,7 +335,7 @@ jspm.config({
 });
 ```
 
-### Installing Libraries Locally
+### Installing Packages Locally
 
 While the CDN endpoints make it very convenient to create and load modules without the friction of installation, it is easy to switch to installing packages locally at any time.
 
