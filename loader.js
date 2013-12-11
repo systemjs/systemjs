@@ -24,7 +24,7 @@
     global.createLoader = function() {
       delete global.createLoader;
 
-      config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.lastIndexOf('\/') + 1) : './';
+      config.baseURL = config.baseURL || isBrowser ? document.URL.substring(0, window.location.href.split('#')[0].lastIndexOf('\/') + 1) : './';
       config.registryURL = 'https://registry.jspm.io';
 
       // -- helpers --
