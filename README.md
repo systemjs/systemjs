@@ -463,8 +463,9 @@ Supported Plugins:
 
 * CSS `jspm.import('my/file.css!')`
 * Image `jspm.import('some/image.png!image')`
-* JSON `jspm.import('some/data.json!')`
-* Text `jspm.import('some/text.txt!text')`
+* JSON `jspm.import('some/data.json!', function(json) {})`
+* Markdown `jspm.import('github:some/project/README.md!', function(html) {})`
+* Text `jspm.import('some/text.txt!text', function(text) {})`
 * WebFont `jspm.import('#google Port Lligat Slab, Droid Sans !font')`
 
 The name of the plugin is by default the file extension before the `!`, or the name can be provided after with `!pluginName` when the plugin name is not the same as the resource extension name.
