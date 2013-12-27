@@ -47,7 +47,7 @@ In the `index.html` page we can then load a module from the baseURL folder with:
     console.log(test.isAMD); // yup
   });
 </script>
-
+```
 The module file at `lib/test.js` will be loaded, its module format detected and any dependencies in turn loaded before returning the defined module.
 
 The entire loading class is implemented identically to the ES6 module specification, with the module format detection rules being the only addition.
