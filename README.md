@@ -1,15 +1,15 @@
 SystemJS
 ===========
 
-A minimal universal module loader.
+A minimal universal ES6 spec-compilant module loader.
 
-A small extension library for the new `System` ES6 loader, which will soon be native to browsers.
+A small (10KB minfied) extension library for the new `System` ES6 loader, which will soon be native to browsers.
 
 The extension adds the following features to the existing `System` loader:
 * Dynamically load ES6 modules, AMD, CommonJS and global scripts detecting the format automatically, or with format hints.
 * A plugin system for creating modular custom loading rules.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 28KB.
 
 Runs in the browser and NodeJS.
 
