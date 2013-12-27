@@ -113,8 +113,8 @@ app/main.js:
 
 index.html:
 ```html
+  <script> System.paths['~/*'] = '/app/*.js'; </script>
   <script>
-    System.paths['~/*'] = '/lib/*.js';
     System.import('~/main');
   </script>
 ```
