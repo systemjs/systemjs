@@ -30,7 +30,7 @@ Then include `system.js` with a script tag in the page:
 
 ### Write and Load a Module
 
-lib/test.js:
+app/test.js:
 ```javascript
   define(function() {
     return {
@@ -43,12 +43,12 @@ In the `index.html` page we can then load a module from the baseURL folder with:
 
 ```html
 <script>
-  System.import('lib/test').then(function(test) {
+  System.import('app/test').then(function(test) {
     console.log(test.isAMD); // yup
   });
 </script>
 ```
-The module file at `lib/test.js` will be loaded, its module format detected and any dependencies in turn loaded before returning the defined module.
+The module file at `app/test.js` will be loaded, its module format detected and any dependencies in turn loaded before returning the defined module.
 
 The entire loading class is implemented identically to the ES6 module specification, with the module format detection rules being the only addition.
 
@@ -80,34 +80,9 @@ By default, the baseURL is set to the current page, but it can be changed with:
 
 ```html
   <script>
-    System.baseURL = '/lib/';
+    System.baseURL = '/js/';
   </script>
 ```
-
-### Writing Modular Code
-
-It is recommended to write modular code in either AMD or CommonJS. Both are equally supported by SystemJS, with the format detected automatically.
-
-For example, we can write modular CommonJS:
-
-/lib/app.js:
-```javascript
-  var subModule = require('./submodule/submodule');
-  //...
-  subModule.someMethod();
-  //...
-```
-
-/lib/submodule/submodule.js:
-```javascript
-  exports.someMethod = function() {
-
-  }
-```
-
-and load this with `System.import('app')` in the page.
-
-> Note: always use relative requires of the form `./` or `../` to reference modules in the same package. This is important within any package for modularity.
 
 ### Paths Configuration
 
@@ -125,9 +100,9 @@ It is then better to have local application scripts in their own separate folder
 
 Non-wildcard paths are also supported, and the most specific rule will always be used.
 
-In this example, we can now write local application code in its own folder, without conflict with library code:
+In this example, we can now write local application code in its own folder (`app`), without conflict with library code (`js`):
 
-/app/main.js:
+app/main.js:
 ```javascript
   define(['jquery'], function($) {
     return {
@@ -139,10 +114,35 @@ In this example, we can now write local application code in its own folder, with
 index.html:
 ```html
   <script>
-    System.paths['~/*'] = '/app/*.js';
+    System.paths['~/*'] = '/lib/*.js';
     System.import('~/main');
   </script>
 ```
+
+### Writing Modular Code
+
+It is recommended to write modular code in either AMD or CommonJS. Both are equally supported by SystemJS, with the format detected automatically.
+
+For example, we can write modular CommonJS:
+
+app/app.js:
+```javascript
+  var subModule = require('./submodule/submodule');
+  //...
+  subModule.someMethod();
+  //...
+```
+
+app/submodule/submodule.js:
+```javascript
+  exports.someMethod = function() {
+
+  }
+```
+
+and load this with `System.import('~/app')` in the page.
+
+> Note: always use relative requires of the form `./` or `../` to reference modules in the same package. This is important within any package for modularity.
 
 ### Module Format Hints
 
@@ -169,7 +169,7 @@ SystemJS is an ES6 module loader. It will detect and load ES6 modules, parsing t
 
 A very simple example:
 
-es6-file.js:
+app/es6-file.js:
 ```javascript
   export class q {
     constructor() {
@@ -194,10 +194,10 @@ For examples of build workflows, see the [jspm CLI documentation](https://github
 
 ### Module Forwarding
 
-Consider the structure of the `lib` folder for shared libraries. At some point we end up combining module files with package folders, something like:
+Consider the structure of the `js` folder for shared libraries. At some point we end up combining module files with package folders, something like:
 
 ```
-- lib/
+- js/
   - jquery.js
   - underscore.js
   - bootstrap
@@ -207,13 +207,13 @@ Consider the structure of the `lib` folder for shared libraries. At some point w
   - app.js
 ```
 
-The question then is how do we load the folder as simply as the module files?
+The question then is how do we load the `bootstrap` folder as simply as the module files?
 
 `System.import('bootstrap/js/bootstrap')` is far too much typing...
 
 A good way of handling this is to provide a re-export module at a shortcut location:
 
-/lib/bootstrap.js:
+js/bootstrap.js:
 ```javascript
   export * from './bootstrap/js/bootstrap';
 ```
@@ -248,13 +248,13 @@ When many properties are written to the global object, the collection of those p
 
 This provides loading as expected in the majority of cases:
 
-sample-global.js:
+app/sample-global.js:
 ```javascript
   hello = 'world';
 ```
 
 ```javascript
-  System.import('sample-global').then(function(sampleGlobal) {
+  System.import('~/sample-global').then(function(sampleGlobal) {
     console.log(sampleGlobal); // 'world'
   });
 ```
@@ -265,7 +265,7 @@ The automatic detection handles most cases, but there are still scenarios where 
 
 To specify the exported name, provide an `"export"` string, directly beneath the `"global"` hint.
 
-my-global.js:
+app/my-global.js:
 ```javascript
   "global";
   "export MyGlobal.obj";
@@ -278,7 +278,7 @@ my-global.js:
 ```
 
 ```javascript
-  System.import('my-global').then(function(m) {
+  System.import('~/my-global').then(function(m) {
     console.log(m); // 'hello world'
   });
 ```
@@ -289,7 +289,7 @@ Global modules can also specify dependencies using this same hint system.
 
 We write an `"import"` string, directly beneath the `"global"` hint.
 
-jquery-plugin.js:
+js/jquery-plugin.js:
 ```javascript
   "global";
   "import jquery";
@@ -339,7 +339,7 @@ Supported Plugins:
 * CSS `System.import('my/file.css!')`
 * Image `System.import('some/image.png!image')`
 * JSON `System.import('some/data.json!').then(function(json){})`
-* Markdown `System.import('github:some/project/README.md!').then(function(html) {})`
+* Markdown `System.import('~/some/project/README.md!').then(function(html) {})`
 * Text `System.import('some/text.txt!text').then(function(text) {})`
 * WebFont `System.import('google Port Lligat Slab, Droid Sans !font')`
 
@@ -357,7 +357,7 @@ Read more on the loader hooks at the [ES6 Module Loader polyfill page](https://g
 
 For example, we can write a CoffeeScript plugin with the following (CommonJS as an example, any module format works fine):
 
-lib/coffee.js:
+js/coffee.js:
 ```javascript
   var CoffeeScript = require('coffeescript');
 
@@ -369,14 +369,14 @@ lib/coffee.js:
 By overriding the `translate` hook, we now support CoffeeScript loading with:
 
 ```
- - /lib
+ - js/
    - coffee.js             our plugin above
    - coffeescript.js       the CoffeeScript compiler
- - /app
+ - app/
    - main.coffee
 ```
 
-Then assuming we have a `~` [path config](#Paths Configuration) set to the `/app` folder, and the baseURL set to `/lib/`, we can write:
+Then assuming we have a `~` [path config](#Paths Configuration) set to the `/app` folder, and the baseURL set to `/js/`, we can write:
 
 ```javascript
   System.import('~/main.coffee!').then(function(main) {
@@ -388,7 +388,7 @@ Then assuming we have a `~` [path config](#Paths Configuration) set to the `/app
 
 A CSS plugin, on the other hand, would override the fetch hook:
 
-lib/css.js:
+js/css.js:
 ```javascript
   exports.fetch = function(load) {
     // return a thenable for fetching (as per specification)
