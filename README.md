@@ -140,7 +140,7 @@ index.html:
 ```html
   <script>
     System.paths['~/*'] = '/app/*.js';
-    System.import('~/app');
+    System.import('~/main');
   </script>
 ```
 
