@@ -1,71 +1,67 @@
 <!doctype html>
 <html>
 <script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
-<script src="../loader.js" type="text/javascript"></script>
+<script src="../system.js" type="text/javascript"></script>
 
 <script>
-  jspm.config({
-    urlArgs: '?test'
-  });
-
-  jspm.import('~/test-runner', function(runner) {
+  System.import('test-runner').then(function(runner) {
     runner.execute([
       {
         name: 'Wrapper module support',
-        run: function(complete) {
-          jspm.import('~/tests/wrapper', complete);
+        run: function(complete, err) {
+          System.import('tests/wrapper').then(complete, err);
         },
         confirm: function(m) {
-          if (m != 'default1')
+          if (m.default != 'default1')
             return 'Wrapper module not defined.';
         }
       },
       {
         name: 'Basic exporting & importing',
-        run: function(complete) {
+        run: function(complete, err) {
           var m1, m2, m3, m4, err;
           var checkComplete = function() {
             if (m1 && m2 && m3 && m4 && err)
               complete(m1, m2, m3, m4);
           }
-          jspm.import(['~/tests/default1'], function(_m1) {
+          System.import('tests/default1').then(function(_m1) {
             if (m1 === undefined)
               m1 = null;
             else
               m1 = _m1;
             checkComplete();
           });
-          jspm.import(['~/tests/default1'], function(_m1) {
+          System.import('tests/default1').then(function(_m1) {
             if (m1 === undefined)
               m1 = null;
             else
               m1 = _m1;
             checkComplete();
           });
-          jspm.import(['~/tests/default2'], function(_m2) {
+          System.import('tests/default2').then(function(_m2) {
             m2 = _m2;
             checkComplete();
           });
-          jspm.import(['~/tests/asdf'], function() {
+          System.import('tests/asdf').then(function() {
           }, function(_err) {
             err = _err;
             checkComplete();
           });
-          jspm.import('~/tests/default3', function(_m3) {
+          System.import('tests/default3').then(function(_m3) {
             m3 = _m3;
             checkComplete();
           });
-          jspm.import('~/tests/module', function(_m4) {
+          System.import('tests/module').then(function(_m4) {
             m4 = _m4;
             checkComplete();
           });
         },
         confirm: function(m1, m2, m3, m4) {
-          if (m1 != 'default1')
+          if (m1.default != 'default1')
             return 'Error defining default 1';
-          if (m2 != 'default2')
+          if (m2.default != 'default2')
             return 'Error defining default 2';
-          if (m3 != 'default3')
+          if (m3.default != 'default3')
             return 'Error defining default 3';
           if (m4.test != 'default3')
             return 'Error defining module';
@@ -73,8 +69,8 @@
       },
       {
         name: 'Error handling',
-        run: function(complete) {
-          jspm.import('~/tests/error', complete);
+        run: function(complete, err) {
+          System.import('tests/error').then(complete, err);
         },
         confirm: function() {
           return;
@@ -82,8 +78,8 @@
       },
       {
         name: 'Global script loading',
-        run: function(complete) {
-          jspm.import(['~/tests/global'], complete);
+        run: function(complete, err) {
+          System.import('tests/global').then(complete, err);
         },
         confirm: function(m) {
           if (!m.jQuery || !m.another)
@@ -92,8 +88,8 @@
       },
       {
         name: 'Global script with multiple objects the same',
-        run: function(complete) {
-          jspm.import(['~/tests/global-multi'], complete);
+        run: function(complete, err) {
+          System.import('tests/global-multi').then(complete, err);
         },
         confirm: function(m) {
           if (m.jquery != 'here')
@@ -101,59 +97,19 @@
         }
       },
       {
-        name: 'Shim with imports',
-        run: function(complete) {
-          jspm.config({
-            packages: {
-              '~': {
-                shim: {
-                  'tests/global-with-dep': ['./global-dep']
-                }
-              }
-            }
-          });
-          jspm.import(['~/tests/global-with-dep'], complete);
-        },
-        confirm: function(m) {
-          if (m != '1.8.3')
-            return 'Global dependency not defined';
-        }
-      },
-      {
         name: 'Global script loading with inline shim',
-        run: function(complete) {
-          jspm.import('~/tests/global-inline-dep', complete);
+        run: function(complete, err) {
+          System.import('tests/global-inline-dep').then(complete, err);
         },
         confirm: function(m) {
           if (m != '1.8.3')
             return 'Global dependency not defined';
-        }
-      },
-      {
-        name: 'Wildcard shim with export specified',
-        run: function(complete) {
-          jspm.config({
-            packages: {
-              '~': {
-                shim: {
-                  'tests/global-with-*': {
-                    exports: 'window.q.r'
-                  }
-                }
-              }
-            }
-          });
-          jspm.import(['~/tests/global-with-export'], complete);
-        },
-        confirm: function(m) {
-          if (m != 'r')
-            return 'Exports value not correct'
         }
       },
       {
         name: 'Global script with inline exports',
-        run: function(complete) {
-          jspm.import('~/tests/global-inline-export', complete);
+        run: function(complete, err) {
+          System.import('tests/global-inline-export').then(complete, err);
         },
         confirm: function(m) {
           if (m != 'r')
@@ -161,88 +117,30 @@
         }
       },
       {
-        name: 'Endpoint configuration',
-        run: function(complete) {
-          jspm.config({
-            endpoints: {
-              'mypath': {
-                location: './tests',
-                depth: 1,
-                main: 'deep',
-                format: 'cjs'
-              }
-            }
-          });
-          jspm.import(['mypath:path', 'mypath:deep'], complete);
+        name: 'Map configuration',
+        run: function(complete, err) {
+          System.map['maptest'] = 'tests/map-test';
+          System.import('maptest').then(complete, err)
         },
         confirm: function(m) {
-          if (m != 'path')
-            return 'module not loaded';
+          if (m.maptest != 'maptest')
+            return 'Mapped module not loaded';
         }
       },
       {
-        name: 'Map configuration',
-        run: function(complete) {
-          jspm.config({
-            map: {
-              'maptest': '~/tests/map-test'
-            }
-          });
-          jspm.import(['maptest', 'maptest/sub'], complete)
+        name: 'Map configuration subpath',
+        run: function(complete, err) {
+          System.import('maptest/sub').then(complete, err)
         },
-        confirm: function(m1, m2) {
-          if (m1.maptest != 'maptest')
-            return 'Mapped module not loaded';
-          if (m2.maptest != 'maptestsub')
+        confirm: function(m) {
+          if (m.maptest != 'maptestsub')
             return 'Mapped folder not loaded';
         }
       },
       {
-        name: 'Wildcard Map Configuration',
-        run: function(complete) {
-          jspm.config({
-            map: {
-              'wild/card.*.*': '~/tests/wildcard-test/*',
-              'wild/card.second.*': '~/tests/wildcard-test/2'
-            }
-          });
-          jspm.import(['wild/card.first.here', 'wild/card.second.here', 'wild/card.second.here/sub'], complete);
-        },
-        confirm: function(m1, m2, m3) {
-          if (!m1 || !m2 || !m3)
-            return 'Failed';
-        }
-      },
-      {
-        name: 'Package Configuration',
-        run: function(complete) {
-          jspm.config({
-            packages: {
-              '~/tests/mypackage': {
-                main: 'index',
-                format: 'global',
-                map: {
-                  'bar': './lib/bar'
-                },
-                shim: {
-                  'src/*': ['bar']
-                }
-              }
-            }
-          });
-          jspm.import(['~/tests/mypackage', '~/tests/mypackage/src/foo'], complete);
-        },
-        confirm: function(m1, m2) {
-          if (m1 != 'bar')
-            return 'Mapped package dependency not loaded';
-          if (m2 != 'foo')
-            return 'Sub dependency not loaded';
-        }
-      },
-      {
         name: 'Loading an AMD module',
-        run: function(complete) {
-          jspm.import(['~/tests/amd-module'], complete);
+        run: function(complete, err) {
+          System.import('tests/amd-module').then(complete, err);
         },
         confirm: function(m) {
           if (m.amd != true)
@@ -253,8 +151,8 @@
       },
       {
         name: 'Loading an AMD named define',
-        run: function(complete) {
-          jspm.import(['github:coreyti/showdown@0.3.1/src/showdown'], complete);
+        run: function(complete, err) {
+          System.import('tests/nameddefine').then(complete, err);
         },
         confirm: function(m) {
           if (!m.converter)
@@ -263,15 +161,8 @@
       },
       {
         name: 'Loading AMD CommonJS form',
-        run: function(complete) {
-          jspm.config({
-            packages: {
-              '~/tests/amd-cjs-module': {
-                shim: 'amd'
-              }
-            }
-          });
-          jspm.import(['~/tests/amd-cjs-module'], complete);
+        run: function(complete, err) {
+          System.import('tests/amd-cjs-module').then(complete, err);
         },
         confirm: function(m) {
           if (m.test != 'hi')
@@ -280,8 +171,8 @@
       },
       {
         name: 'Loading a CommonJS module',
-        run: function(complete) {
-          jspm.import(['~/tests/common-js-module'], complete);
+        run: function(complete, err) {
+          System.import('tests/common-js-module').then(complete, err);
         },
         confirm: function(m) {
           if (m.hello != 'world')
@@ -292,8 +183,8 @@
       },
       {
         name: 'Loading a UMD module',
-        run: function(complete) {
-          jspm.import(['~/tests/umd'], complete);
+        run: function(complete, err) {
+          System.import('tests/umd').then(complete, err);
         },
         confirm: function(m) {
           if (m.d != 'hi')
@@ -301,14 +192,38 @@
         }
       },
       {
+        name: 'Loading ES6 with format hint',
+        run: function(complete, err) {
+          System.import('tests/es6-format').then(complete, err);
+        },
+        confirm: function(m) {
+        }
+      },
+      {
+        name: 'Loading AMD with format hint',
+        run: function(complete, err) {
+          System.import('tests/amd-format').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.amd != 'amd')
+            return 'AMD not loaded';          
+        }
+      },
+      {
+        name: 'Loading CJS with format hint',
+        run: function(complete, err) {
+          System.import('tests/cjs-format').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.cjs != 'cjs')
+            return 'CJS not loaded';
+        }
+      },
+      {
         name: 'Simple compiler Plugin',
-        run: function(complete) {
-          jspm.config({
-            map: {
-              'coffee': '~/tests/compiler-plugin'
-            }
-          });
-          jspm.import(['~/tests/compiler-test.coffee!'], complete);
+        run: function(complete, err) {
+          System.map['coffee'] = 'tests/compiler-plugin';
+          System.import('tests/compiler-test.coffee!').then(complete, err);
         },
         confirm: function(m) {
           if (m.output != 'plugin output')
@@ -318,67 +233,32 @@
         }
       },
       {
-        name: 'Text plugin',
-        run: function(complete) {
-          jspm.import('~/tests/some-text.txt!text', complete);
+        name: 'Advanced compiler plugin',
+        run: function(complete, err) {
+          System.import('tests/compiler-test!tests/advanced-plugin').then(complete, err);
         },
         confirm: function(m) {
-          if (m != 'this is some text\n')
-            return 'Text not defined.';
+          if (m.q != 'custom fetch!')
+            return 'Custom fetch not working';
         }
       },
       {
-        name: 'JSON plugin',
-        run: function(complete) {
-          jspm.import('~/tests/some-json.json!', complete);
+        name: 'Loading from jspm',
+        run: function(complete, err) {
+          System.paths['github:*'] = 'https://github.jspm.io/*.js';
+          System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
+          
+          System.import('npm:underscore').then(complete);
         },
         confirm: function(m) {
-          if (m.some != 'json')
-            return 'JSON not defined.';
-        }
-      },
-      {
-        name: 'Image plugin',
-        run: function(complete) {
-          jspm.import('http://jspm.io/icons.png!image', complete);
-        },
-        confirm: function(m) {
-        }
-      },
-      {
-        name: 'CSS plugin',
-        run: function(complete) {
-          jspm.import('~/tests/css.css!', complete);
-        },
-        confirm: function(m) {
-        }
-      },
-      {
-        name: 'Font plugin',
-        run: function(complete) {
-          jspm.import('#google Port Lligat Slab !font', complete);
-        },
-        confirm: function(m) {
-        }
-      },
-      {
-        name: 'onLoad hook',
-        run: function(complete) {
-          jspm.config({
-            onLoad: complete
-          });
-          jspm.import(['~/tests/normalize-hook-test']);
-        },
-        confirm: function(name, source, options) {
-          jspm.config({
-            onLoad: null
-          });
-          if (name != '~/tests/normalize-hook-test')
-            return 'normalize hook has incorrect name';
-          if (source != '"hello world";')
-            return 'invalid source';
+          if (typeof m.chain != 'function')
+            return 'Not loaded';
         }
       }
     ]);
+  }, function(err) {
+    setTimeout(function() {
+      throw err;
+    }, 1);
   });
 </script>

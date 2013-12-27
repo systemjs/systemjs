@@ -1,16 +1,16 @@
 {
-  "name": "jspm-loader",
-  "version": "0.3.1",
-  "description": "AMD, CommonJS and ES6 module loader",
-  "main": "loader.js",
+  "name": "SystemJS",
+  "version": "0.0.1",
+  "description": "System loader extension for flexible AMD & CommonJS support",
+  "main": "system.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/jspm/jspm-loader"
+    "url": "git://github.com/jspm/systemjs"
   },
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "es6-module-loader": "~0.3.0"
+    "es6-module-loader": "~0.4.0"
   },
-  "files": ["loader.js"]
+  "files": ["system.js"]
 }

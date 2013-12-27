@@ -55,6 +55,15 @@ exports.execute = function(tests) {
         testPage.setSummary(passed, failed);
       else
         doNextTest();
+    }, function(err) {
+      setTimeout(function() {
+        throw err;
+      }, 1);
+      failed++;
+      testPage.setSummary(passed, failed);
+      curTest++;
+      if (curTest == tests.length)
+        testPage.setSummary(passed, failed);
     });
   }
   doNextTest();
