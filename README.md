@@ -392,16 +392,19 @@ js/css.js:
 ```javascript
   exports.fetch = function(load) {
     // return a thenable for fetching (as per specification)
-    return new Promise(function(resolve, reject) {
-      var cssFile = load.address;
+    // alternatively return new Promise(function(resolve, reject))
+    return {
+      then: function(resolve, reject) {
+        var cssFile = load.address;
 
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = cssFile;
-      link.onload = resolve;
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = cssFile;
+        link.onload = resolve;
 
-      document.head.appendChild(link);
-    });
+        document.head.appendChild(link);
+      }
+    };
   }
 ```
 
