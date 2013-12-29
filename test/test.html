@@ -251,8 +251,8 @@
           System.import('tests/compiler-test!tests/advanced-plugin').then(complete, err);
         },
         confirm: function(m) {
-          if (m != 'custom fetch!')
-            return 'Custom fetch not working';
+          if (m != 'custom fetch:tests/compiler-test!tests/advanced-plugin')
+            return m;
         }
       },
       {

@@ -349,7 +349,7 @@ Links will be provided soon!
 
 A plugin is just a set of overrides for the loader hooks of the ES6 module specification.
 
-The hooks plugins can override are `normalize`, `locate`, `fetch` and `translate`.
+The hooks plugins can override are `locate`, `fetch` and `translate`.
 
 Read more on the loader hooks at the [ES6 Module Loader polyfill page](https://github.com/ModuleLoader/es6-module-loader#creating-a-custom-loader).
 
@@ -392,7 +392,7 @@ js/css.js:
 ```javascript
   exports.fetch = function(load) {
     // return a thenable for fetching (as per specification)
-    // alternatively return new Promise(function(resolve, reject))
+    // alternatively return new Promise(function(resolve, reject) { ... })
     return {
       then: function(resolve, reject) {
         var cssFile = load.address;

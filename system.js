@@ -272,12 +272,12 @@
       System.normalize = function(name, parentName, parentAddress) {
         name = name.trim();
 
-        // if parent is a plugin
+        // if parent is a plugin, normalize against the parent plugin argument only
         var parentPluginIndex;
         if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
           parentName = parentName.substr(0, parentPluginIndex);
 
-        // plugin
+        // if this is a plugin, normalize the plugin name and the argument
         var pluginIndex = name.lastIndexOf('!');
         if (pluginIndex != -1) {
           var argumentName = name.substr(0, pluginIndex);
@@ -285,27 +285,21 @@
           // plugin name is part after "!" or the extension itself
           var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
 
-          // load the plugin module
-          return new Promise(function(resolve) { 
+          // normalize the plugin name
+          return new Promise(function(resolve) {
             resolve(System.normalize(pluginName)); 
           })
+          // normalize the plugin argument
           .then(function(_pluginName) {
             pluginName = _pluginName;
-            
-            return System.load(pluginName);
-          })
-          .then(function() {
-            var plugin = System.get(pluginName);
-            plugin = plugin.default || plugin;
-
-            // normalize the plugin argument
-            return (plugin.normalize || System.normalize).call(System, argumentName, parentName, parentAddress);
+            return System.normalize(argumentName, parentName, parentAddress);
           })
           .then(function(argumentName) {
             return argumentName + '!' + pluginName;
           });
         }
 
+        // standard normalization
         return systemNormalize.call(this, applyMap(name), parentName, parentAddress);
       }
 
@@ -321,20 +315,28 @@
           // the name to locate is the plugin argument only
           load.name = name.substr(0, pluginIndex);
 
-          var plugin = System.get(pluginName);
-          plugin = plugin.default || plugin;
+          // load the plugin module
+          return System.load(pluginName)
+          .then(function() {
+            var plugin = System.get(pluginName);
+            plugin = plugin.default || plugin;
 
-          // store the plugin module itself on the metadata
-          load.metadata.plugin = plugin;
-          load.metadata.pluginName = pluginName;
+            // store the plugin module itself on the metadata
+            load.metadata.plugin = plugin;
+            load.metadata.pluginName = pluginName;
 
-          // run locate if given
-          if (plugin.locate)
-            return plugin.locate.call(System, load);
+            // run plugin locate if given
+            if (plugin.locate)
+              return plugin.locate.call(System, load);
 
-          return new Promise(function(resolve) { resolve(System.locate(load)); }).then(function(address) {
-            // remove ".js" extension
-            return address.substr(0, address.length - 3);
+            // otherwise use standard locate without '.js' extension adding
+            else
+              return new Promise(function(resolve) {
+                resolve(System.locate(load));
+              })
+              .then(function(address) {
+                return address.substr(0, address.length - 3);
+              });
           });
         }
 
@@ -594,9 +596,10 @@
           resolve(System.normalize.call(this, name, null, null))
         })
         .then(function(name) {
-          return systemImport.call(System, name, options).then(function(module) {
-            return checkDefaultOnly(module);
-          });
+          return systemImport.call(System, name, options);
+        })
+        .then(function(module) {
+          return checkDefaultOnly(module);
         });
       }
 

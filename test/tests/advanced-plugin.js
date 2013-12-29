@@ -1,3 +1,4 @@
+
 exports.locate = function(load) {
   return {
     then: function(resolve, reject) {
@@ -19,5 +20,5 @@ exports.fetch = function(load) {
 }
 
 exports.translate = function(load) {
-  return 'q = "' + load.source + '!";';
+  return 'q = "' + load.source + ':' + load.name + '";';
 }
