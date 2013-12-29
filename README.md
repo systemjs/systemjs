@@ -349,7 +349,7 @@ Links will be provided soon!
 
 A plugin is just a set of overrides for the loader hooks of the ES6 module specification.
 
-These hooks represent the loading cycle for a module: `normalize`, `locate`, `fetch`, `translate` and `instantiate`.
+The hooks plugins can override are `normalize`, `locate`, `fetch` and `translate`.
 
 Read more on the loader hooks at the [ES6 Module Loader polyfill page](https://github.com/ModuleLoader/es6-module-loader#creating-a-custom-loader).
 
@@ -392,29 +392,22 @@ js/css.js:
 ```javascript
   exports.fetch = function(load) {
     // return a thenable for fetching (as per specification)
-    return {
-      then: function(resolve, reject) {
-        var cssFile = load.address;
+    return new Promise(function(resolve, reject) {
+      var cssFile = load.address;
 
-        var link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = cssFile;
-        link.onload = resolve;
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = cssFile;
+      link.onload = resolve;
 
-        document.head.appendChild(link);
-      }
-    };
+      document.head.appendChild(link);
+    });
   }
 ```
 
 Each loader hook can either return directly or return a thenable for the value.
 
 The other loader hooks are also treated identically to the specification.
-
-Google Group
----
-
-Join ... for support questions and discussion relating to SystemJS.
 
 
 License

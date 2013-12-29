@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+<!-- <script> window.Promise = null </script> -->
 <script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
 <script src="../system.js" type="text/javascript"></script>
 
@@ -233,12 +234,24 @@
         }
       },
       {
+        name: 'Legacy plugin',
+        run: function(complete, err) {
+          System.import('tests/default1.js!tests/legacy-plugin').then(complete, err);
+        },
+        confirm: function(m) {
+          if (!m.default)
+            return 'No Default';
+          if (!m.plugin)
+            return 'Not transpiled';
+        }
+      },
+      {
         name: 'Advanced compiler plugin',
         run: function(complete, err) {
           System.import('tests/compiler-test!tests/advanced-plugin').then(complete, err);
         },
         confirm: function(m) {
-          if (m.q != 'custom fetch!')
+          if (m != 'custom fetch!')
             return 'Custom fetch not working';
         }
       },

@@ -272,6 +272,11 @@
       System.normalize = function(name, parentName, parentAddress) {
         name = name.trim();
 
+        // if parent is a plugin
+        var parentPluginIndex;
+        if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
+          parentName = parentName.substr(0, parentPluginIndex);
+
         // plugin
         var pluginIndex = name.lastIndexOf('!');
         if (pluginIndex != -1) {
@@ -281,22 +286,23 @@
           var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
 
           // load the plugin module
-          var normalized = System.normalize(pluginName);
-          return (normalized.then || function(resolve) { return resolve(normalized); })(function(_pluginName) {
+          return new Promise(function(resolve) { 
+            resolve(System.normalize(pluginName)); 
+          })
+          .then(function(_pluginName) {
             pluginName = _pluginName;
             
-            return System.load(pluginName)
-            .then(function() {
-              var plugin = System.get(pluginName);
-              plugin = plugin.default || plugin;
+            return System.load(pluginName);
+          })
+          .then(function() {
+            var plugin = System.get(pluginName);
+            plugin = plugin.default || plugin;
 
-              // normalize the plugin argument
-              var normalized = (plugin.normalize || System.normalize).call(System, argumentName, parentName, parentAddress);
-              return (normalized.then || function(resolve) { return resolve(normalized); })(function(argumentName) {
-                return argumentName + '!' + pluginName;
-              });
-
-            });
+            // normalize the plugin argument
+            return (plugin.normalize || System.normalize).call(System, argumentName, parentName, parentAddress);
+          })
+          .then(function(argumentName) {
+            return argumentName + '!' + pluginName;
           });
         }
 
@@ -326,8 +332,7 @@
           if (plugin.locate)
             return plugin.locate.call(System, load);
 
-          var located = System.locate(load);
-          return (located.then || function(resolve) { return resolve(located); })(function(address) {
+          return new Promise(function(resolve) { resolve(System.locate(load)); }).then(function(address) {
             // remove ".js" extension
             return address.substr(0, address.length - 3);
           });
@@ -338,6 +343,15 @@
 
       var systemFetch = System.fetch;
       System.fetch = function(load) {
+        // support legacy plugins
+        var self = this;
+        if (typeof load.metadata.plugin == 'function') {
+          return new Promise(function(fulfill, reject) {
+            load.metadata.plugin(load.name, load.address, function(url, callback, errback) {
+              systemFetch.call(self, { name: load.name, address: url }).then(callback, errback);
+            }, fulfill, reject);
+          });
+        }
         return (load.metadata.plugin && load.metadata.plugin.fetch || systemFetch).call(this, load);
       }
 
@@ -352,10 +366,6 @@
 
       var systemInstantiate = System.instantiate;
       System.instantiate = function(load) {
-        var plugin = load.metadata.plugin;
-        if (plugin && plugin.instantiate)
-          return plugin.instantiate.call(System, load);
-
         var name = load.name || '';
 
         if (name == 'traceur')
@@ -365,7 +375,12 @@
 
         // plugins provide empty source
         if (!source)
-          return new global.Module({});
+          return {
+            deps: [],
+            execute: function() {
+              return new global.Module({});
+            }
+          };
 
         // set load.metadata.format from metaata or format hints in the source
         var format = load.metadata.format;
@@ -387,7 +402,7 @@
           };
         }
 
-        if (format == 'es6' || source.match(es6RegEx)) {
+        if (format == 'es6' || !format && source.match(es6RegEx)) {
           load.metadata.format = 'es6';
           return systemInstantiate.call(System, load);
         }
@@ -575,8 +590,10 @@
       var systemImport = System.import;
       System.import = function(name, options) {
         // normalize name first
-        var normalized = System.normalize.call(this, name, null, null);
-        return (normalized.then || function(resolve) { return resolve(normalized); })(function(name) {
+        return new Promise(function(resolve) {
+          resolve(System.normalize.call(this, name, null, null))
+        })
+        .then(function(name) {
           return systemImport.call(System, name, options).then(function(module) {
             return checkDefaultOnly(module);
           });

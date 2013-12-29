@@ -1,3 +1,4 @@
+"cjs";
 exports.translate = function(load) {
-  return 'export var extra = "yay!"; \n' + load.source;
+  return 'import { d } from "./default1"; export var extra = "yay!"; \n' + load.source;
 }
