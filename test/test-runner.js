@@ -17,12 +17,12 @@ TestPage.render = function(o) {
 TestPage.prototype = {
   setResult: function(index, result) {
     if (result)
-      this.$results[index].innerText = result;
+      this.$results[index].innerHTML = result;
     else
-      this.$results[index].innerText = 'Passed';
+      this.$results[index].innerHTML = 'Passed';
   },
   setSummary: function(passed, failed) {
-    this.$summary.innerText = passed + ' tests passed, ' + failed + ' tests failed.';
+    this.$summary.innerHTML = passed + ' tests passed, ' + failed + ' tests failed.';
   }
 };
 
@@ -47,7 +47,6 @@ exports.execute = function(tests) {
         failed++;
       else
         passed++;
-
       testPage.setSummary(passed, failed);
 
       curTest++;

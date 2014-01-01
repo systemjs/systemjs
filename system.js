@@ -23,18 +23,8 @@
 
         var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)((import|module)\s+[^"']+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
-        // AMD and CommonJS regexs for support
-        var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
-        var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*(("[^"]+"\s*,|'[^']+'\s*,)?("[^"]+"\s*,|'[^']+'\s*,)?function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
-        var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
-        var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
-
         // module format hint regex
         var formatHintRegEx = /(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["'](global|amd|cjs|es6)["'][;\n]/;
-
-        // global dependency specifier, used for shimmed dependencies
-        var globalShimRegEx = /(["']global["'];\s*)((['"]import [^'"]+['"];\s*)*)(['"]export ([^'"]+)["'])?/;
-        var globalImportRegEx = /(["']import [^'"]+)+/g;
 
         var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
         var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
@@ -184,73 +174,6 @@
 
           return name;
         }
-
-        // given a module's global dependencies, prepare the global object
-        // to contain the union of the defined properties of its dependent modules
-        var globalObj = {};
-        var moduleGlobals = {};
-        function setGlobal(depModules) {
-          // first, we add all the dependency module properties to the global
-          if (depModules) {
-
-            for (var i = 0; i < depModules.length; i++) {
-              // NB cheat for iteration
-              var depGlobal;
-              for (var m in System._modules) {
-                if (System._modules[m] === depModules[i]) {
-                  depGlobal = moduleGlobals[m];
-                  break;
-                }
-              }
-              if (depGlobal)
-                for (var m in depGlobal)
-                  global[m] = depGlobal[m];
-            }
-          }
-
-          // now we store a complete copy of the global object
-          // in order to detect changes
-          for (var g in global) {
-            if (global.hasOwnProperty(g))
-              globalObj[g] = global[g];
-          }
-        }
-
-        // go through the global object to find any changes
-        // the differences become the returned global for this object
-        // the global object is left as is
-        // optional propertyName of the form 'some.object.here'
-        function getGlobal(name, propertyName) {
-          var singleGlobal, moduleGlobal;
-          if (propertyName) {
-            singleGlobal = eval(propertyName);
-            moduleGlobal = {};
-            moduleGlobal[propertyName.split('.')[0]] = singleGlobal;
-          }
-          else {
-            moduleGlobal = {};
-            for (var g in global) {
-              if (global.hasOwnProperty(g) && g != (isBrowser ? 'window' : 'global') && globalObj[g] != global[g]) {
-                moduleGlobal[g] = global[g];
-                if (singleGlobal) {
-                  if (singleGlobal !== global[g])
-                    singleGlobal = false;
-                }
-                else if (singleGlobal !== false)
-                  singleGlobal = global[g];
-              }
-            }
-          }
-          moduleGlobals[name] = moduleGlobal;
-          // make the module the first found global if not otherwise specified
-          return singleGlobal ? { default: singleGlobal, __defaultOnly: true } : moduleGlobal;
-        }
-
-        var nodeProcess = {
-          nextTick: function(f) {
-            setTimeout(f, 7);
-          }
-        };
 
         // go through a module list or module and if the only
         // export is the default, then provide it directly
@@ -413,182 +336,308 @@
         if (!format && !isMinified(source))
           source = removeComments(source);
 
-        var _imports = [];
+        // do modular format detection and handling
+        // format priority is order of System.formats array
+        for (var i = 0; i < this.formats.length; i++) {
+          var meta = {};
+          var f = this.formats[i];
 
-        // AMD
-        // define([.., .., ..], ...)
-        amdDefineRegEx.lastIndex = 0;
-        
-        // define(varName); || define(function(require, exports) {}); || define({})
-        cjsDefineRegEx.lastIndex = 0;
-        var cjsAMD = false;
-        if ((format == 'amd' || !format) && (
-          (match = cjsDefineRegEx.exec(source)) && (cjsAMD = true) ||
-          (match = amdDefineRegEx.exec(source)) && (match[1] || match[2])
-        )) {
-          if (cjsAMD) {
-            _imports = ['require', 'exports', 'module'];
+          if (format && format != f)
+              continue;
 
-            while (match = cjsRequireRegEx.exec(source))
-              _imports.push(match[2] || match[3]);
-          }
-          else {
-            
-            if (match[2])
-              _imports = _imports.concat(eval(match[2]));
-          }
+          var curFormat = this.format[f];
 
-          // remove any reserved words
-          var requireIndex, exportsIndex, moduleIndex;
+          // if format is specified, run detection but always pass it
+          if (!curFormat.detect(source, meta) && !format)
+            continue;
 
-          if ((requireIndex = _imports.indexOf('require')) != -1)
-            _imports.splice(requireIndex, 1);
-          if ((exportsIndex = _imports.indexOf('exports')) != -1)
-            _imports.splice(exportsIndex, 1);
-          if ((moduleIndex = _imports.indexOf('module')) != -1)
-            _imports.splice(moduleIndex, 1);
+          var deps = curFormat.deps(source, meta);
+
+          var execute = curFormat.execute;
 
           return {
-            deps: _imports,
-            execute: function() {
-              var deps = checkDefaultOnly(arguments);
-              var depMap = {};
-              for (var i = 0; i < _imports.length; i++)
-                depMap[_imports[i]] = deps[i];
-
-              // add system dependencies
-              var exports;
-              var module;
-              var require;
-
-              if (moduleIndex != -1)
-                module = { id: name, uri: load.address, config: function() { return {}; } };
-              if (exportsIndex != -1)
-                exports = {};
-              if (requireIndex != -1)
-                require = function(names, callback, errback) {
-                  if (typeof names == 'string' && names in depMap)
-                    return depMap[names];
-                  return System.require(names, callback, errback, { name: name, address: load.address });
-                }
-
-              if (moduleIndex != -1)
-                deps.splice(moduleIndex, 0, module);
-              if (exportsIndex != -1)
-                deps.splice(exportsIndex, 0, exports);
-              if (requireIndex != -1)
-                deps.splice(requireIndex, 0, require);
-
-              var output;
-
-              global.require = global.requirejs = System.require;
-              global.define = function(dependencies, factory) {
-                if (typeof dependencies == 'string') {
-                  dependencies = arguments[1];
-                  factory = arguments[2];
-                }
-
-                // no dependencies
-                if (!(dependencies instanceof Array))
-                  factory = dependencies;
-
-                // run the factory function
-                if (typeof factory == 'function')
-                  output = factory.apply(global, deps) || exports;
-                // otherwise factory is the value
-                else
-                  output = factory;
-              }
-              global.define.amd = {};
-
-              // ensure no NodeJS environment detection
-              delete global.module;
-              delete global.exports;
-
-              __scopedEval(load.source, global, load.address);
-
-              delete global.define;
-              delete global.require;
-              delete global.requirejs;
-
-              return new global.Module(output && output.__module ? output : { __defaultOnly: true, 'default': output });
-            }
-          };
-        }
-        
-        // CommonJS
-        // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
-        cjsExportsRegEx.lastIndex = 0;
-        cjsRequireRegEx.lastIndex = 0;
-        if (format == 'cjs' || !format && ((match = cjsRequireRegEx.exec(source)) || source.match(cjsExportsRegEx))) {
-          if (match)
-            _imports.push(match[2] || match[3]);
-          while (match = cjsRequireRegEx.exec(source))
-            _imports.push(match[2] || match[3]);
-
-          return {
-            deps: _imports, // clone the array as we still need it
+            deps: deps,
             execute: function() {
               var depMap = {};
-              for (var i = 0; i < _imports.length; i++)
-                depMap[_imports[i]] = checkDefaultOnly(arguments[i]);
+              for (var i = 0; i < arguments.length; i++)
+                depMap[deps[i]] = checkDefaultOnly(arguments[i]);
 
-              var dirname = load.address.split('/');
-              dirname.pop();
-              dirname = dirname.join('/');
+              // yes this is a lot of arguments, but we really dont want to add the other properties
+              // to the load object, as it is then too easy to create a global closure function of load
+              // that causes the module source not to be garbage disposed
+              var output = execute(load, depMap, global, meta, function() {
+                __scopedEval(load.source, global, load.address);
+              });
 
-              var globals = global._g = {
-                global: global,
-                exports: {},
-                process: nodeProcess,
-                require: function(d) {
-                  return depMap[d];
-                },
-                __filename: load.address,
-                __dirname: dirname,
-              };
-              globals.module = { exports: globals.exports };
-
-              var glString = '';
-              for (var _g in globals)
-                glString += 'var ' + _g + ' = _g.' + _g + ';';
-
-              load.source = glString + load.source;
-
-              __scopedEval(load.source, global, load.address);
-
-              delete global._g;
-
-              var output = globals.module.exports;
-
-              return new global.Module(output && output.__module ? output : { __defaultOnly: true, 'default': output });
+              if (output instanceof global.Module)
+                return output;
+              else
+                return new global.Module(output && output.__module ? output : { __defaultOnly: true, 'default': output });
             }
           };
         }
 
-        // Global
-        var globalExport;
-        if (format == 'global' && (match = source.match(globalShimRegEx))) {
-          _imports = match[2].match(globalImportRegEx);
-          if (_imports)
-            for (var i = 0; i < _imports.length; i++)
-              _imports[i] = _imports[i].substr(8);
-          globalExport = match[5];
-        }
-        return {
-          // apply shim config
-          deps: _imports,
-          execute: function() {
-            setGlobal(arguments);
-            // ensure local vars are scoped back to the global
-            if (globalExport)
-              load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
-            __scopedEval(load.source, global, load.address);
-            return new global.Module(getGlobal(name, globalExport));
-          }
-        };
+        if (format && format != 'global')
+          throw new TypeError('Format "' + format + '" not defined in System');
       }
 
+      System.format = {};
+      System.formats = ['amd', 'cjs', 'global'];
+      
+
+      // AMD Module Format
+      // define([.., .., ..], ...)
+      // define(varName); || define(function(require, exports) {}); || define({})
+      var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
+      var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*(("[^"]+"\s*,|'[^']+'\s*,)?("[^"]+"\s*,|'[^']+'\s*,)?function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
+
+      var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+
+      System.format.amd = {
+        detect: function(source, meta) {
+          amdDefineRegEx.lastIndex = 0;
+          cjsDefineRegEx.lastIndex = 0;
+
+          if (match = cjsDefineRegEx.exec(source)) {
+            return true;
+          }
+          else if ((match = amdDefineRegEx.exec(source)) && (match[1] || match[2])) {
+            meta.deps = eval(match[2]);
+            return true;
+          }
+        },
+        deps: function(source, meta) {
+          var deps = meta.deps;
+
+          if (!deps) {
+            // no deps means CJS AMD form, so pick up require('') statements with regex
+            deps = ['require', 'exports', 'module'];
+
+            while (match = cjsRequireRegEx.exec(source))
+              deps.push(match[2] || match[3]);
+          }
+
+          // we then remove the special reserved names
+          var index;
+          if (meta.require = (index = deps.indexOf('require')) != -1)
+            deps.splice(index, 1);
+          if (meta.exports = (index = deps.indexOf('exports')) != -1)
+            deps.splice(index, 1);
+          if (meta.module = (index = deps.indexOf('module')) != -1)
+            deps.splice(index, 1);
+
+          return deps;
+        },
+        execute: function(load, depMap, global, meta, execute) {
+          // add back in system dependencies
+          if (meta.module)
+            depMap.module = { id: load.name, uri: load.address, config: function() { return {}; } };
+          if (meta.exports)
+            depMap.exports = {};
+
+          // avoid load object closure
+          var name = load.name;
+          var address = load.address;
+
+          if (meta.require)
+            depMap.require = function(names, callback, errback) {
+              if (typeof names == 'string' && names in depMap)
+                return depMap[names];
+              return System.require(names, callback, errback, { name: name, address: address });
+            }
+
+          var output;
+
+          global.require = global.requirejs = System.require;
+          global.define = function(dependencies, factory) {
+            if (typeof dependencies == 'string') {
+              dependencies = arguments[1];
+              factory = arguments[2];
+            }
+
+            // no dependencies
+            if (!(dependencies instanceof Array)) {
+              factory = dependencies;
+              if (typeof dependencies == 'function')
+                dependencies = ['require', 'exports', 'module'];
+            }
+
+            for (var i = 0; i < dependencies.length; i++)
+              dependencies[i] = depMap[dependencies[i]];
+
+            // run the factory function
+            if (typeof factory == 'function')
+              output = factory.apply(global, dependencies) || depMap.exports;
+            // otherwise factory is the value
+            else
+              output = factory;
+          }
+          global.define.amd = {};
+
+          // ensure no NodeJS environment detection
+          delete global.module;
+          delete global.exports;
+
+          execute();
+
+          delete global.define;
+          delete global.require;
+          delete global.requirejs;
+
+          return output;
+        }
+      };
+
+
+      // CJS Module Format
+      // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
+      var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
+
+      var nodeProcess = {
+        nextTick: function(f) {
+          setTimeout(f, 7);
+        }
+      };
+      System.format.cjs = {
+        detect: function(source, meta) {
+          cjsExportsRegEx.lastIndex = 0;
+          cjsRequireRegEx.lastIndex = 0;
+
+          return (meta.firstMatch = cjsRequireRegEx.exec(source)) || source.match(cjsExportsRegEx);
+        },
+        deps: function(source, meta) {
+          var deps = [];
+          var match;
+          if ((match = meta.firstMatch))
+            deps.push(match[2] || match[3]);
+
+          while (match = cjsRequireRegEx.exec(source))
+            deps.push(match[2] || match[3]);
+
+          return deps;
+        },
+        execute: function(load, depMap, global, meta, execute) {
+          var dirname = load.address.split('/');
+          dirname.pop();
+          dirname = dirname.join('/');
+
+          var globals = global._g = {
+            global: global,
+            exports: {},
+            process: nodeProcess,
+            require: function(d) {
+              return depMap[d];
+            },
+            __filename: load.address,
+            __dirname: dirname,
+          };
+          globals.module = { exports: globals.exports };
+
+          var glString = '';
+          for (var _g in globals)
+            glString += 'var ' + _g + ' = _g.' + _g + ';';
+
+          load.source = glString + load.source;
+
+          execute();
+
+          delete global._g;
+
+          return globals.module.exports;
+        }
+      };
+
+
+
+      // Global
+      var globalShimRegEx = /(["']global["'];\s*)((['"]import [^'"]+['"];\s*)*)(['"]export ([^'"]+)["'])?/;
+      var globalImportRegEx = /(["']import [^'"]+)+/g;
+
+      // given a module's global dependencies, prepare the global object
+      // to contain the union of the defined properties of its dependent modules
+      var globalObj = {};
+      var moduleGlobals = {};
+
+      System.format.global = {
+        detect: function() {
+          return true;
+        },
+        deps: function(source, meta) {
+          var match, deps;
+          if (match = source.match(globalShimRegEx)) {
+            deps = match[2].match(globalImportRegEx);
+            if (deps)
+              for (var i = 0; i < deps.length; i++)
+                deps[i] = deps[i].substr(8);
+            meta.globalExport = match[5];
+          }
+          return deps || [];
+        },
+        execute: function(load, depMap, global, meta, execute) {
+          var globalExport = meta.globalExport;
+
+          // first, we add all the dependency module properties to the global
+          // NB cheat here for System iteration
+          for (var d in depMap) {
+            var module = depMap[d];
+            var moduleGlobal;
+            for (var m in System._modules) {
+              if (System._modules[m] === module) {
+                moduleGlobal = moduleGlobals[m];
+                break;
+              }
+            }
+            if (moduleGlobal)
+              for (var m in moduleGlobal)
+                global[m] = moduleGlobal[m];
+          }
+
+          // now store a complete copy of the global object
+          // in order to detect changes
+          var globalObj = {};
+          for (var g in global)
+            if (global.hasOwnProperty(g))
+              globalObj[g] = global[g];
+
+          if (globalExport)
+            load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
+
+          execute();
+
+          // check for global changes, creating the globalObject for the module
+          // if many globals, then a module object for those is created
+          // if one global, then that is the module directly
+          var singleGlobal, moduleGlobal;
+          if (globalExport) {
+            singleGlobal = eval('global.' + globalExport);
+            moduleGlobal = {};
+            moduleGlobal[globalExport.split('.')[0]] = singleGlobal;
+          }
+          else {
+            moduleGlobal = {};
+            for (var g in global) {
+              if (global.hasOwnProperty(g) && g != global && globalObj[g] != global[g]) {
+                moduleGlobal[g] = global[g];
+                if (singleGlobal) {
+                  if (singleGlobal !== global[g])
+                    singleGlobal = false;
+                }
+                else if (singleGlobal !== false)
+                  singleGlobal = global[g];
+              }
+            }
+          }
+          moduleGlobals[name] = moduleGlobal;
+          
+          if (singleGlobal)
+            return singleGlobal;
+          else
+            return new Module(moduleGlobal);
+        }
+      }
+
+
+      
       var systemImport = System.import;
       System.import = function(name, options) {
         // normalize name first
