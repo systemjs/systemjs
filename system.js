@@ -15,6 +15,7 @@
       delete global.upgradeSystemLoader;
 
       System.map = {};
+      System.shim = {};
 
       // -- helpers --
 
@@ -339,7 +340,6 @@
         // do modular format detection and handling
         // format priority is order of System.formats array
         for (var i = 0; i < this.formats.length; i++) {
-          var meta = {};
           var f = this.formats[i];
 
           if (format && format != f)
@@ -347,11 +347,10 @@
 
           var curFormat = this.format[f];
 
-          // if format is specified, run detection but always pass it
-          if (!curFormat.detect(source, meta) && !format)
+          // run detection, which returns deps (even if format already knows format)
+          var deps;
+          if (!(deps = curFormat.detect(source, load)) && !format)
             continue;
-
-          var deps = curFormat.deps(source, meta);
 
           var execute = curFormat.execute;
 
@@ -365,7 +364,7 @@
               // yes this is a lot of arguments, but we really dont want to add the other properties
               // to the load object, as it is then too easy to create a global closure function of load
               // that causes the module source not to be garbage disposed
-              var output = execute(load, depMap, global, meta, function() {
+              var output = execute(load, depMap, global, function() {
                 __scopedEval(load.source, global, load.address);
               });
 
@@ -394,20 +393,17 @@
       var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
 
       System.format.amd = {
-        detect: function(source, meta) {
+        detect: function(source, load) {
           amdDefineRegEx.lastIndex = 0;
           cjsDefineRegEx.lastIndex = 0;
 
-          if (match = cjsDefineRegEx.exec(source)) {
-            return true;
-          }
-          else if ((match = amdDefineRegEx.exec(source)) && (match[1] || match[2])) {
-            meta.deps = eval(match[2]);
-            return true;
-          }
-        },
-        deps: function(source, meta) {
-          var deps = meta.deps;
+          // do detection
+          var deps;
+          if (
+            !(match = cjsDefineRegEx.exec(source)) &&
+            !((match = amdDefineRegEx.exec(source)) && (match[1] || match[2]) && (deps = eval(match[2])))
+          )
+            return false;
 
           if (!deps) {
             // no deps means CJS AMD form, so pick up require('') statements with regex
@@ -419,6 +415,7 @@
 
           // we then remove the special reserved names
           var index;
+          var meta = load.metadata;
           if (meta.require = (index = deps.indexOf('require')) != -1)
             deps.splice(index, 1);
           if (meta.exports = (index = deps.indexOf('exports')) != -1)
@@ -428,8 +425,9 @@
 
           return deps;
         },
-        execute: function(load, depMap, global, meta, execute) {
+        execute: function(load, depMap, global, execute) {
           // add back in system dependencies
+          var meta = load.metadata;
           if (meta.module)
             depMap.module = { id: load.name, uri: load.address, config: function() { return {}; } };
           if (meta.exports)
@@ -499,16 +497,20 @@
         }
       };
       System.format.cjs = {
-        detect: function(source, meta) {
+        detect: function(source) {
+
           cjsExportsRegEx.lastIndex = 0;
           cjsRequireRegEx.lastIndex = 0;
 
-          return (meta.firstMatch = cjsRequireRegEx.exec(source)) || source.match(cjsExportsRegEx);
-        },
-        deps: function(source, meta) {
+          var firstMatch = cjsRequireRegEx.exec(source);
+
+          // fail detection
+          if (!firstMatch && !source.match(cjsExportsRegEx))
+            return false;
+
           var deps = [];
           var match;
-          if ((match = meta.firstMatch))
+          if ((match = firstMatch))
             deps.push(match[2] || match[3]);
 
           while (match = cjsRequireRegEx.exec(source))
@@ -516,7 +518,7 @@
 
           return deps;
         },
-        execute: function(load, depMap, global, meta, execute) {
+        execute: function(load, depMap, global, execute) {
           var dirname = load.address.split('/');
           dirname.pop();
           dirname = dirname.join('/');
@@ -547,8 +549,6 @@
         }
       };
 
-
-
       // Global
       var globalShimRegEx = /(["']global["'];\s*)((['"]import [^'"]+['"];\s*)*)(['"]export ([^'"]+)["'])?/;
       var globalImportRegEx = /(["']import [^'"]+)+/g;
@@ -559,22 +559,31 @@
       var moduleGlobals = {};
 
       System.format.global = {
-        detect: function() {
-          return true;
-        },
-        deps: function(source, meta) {
+        detect: function(source, load) {
           var match, deps;
           if (match = source.match(globalShimRegEx)) {
             deps = match[2].match(globalImportRegEx);
             if (deps)
               for (var i = 0; i < deps.length; i++)
                 deps[i] = deps[i].substr(8);
-            meta.globalExport = match[5];
+            load.metadata.globalExport = match[5];
           }
-          return deps || [];
+          deps = deps || [];
+          var shim;
+          if (shim = System.shim[load.name]) {
+            if (typeof shim == 'object') {
+              if (shim.exports)
+                load.metadata.globalExport = shim.exports;
+              if (shim.imports)
+                shim = shim.imports;
+            }
+            if (shim instanceof Array)
+              deps = deps.concat(shim);
+          }
+          return deps;
         },
-        execute: function(load, depMap, global, meta, execute) {
-          var globalExport = meta.globalExport;
+        execute: function(load, depMap, global, execute) {
+          var globalExport = load.metadata.globalExport;
 
           // first, we add all the dependency module properties to the global
           // NB cheat here for System iteration
@@ -634,7 +643,7 @@
           else
             return new Module(moduleGlobal);
         }
-      }
+      };
 
 
       

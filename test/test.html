@@ -118,6 +118,28 @@
         }
       },
       {
+        name: 'Global script with shim config',
+        run: function(complete, err) {
+          System.shim['tests/global-shim-config'] = ['./global-shim-config-dep'];
+          System.import('tests/global-shim-config').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m != 'shimmed')
+            return 'Not shimmed';
+        }
+      },
+      {
+        name: 'Global script with shim config exports',
+        run: function(complete, err) {
+          System.shim['tests/global-shim-config-exports'] = { exports: 'p' };
+          System.import('tests/global-shim-config-exports').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m != 'export')
+            return 'Exports not shimmed';
+        }
+      },
+      {
         name: 'Map configuration',
         run: function(complete, err) {
           System.map['maptest'] = 'tests/map-test';
