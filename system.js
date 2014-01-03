@@ -17,6 +17,7 @@
       System.map = {};
       System.shim = {};
       System.paths = global.systemPaths || System.paths;
+      delete global.systemPaths;
 
       // -- helpers --
 
