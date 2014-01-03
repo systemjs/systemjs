@@ -16,6 +16,7 @@
 
       System.map = {};
       System.shim = {};
+      System.paths = global.systemPaths || System.paths;
 
       // -- helpers --
 
@@ -750,6 +751,4 @@
       throw e;
     }
   }
-
 })();
-

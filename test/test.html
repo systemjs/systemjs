@@ -1,6 +1,9 @@
 <!doctype html>
 <html>
-<!-- <script> window.Promise = null </script> -->
+<script>
+  // window.Promise = null
+  window.systemPaths = { '*': '*.js', 'github:*': 'https://github.jspm.io/*.js', 'npm:*': 'https://npm.jspm.io/*.js' };
+</script>
 <script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
 <script src="../system.js" type="text/javascript"></script>
 
@@ -280,9 +283,6 @@
       {
         name: 'Loading from jspm',
         run: function(complete, err) {
-          System.paths['github:*'] = 'https://github.jspm.io/*.js';
-          System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
-          
           System.import('npm:underscore').then(complete);
         },
         confirm: function(m) {
