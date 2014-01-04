@@ -161,7 +161,7 @@ define(['some-dep'], function() {
 
 Similarly, `"global"`, `"cjs"` and `"es6"` can be used in module files to set the detection.
 
-It is recommended to use a format hint if writing a new AMD or CommonJS module for use in SystemJS, while leaving out the format hint for ES6 modules, allowing for an easier transition as they become the standard.
+It is recommended to use a format hint only in the few cases where the format detection would otherwise fail.
 
 ### Loading ES6 Modules
 
