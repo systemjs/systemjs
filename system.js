@@ -11,13 +11,18 @@
     var isBrowser = typeof window != 'undefined';
     var global = isBrowser ? window : {};
 
+    global.systemPlugins = [];
+
     global.upgradeSystemLoader = function() {
       delete global.upgradeSystemLoader;
 
       System.map = {};
       System.shim = {};
-      System.paths = global.systemPaths || System.paths;
-      delete global.systemPaths;
+
+      if (global.systemPlugins.length)
+        for (var i = 0, l = global.systemPlugins.length; i < l; i++)
+          global.systemPlugins[i]();
+      delete global.systemPlugins;
 
       // -- helpers --
 
