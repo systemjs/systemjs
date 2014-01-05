@@ -9,14 +9,28 @@
 
 global.upgradeSystemLoader = function() {
   delete global.upgradeSystemLoader;
+/*
+  SystemJS Core
+  Adds normalization to the import function, as well as __defaultOnly support
+*/
 (function() {
   // check we have System
   if (typeof System == 'undefined')
     throw 'System not defined. Include the `es6-module-loader.js` polyfill before SystemJS.';
 
-  // go through a module list or module and if the only
-  // export is the default, then provide it directly
-  // useful for module.exports = function() {} handling
+  /*
+    __defaultOnly
+    
+    When a module object looks like:
+    new Module({
+      __defaultOnly: true,
+      default: 'some-module'
+    })
+
+    Then the import of that module is taken to be the 'default' export and not the module object itself.
+
+    Useful for module.exports = function() {} handling
+  */
   var checkDefaultOnly = function(module) {
     if (!(module instanceof Module)) {
       var out = [];
@@ -42,6 +56,26 @@ global.upgradeSystemLoader = function() {
     });
   }
 })();
+/*
+  SystemJS Formats
+
+  Provides modular support for format detections.
+
+  Add a format with:
+    System.formats.push('myformatname');
+    System.format.myformat = {
+      detect: function(source, load) {
+        return false / depArray;
+      },
+      execute: function(load, depMap, global, execute) {
+        return moduleObj; // (doesnt have to be a Module instance)
+      }
+    }
+
+  The System.formats array sets the format detection order.
+  
+  See the AMD, global and CommonJS format extensions for examples.
+*/
 (function() {
 
   (function(global) {
@@ -270,7 +304,12 @@ global.upgradeSystemLoader = function() {
     }
   }
 
-})();(function() {
+})();/*
+  SystemJS AMD Format
+  Provides the AMD module format definition at System.format.amd
+  as well as a RequireJS-style require on System.requirejs
+*/
+(function() {
   System.formats.push('amd');
 
   // AMD Module Format
@@ -421,7 +460,11 @@ global.upgradeSystemLoader = function() {
       return output;
     }
   };
-})();(function() {
+})();/*
+  SystemJS CommonJS Format
+  Provides the CommonJS module format definition at System.format.cjs
+*/
+(function() {
   System.formats.push('cjs');
 
   // CJS Module Format
@@ -487,7 +530,18 @@ global.upgradeSystemLoader = function() {
       return globals.module.exports;
     }
   };
-})();(function() {
+})();/*
+  SystemJS Global Format
+  Provides the global support at System.format.global
+  Supports inline shim syntax with:
+    "global";
+    "import jquery";
+    "export my.Global";
+
+  Also detects writes to the global object avoiding global collisions.
+  See the SystemJS readme global support section for further information.
+*/
+(function() {
   System.formats.push('global');
 
   // Global
@@ -627,7 +681,15 @@ global.upgradeSystemLoader = function() {
   System.normalize = function(name, parentName, parentAddress) {
     return systemNormalize(applyMap(name), parentName, parentAddress);
   }
-})();(function() {
+})();/*
+  SystemJS Plugin Support
+
+  Supports plugin syntax with "!"
+
+  The plugin name is loaded as a module itself, and can override standard loader hooks
+  for the plugin resource. See the plugin section of the systemjs readme.
+*/
+(function() {
   var systemNormalize = System.normalize;
   System.normalize = function(name, parentName, parentAddress) {
     name = name.trim();
@@ -726,7 +788,18 @@ global.upgradeSystemLoader = function() {
     return systemTranslate.call(this, load);
   }
 
-})();System.paths['~/*'] = System.baseURL + '*.js';
+})();/*
+  SystemJS jspm
+
+  Defines jspm paths for SystemJS
+
+  Allows requires of the form:
+    System.import('jquery')
+    System.import('npm:underscore')
+
+  To work directly over CDN.
+*/
+System.paths['~/*'] = System.baseURL + '*.js';
 System.baseURL = 'https://registry.jspm.io/';
 System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
 System.paths['github:*'] = 'https://github.jspm.io/*.js';}
