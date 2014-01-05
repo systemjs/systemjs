@@ -642,7 +642,13 @@ global.upgradeSystemLoader = function() {
         return new Module(moduleGlobal);
     }
   };
-})();(function() {
+})();/*
+  SystemJS map support
+  
+  Provides map configuration through
+    System.map['jquery'] = 'some/module/map'
+*/
+(function() {
   var separatorRegEx = /[\/:]/;
 
   System.map = {};
