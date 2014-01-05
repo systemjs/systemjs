@@ -1,13 +1,14 @@
 SystemJS
 ===========
 
-A minimal universal ES6 spec-compilant module loader.
+Legacy module loading support for the new ES6 System browser loader, which will be natively provided in browsers.
 
-A small (10KB minfied) extension library for the new `System` ES6 loader, which will soon be native to browsers.
+A small (10KB minfied) extension supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
 
-The extension adds the following features to the existing `System` loader:
 * Dynamically load ES6 modules, AMD, CommonJS and global scripts detecting the format automatically, or with format hints.
-* A plugin system for creating modular custom loading rules.
+* Map configuration for pre-normalization rules.
+* A plugin system for custom loading rules.
+* Custom format rules for supporting additional module formats.
 
 Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 28KB.
 
@@ -86,7 +87,7 @@ By default, the baseURL is set to the current page, but it can be changed with:
 
 ### Paths Configuration
 
-The `System` loader comes with a paths configuation system. While not part of SystemJS, it is described here for completion.
+The `System` loader comes with a paths configuration system. While not part of SystemJS, it is described here for completion.
 
 _Note: The implementation is currently in discussion and not specified, thus it is subject to change._
 
@@ -306,7 +307,7 @@ js/jquery-plugin.js:
   });
 ```
 
-The primary use of all of having this information in the module is that global scripts can be converted into modular scripts with complete accuracy by an automated process based on simple configuration instead of manual conversion.
+The primary use for having all this information in the module is that global scripts can be converted into modular scripts with complete accuracy by an automated process based on simple configuration instead of manual conversion.
 
 ### AMD Compatibility Layer
 
@@ -323,6 +324,50 @@ To create the `requirejs` and `require` globals as AMD globals, simply include t
 This should replicate a fair amount of the dynamic RequireJS functionality, and support is improving over time.
 
 _Note that AMD-style plugins are not supported._
+
+
+### Custom Format Support
+
+The order in which module format detection is performed, is provided by the `System.formats`. The default value is `['amd', 'cjs', 'global']`.
+
+To add a new module format, specify it in the `System.formats` array, and then provide a `System.format` rule for it.
+
+The format rule provides two functions - detection which returns dependencies if detection passes, and an execution function.
+
+```javascript
+  System.formats = ['amd', 'cjs', 'myformat', 'global'];
+
+  System.format.myformat = {
+    detect: function(source, load) {
+      if (!source.match(formatRegEx))
+        return false;
+
+      // return the array of dependencies
+      return getDeps(source);
+    },
+    execute: function(load, depMap, global, execute) {
+      // provide any globals
+      global.myFormatGlobal = function(dep) {
+        return depMap[dep];
+      }
+
+      // alter the source before execution
+      load.source = '(function() {' + load.source + '}();';
+
+      // execute source code
+      execute();
+
+      // clean up any globals
+      delete global.myFormatGlobal;
+
+      // return the defined module object
+      return global.module;
+    }
+  }
+```
+
+For further examples, see the internal AMD or CommonJS support implemented in this way here.
+
 
 
 Plugins
@@ -344,6 +389,8 @@ Supported Plugins:
 * WebFont `System.import('google Port Lligat Slab, Droid Sans !font')`
 
 Links will be provided soon!
+
+Note that the AMD compatibility layer could provide a mapping from AMD plugins into SystemJS plugins that provide the same functionality as associated SystemJS plugins.
 
 ### Creating Plugins
 
