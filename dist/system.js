@@ -83,7 +83,7 @@ global.upgradeSystemLoader = function() {
     System.format = {};
     System.formats = [];
 
-    var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"']+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
+    var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'}{\(\)\n;,]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
     var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
     var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
@@ -280,7 +280,7 @@ global.upgradeSystemLoader = function() {
             if (output instanceof global.Module)
               return output;
             else
-              return new global.Module(output && output.__module ? output : { __defaultOnly: true, 'default': output });
+              return new global.Module(output && output.__module ? output.__module : { __defaultOnly: true, 'default': output });
           }
         };
       }
