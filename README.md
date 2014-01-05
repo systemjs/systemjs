@@ -1,16 +1,17 @@
 SystemJS
 ===========
 
-Legacy module loading support for the new ES6 System browser loader, which will be natively provided in browsers.
+Extensions for the new ES6 System browser loader, which will be natively provided in browsers.
 
-A small (10KB minfied) extension supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
+A small (15KB minfied) collection of extensions to the System loader, for supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
 
-* Dynamically load ES6 modules, AMD, CommonJS and global scripts detecting the format automatically, or with format hints.
-* Map configuration for pre-normalization rules.
-* A plugin system for custom loading rules.
-* Custom format rules for supporting additional module formats.
+Extensions are self-contained additions to the `System` global, which can be applied individually or all together.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 28KB.
+* **Formats:** Dynamically load AMD, CommonJS and global scripts (as well as ES6 modules) detecting the format automatically, or with format hints.
+* **Map:** Map configuration.
+* **Plugins:** A dynamic plugin system for modular loading rules.
+
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 32KB.
 
 Runs in the browser and NodeJS.
 
@@ -21,13 +22,15 @@ Getting Started
 
 Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/traceur.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) and locate them in the same folder as `system.js` from this repo.
 
-Then include `system.js` with a script tag in the page:
+Then include `dist/system.js` with a script tag in the page:
 
 ```html
   <script src="system.js"></script>
 ```
 
 `es6-module-loader.js` will then be included automatically and the [Traceur](https://github.com/google/traceur-compiler) parser is dynamically included from `traceur.js` when loading an ES6 module only.
+
+_Note this version does not come with jspm paths support by default._
 
 ### Write and Load a Module
 
@@ -193,46 +196,6 @@ For further examples of loading ES6 modules, see the [ES6 Module Loader polyfill
 
 For examples of build workflows, see the [jspm CLI documentation](https://github.com/jspm/jspm-cli#building-application-code).
 
-### Module Forwarding
-
-Consider the structure of the `js` folder for shared libraries. At some point we end up combining module files with package folders, something like:
-
-```
-- js/
-  - jquery.js
-  - underscore.js
-  - bootstrap
-    - js
-      - bootstrap.js  
-- app/
-  - app.js
-```
-
-The question then is how do we load the `bootstrap` folder as simply as the module files?
-
-`System.import('bootstrap/js/bootstrap')` is far too much typing...
-
-A good way of handling this is to provide a re-export module at a shortcut location:
-
-js/bootstrap.js:
-```javascript
-  export * from './bootstrap/js/bootstrap';
-```
-
-This is an ES6 wildcard re-export, which is like a redirect for modules.
-
-In this way we can have clean names for module loading:
-
-```javascript
-  System.import('bootstrap').then(function() {
-
-  });
-```
-
-SystemJS handles this scenario as an ES6 module loading exception, without needing to do full ES6 parsing.
-
-When in production, one would build all these files into one, so that the redirects don't result in additional requests.
-
 ### Loading Global Scripts
 
 #### Automatic Global Detection
@@ -325,6 +288,25 @@ This should replicate a fair amount of the dynamic RequireJS functionality, and 
 
 _Note that AMD-style plugins are not supported._
 
+
+
+### Map Config
+
+Map configuration works just like other module loaders, altering the module name at the normalization stage.
+
+Example:
+
+```javascript
+  System.map['jquery'] = '~/jquery@1.8.3';
+
+  System.import('jquery') // behaves identical to System.import('~/jquery@1.8.2')
+```
+
+Map configuration also affects submodules:
+
+```javascript
+  System.import('jquery/submodule') // normalizes to -> `~/jquery@1.82/submodule'
+```
 
 ### Custom Format Support
 
