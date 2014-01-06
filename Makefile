@@ -26,6 +26,7 @@ system:
 	cat $(START) \
 	$(FORMATS) \
 	lib/system-map.js \
+	lib/system-module.js \
 	lib/system-plugins.js \
 	$(END) > dist/$@.js
 	$(MINIFY)
@@ -34,6 +35,7 @@ system-jspm:
 	cat $(START) \
 	$(FORMATS) \
 	lib/system-map.js \
+	lib/system-module.js \
 	lib/system-plugins.js \
 	lib/system-jspm.js \
 	$(END) > dist/$@.js

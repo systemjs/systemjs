@@ -41,12 +41,19 @@ global.upgradeSystemLoader = function() {
     return module.__defaultOnly ? module['default'] : module;
   }
   
+  var systemGet = System.get;
+  System.get = function(key) {
+    var module = systemGet.call(this, key);
+    return checkDefaultOnly(module);
+  }
+  
   // patch System.import to do normalization
   var systemImport = System.import;
   System.import = function(name, options) {
+    console.log(options);
     // normalize name first
     return new Promise(function(resolve) {
-      resolve(System.normalize.call(this, name, null, null))
+      resolve(System.normalize.call(this, name, options && options.name, options && options.address))
     })
     .then(function(name) {
       return systemImport.call(System, name, options);
@@ -361,7 +368,7 @@ global.upgradeSystemLoader = function() {
 
     // commonjs require
     else if (typeof names == 'string')
-      return checkDefaultOnly(System.get(names));
+      return System.get(names);
 
     else
       throw 'Invalid require';
@@ -460,7 +467,8 @@ global.upgradeSystemLoader = function() {
       return output;
     }
   };
-})();/*
+})();
+/*
   SystemJS CommonJS Format
   Provides the CommonJS module format definition at System.format.cjs
 */
@@ -688,6 +696,49 @@ global.upgradeSystemLoader = function() {
     return systemNormalize(applyMap(name), parentName, parentAddress);
   }
 })();/*
+  SystemJS Module Addon
+
+  Supports the import "@module" for any module, providing the module meta:
+
+  import { name } from "@module";
+
+  Where name is the name of the current module.
+*/
+(function() {
+  var systemNormalize = System.normalize;
+  System.normalize = function(name, parentName, parentAddress) {
+    if (name == '@module')
+      return '@module:' + parentName;
+    return systemNormalize.call(this, name, parentName, parentAddress);
+  }
+  var systemLocate = System.locate;
+  System.locate = function(load) {
+    if (load.name.substr(0, 7) == '@module') {
+      load.metadata.module = {
+        name: load.name.substr(8)
+      };
+      return '';
+    }
+    return systemLocate.call(this, load);
+  }
+  var systemFetch = System.fetch;
+  System.fetch = function(load) {
+    if (load.metadata.module)
+      return '';
+    return systemFetch.call(this, load);
+  }
+  var systemInstantiate = System.instantiate;
+  System.instantiate = function(load) {
+    if (load.metadata.module)
+      return {
+        deps: [],
+        execute: function() {
+          return new Module(load.metadata.module);
+        }
+      };
+    return systemInstantiate.call(this, load);
+  }
+})();/*
   SystemJS Plugin Support
 
   Supports plugin syntax with "!"
@@ -778,7 +829,7 @@ global.upgradeSystemLoader = function() {
     if (typeof load.metadata.plugin == 'function') {
       return new Promise(function(fulfill, reject) {
         load.metadata.plugin(load.name, load.address, function(url, callback, errback) {
-          systemFetch.call(self, { name: load.name, address: url }).then(callback, errback);
+          systemFetch.call(self, { name: load.name, address: url, metadata: {} }).then(callback, errback);
         }, fulfill, reject);
       });
     }

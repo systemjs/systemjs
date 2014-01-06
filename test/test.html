@@ -245,6 +245,28 @@
         }
       },
       {
+        name: 'Module Name meta',
+        run: function(complete, err) {
+          System.import('~/tests/reflection').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.myname != '~/tests/reflection')
+            return 'Module name not returned';
+        }
+      },
+      {
+        name: 'Relative dyanamic loading',
+        run: function(complete, err) {
+          System.import('~/tests/reldynamic').then(function(m) {
+            m.dynamicLoad().then(complete, err);
+          }, err);
+        },
+        confirm: function(m) {
+          if (m.dynamic != 'module')
+            return 'Dynamic load failed';
+        }
+      },
+      {
         name: 'Simple compiler Plugin',
         run: function(complete, err) {
           System.map['coffee'] = '~/tests/compiler-plugin';

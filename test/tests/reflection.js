@@ -1,0 +1,1 @@
+export { name as myname } from '@module';
