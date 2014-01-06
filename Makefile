@@ -17,7 +17,7 @@ endef
 
 define MINIFY
 	cat lib/banner.js > dist/$@.min.js
-	uglifyjs dist/$@.js >> dist/$@.min.js
+	uglifyjs dist/$@.js -cm >> dist/$@.min.js
 endef
 
 all: system system-jspm

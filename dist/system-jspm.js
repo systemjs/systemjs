@@ -92,9 +92,6 @@ global.upgradeSystemLoader = function() {
 
     var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
-    var sourceMappingURLRegEx = /\/\/[@#] ?sourceMappingURL=(.+)/;
-    var sourceURLRegEx = /\/\/[@#] ?sourceURL=(.+)/;
-
     // module format hint regex
     var formatHintRegEx = /^(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["']([^'"]+)["'][;\n]/;
 
@@ -241,7 +238,6 @@ global.upgradeSystemLoader = function() {
         if (formatMatch)
           format = formatMatch[5];
       }
-      var match;
 
       // es6 handled by core
       if (format == 'es6' || !format && source.match(es6RegEx)) {
@@ -380,6 +376,7 @@ global.upgradeSystemLoader = function() {
       cjsDefineRegEx.lastIndex = 0;
 
       // do detection
+      var match;
       var deps;
       if (
         !(match = cjsDefineRegEx.exec(source)) &&
@@ -558,7 +555,6 @@ global.upgradeSystemLoader = function() {
 
   // given a module's global dependencies, prepare the global object
   // to contain the union of the defined properties of its dependent modules
-  var globalObj = {};
   var moduleGlobals = {};
 
   // also support a System.shim system
