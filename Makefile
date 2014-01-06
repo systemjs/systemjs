@@ -28,6 +28,7 @@ system:
 	lib/system-map.js \
 	lib/system-module.js \
 	lib/system-plugins.js \
+	lib/system-versions.js \
 	$(END) > dist/$@.js
 	$(MINIFY)
 
@@ -37,6 +38,7 @@ system-jspm:
 	lib/system-map.js \
 	lib/system-module.js \
 	lib/system-plugins.js \
+	lib/system-versions.js \
 	lib/system-jspm.js \
 	$(END) > dist/$@.js
 	$(MINIFY)
