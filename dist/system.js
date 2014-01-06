@@ -370,6 +370,11 @@ global.upgradeSystemLoader = function() {
       throw 'Invalid require';
   }
 
+  function rmFirstLast(str) {
+    str = str.trim();
+    return str.substr(1, str.length - 2);
+  }
+
   System.format.amd = {
     detect: function(source, load) {
       amdDefineRegEx.lastIndex = 0;
@@ -380,7 +385,7 @@ global.upgradeSystemLoader = function() {
       var deps;
       if (
         !(match = cjsDefineRegEx.exec(source)) &&
-        !((match = amdDefineRegEx.exec(source)) && (match[1] || match[2]) && (deps = eval(match[2])))
+        !((match = amdDefineRegEx.exec(source)) && (match[1] || match[2] && (deps = rmFirstLast(match[2]).split(',').map(rmFirstLast))))
       )
         return false;
 
@@ -620,9 +625,13 @@ global.upgradeSystemLoader = function() {
       // if one global, then that is the module directly
       var singleGlobal, moduleGlobal;
       if (globalExport) {
-        singleGlobal = eval('global.' + globalExport);
+        var globalExportParts = globalExport.split('.');
+        var firstPart = globalExportParts[0];
+        singleGlobal = global;
+        while (globalExportParts.length)
+          singleGlobal = singleGlobal[globalExportParts.shift()];
         moduleGlobal = {};
-        moduleGlobal[globalExport.split('.')[0]] = singleGlobal;
+        moduleGlobal[firstPart] = global[firstPart];
       }
       else {
         moduleGlobal = {};
@@ -908,7 +917,7 @@ global.upgradeSystemLoader = function() {
       if (!semverMatch)
         return normalized;
 
-      packageName = normalized.substr(0, index);
+      var packageName = normalized.substr(0, index);
       var versions = packageVersions[packageName] = packageVersions[packageName] || [];
 
 
@@ -942,26 +951,28 @@ global.upgradeSystemLoader = function() {
 
 })();}
 
-if (!global.System) {
-  if (typeof window != 'undefined') {
-    // determine the current script path as the base path
-    var scripts = document.getElementsByTagName('script');
-    var head = document.getElementsByTagName('head')[0];
-    var curPath = scripts[scripts.length - 1].src;
-    var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
-    document.write(
-      '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
-    );
+(function() {
+  if (!global.System) {
+    if (typeof window != 'undefined') {
+      // determine the current script path as the base path
+      var scripts = document.getElementsByTagName('script');
+      var curPath = scripts[scripts.length - 1].src;
+      var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+      document.write(
+        '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
+      );
+    }
+    else {
+      var es6ModuleLoader = require('es6-module-loader');
+      global.System = es6ModuleLoader.System;
+      global.Loader = es6ModuleLoader.Loader;
+      global.Module = es6ModuleLoader.Module;
+      module.exports = global.System;
+      global.upgradeSystemLoader();
+    }
   }
-  else {
-    var es6ModuleLoader = require('es6-module-loader');
-    global.System = es6ModuleLoader.System;
-    global.Loader = es6ModuleLoader.Loader;
-    global.Module = es6ModuleLoader.Module;
-    module.exports = global.System;
+  else
     global.upgradeSystemLoader();
-  }
-}
-else
-  global.upgradeSystemLoader();
+})();
+
 })(typeof window != 'undefined' ? window : global);
