@@ -370,11 +370,6 @@ global.upgradeSystemLoader = function() {
       throw 'Invalid require';
   }
 
-  function rmFirstLast(str) {
-    str = str.trim();
-    return str.substr(1, str.length - 2);
-  }
-
   System.format.amd = {
     detect: function(source, load) {
       amdDefineRegEx.lastIndex = 0;
@@ -385,7 +380,7 @@ global.upgradeSystemLoader = function() {
       var deps;
       if (
         !(match = cjsDefineRegEx.exec(source)) &&
-        !((match = amdDefineRegEx.exec(source)) && (match[1] || match[2] && (deps = rmFirstLast(match[2]).split(',').map(rmFirstLast))))
+        !((match = amdDefineRegEx.exec(source)) && (match[1] || match[2] && (deps = (1, eval)(match[2]))))
       )
         return false;
 
@@ -625,11 +620,8 @@ global.upgradeSystemLoader = function() {
       // if one global, then that is the module directly
       var singleGlobal, moduleGlobal;
       if (globalExport) {
-        var globalExportParts = globalExport.split('.');
-        var firstPart = globalExportParts[0];
-        singleGlobal = global;
-        while (globalExportParts.length)
-          singleGlobal = singleGlobal[globalExportParts.shift()];
+        var firstPart = globalExport.split('.')[0];
+        singleGlobal = eval.call(global, globalExport);
         moduleGlobal = {};
         moduleGlobal[firstPart] = global[firstPart];
       }
@@ -963,7 +955,8 @@ global.upgradeSystemLoader = function() {
 System.paths['~/*'] = System.baseURL + '*.js';
 System.baseURL = 'https://registry.jspm.io/';
 System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
-System.paths['github:*'] = 'https://github.jspm.io/*.js';}
+System.paths['github:*'] = 'https://github.jspm.io/*.js';
+};
 
 (function() {
   if (!global.System) {
@@ -988,5 +981,6 @@ System.paths['github:*'] = 'https://github.jspm.io/*.js';}
   else
     global.upgradeSystemLoader();
 })();
+
 
 })(typeof window != 'undefined' ? window : global);
