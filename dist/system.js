@@ -226,7 +226,7 @@ global.upgradeSystemLoader = function() {
     System.instantiate = function(load) {
       var name = load.name || '';
 
-      if (name == 'traceur')
+      if (!load.source || name == 'traceur')
         return systemInstantiate.call(this, load);
 
       var source = load.source;
@@ -307,7 +307,8 @@ global.upgradeSystemLoader = function() {
     }
   }
 
-})();/*
+})();
+/*
   SystemJS AMD Format
   Provides the AMD module format definition at System.format.amd
   as well as a RequireJS-style require on System.requirejs
@@ -864,6 +865,16 @@ global.upgradeSystemLoader = function() {
 
   The full list of versions can be found at System.versions providing an insight
   into any possible version forks.
+
+  It is also possible to create version solution hints on the System global:
+
+  System.versions = {
+    jquery: ['1.9.2'],
+    bootstrap: ['3.0.1']
+  };
+
+  When a matching semver request is made (jquery@1.9, jquery@1, bootstrap@3)
+  they will be converted into one of these more specific versions first.
 */
 
 (function() {
