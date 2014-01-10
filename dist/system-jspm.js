@@ -880,6 +880,34 @@ global.upgradeSystemLoader = function() {
 (function() {
   // match x, x.y and x.y.z
   var semverRegEx = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?$/;
+
+  var semverCompare = function(v1, v2) {
+    var v1Parts = v1.split('.');
+    var v2Parts = v2.split('.');
+
+    if (v1Parts[0] != v2Parts[0])
+      return v1Parts[0] > v2Parts[0];
+
+    if (!v1Parts[1])
+      return false;
+
+    if (!v2Parts[1])
+      return true;
+
+    if (v1Parts[1] != v2Parts[1])
+      return v1Parts[1] > v2Parts[1];
+
+    if (!v1Parts[2])
+      return false;
+
+    if (!v2Parts[2])
+      return true;
+
+    if (v1Parts[2] != v2Parts[2])
+      return v1Parts[2] > v2Parts[2];
+
+    return true;
+  }
   
   var systemNormalize = System.normalize;
 
@@ -927,8 +955,8 @@ global.upgradeSystemLoader = function() {
       // look for a version match
       // if an exact semver, theres nothing to match, just record it
       if (!semverMatch[3])
-        for (var i = 0; i < packageVersions[packageName].length; i++) {
-          var curVersion = packageVersions[packageName][i];
+        for (var i = versions.length - 1; i >= 0; i--) {
+          var curVersion = versions[i];
           // if I have requested x.y, find an x.y.z
           // if I have requested x, find any x.y / x.y.z
           if (curVersion.substr(0, version.length) == version && curVersion.charAt(version.length) == '.')
@@ -946,6 +974,8 @@ global.upgradeSystemLoader = function() {
         // if there is an x of this version in the list, remove that now
         if ((index = versions.indexOf(semverMatch[1])) != -1)
           versions.splice(index, 1);
+
+        versions.sort(semverCompare);
       }
 
       return normalized;
