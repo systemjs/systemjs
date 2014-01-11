@@ -849,8 +849,8 @@ global.upgradeSystemLoader = function() {
   Supports requesting a module from a package that contains a version suffix
   with the following semver ranges:
     module       - any version
-    module@1     - major version 1, any minor
-    module@1.2   - minor version 1.2, any patch
+    module@1     - major version 1, any minor (not prerelease)
+    module@1.2   - minor version 1.2, any patch (not prerelease)
     module@1.2.3 - exact version
 
   It is assumed that these modules are provided by the server / file system.
@@ -887,19 +887,23 @@ global.upgradeSystemLoader = function() {
   };
 
   When a matching semver request is made (jquery@1.9, jquery@1, bootstrap@3)
-  they will be converted into one of these more specific versions first.
+  they will be converted to the latest version match contained here, if present.
 
-  Prereleases are allowed to satisfy ranges when present in the versions list.
+  Prereleases in this versions list are also allowed to satisfy ranges when present.
 */
 
 (function() {
   // match x, x.y, x.y.z, x.y.z-prerelease.1
   var semverRegEx = /^(\d+)(?:\.(\d+)(?:\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?)?)?$/;
-  var semverSplitRegEx = /\.|-/;
 
   var semverCompare = function(v1, v2) {
-    var v1Parts = v1.split(semverSplitRegEx);
-    var v2Parts = v2.split(semverSplitRegEx);
+    var v1Parts = v1.split('.');
+    var v2Parts = v2.split('.');
+    var prerelease;
+    if (v1Parts[2] && (prereleaseIndex = v1Parts[2].indexOf('-')) != -1)
+      v1Parts.splice(2, 1, v1Parts[2].substr(0, prereleaseIndex), v1Parts[2].substr(prereleaseIndex + 1));
+    if (v2Parts[2] && (prereleaseIndex = v2Parts[2].indexOf('-')) != -1)
+      v2Parts.splice(2, 1, v2Parts[2].substr(0, prereleaseIndex), v2Parts[2].substr(prereleaseIndex + 1));
     for (var i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
       if (!v1Parts[i])
         return true;

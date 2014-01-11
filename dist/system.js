@@ -897,10 +897,13 @@ global.upgradeSystemLoader = function() {
   var semverRegEx = /^(\d+)(?:\.(\d+)(?:\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?)?)?$/;
 
   var semverCompare = function(v1, v2) {
-    var v1Parts = v1.split('-');
-    var v2Parts = v2.split('-');
-    v1Parts = v1Parts[0].split('.').concat(v1Parts[1].split(.));
-    v2Parts = v2Parts[0].split('.').concat(v1Parts[1].split(.));
+    var v1Parts = v1.split('.');
+    var v2Parts = v2.split('.');
+    var prerelease;
+    if (v1Parts[2] && (prereleaseIndex = v1Parts[2].indexOf('-')) != -1)
+      v1Parts.splice(2, 1, v1Parts[2].substr(0, prereleaseIndex), v1Parts[2].substr(prereleaseIndex + 1));
+    if (v2Parts[2] && (prereleaseIndex = v2Parts[2].indexOf('-')) != -1)
+      v2Parts.splice(2, 1, v2Parts[2].substr(0, prereleaseIndex), v2Parts[2].substr(prereleaseIndex + 1));
     for (var i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
       if (!v1Parts[i])
         return true;
