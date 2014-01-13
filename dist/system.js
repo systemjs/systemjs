@@ -864,11 +864,11 @@ global.upgradeSystemLoader = function() {
 
   Compatible version request support is then also provided for:
 
-    module@^1.2.3       - module@1, >=1.2.3
-    module@^1.2         - module@1, >=1.2.0
-    module@^1           - module@1
-    module@^0.5.3       - module@0.5, >= 0.5.3
-    module@^0.0.1       - module@0.0.1
+    module@^1.2.3        - module@1, >=1.2.3
+    module@^1.2          - module@1, >=1.2.0
+    module@^1            - module@1
+    module@^0.5.3        - module@0.5, >= 0.5.3
+    module@^0.0.1        - module@0.0.1
 
   The ^ symbol is always normalized out to a normal version request.
 
@@ -882,9 +882,11 @@ global.upgradeSystemLoader = function() {
   It is also possible to create version solution hints on the System global:
 
   System.versions = {
-    jquery: ['1.9.2'],
-    bootstrap: ['3.0.1']
+    jquery: ['1.9.2', '2.0.3'],
+    bootstrap: '3.0.1'
   };
+
+  Versions can be an array or string for a single version.
 
   When a matching semver request is made (jquery@1.9, jquery@1, bootstrap@3)
   they will be converted to the latest version match contained here, if present.
@@ -924,7 +926,7 @@ global.upgradeSystemLoader = function() {
     // run all other normalizers first
     return Promise.resolve(systemNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
-      var version, semverMatch, nextChar;
+      var version, semverMatch, nextChar, versions;
       var index = normalized.indexOf('@');
 
       // see if this module corresponds to a package already in out versioned packages list
@@ -932,6 +934,9 @@ global.upgradeSystemLoader = function() {
       // no version specified - check against the list (given we don't know the package name)
       if (index == -1) {
         for (var p in packageVersions) {
+          versions = packageVersions[p];
+          if (typeof versions == 'string')
+            versions = [versions];
           if (normalized.substr(0, p.length) != p)
             continue;
 
@@ -941,7 +946,7 @@ global.upgradeSystemLoader = function() {
             continue;
 
           // match -> take latest version
-          return p + '@' + packageVersions[p][packageVersions[p].length - 1] + normalized.substr(p.length);
+          return p + '@' + versions[versions.length - 1] + normalized.substr(p.length);
         }
         return normalized;
       }
@@ -968,8 +973,10 @@ global.upgradeSystemLoader = function() {
           minVersion = version;
           semverMatch = [0, semverMatch[2]];
         }
-        else
+        else {
+          semverMatch = [semverMatch[1]]
           minVersion = false;
+        }
         version = semverMatch.join('.');
 
         // remove the ^ now
@@ -981,7 +988,11 @@ global.upgradeSystemLoader = function() {
         return normalized;
 
       var packageName = normalized.substr(0, index);
-      var versions = packageVersions[packageName] = packageVersions[packageName] || [];
+
+      versions = packageVersions[packageName] || [];
+
+      if (typeof versions == 'string')
+        versions = [versions];
 
       // look for a version match
       // if an exact semver, theres nothing to match, just record it
@@ -1002,6 +1013,9 @@ global.upgradeSystemLoader = function() {
       if (versions.indexOf(version) == -1) {
         versions.push(version);
         versions.sort(semverCompare);
+        packageVersions[packageName] = versions.length == 1 ? versions[0] : versions;
+
+        // could also add a catch here to another System.import, so if the import fails we can remove the version
       }
 
       return normalized;
