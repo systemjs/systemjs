@@ -976,10 +976,11 @@ global.upgradeSystemLoader = function() {
   
   var systemNormalize = System.normalize;
 
-  var packageVersions = System.versions = {};
+  System.versions = {};
 
   // hook normalize and store a record of all versioned packages
   System.normalize = function(name, parentName, parentAddress) {
+    var packageVersions = System.versions;
     // run all other normalizers first
     return Promise.resolve(systemNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
