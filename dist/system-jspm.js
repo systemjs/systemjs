@@ -1090,8 +1090,8 @@ global.upgradeSystemLoader = function() {
 
   To work directly over CDN.
 */
-System.paths['~/*'] = System.baseURL + '*.js';
-System.baseURL = 'https://registry.jspm.io/';
+System.paths['*'] = 'https://registry.jspm.io/*.js';
+System.paths['~/*'] = '*.js';
 System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
 System.paths['github:*'] = 'https://github.jspm.io/*.js';
 };
