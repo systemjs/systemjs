@@ -281,6 +281,17 @@
         }
       },
       {
+        name: 'Versions support',
+        run: function(complete, err) {
+          System.versions['~/tests/versioned'] = '2.0.3';
+          System.import('~/tests/versioned@^2.0.3').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.version != '2.3.4')
+            return 'Version not loaded';
+        }
+      },
+      {
         name: 'Simple compiler Plugin',
         run: function(complete, err) {
           System.map['coffee'] = '~/tests/compiler-plugin';
