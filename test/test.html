@@ -146,6 +146,9 @@
         name: 'Map configuration',
         run: function(complete, err) {
           System.map['maptest'] = '~/tests/map-test';
+          System.map['~/tests/contextual-map'] = {
+            maptest: '~/tests/contextual-map-dep'
+          };
           System.import('maptest').then(complete, err)
         },
         confirm: function(m) {
@@ -161,6 +164,16 @@
         confirm: function(m) {
           if (m.maptest != 'maptestsub')
             return 'Mapped folder not loaded';
+        }
+      },
+      {
+        name: 'Contextual map configuration',
+        run: function(complete, err) {
+          System.import('~/tests/contextual-map').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.mapdep != 'mapdep')
+            return 'Contextual map dep not loaded';
         }
       },
       {

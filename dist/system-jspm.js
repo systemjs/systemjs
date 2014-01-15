@@ -803,45 +803,102 @@ global.upgradeSystemLoader = function() {
   
   Provides map configuration through
     System.map['jquery'] = 'some/module/map'
+
+  As well as contextual map config through
+    System.map['bootstrap'] = {
+      jquery: 'some/module/map2'
+    }
+
+  Note that this applies for subpaths, just like RequireJS
+
+  jquery      -> 'some/module/map'
+  jquery/path -> 'some/module/map/jquery/path'
+  bootstrap   -> 'bootstrap'
+
+  Inside any module name of the form 'bootstrap' or 'bootstrap/*'
+    jquery    -> 'some/module/map2'
+    jquery/p  -> 'some/module/map2/p'
+
+  Maps are carefully applied from most specific contextual map, to least specific global map
 */
 (function() {
-  var separatorRegEx = /[\/:]/;
 
   System.map = {};
 
-  // given a relative-resolved module name apply the map configuration
-  var applyMap = function(name) {
-    
-    var curMatch = '';
-    var curMatchSuffix = '';
 
-    var nameParts = name.split(separatorRegEx);
+  // return the number of prefix parts (separated by '/') matching the name
+  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
+  function prefixMatchLength(name, prefix) {
+    var prefixParts = prefix.split('/');
+    var nameParts = name.split('/');
+    if (prefixParts.length > nameParts.length)
+      return 0;
+    for (var i = 0; i < prefixParts.length; i++)
+      if (nameParts[i] != prefixParts[i])
+        return 0;
+    return prefixParts.length;
+  }
+
+
+  // given a relative-resolved module name and normalized parent name,
+  // apply the map configuration
+  function applyMap(name, parentName) {
+
+    var curMatch, curMatchLength = 0;
+    var curParent, curParentMatchLength = 0;
     
-    main:
+    // first find most specific contextual match
+    if (parentName) {
+      for (var p in System.map) {
+        var curMap = System.map[p];
+        if (typeof curMap != 'object')
+          continue;
+
+        // most specific parent match wins first
+        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
+          continue;
+
+        for (var q in curMap) {
+          // most specific name match wins
+          if (prefixMatchLength(name, q) <= curMatchLength)
+            continue;
+
+          curMatch = q;
+          curMatchLength = q.split('/').length;
+          curParent = p;
+          curParentMatchLength = p.split('/').length;
+        }
+      }
+      if (curMatch) {
+        var subPath = name.split('/').splice(curMatchLength).join('/');
+        return System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
+      }
+    }
+
+    // if we didn't find a contextual match, try the global map
     for (var p in System.map) {
-      var matchParts = p.split(separatorRegEx);
-      if (matchParts.length > nameParts.length)
+      var curMap = System.map[p];
+      if (typeof curMap != 'string')
         continue;
 
-      for (var i = 0; i < matchParts.length; i++)
-        if (nameParts[i] != matchParts[i])
-          continue main;
-    
-      if (p.length <= curMatch.length)
+      if (prefixMatchLength(name, p) <= curMatchLength)
         continue;
 
       curMatch = p;
-      curMatchSuffix = name.substr(nameParts.splice(0, matchParts.length).join('/').length);
+      curMatchLength = p.split('/').length;
     }
-    if (curMatch)
-      name = System.map[curMatch] + curMatchSuffix;
-
-    return name;
+    
+    // return a match if any
+    if (!curMatch)
+      return name;
+    
+    var subPath = name.split('/').splice(curMatchLength).join('/');
+    return System.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
   var systemNormalize = System.normalize;
   System.normalize = function(name, parentName, parentAddress) {
-    return systemNormalize(applyMap(name), parentName, parentAddress);
+    return systemNormalize(applyMap(name, parentName), parentName, parentAddress);
   }
 })();/*
   SystemJS Semver Version Addon
@@ -901,7 +958,7 @@ global.upgradeSystemLoader = function() {
   var semverCompare = function(v1, v2) {
     var v1Parts = v1.split('.');
     var v2Parts = v2.split('.');
-    var prerelease;
+    var prereleaseIndex;
     if (v1Parts[2] && (prereleaseIndex = v1Parts[2].indexOf('-')) != -1)
       v1Parts.splice(2, 1, v1Parts[2].substr(0, prereleaseIndex), v1Parts[2].substr(prereleaseIndex + 1));
     if (v2Parts[2] && (prereleaseIndex = v2Parts[2].indexOf('-')) != -1)
