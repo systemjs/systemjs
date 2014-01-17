@@ -1,5 +1,5 @@
 define START
-	lib/banner.js \
+	cat lib/banner.js \
 	lib/polyfill-wrapper-start.js \
 	lib/system-core.js
 endef
@@ -12,10 +12,7 @@ define FORMATS
 endef
 
 define END
-	lib/polyfill-wrapper-end.js
-endef
-
-define MINIFY
+	lib/polyfill-wrapper-end.js > dist/$@.js
 	cat lib/banner.js > dist/$@.min.js
 	uglifyjs dist/$@.js -cm >> dist/$@.min.js
 endef
@@ -23,22 +20,20 @@ endef
 all: system system-jspm
 
 system:
-	cat $(START) \
+	$(START) \
 	$(FORMATS) \
 	lib/system-module.js \
 	lib/system-plugins.js \
 	lib/system-map.js \
 	lib/system-versions.js \
-	$(END) > dist/$@.js
-	$(MINIFY)
+	$(END)
 
 system-jspm:
-	cat $(START) \
+	$(START) \
 	$(FORMATS) \
 	lib/system-module.js \
 	lib/system-plugins.js \
 	lib/system-map.js \
 	lib/system-versions.js \
 	lib/system-jspm.js \
-	$(END) > dist/$@.js
-	$(MINIFY)
+	$(END)
