@@ -17,7 +17,7 @@ define END
 	uglifyjs dist/$@.js -cm >> dist/$@.min.js
 endef
 
-all: system system-jspm
+all: system
 
 system:
 	$(START) \
@@ -26,14 +26,4 @@ system:
 	lib/system-plugins.js \
 	lib/system-map.js \
 	lib/system-versions.js \
-	$(END)
-
-system-jspm:
-	$(START) \
-	$(FORMATS) \
-	lib/system-module.js \
-	lib/system-plugins.js \
-	lib/system-map.js \
-	lib/system-versions.js \
-	lib/system-jspm.js \
 	$(END)

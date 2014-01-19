@@ -30,8 +30,6 @@ Then include `dist/system.js` with a script tag in the page:
 
 `es6-module-loader.js` will then be included automatically and the [Traceur](https://github.com/google/traceur-compiler) parser is dynamically included from `traceur.js` when loading an ES6 module only.
 
-_Note this version does not come with jspm paths support by default._
-
 ### Write and Load a Module
 
 app/test.js:
