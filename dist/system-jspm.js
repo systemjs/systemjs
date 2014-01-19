@@ -90,137 +90,11 @@ global.upgradeSystemLoader = function() {
     System.format = {};
     System.formats = [];
 
+    // also in ESML, build.js
     var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
     // module format hint regex
     var formatHintRegEx = /^(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["']([^'"]+)["'][;\n]/;
-
-    // go through a module list or module and if the only
-    // export is the default, then provide it directly
-    // useful for module.exports = function() {} handling
-    var checkDefaultOnly = function(module) {
-      if (!(module instanceof Module)) {
-        var out = [];
-        for (var i = 0; i < module.length; i++)
-          out[i] = checkDefaultOnly(module[i]);
-        return out;
-      }
-      return module.__defaultOnly ? module['default'] : module;
-    }
-
-    // determine if the source is minified - don't remove comments in this case
-    function isMinified(str) {
-      var newlines = str.match(/\n/g);
-      return str.length / (newlines && newlines.length || 1) > 100;
-    }
-
-    // function to remove the comments from a string
-    // necessary for regex detection not to check commented code
-    function removeComments(str) {
-      // output
-      // block comments replaced with equivalent whitespace
-      // this is to ensure source maps remain valid
-      var curOutIndex = 0,
-        outString = '',
-        blockCommentWhitespace = '';
-
-      // mode variables
-      var singleQuote = false,
-        doubleQuote = false,
-        regex = false,
-        blockComment = false,
-        doubleBackslash = false,
-        lineComment = false;
-
-      // character buffer
-      var lastChar;
-      var curChar = '';
-      var lastToken;
-
-      for (var i = 0, l = str.length; i <= l; i++) {
-        lastChar = curChar;
-        curChar = str.charAt(i);
-
-        if (curChar === '\n' || curChar === '\r' || curChar === '') {
-          regex = doubleQuote = singleQuote = doubleBackslash = false;
-          if (lineComment) {
-            curOutIndex = i;
-            lineComment = false;
-          }
-          if (blockComment)
-            blockCommentWhitespace += curChar;
-          lastToken = '';
-          continue;
-        }
-
-        if (lastChar !== ' ' && lastChar !== '\t')
-          lastToken = lastChar;
-
-        if (singleQuote || doubleQuote || regex) {
-          if (curChar == '\\' && lastChar == '\\')
-            doubleBackslash = !doubleBackslash;
-        }
-
-        if (singleQuote) {
-          if (curChar === "'" && (lastChar !== '\\' || doubleBackslash))
-            singleQuote = doubleBackslash = false;
-        }
-
-        else if (doubleQuote) {
-          if (curChar === '"' && (lastChar !== '\\' || doubleBackslash))
-            doubleQuote = doubleBackslash = false;
-        }
-
-        else if (regex) {
-          if (curChar === '/' && (lastChar !== '\\' || doubleBackslash)) {
-            // a comment inside a regex immediately means we've misread the regex
-            // so switch back to block mode to detect the comment
-            if (str.charAt(i + 1) == '/') {
-              regex = doubleBackslash = false;
-            }
-            else {
-              regex = doubleBackslash = false;
-              i++;
-              lastToken = lastChar = curChar;
-              curChar = str.charAt(i);
-            }
-          }
-        }
-
-        else if (blockComment) {
-          blockCommentWhitespace += ' ';
-          if (curChar === '/' && lastChar === '*' && blockCommentWhitespace.length > 3) {
-            blockComment = false;
-            curOutIndex = i + 1;
-          }
-        }
-
-        else if (!lineComment) {
-          doubleQuote = curChar === '"';
-          singleQuote = curChar === "'";
-
-          if (lastChar !== '/')
-            continue;
-          
-          if (curChar === '*') {
-            blockComment = true;
-            outString += blockCommentWhitespace + str.substring(curOutIndex, i - 1);
-            blockCommentWhitespace = '  ';
-          }
-          else if (curChar === '/') {
-            lineComment = true;
-            outString += blockCommentWhitespace + str.substring(curOutIndex, i - 1);
-            blockCommentWhitespace = '';
-          }
-          else if (lastToken !== '}' && lastToken !== ')' && lastToken !== ']' && !lastToken.match(/\w|\d|'|"|\-|\+/)) {
-            // detection not perfect - careful comment detection within regex is used to compensate
-            // without sacrificing global comment removal accuracy
-            regex = true;
-          }
-        }
-      }
-      return outString + blockCommentWhitespace + str.substr(curOutIndex);
-    }
 
     var systemInstantiate = System.instantiate;
     System.instantiate = function(load) {
@@ -229,67 +103,52 @@ global.upgradeSystemLoader = function() {
       if (!load.source || name == 'traceur')
         return systemInstantiate.call(this, load);
 
-      var source = load.source;
-
       // set load.metadata.format from metadata or format hints in the source
       var format = load.metadata.format;
       if (!format) {
         var formatMatch = load.source.match(formatHintRegEx);
         if (formatMatch)
-          format = formatMatch[5];
+          format = load.metadata.format = formatMatch[5];
       }
 
       // es6 handled by core
-      if (format == 'es6' || !format && source.match(es6RegEx)) {
+      if (format == 'es6' || !format && load.source.match(es6RegEx)) {
         load.metadata.es6 = true;
         return systemInstantiate.call(System, load);
       }
 
-      // remove comments to allow for regex format detections if necessary
-      if (!format && !isMinified(source))
-        source = removeComments(source);
-
-      // do modular format detection and handling
-      // format priority is order of System.formats array
-      for (var i = 0; i < this.formats.length; i++) {
-        var f = this.formats[i];
-
-        if (format && format != f)
-            continue;
-
-        var curFormat = this.format[f];
-
-        // run detection, which returns deps (even if format already knows format)
-        var deps;
-        if (!(deps = curFormat.detect(source, load)) && !format)
-          continue;
-
-        var execute = curFormat.execute;
-
-        return {
-          deps: deps,
-          execute: function() {
-            var depMap = {};
-            for (var i = 0; i < arguments.length; i++)
-              depMap[deps[i]] = checkDefaultOnly(arguments[i]);
-
-            // yes this is a lot of arguments, but we really dont want to add the other properties
-            // to the load object, as it is then too easy to create a global closure function of load
-            // that causes the module source not to be garbage disposed
-            var output = execute(load, depMap, global, function() {
-              __scopedEval(load.source, global, load.address);
-            });
-
-            if (output instanceof global.Module)
-              return output;
-            else
-              return new global.Module(output && output.__module ? output.__module : { __defaultOnly: true, 'default': output });
+      // if we don't know the format, run detection first
+      if (!format)
+        for (var i = 0; i < this.formats.length; i++) {
+          var f = this.formats[i];
+          var curFormat = this.format[f];
+          if (curFormat.detect(load)) {
+            format = f;
+            break;
           }
-        };
-      }
+        }
 
-      if (format && format != 'global')
-        throw new TypeError('Format "' + format + '" not defined in System');
+      var curFormat = this.format[format];
+
+      // if we don't have a format or format rule, throw
+      if (!format || !curFormat)
+        throw new TypeError('No format found for ' + (format ? format : load.address));
+
+      // now invoke format instantiation
+      function exec() {
+        __scopedEval(load.source, global, load.address);
+      }
+      return {
+        deps: curFormat.deps(load, global, exec),
+        execute: function() {
+          var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0), load, global, exec);
+
+          if (output instanceof global.Module)
+            return output;
+          else
+            return new global.Module(output && output.__module ? output.__module : { __defaultOnly: true, 'default': output });
+        }
+      };
     }
   })(typeof window != 'undefined' ? window : global);
 
@@ -316,52 +175,25 @@ global.upgradeSystemLoader = function() {
 (function() {
   System.formats.push('amd');
 
-  // AMD Module Format
+  // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
-  var amdDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\])?/g;
-  var cjsDefineRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*(("[^"]+"\s*,|'[^']+'\s*,)?("[^"]+"\s*,|'[^']+'\s*,)?function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/g;
-
-  var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
 
   /*
     AMD-compatible require
     To copy RequireJS, set window.require = window.requirejs = System.requirejs
   */
-  System.requirejs = function(names, callback, errback, referer) {
+  var require = System.requirejs = function(names, callback, errback, referer) {
     // in amd, first arg can be a config object... we just ignore
     if (typeof names == 'object' && !(names instanceof Array))
-      return System.require.apply(null, Array.prototype.splice.call(arguments, 1));
-
-    if (typeof callback == 'object') {
-      referer = callback;
-      callback = undefined;
-    }
-    else if (typeof errback == 'object') {
-      referer = errback;
-      errback = undefined;
-    }
+      return require.apply(null, Array.prototype.splice.call(arguments, 1));
 
     // amd require
-    if (names instanceof Array) {
-      var modules = [];
-      var setCnt = 0;
-      var errored = false;
-      var err = function(err) {
-        if (errored)
-          return;
-        errored = true;
-        errback(err);
-      }
-      for (var i = 0; i < names.length; i++) (function(i) {
-        System.import(names[i]).then(function(m) {
-          modules[i] = m;
-          setCnt++;
-          if (setCnt == names.length)
-            callback(modules);
-        }, err);
-      })();
-    }
+    if (names instanceof Array)
+      Promise.all(names.map(function(name) {
+        return System.import(name, referer);
+      })).then(callback, errback);
 
     // commonjs require
     else if (typeof names == 'string')
@@ -370,85 +202,47 @@ global.upgradeSystemLoader = function() {
     else
       throw 'Invalid require';
   }
+  function makeRequire(parentName, deps, depsNormalized) {
+    return function(names, callback, errback) {
+      if (typeof names == 'string' && deps.indexOf(names) != -1)
+        return System.get(depsNormalized[deps.indexOf(names)]);
+      return require(names, callback, errback, { name: parentName });
+    }
+  }
 
   System.format.amd = {
-    detect: function(source, load) {
-      amdDefineRegEx.lastIndex = 0;
-      cjsDefineRegEx.lastIndex = 0;
-
-      // do detection
-      var match;
-      var deps;
-      if (
-        !(match = cjsDefineRegEx.exec(source)) &&
-        !((match = amdDefineRegEx.exec(source)) && (match[1] || match[2] && (deps = (1, eval)(match[2]))))
-      )
-        return false;
-
-      if (!deps) {
-        // no deps means CJS AMD form, so pick up require('') statements with regex
-        deps = ['require', 'exports', 'module'];
-
-        while (match = cjsRequireRegEx.exec(source))
-          deps.push(match[2] || match[3]);
-      }
-
-      // we then remove the special reserved names
-      var index;
-      var meta = load.metadata;
-      if (meta.require = (index = deps.indexOf('require')) != -1)
-        deps.splice(index, 1);
-      if (meta.exports = (index = deps.indexOf('exports')) != -1)
-        deps.splice(index, 1);
-      if (meta.module = (index = deps.indexOf('module')) != -1)
-        deps.splice(index, 1);
-
-      return deps;
+    detect: function(load) {
+      return !!load.source.match(amdRegEx);
     },
-    execute: function(load, depMap, global, execute) {
-      // add back in system dependencies
+    deps: function(load, global, exec) {
+
+      var deps;
       var meta = load.metadata;
-      if (meta.module)
-        depMap.module = { id: load.name, uri: load.address, config: function() { return {}; } };
-      if (meta.exports)
-        depMap.exports = {};
 
-      // avoid load object closure
-      var name = load.name;
-      var address = load.address;
+      global.define = function(name, _deps, factory) {
 
-      if (meta.require)
-        depMap.require = function(names, callback, errback) {
-          if (typeof names == 'string' && names in depMap)
-            return depMap[names];
-          return System.requirejs(names, callback, errback, { name: name, address: address });
+        if (typeof name != 'string') {
+          factory = _deps;
+          _deps = name;
         }
-
-      var output;
-
-      global.require = global.requirejs = System.requirejs;
-      global.define = function(dependencies, factory) {
-        if (typeof dependencies == 'string') {
-          dependencies = arguments[1];
-          factory = arguments[2];
+        else {
+          meta.name = name;
         }
-
-        // no dependencies
-        if (!(dependencies instanceof Array)) {
-          factory = dependencies;
-          if (typeof dependencies == 'function')
-            dependencies = ['require', 'exports', 'module'];
+        if (!(_deps instanceof Array)) {
+          factory = _deps;
+          // CommonJS AMD form
+          _deps = ['require', 'exports', 'module'].concat(System.format.cjs.deps(load, global, eval));
         }
-
-        for (var i = 0; i < dependencies.length; i++)
-          dependencies[i] = depMap[dependencies[i]];
-
-        // run the factory function
-        if (typeof factory == 'function')
-          output = factory.apply(global, dependencies) || depMap.exports;
-        // otherwise factory is the value
-        else
-          output = factory;
+        deps = _deps;
+        
+        if (typeof factory != 'function') {
+          meta.factory = function() {
+            return factory;
+          }
+        }
+        else {
+          meta.factory = factory;
+        }
       }
       global.define.amd = {};
 
@@ -456,13 +250,46 @@ global.upgradeSystemLoader = function() {
       delete global.module;
       delete global.exports;
 
-      execute();
+      exec();
+
+      var index;
+      if ((index = deps.indexOf('require')) != -1) {
+        meta.requireIndex = index;
+        deps.splice(index, 1);
+      }
+      if ((index = deps.indexOf('exports')) != -1) {
+        meta.exportsIndex = index;
+        deps.splice(index, 1);
+      }
+      if ((index = deps.indexOf('module')) != -1) {
+        meta.moduleIndex = index;
+        deps.splice(index, 1);
+      }
 
       delete global.define;
-      delete global.require;
-      delete global.requirejs;
 
-      return output;
+      meta.deps = deps;
+
+      return deps;
+
+    },
+    execute: function(depNames, load, global, exec) {
+      var meta = load.metadata;
+      var deps = [];
+      for (var i = 0; i < depNames.length; i++)
+        deps[i] = System.get(depNames[i]);
+
+      var require, exports = {}, module;
+      
+      // add back in system dependencies
+      if (meta.moduleIndex !== undefined)
+        deps.splice(meta.moduleIndex, 0, module = { id: load.name, uri: load.address, config: function() { return {}; }, exports: exports });
+      if (meta.exportsIndex !== undefined)
+        deps.splice(meta.exportsIndex, 0, exports);
+      if (meta.requireIndex !== undefined)
+        deps.splice(meta.requireIndex, 0, require = makeRequire(load.name, meta.deps, depNames));
+
+      return meta.factory.apply(global, deps) || module && module.exports || undefined;
     }
   };
 })();
@@ -477,6 +304,7 @@ global.upgradeSystemLoader = function() {
   // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
   var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
   var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+  var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
   var nodeProcess = {
     nextTick: function(f) {
@@ -485,38 +313,44 @@ global.upgradeSystemLoader = function() {
   };
 
   System.format.cjs = {
-    detect: function(source) {
-
+    detect: function(load) {
+      cjsExportsRegEx.lastIndex = 0;
+      cjsRequireRegEx.lastIndex = 0;
+      return !!(cjsRequireRegEx.exec(load.source) || cjsExportsRegEx.exec(load.source));
+    },
+    deps: function(load, global, exec) {
       cjsExportsRegEx.lastIndex = 0;
       cjsRequireRegEx.lastIndex = 0;
 
-      var firstMatch = cjsRequireRegEx.exec(source);
-
-      // fail detection
-      if (!firstMatch && !source.match(cjsExportsRegEx))
-        return false;
-
       var deps = [];
+
+      // remove comments from the source first
+      var source = load.source.replace(commentRegEx, '');
+
       var match;
-      if ((match = firstMatch))
-        deps.push(match[2] || match[3]);
 
       while (match = cjsRequireRegEx.exec(source))
         deps.push(match[2] || match[3]);
 
+      load.metadata.deps = deps;
+
       return deps;
     },
-    execute: function(load, depMap, global, execute) {
+    execute: function(depNames, load, global, exec) {
       var dirname = load.address.split('/');
       dirname.pop();
       dirname = dirname.join('/');
+
+      var deps = load.metadata.deps;
 
       var globals = global._g = {
         global: global,
         exports: {},
         process: nodeProcess,
         require: function(d) {
-          return depMap[d];
+          var index = deps.indexOf(d);
+          if (index != -1)
+            return System.get(depNames[index]);
         },
         __filename: load.address,
         __dirname: dirname,
@@ -529,7 +363,7 @@ global.upgradeSystemLoader = function() {
 
       load.source = glString + load.source;
 
-      execute();
+      exec();
 
       delete global._g;
 
@@ -562,9 +396,12 @@ global.upgradeSystemLoader = function() {
   System.shim = {};
 
   System.format.global = {
-    detect: function(source, load) {
+    detect: function() {
+      return true;
+    },
+    deps: function(load, global, exec) {
       var match, deps;
-      if (match = source.match(globalShimRegEx)) {
+      if (match = load.source.match(globalShimRegEx)) {
         deps = match[2].match(globalImportRegEx);
         if (deps)
           for (var i = 0; i < deps.length; i++)
@@ -585,20 +422,12 @@ global.upgradeSystemLoader = function() {
       }
       return deps;
     },
-    execute: function(load, depMap, global, execute) {
+    execute: function(depNames, load, global, exec) {
       var globalExport = load.metadata.globalExport;
 
       // first, we add all the dependency module properties to the global
-      // NB cheat here for System iteration
-      for (var d in depMap) {
-        var module = depMap[d];
-        var moduleGlobal;
-        for (var m in System._modules) {
-          if (System._modules[m] === module) {
-            moduleGlobal = moduleGlobals[m];
-            break;
-          }
-        }
+      for (var i = 0; i < depNames.length; i++) {
+        var moduleGlobal = moduleGlobals[depNames[i]];
         if (moduleGlobal)
           for (var m in moduleGlobal)
             global[m] = moduleGlobal[m];
@@ -614,7 +443,7 @@ global.upgradeSystemLoader = function() {
       if (globalExport)
         load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
 
-      execute();
+      exec();
 
       // check for global changes, creating the globalObject for the module
       // if many globals, then a module object for those is created
@@ -640,7 +469,7 @@ global.upgradeSystemLoader = function() {
           }
         }
       }
-      moduleGlobals[name] = moduleGlobal;
+      moduleGlobals[load.name] = moduleGlobal;
       
       if (singleGlobal)
         return singleGlobal;
