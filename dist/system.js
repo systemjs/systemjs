@@ -146,7 +146,7 @@ global.upgradeSystemLoader = function() {
           if (output instanceof global.Module)
             return output;
           else
-            return new global.Module(output && output.__module ? output.__module : { __defaultOnly: true, 'default': output });
+            return new global.Module(output && output.__module ? (delete output.__module, output) : { __defaultOnly: true, 'default': output });
         }
       };
     }
