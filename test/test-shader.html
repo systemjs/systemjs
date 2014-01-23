@@ -1,0 +1,15 @@
+<!doctype html>
+  <script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
+  <script src="../dist/system.js" type="text/javascript"></script>
+  <script>
+    System.paths = {
+      '*': 'https://registry.jspm.io/*.js',
+      'github:*': 'https://github.jspm.io/*.js',
+      'npm:*': 'https://npm.jspm.io/*.js'
+    };
+    System.import('github:guybedford/requirebin-shader/shader').catch(function(e) {
+      setTimeout(function() {
+        throw e;
+      }, 1);
+    })
+  </script>

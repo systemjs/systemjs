@@ -118,7 +118,7 @@ global.upgradeSystemLoader = function() {
       }
 
       // if we don't know the format, run detection first
-      if (!format)
+      if (!format || !this.format[format])
         for (var i = 0; i < this.formats.length; i++) {
           var f = this.formats[i];
           var curFormat = this.format[f];
@@ -289,7 +289,7 @@ global.upgradeSystemLoader = function() {
       if (meta.requireIndex !== undefined)
         deps.splice(meta.requireIndex, 0, require = makeRequire(load.name, meta.deps, depNames));
 
-      return meta.factory.apply(global, deps) || module && module.exports || undefined;
+      return meta.factory.apply(global, deps) || module && module.exports || exports || undefined;
     }
   };
 })();
