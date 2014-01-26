@@ -1,1 +1,1 @@
-export { name as myname } from '@module';
+export var myname = __moduleName;

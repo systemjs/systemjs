@@ -22,7 +22,6 @@ all: system
 system:
 	$(START) \
 	$(FORMATS) \
-	lib/system-module.js \
 	lib/system-plugins.js \
 	lib/system-map.js \
 	lib/system-versions.js \
