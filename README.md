@@ -3,13 +3,14 @@ SystemJS
 
 Extensions for the new ES6 System browser loader, which will be natively provided in browsers.
 
-A small (15KB minfied) collection of extensions to the System loader, for supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
+A small (10KB minfied) collection of extensions to the System loader, for supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
 
 Extensions are self-contained additions to the `System` global, which can be applied individually (see [lib](https://github.com/guybedford/systemjs/tree/master/lib)) or all together ([dist/system.js](https://github.com/guybedford/systemjs/blob/master/dist/system.js)).
 
 * **Formats:** Dynamically load AMD, CommonJS and global scripts (as well as ES6 modules) detecting the format automatically, or with format hints.
 * **Map:** Map configuration.
 * **Plugins:** A dynamic plugin system for modular loading rules.
+* **Versions:** Multi-version support for semver compatible version ranges (`@^1.2.3` syntax).
 
 Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 32KB.
 
@@ -94,10 +95,10 @@ _Note: The implementation is currently in discussion and not specified, thus it 
 
 One can use the baseURL to reference library scripts like `jquery`, `underscore` etc.
 
-It is then better to have local application scripts in their own separate folder, which can be set up with paths config:
+We then create a path for our local application scripts in their own separate folder, which can be set up with paths config:
 
 ```javascript
-  System.paths['~/*'] = '/app/*.js';
+  System.paths['app/*'] = '/app/*.js';
 ```
 
 Non-wildcard paths are also supported, and the most specific rule will always be used.
@@ -115,9 +116,9 @@ app/main.js:
 
 index.html:
 ```html
-  <script> System.paths['~/*'] = '/app/*.js'; </script>
+  <script> System.paths['app/*'] = '/app/*.js'; </script>
   <script>
-    System.import('~/main');
+    System.import('app/main');
   </script>
 ```
 
@@ -127,7 +128,7 @@ It is recommended to write modular code in either AMD or CommonJS. Both are equa
 
 For example, we can write modular CommonJS:
 
-app/app.js:
+app/module.js:
 ```javascript
   var subModule = require('./submodule/submodule');
   //...
@@ -142,7 +143,7 @@ app/submodule/submodule.js:
   }
 ```
 
-and load this with `System.import('~/app')` in the page.
+and load this with `System.import('app/module')` in the page.
 
 > Note: always use relative requires of the form `./` or `../` to reference modules in the same package. This is important within any package for modularity.
 
@@ -216,7 +217,7 @@ app/sample-global.js:
 ```
 
 ```javascript
-  System.import('~/sample-global').then(function(sampleGlobal) {
+  System.import('app/sample-global').then(function(sampleGlobal) {
     console.log(sampleGlobal); // 'world'
   });
 ```
@@ -240,7 +241,7 @@ app/my-global.js:
 ```
 
 ```javascript
-  System.import('~/my-global').then(function(m) {
+  System.import('app/my-global').then(function(m) {
     console.log(m); // 'hello world'
   });
 ```
@@ -295,15 +296,15 @@ Map configuration works just like other module loaders, altering the module name
 Example:
 
 ```javascript
-  System.map['jquery'] = '~/jquery@1.8.3';
+  System.map['jquery'] = 'app/jquery@1.8.3';
 
-  System.import('jquery') // behaves identical to System.import('~/jquery@1.8.2')
+  System.import('jquery') // behaves identical to System.import('app/jquery@1.8.2')
 ```
 
 Map configuration also affects submodules:
 
 ```javascript
-  System.import('jquery/submodule') // normalizes to -> `~/jquery@1.82/submodule'
+  System.import('jquery/submodule') // normalizes to -> `app/jquery@1.82/submodule'
 ```
 
 ### Custom Format Support
@@ -364,7 +365,7 @@ Supported Plugins:
 * CSS `System.import('my/file.css!')`
 * Image `System.import('some/image.png!image')`
 * JSON `System.import('some/data.json!').then(function(json){})`
-* Markdown `System.import('~/some/project/README.md!').then(function(html) {})`
+* Markdown `System.import('app/some/project/README.md!').then(function(html) {})`
 * Text `System.import('some/text.txt!text').then(function(text) {})`
 * WebFont `System.import('google Port Lligat Slab, Droid Sans !font')`
 
@@ -403,10 +404,10 @@ By overriding the `translate` hook, we now support CoffeeScript loading with:
    - main.coffee
 ```
 
-Then assuming we have a `~` [path config](#Paths Configuration) set to the `/app` folder, and the baseURL set to `/js/`, we can write:
+Then assuming we have a `app` [path config](#Paths Configuration) set to the `/app` folder, and the baseURL set to `/js/`, we can write:
 
 ```javascript
-  System.import('~/main.coffee!').then(function(main) {
+  System.import('app/main.coffee!').then(function(main) {
     // main is now loaded from CoffeeScript
   });
 ```

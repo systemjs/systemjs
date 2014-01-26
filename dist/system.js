@@ -598,7 +598,7 @@ global.upgradeSystemLoader = function() {
   Note that this applies for subpaths, just like RequireJS
 
   jquery      -> 'some/module/map'
-  jquery/path -> 'some/module/map/jquery/path'
+  jquery/path -> 'some/module/map/path'
   bootstrap   -> 'bootstrap'
 
   Inside any module name of the form 'bootstrap' or 'bootstrap/*'
@@ -609,7 +609,7 @@ global.upgradeSystemLoader = function() {
 */
 (function() {
 
-  System.map = {};
+  System.map = System.map || {};
 
 
   // return the number of prefix parts (separated by '/') matching the name
@@ -686,7 +686,8 @@ global.upgradeSystemLoader = function() {
   System.normalize = function(name, parentName, parentAddress) {
     return systemNormalize(applyMap(name, parentName), parentName, parentAddress);
   }
-})();/*
+})();
+/*
   SystemJS Semver Version Addon
 
   Supports requesting a module from a package that contains a version suffix
