@@ -684,7 +684,10 @@ global.upgradeSystemLoader = function() {
 
   var systemNormalize = System.normalize;
   System.normalize = function(name, parentName, parentAddress) {
-    return systemNormalize(applyMap(name, parentName), parentName, parentAddress);
+    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
+    .then(function(name) {
+      return applyMap(name, parentName);
+    });
   }
 })();
 /*
