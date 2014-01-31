@@ -1,1 +1,3 @@
-export var dep = 'hi';
+define({
+  dep: 'hi'
+})

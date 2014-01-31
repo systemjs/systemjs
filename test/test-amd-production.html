@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<script>
+  // window.Promise = null
+</script>
+<script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
+<script src="../dist/system-production.js" type="text/javascript"></script>
+<!-- <script src="../dist/system-production.min.js" type="text/javascript"></script> -->
+
+<script>
+  System.import('test-runner').then(function(runner) {
+    runner.execute([
+      {
+        name: 'Loading an AMD module',
+        run: function(complete, err) {
+          System.import('tests/amd-module').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.amd != true)
+            return 'Incorrect module';
+          if (m.dep.amd != 'dep')
+            return 'Dependency not defined';
+        }
+      },
+      {
+        name: 'Loading an AMD named define',
+        run: function(complete, err) {
+          System.import('tests/nameddefine').then(function() {
+            System.import('showdown').then(complete, err);
+          }, err);
+        },
+        confirm: function(m) {
+          if (!m.converter)
+            return 'Showdown not loaded!';
+        }
+      },
+      {
+        name: 'Loading a UMD module',
+        run: function(complete, err) {
+          System.import('tests/umd').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.d != 'hi')
+            return 'module value not defined';
+        }
+      }
+    ]);
+  }, function(err) {
+    setTimeout(function() {
+      throw err;
+    }, 1);
+  });
+</script>
