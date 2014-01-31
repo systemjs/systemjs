@@ -682,7 +682,7 @@ global.upgradeSystemLoader = function() {
     return System.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
-  var systemNormalize = System.normalize;
+  var systemNormalize = System.normalize.bind(System);
   System.normalize = function(name, parentName, parentAddress) {
     return Promise.resolve(systemNormalize(name, parentName, parentAddress))
     .then(function(name) {
@@ -692,6 +692,8 @@ global.upgradeSystemLoader = function() {
 })();
 /*
   SystemJS Semver Version Addon
+  
+  1. Uses Semver convention for major and minor forms
 
   Supports requesting a module from a package that contains a version suffix
   with the following semver ranges:
@@ -706,8 +708,10 @@ global.upgradeSystemLoader = function() {
   that would match the same package and version range.
 
   This provides a greedy algorithm as a simple fix for sharing version-managed
-  dependencies as much as possible, which can later be optimized through map 
-  configuration created out of deeper version tree analysis.
+  dependencies as much as possible, which can later be optimized through version
+  hint configuration created out of deeper version tree analysis.
+  
+  2. Semver-compatibility syntax (caret operator - ^)
 
   Compatible version request support is then also provided for:
 
@@ -720,6 +724,8 @@ global.upgradeSystemLoader = function() {
   The ^ symbol is always normalized out to a normal version request.
 
   This provides comprehensive semver compatibility.
+  
+  3. System.versions version hints and version report
 
   Note this addon should be provided after all other normalize overrides.
 
@@ -812,18 +818,20 @@ global.upgradeSystemLoader = function() {
 
       // translate '^' handling as described above
       if (minVersion) {
+        // >= 1.0.0
         if (semverMatch[1] > 0) {
           minVersion = version;
-          version = semverMatch[0];
           semverMatch = [semverMatch[1]];
         }
+        // >= 0.1.0
         else if (semverMatch[2] > 0) {
           minVersion = version;
           semverMatch = [0, semverMatch[2]];
         }
+        // >= 0.0.0
         else {
-          semverMatch = [semverMatch[1]]
           minVersion = false;
+          semverMatch = [0, 0, semverMatch[3]]
         }
         version = semverMatch.join('.');
 
@@ -849,7 +857,7 @@ global.upgradeSystemLoader = function() {
           var curVersion = versions[i];
           // if I have requested x.y, find an x.y.z-b
           // if I have requested x, find any x.y / x.y.z-b
-          if (curVersion.substr(0, version.length) == version && curVersion.charAt(version.length) == '.') {
+          if (curVersion.substr(0, version.length) == version && curVersion.charAt(version.length).match(/^[\.\-]?$/)) {
             // if a minimum version, then check too
             if (!minVersion || minVersion && semverCompare(curVersion, minVersion))
               return packageName + '@' + curVersion + normalized.substr(packageName.length + version.length + 1);
@@ -870,7 +878,8 @@ global.upgradeSystemLoader = function() {
     });
   }
 
-})();};
+})();
+};
 
 (function() {
   if (!global.System) {

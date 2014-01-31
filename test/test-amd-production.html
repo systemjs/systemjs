@@ -43,6 +43,46 @@
           if (m.d != 'hi')
             return 'module value not defined';
         }
+      },
+      {
+        name: 'Loading a bundle',
+        run: function(complete, err) {
+          var b1, b2;
+          System.import('tests/bundle').then(function() {
+            return System.import('bundle-define1');
+          })
+          .then(function(_b1) {
+            b1 = _b1;
+            return System.import('bundle-define2');
+          })
+          .then(function(_b2) {
+            b2 = _b2;
+            complete(b1, b2);
+          })
+          .catch(err);
+        },
+        confirm: function(b1, b2) {
+          if (b1.name != 'bundle1')
+            return 'bundle 1 not loaded';
+          if (b2.name != 'bundle2')
+            return 'bundle 2 not loaded';
+        }
+      },
+      {
+        name: 'Loading a bundle on demand',
+        run: function(complete, err) {
+          // our main bundle defines jquery
+          System.bundles = {
+            'tests/main-bundle': ['jquery']
+          };
+
+          // we import jquery, but should get the version from the bundle
+          System.import('jquery').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.name != 'jquery-bundled')
+            return 'jquery not loaded from bundle';
+        }
       }
     ]);
   }, function(err) {
