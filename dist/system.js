@@ -193,7 +193,9 @@ global.upgradeSystemLoader = function() {
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
         return System.import(name, referer);
-      })).then(callback, errback);
+      })).then(function(modules) {
+        callback.apply(null, modules);
+      }, errback);
 
     // commonjs require
     else if (typeof names == 'string')
