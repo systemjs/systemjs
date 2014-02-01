@@ -542,6 +542,7 @@ global.upgradeSystemLoader = function() {
         // store the plugin module itself on the metadata
         load.metadata.plugin = plugin;
         load.metadata.pluginName = pluginName;
+        load.metadata.pluginArgument = load.name;
 
         // run plugin locate if given
         if (plugin.locate)
@@ -567,7 +568,7 @@ global.upgradeSystemLoader = function() {
     var self = this;
     if (typeof load.metadata.plugin == 'function') {
       return new Promise(function(fulfill, reject) {
-        load.metadata.plugin(load.name, load.address, function(url, callback, errback) {
+        load.metadata.plugin(load.metadata.pluginArgument, load.address, function(url, callback, errback) {
           systemFetch.call(self, { name: load.name, address: url, metadata: {} }).then(callback, errback);
         }, fulfill, reject);
       });

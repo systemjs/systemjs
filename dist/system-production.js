@@ -365,6 +365,8 @@ global.upgradeSystemLoader = function() {
   // override fetch to use script injection
   // bundles support (just like RequireJS)
   System.bundles = System.bundles || {};
+
+  var systemFetch = System.fetch;
   System.fetch = function(load) {
     // if this module is in a bundle, load the bundle first
     for (var b in System.bundles) {
@@ -377,7 +379,7 @@ global.upgradeSystemLoader = function() {
     if (instantiateCache[load.name])
       return '';
 
-    // otherwise do script injection
+    // if a bundle, do script injection
     return new Promise(function(resolve, reject) {
       var s = document.createElement('script');
       s.async = true;
