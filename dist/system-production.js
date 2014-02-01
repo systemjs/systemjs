@@ -396,7 +396,6 @@ global.upgradeSystemLoader = function() {
   }
   var lastAnonymous = null;
   global.define = function(name, deps, factory) {
-
     // anonymous define
     if (typeof name != 'string') {
       factory = deps;
