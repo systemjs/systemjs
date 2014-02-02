@@ -22,8 +22,9 @@ Contents
 1. [Getting Started](#getting-started)
 2. [Working with Modules](#working-with-modules)
   * [Paths Configuration](#creating-path-rules)
-  * [Module Format Hints](#module-format-hints)
   * [Loading ES6 Modules](#loading-es6-modules)
+3. [SystemJS Features](#systemjs-features)
+  * [Module Format Hints](#module-format-hints)
   * [Loading Global Scripts](#loading-global-scripts)
   * [AMD Compatibilty Layer](#amd-compatibility-layer)
   * [Map Config](#map-config)
@@ -167,25 +168,6 @@ and load this with `System.import('app/module')` in the page.
 
 > Note: always use relative requires of the form `./` or `../` to reference modules in the same package. This is important within any package for modularity.
 
-### Module Format Hints
-
-The module format detection is well-tested over a large variety of libraries including complex UMD patterns. It will detect in order ES6, AMD, then CommonJS and fall back to global modules.
-
-It is still impossible to write 100% accurate detection though.
-
-For this reason, it is also possible to write modules with the module format specified. The module format is provided as a string, as the first line of code (excluding comments) in a file:
-
-```javascript
-"amd";
-define(['some-dep'], function() {
-  return {};
-});
-```
-
-Similarly, `"global"`, `"cjs"` and `"es6"` can be used in module files to set the detection.
-
-It is recommended to use a format hint only in the few cases where the format detection would otherwise fail.
-
 ### Loading ES6 Modules
 
 SystemJS is an ES6 module loader. It will detect and load ES6 modules, parsing them with Traceur dynamically. This allows for dynamic loading of ES6 without a build step, although a build step still needs to be run to transpile ES6 back to ES5 and AMD for production.
@@ -211,9 +193,31 @@ app/es6-file.js:
 
 ES6 modules define named exports, provided as getters on a special immutable `Module` object.
 
+For the production build workflow, see the [compiling ES6 to ES5 and AMD](#compiling-es6-to-es5-and-amd).
+
 For further examples of loading ES6 modules, see the [ES6 Module Loader polyfill documentation](https://github.com/ModuleLoader/es6-module-loader).
 
-For examples of build workflows, see the [jspm CLI documentation](https://github.com/jspm/jspm-cli#building-application-code).
+SystemJS Features
+---
+
+### Module Format Hints
+
+The module format detection is well-tested over a large variety of libraries including complex UMD patterns. It will detect in order ES6, AMD, then CommonJS and fall back to global modules.
+
+It is still impossible to write 100% accurate detection though.
+
+For this reason, it is also possible to write modules with the module format specified. The module format is provided as a string, as the first line of code (excluding comments) in a file:
+
+```javascript
+"amd";
+define(['some-dep'], function() {
+  return {};
+});
+```
+
+Similarly, `"global"`, `"cjs"` and `"es6"` can be used in module files to set the detection.
+
+It is recommended to use a format hint only in the few cases where the format detection would otherwise fail.
 
 ### Loading Global Scripts
 
