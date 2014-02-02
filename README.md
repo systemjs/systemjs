@@ -12,9 +12,17 @@ Extensions are self-contained additions to the `System` global, which can be app
 * **Plugins:** A dynamic plugin system for modular loading rules.
 * **Versions:** Multi-version support for semver compatible version ranges (`@^1.2.3` syntax).
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 32KB.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 27KB.
 
-Runs in the browser and NodeJS.
+Runs in the browser and NodeJS (`npm install systemjs`).
+
+Contents
+---
+
+1. [Getting Started](#getting-started)
+2. [Working with Modules](#working-with-modules)
+3. [Build Workflows](#build-workflows)
+4. []
 
 Getting Started
 ---
@@ -42,7 +50,7 @@ app/test.js:
   });
 ```
 
-In the `index.html` page we can then load a module from the baseURL folder with:
+In the `index.html` page we can then load a module with:
 
 ```html
 <script>
@@ -51,7 +59,7 @@ In the `index.html` page we can then load a module from the baseURL folder with:
   });
 </script>
 ```
-The module file at `app/test.js` will be loaded, its module format detected and any dependencies in turn loaded before returning the defined module.
+The module file at URL `app/test.js` will be loaded, its module format detected and any dependencies in turn loaded before returning the defined module.
 
 The entire loading class is implemented identically to the ES6 module specification, with the module format detection rules being the only addition.
 
@@ -69,33 +77,29 @@ Working with Modules
 
 Modules are dependency-managed JavaScript files. They are loaded by a **module name** reference.
 
-Each module name directly corresponds to a JavaScript file URL, but without the `.js` extension, and with baseURL rules, mostly identical to RequireJS.
+Each module name directly corresponds to a JavaScript file URL, but without the `.js` extension, and with some additional resolution rules.
 
-The default baseURL rule is:
+The default resolution rule is:
 
 <pre>
-  my/module -> resolve(baseURL, 'my/module') + '.js'
+  my/module -> resolve(pageURL, 'my/module') + '.js'
 </pre>
 
-### Setting the baseURL
+### Creating Path Rules
 
-By default, the baseURL is set to the current page, but it can be changed with:
+The `System` loader specification describes a paths configuration system.
 
-```html
-  <script>
-    System.baseURL = '/js/';
-  </script>
+_Note: The implementation is currently in discussion only and not yet specified, thus it is subject to change._
+
+Typically one would like all modules to be loaded from a library folder containing different modules. We can set this up with:
+
+```javascript
+  System.paths['*'] = '/lib/*.js';
 ```
 
-### Paths Configuration
+This is useful to reference shared library scripts like `jquery`, `underscore` etc.
 
-The `System` loader comes with a paths configuration system. While not part of SystemJS, it is described here for completion.
-
-_Note: The implementation is currently in discussion and not specified, thus it is subject to change._
-
-One can use the baseURL to reference library scripts like `jquery`, `underscore` etc.
-
-We then create a path for our local application scripts in their own separate folder, which can be set up with paths config:
+We then create a path for our local application scripts in their own separate folder, which can also be set up with paths config:
 
 ```javascript
   System.paths['app/*'] = '/app/*.js';
@@ -116,15 +120,20 @@ app/main.js:
 
 index.html:
 ```html
-  <script> System.paths['app/*'] = '/app/*.js'; </script>
   <script>
-    System.import('app/main');
+    System.paths['*'] = '/lib/*.js';
+    System.paths['app/*'] = '/app/*.js'; 
+  </script>
+  <script>
+    System.import('main');
   </script>
 ```
 
+This will load `/app/main.js`, which in turn is only loaded after loading the dependency `/lib/jquery.js`.
+
 ### Writing Modular Code
 
-It is recommended to write modular code in either AMD or CommonJS. Both are equally supported by SystemJS, with the format detected automatically.
+For SystemJS it is recommended to write modular code in either AMD or CommonJS. Both are equally supported by SystemJS, with the format detected automatically.
 
 For example, we can write modular CommonJS:
 
@@ -271,6 +280,8 @@ js/jquery-plugin.js:
 
 The primary use for having all this information in the module is that global scripts can be converted into modular scripts with complete accuracy by an automated process based on simple configuration instead of manual conversion.
 
+This information can equally be provided through configuration with `System.shim[module/name] = { deps: [], exports: '' }`, but it is recommended to inline it within the file for stronger modularity.
+
 ### AMD Compatibility Layer
 
 As part of providing AMD support, SystemJS provides a small AMD compatibility layer, with the goal of supporting as much of the RequireJS test suite as possible to ensure functioning of existing AMD code.
@@ -285,13 +296,11 @@ To create the `requirejs` and `require` globals as AMD globals, simply include t
 
 This should replicate a fair amount of the dynamic RequireJS functionality, and support is improving over time.
 
-_Note that AMD-style plugins are not supported._
-
-
+_Note that AMD-style plugins are not yet supported._
 
 ### Map Config
 
-Map configuration works just like other module loaders, altering the module name at the normalization stage.
+Map configuration alters the module name at the normalization stage. It is useful for creating aliases and version mappings.
 
 Example:
 
@@ -306,6 +315,121 @@ Map configuration also affects submodules:
 ```javascript
   System.import('jquery/submodule') // normalizes to -> `app/jquery@1.82/submodule'
 ```
+
+### Plugins
+
+Plugins handle alternative loading scenarios, including loading assets such as CSS or images, and providing custom transpilation scenarios.
+
+Plugins are indicated by `!` syntax, which unlike RequireJS is appended at the end of the module name, not the beginning.
+
+The plugin name is just a module name itself, and if not specified, is assumed to be the extension name of the module.
+
+Supported Plugins:
+
+* [CSS](https://github.com/jspm/plugin-css) `System.import('my/file.css!')`
+* [Image](https://github.com/jspm/plugin-image) `System.import('some/image.png!image')`
+* [JSON](https://github.com/jspm/plugin-json) `System.import('some/data.json!').then(function(json){})`
+* [Markdown](https://github.com/jspm/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
+* [Text](https://github.com/jspm/plugin-text) `System.import('some/text.txt!text').then(function(text) {})`
+* [WebFont](https://github.com/jspm/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
+
+Links will be provided soon!
+
+Note that the AMD compatibility layer could provide a mapping from AMD plugins into SystemJS plugins that provide the same functionality as associated SystemJS plugins.
+
+
+
+Build Workflows
+-----
+
+### Compiling ES6 to ES5 and AMD
+
+If writing an application in ES6, we can compile back into AMD and ES5 by installing Traceur globally and using the command-line tool:
+
+Install Traceur:
+
+```
+  npm install traceur -g
+```
+
+Build the application into AMD and ES5:
+
+```
+  traceur --dir app app-built --modules=amd
+```
+
+This will compile all ES6 files in the directory `app` into corresponding AMD files in `app-built`.
+
+In our application HTML, we now need to include [`traceur-runtime.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/traceur-runtime.js) before es6-module-loader.js:
+
+```html
+  <script src="traceur-runtime.js"></script>
+  <script src="es6-module-loader.js"></script>
+```
+
+Now the application will continue to behave identically without needing to compile ES6 in the browser.
+
+The next step for production is to then compile all of these separate AMD files into a single file for production, described below.
+
+
+### Building AMD modules into a single file
+
+#### Using the r.js Optimizer
+
+To build separate AMD modules into a single file, we can use the [RequireJS optimizer](https://github.com/jrburke/r.js):
+
+Install the optimzer:
+
+```
+  npm install requirejs -g
+```
+
+Build modules into a single file (assuming the main entry point is `app-built/main`):
+
+```
+  r.js -o name=app-built/main out=app-built.js paths.app=app-built
+```
+
+_If not compiling from ES6, replace `app-built` with `app`, and the last argument setting `paths.app` is not necessary._
+
+This will build all dependencies of `app-built/main` into a single file, `app-built.js` located in the same folder as the `app` folder.
+
+#### Enabling AMD Production Support
+
+SystemJS comes with a separate build for AMD production only. This is fully CSP-compatible using script tag injection to load scripts, while still remaining an
+extension of the ES6 Module Loader.
+
+Replace the `system.js` file with `dist/system-production.js`.
+
+We then also add configuration so SystemJS knows to load `app-built` instead of `app/main`:
+
+```html
+  <script src="system-production.js"></script>
+  <script>
+    System.bundles['app-built'] = ['app/main'];
+    System.import('app/main').then(function(m) { 
+      //... 
+    });
+  </script>
+```
+
+The `bundles` configuration tells the loader that when getting a load to `app/main`, it should load the `app-built` bundle first to get that module.
+
+Additional modules that may be primary endpoints can also be added to the list.
+
+_Note that this build workflow doesn't fully support plugins, CommonJS or global script loading. A build workflow specific to the ES6 Module Loader is needed in these scenarios, which
+is currently under development._
+
+Advanced Customization
+------
+
+### Custom Loader Addons
+
+SystemJS is simply a build of a collection of separate addons. Different build collections can be customized for different loading scenarios in the Makefile.
+
+Alternatively individual addons can also just be applied individually copying them from the [lib folder](https://github.com/guybedford/systemjs/tree/master/lib).
+
+To understand the loader hooks, read the [custom loader section of the ES6 Module Loader readme](https://github.com/ModuleLoader/es6-module-loader#creating-a-custom-loader).
 
 ### Custom Format Support
 
@@ -349,31 +473,7 @@ The format rule provides two functions - detection which returns dependencies if
 
 For further examples, see the internal AMD or CommonJS support implemented in this way here.
 
-
-
-Plugins
-------
-
-Plugins can be created to handle alternative loading scenarios, including loading assets such as CSS or images, and providing custom transpilation scenarios.
-
-Plugins are indicated by `!` syntax, which unlike RequireJS is appended at the end of the module name, not the beginning.
-
-The plugin name is just a module name itself, and if not specified, is assumed to be the extension name of the module.
-
-Supported Plugins:
-
-* CSS `System.import('my/file.css!')`
-* Image `System.import('some/image.png!image')`
-* JSON `System.import('some/data.json!').then(function(json){})`
-* Markdown `System.import('app/some/project/README.md!').then(function(html) {})`
-* Text `System.import('some/text.txt!text').then(function(text) {})`
-* WebFont `System.import('google Port Lligat Slab, Droid Sans !font')`
-
-Links will be provided soon!
-
-Note that the AMD compatibility layer could provide a mapping from AMD plugins into SystemJS plugins that provide the same functionality as associated SystemJS plugins.
-
-### Creating Plugins
+### Creating a Plugin
 
 A plugin is just a set of overrides for the loader hooks of the ES6 module specification.
 
