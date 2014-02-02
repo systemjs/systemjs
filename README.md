@@ -21,8 +21,18 @@ Contents
 
 1. [Getting Started](#getting-started)
 2. [Working with Modules](#working-with-modules)
+  * [Paths Configuration](#creating-path-rules)
+  * [Module Format Hints](#module-format-hints)
+  * [Loading ES6 Modules](#loading-es6-modules)
+  * [Loading Global Scripts](#loading-global-scripts)
+  * [AMD Compatibilty Layer](#amd-compatibility-layer)
+  * [Map Config](#map-config)
+  * [Plugins](#plugins)
 3. [Build Workflows](#build-workflows)
-4. []
+  * [Compiling ES6 to ES5 and AMD](#compiling-es6-to-es5-and-amd)
+  * [Compiling into a single file](#building-amd-modules-into-a-single-file)
+  * [AMD Named Define Production Support](#enabling-amd-production-support)
+4. [Advanced Customization](#advanced-customization)
 
 Getting Started
 ---
