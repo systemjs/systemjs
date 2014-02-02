@@ -1,16 +1,15 @@
 {
-  "name": "SystemJS",
-  "version": "0.0.2",
+  "name": "systemjs",
+  "version": "0.4.0",
   "description": "System loader extension for flexible AMD & CommonJS support",
-  "main": "system.js",
+  "main": "dist/system.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/jspm/systemjs"
+    "url": "git://github.com/guybedford/systemjs"
   },
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
     "es6-module-loader": "~0.4.0"
-  },
-  "files": ["system.js"]
+  }
 }

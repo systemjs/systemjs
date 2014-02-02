@@ -14,7 +14,7 @@ Extensions are self-contained additions to the `System` global, which can be app
 
 Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 27KB.
 
-Runs in the browser and NodeJS (`npm install systemjs`).
+Runs in the browser and NodeJS.
 
 Contents
 ---
@@ -28,6 +28,7 @@ Contents
   * [AMD Compatibilty Layer](#amd-compatibility-layer)
   * [Map Config](#map-config)
   * [Plugins](#plugins)
+  * [NodeJS Use](#nodejs-usage)
 3. [Build Workflows](#build-workflows)
   * [Compiling ES6 to ES5 and AMD](#compiling-es6-to-es5-and-amd)
   * [Compiling into a single file](#building-amd-modules-into-a-single-file)
@@ -347,7 +348,26 @@ Links will be provided soon!
 
 Note that the AMD compatibility layer could provide a mapping from AMD plugins into SystemJS plugins that provide the same functionality as associated SystemJS plugins.
 
+### NodeJS Usage
 
+To load modules in NodeJS, install SystemJS with:
+
+```
+  npm install systemjs
+```
+
+We can then load modules equivalently to in the browser:
+
+```javascript
+var System = require('systemjs');
+
+// loads './app.js' from the current directory
+System.import('./app').then(function(m) {
+  console.log(m);
+}, function(e) {
+  console.log(e);
+});
+```
 
 Build Workflows
 -----
