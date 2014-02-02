@@ -1,7 +1,7 @@
 SystemJS
 ===========
 
-Extensions for the new ES6 System browser loader, which will be natively provided in browsers.
+Extensions for the new ES6 System browser loader, which will be natively provided in browsers. _Note that parts of the specification are still being completed, so that this project is subject to change._
 
 A small (10KB minfied) collection of extensions to the System loader, for supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
 
