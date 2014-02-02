@@ -5,7 +5,7 @@ Extensions for the new ES6 System browser loader, which will be natively provide
 
 A small (10KB minfied) collection of extensions to the System loader, for supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
 
-Additionally this library aims to smooth over any inconsistencies or practical functionality needed within the native `System` loader implementations across different browsers, just like jQuery provides for the DOM.
+Additionally, as native implementations of `System` arise, this library aims to smooth over any inconsistencies or missing practical functionality needed within the native `System` loader implementations across different browsers, just like jQuery provides for the DOM.
 
 Extensions are self-contained additions to the `System` global, which can be applied individually (see [lib](https://github.com/guybedford/systemjs/tree/master/lib)) or all together ([dist/system.js](https://github.com/guybedford/systemjs/blob/master/dist/system.js)).
 
