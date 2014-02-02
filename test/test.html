@@ -132,6 +132,17 @@
         }
       },
       {
+        name: 'Global script loading that detects as AMD with shim config',
+        run: function(complete, err) {
+          System.shim['tests/global-shim-amd'] = true;
+          System.import('tests/global-shim-amd').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m != 'global')
+            return 'not shimmed';
+        }
+      },
+      {
         name: 'Global script with shim config exports',
         run: function(complete, err) {
           System.shim['tests/global-shim-config-exports'] = { exports: 'p' };
