@@ -251,7 +251,7 @@ global.upgradeSystemLoader = function() {
   
   var systemNormalize = System.normalize;
 
-  System.versions = {};
+  System.versions = System.versions || {};
 
   // hook normalize and store a record of all versioned packages
   System.normalize = function(name, parentName, parentAddress) {

@@ -142,8 +142,16 @@ global.upgradeSystemLoader = function() {
       function exec() {
         __scopedEval(load.source, global, load.address);
       }
+
+      var deps = curFormat.deps(load, global, exec);
+
+      // remove duplicates from deps first
+      for (var i = 0; i < deps.length; i++)
+        if (deps.lastIndexOf(deps[i]) != i)
+          deps.splice(i--, 1);
+
       return {
-        deps: curFormat.deps(load, global, exec),
+        deps: deps,
         execute: function() {
           var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0), load, global, exec);
 
@@ -779,7 +787,7 @@ global.upgradeSystemLoader = function() {
   
   var systemNormalize = System.normalize;
 
-  System.versions = {};
+  System.versions = System.versions || {};
 
   // hook normalize and store a record of all versioned packages
   System.normalize = function(name, parentName, parentAddress) {
