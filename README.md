@@ -411,7 +411,7 @@ Supported Plugins:
 * [Image](https://github.com/systemjs/plugin-image) `System.import('some/image.png!image')`
 * [JSON](https://github.com/systemjs/plugin-json) `System.import('some/data.json!').then(function(json){})`
 * [Text](https://github.com/systemjs/plugin-text) `System.import('some/text.txt!text').then(function(text) {})`
-* 
+
 Additional Plugins:
 
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
