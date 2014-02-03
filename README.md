@@ -1,20 +1,18 @@
 SystemJS
 ===========
 
-Extensions for the new ES6 System browser loader, which will be natively provided in browsers. _Note that parts of the specification are still being completed, so that this project is subject to change._
+Spec-compliant universal module loader - loads ES6 modules, AMD, CommonJS and global scripts.
 
-A small (10KB minfied) collection of extensions to the System loader, for supporting AMD, CommonJS and global script loading, aiming to ease the transition to ES6.
+Designed as a small collection of extensions to the ES6 specification System loader, which can be applied individually (see [lib](https://github.com/guybedford/systemjs/tree/master/lib)) or all together ([dist/system.js](https://github.com/guybedford/systemjs/blob/master/dist/system.js)).
 
-Additionally, as native implementations of `System` arise, this library aims to smooth over any inconsistencies or missing practical functionality needed within the native `System` loader implementations across different browsers, just like jQuery provides for the DOM.
-
-Extensions are self-contained additions to the `System` global, which can be applied individually (see [lib](https://github.com/guybedford/systemjs/tree/master/lib)) or all together ([dist/system.js](https://github.com/guybedford/systemjs/blob/master/dist/system.js)).
+Features include:
 
 * **Formats:** Dynamically load AMD, CommonJS and global scripts (as well as ES6 modules) detecting the format automatically, or with format hints.
 * **Map:** Map configuration.
-* **Plugins:** A dynamic plugin system for modular loading rules.
 * **Versions:** Multi-version support for semver compatible version ranges (`@^1.2.3` syntax).
+* **Plugins:** A dynamic plugin system for modular loading rules.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 27KB.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 27KB. In future, with native implementations, the polyfill should no longer be necessary. Like jQuery provides for the DOM, this library can smoothes over inconsistiencies or missing practical functionality provided by the native System loader.
 
 Runs in the browser and NodeJS.
 
@@ -30,6 +28,8 @@ Contents
   * [Loading Global Scripts](#loading-global-scripts)
   * [AMD Compatibilty Layer](#amd-compatibility-layer)
   * [Map Config](#map-config)
+  * [Multi-version Semver Support](#multi-version-semver-support)
+  * [Relative Dynamic Loading](#relative-dynamic-loading)
   * [Plugins](#plugins)
   * [NodeJS Use](#nodejs-usage)
 3. [Build Workflows](#build-workflows)
@@ -332,6 +332,70 @@ Map configuration also affects submodules:
 ```javascript
   System.import('jquery/submodule') // normalizes to -> `app/jquery@1.82/submodule'
 ```
+
+### Multi-version Semver Support
+
+An optional syntax for version support can be used: `moduleName@version`.
+
+For example, consider an app which uses `jQuery@2.0.3`, but would like to invalidate the cache when jQuery is updated.
+
+We write:
+
+```javascript
+  System.versions['jquery'] = ['2.0.3'];
+```
+
+Now when I do:
+
+```javascript
+  System.import('jquery');
+```
+
+a load will be made to the file `/lib/jquery@2.0.3.js`.
+
+This way, the version can be updated through configuration.
+
+For multi-version support, we can provide multiple versions:
+
+```javascript
+  System.versions['jquery'] = ['2.0.3', '1.8.3'];
+```
+
+These corresponds to `/lib/jquery@2.0.3.js` and `/lib/jquery@1.8.3.js`.
+
+I can now write semver-compatible requires of any of the following forms, to get one of the above:
+
+```javascript
+  System.import('jquery')        // -> /lib/jquery@2.0.3.js
+  System.import('jquery@2')      // -> /lib/jquery@2.0.3.js
+  System.import('jquery@2.0')    // -> /lib/jquery@2.0.3.js
+  
+  System.import('jquery@1')      // -> /lib/jquery@1.8.3.js
+  System.import('jquery@1.8')    // -> /lib/jquery@1.8.3.js
+  System.import('jquery@1.8.2')  // -> /lib/jquery@1.8.2.js
+  
+  // semver compatible form (caret operator ^)
+  System.import('jquery@^2')     // -> /lib/jquery@2.0.3.js
+  System.import('jquery@^1.8.2') // -> /lib/jquery@^1.8.3.js
+  System.import('jquery@^1.8')   // -> /lib/jquery@^1.8.3.js
+```
+
+The semver compatibility operator (`^`) is the most useful way of referencing versions for full semver support.
+
+
+### Relative Dynamic Loading
+
+Modules can check their own name from the global variable `__moduleName`.
+
+This allows easy relative dynamic loading, allowing modules to load additional functionality after the initial load:
+
+```javascript
+export function moreFunctionality() {
+  return System.import('./extrafunctionality', { name: __moduleName });
+}
+```
+
+This can be useful for modules that may only know during runtime which functionality they need to load.
 
 ### Plugins
 
