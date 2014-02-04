@@ -72,12 +72,18 @@ In the `index.html` page we can then load a module with:
 <script>
   System.import('app/test').then(function(test) {
     console.log(test.isAMD); // yup
+  }).catch(function(err) {
+    setTimeout(function() {
+     throw err;
+    }, 1);
   });
 </script>
 ```
 The module file at URL `app/test.js` will be loaded, its module format detected and any dependencies in turn loaded before returning the defined module.
 
 The entire loading class is implemented identically to the ES6 module specification, with the module format detection rules being the only addition.
+
+The loading function uses promises. To ensure errors are thrown a catch handler needs to be attached as shown.
 
 > _Note that when running locally, ensure you are running from a local server or a browser with local XHR requests enabled. If not you will get an error message._
 
