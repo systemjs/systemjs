@@ -41,10 +41,9 @@ global.upgradeSystemLoader = function() {
     return module.__defaultOnly ? module['default'] : module;
   }
   
-  var systemGet = System.get;
-  System.get = function(key) {
-    var module = systemGet.call(this, key);
-    return checkDefaultOnly(module);
+  // a variation on System.get that does the __defaultOnly check
+  System.getModule = function(key) {
+    return checkDefaultOnly(System.get(key));  
   }
   
   // patch System.import to do normalization
@@ -202,7 +201,7 @@ global.upgradeSystemLoader = function() {
 
     // commonjs require
     else if (typeof names == 'string')
-      return System.get(names);
+      return System.getModule(names);
 
     else
       throw 'Invalid require';
@@ -210,7 +209,7 @@ global.upgradeSystemLoader = function() {
   function makeRequire(parentName, deps, depsNormalized) {
     return function(names, callback, errback) {
       if (typeof names == 'string' && deps.indexOf(names) != -1)
-        return System.get(depsNormalized[deps.indexOf(names)]);
+        return System.getModule(depsNormalized[deps.indexOf(names)]);
       return require(names, callback, errback, { name: parentName });
     }
   }
@@ -241,7 +240,7 @@ global.upgradeSystemLoader = function() {
     var meta = load.metadata;
     var deps = [];
     for (var i = 0; i < depNames.length; i++)
-      deps[i] = System.get(depNames[i]);
+      deps[i] = System.getModule(depNames[i]);
 
     var module, exports;
 
@@ -399,7 +398,7 @@ global.upgradeSystemLoader = function() {
         require: function(d) {
           var index = deps.indexOf(d);
           if (index != -1)
-            return System.get(depNames[index]);
+            return System.getModule(depNames[index]);
         },
         __filename: load.address,
         __dirname: dirname,
