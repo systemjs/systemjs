@@ -7,7 +7,8 @@ if (typeof module !== 'undefined') module.exports = Showdown;
 // AMD define happens at the end for compatibility with AMD loaders
 // that don't enforce next-turn semantics on modules.
 if (typeof define === 'function' && define.amd) {
-    define('showdown', function() {
+    define('tests/nameddefine', function() {
         return Showdown;
     });
 }
+define('another-define', { named: 'define' });

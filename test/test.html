@@ -202,11 +202,17 @@
       {
         name: 'Loading an AMD named define',
         run: function(complete, err) {
-          System.import('tests/nameddefine').then(complete, err);
+          System.import('tests/nameddefine').then(function(m1) {
+            System.import('another-define').then(function(m2) {
+              complete(m1, m2);
+            });
+          }, err);
         },
-        confirm: function(m) {
-          if (!m.converter)
+        confirm: function(m1, m2) {
+          if (!m1.converter)
             return 'Showdown not loaded!';
+          if (m2.named != 'define')
+            return 'Second named define not created';
         }
       },
       {

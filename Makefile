@@ -17,19 +17,21 @@ define END
 	uglifyjs dist/$@.js -cm >> dist/$@.min.js
 endef
 
-all: system system-production
+all: system system-amd-production
 
 system:
 	$(START) \
 	$(FORMATS) \
 	lib/system-plugins.js \
+	lib/system-bundles.js \
 	lib/system-map.js \
 	lib/system-versions.js \
 	$(END)
 
-system-production:
+system-amd-production:
 	$(START) \
+	lib/system-amd-production.js \
+	lib/system-bundles.js \
 	lib/system-map.js \
 	lib/system-versions.js \
-	lib/system-amd-production.js \
 	$(END)

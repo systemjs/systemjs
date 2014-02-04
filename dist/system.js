@@ -142,7 +142,6 @@ global.upgradeSystemLoader = function() {
       function exec() {
         __scopedEval(load.source, global, load.address);
       }
-
       var deps = curFormat.deps(load, global, exec);
 
       // remove duplicates from deps first
@@ -224,6 +223,50 @@ global.upgradeSystemLoader = function() {
     }
   }
 
+  function prepareDeps(deps, meta) {
+    for (var i = 0; i < deps.length; i++)
+      if (deps.lastIndexOf(deps[i]) != i)
+        deps.splice(i--, 1);
+
+    // remove system dependencies
+    var index;
+    if ((index = deps.indexOf('require')) != -1) {
+      meta.requireIndex = index;
+      deps.splice(index, 1);
+    }
+    if ((index = deps.indexOf('exports')) != -1) {
+      meta.exportsIndex = index;
+      deps.splice(index, 1);
+    }
+    if ((index = deps.indexOf('module')) != -1) {
+      meta.moduleIndex = index;
+      deps.splice(index, 1);
+    }
+    return deps;
+  }
+
+  function prepareExecute(depNames, load, module) {
+    var meta = load.metadata;
+    var deps = [];
+    for (var i = 0; i < depNames.length; i++)
+      deps[i] = System.get(depNames[i]);
+
+    var module, exports;
+
+    // add back in system dependencies
+    if (meta.moduleIndex !== undefined)
+      deps.splice(meta.moduleIndex, 0, exports = {}, module = { id: load.name, uri: load.address, config: function() { return {}; }, exports: exports });
+    if (meta.exportsIndex !== undefined)
+      deps.splice(meta.exportsIndex, 0, exports = exports || {});
+    if (meta.requireIndex !== undefined)
+      deps.splice(meta.requireIndex, 0, makeRequire(load.name, meta.deps, depNames));
+
+    return {
+      deps: deps,
+      module: module || exports && { exports: exports }
+    };
+  }
+
   System.format.amd = {
     detect: function(load) {
       return !!load.source.match(amdRegEx);
@@ -238,23 +281,44 @@ global.upgradeSystemLoader = function() {
         if (typeof name != 'string') {
           factory = _deps;
           _deps = name;
-        }
-        else {
-          meta.name = name;
+          name = null;
         }
         if (!(_deps instanceof Array)) {
           factory = _deps;
           // CommonJS AMD form
           _deps = ['require', 'exports', 'module'].concat(System.format.cjs.deps(load, global, eval));
         }
-        deps = _deps;
         
-        if (typeof factory != 'function') {
-          meta.factory = function() {
-            return factory;
+        
+        if (typeof factory != 'function')
+          factory = (function(factory) {
+            return function() { return factory; }
+          })(factory);
+        
+        if (name && name != load.name) {
+          // named define for a bundle describing another module
+          var _load = {
+            name: name,
+            address: name,
+            metadata: {}
+          };
+          _deps = prepareDeps(_deps, _load.metadata);
+          System.defined[name] = {
+            deps: _deps,
+            execute: function() {
+              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0), _load);
+              var output = factory.apply(global, execs.deps) || execs.module && execs.module.exports;
+
+              if (output instanceof global.Module)
+                return output;
+              else
+                return new global.Module(output && output.__transpiledModule ? (delete output.__transpiledModule, output) : { __defaultOnly: true, 'default': output });
+            }
           }
         }
         else {
+          // we are defining this module
+          deps = _deps;
           meta.factory = factory;
         }
       }
@@ -266,19 +330,10 @@ global.upgradeSystemLoader = function() {
 
       exec();
 
-      var index;
-      if ((index = deps.indexOf('require')) != -1) {
-        meta.requireIndex = index;
-        deps.splice(index, 1);
-      }
-      if ((index = deps.indexOf('exports')) != -1) {
-        meta.exportsIndex = index;
-        deps.splice(index, 1);
-      }
-      if ((index = deps.indexOf('module')) != -1) {
-        meta.moduleIndex = index;
-        deps.splice(index, 1);
-      }
+      // deps not defined for an AMD module that defines a different name
+      deps = deps || [];
+
+      deps = prepareDeps(deps, meta);
 
       delete global.define;
 
@@ -288,22 +343,10 @@ global.upgradeSystemLoader = function() {
 
     },
     execute: function(depNames, load, global, exec) {
-      var meta = load.metadata;
-      var deps = [];
-      for (var i = 0; i < depNames.length; i++)
-        deps[i] = System.get(depNames[i]);
-
-      var require, exports = {}, module;
-      
-      // add back in system dependencies
-      if (meta.moduleIndex !== undefined)
-        deps.splice(meta.moduleIndex, 0, module = { id: load.name, uri: load.address, config: function() { return {}; }, exports: exports });
-      if (meta.exportsIndex !== undefined)
-        deps.splice(meta.exportsIndex, 0, exports);
-      if (meta.requireIndex !== undefined)
-        deps.splice(meta.requireIndex, 0, require = makeRequire(load.name, meta.deps, depNames));
-
-      return meta.factory.apply(global, deps) || module && module.exports || exports || undefined;
+      if (!load.metadata.factory)
+        return;
+      var execs = prepareExecute(depNames, load);
+      return load.metadata.factory.apply(global, execs.deps) || execs.module && execs.module.exports;
     }
   };
 })();
@@ -597,6 +640,54 @@ global.upgradeSystemLoader = function() {
       return plugin.translate.call(this, load);
 
     return systemTranslate.call(this, load);
+  }
+
+})();(function() {
+
+  // bundles support (just like RequireJS)
+  // bundle name is module name of bundle itself
+  // bundle is array of modules defined by the bundle
+  // when a module in the bundle is requested, the bundle is loaded instead
+  // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
+  System.bundles = System.bundles || {};
+
+  // store a cache of defined modules
+  // of the form System.defined['moduleName'] = { deps: [], execute: function() {} }
+  System.defined = System.defined || {};
+
+  var systemFetch = System.fetch;
+  System.fetch = function(load) {
+    // if the module is already defined, skip fetch
+    if (System.defined[load.name])
+      return '';
+    // if this module is in a bundle, load the bundle first then
+    for (var b in System.bundles) {
+      if (System.bundles[b].indexOf(load.name) == -1)
+        continue;
+      return System.import(b).then(function() { return ''; });
+    }
+    return systemFetch.apply(this, arguments);
+  }
+
+  var systemInstantiate = System.instantiate;
+  System.instantiate = function(load) {
+    // if the module has been defined by a bundle, use that
+    if (System.defined[load.name]) {
+      var instantiateResult = System.defined[load.name];
+      delete System.defined[load.name];
+      return instantiateResult;
+    }
+
+    // if it is a bundle itself, it doesn't define anything
+    if (System.bundles[load.name])
+      return {
+        deps: [],
+        execute: function() {
+          return new Module({});
+        }
+      };
+
+    return systemInstantiate.apply(this, arguments);
   }
 
 })();/*
