@@ -7,10 +7,11 @@ Designed as a small collection of extensions to the ES6 specification System loa
 
 Features include:
 
-* **Formats:** Dynamically load AMD, CommonJS and global scripts (as well as ES6 modules) detecting the format automatically, or with format hints.
-* **Map:** Map configuration.
-* **Versions:** Multi-version support for semver compatible version ranges (`@^1.2.3` syntax).
-* **Plugins:** A dynamic plugin system for modular loading rules.
+* **[Formats](#module-format-hints):** Dynamically load AMD, CommonJS and global scripts (as well as ES6 modules) detecting the format automatically, or with format hints.
+* **[Map](#map-config):** Map configuration.
+* **[Versions](#multi-version-semver-support):** Multi-version support for semver compatible version ranges (`@^1.2.3` syntax).
+* **[Plugins](#plugins):** A dynamic plugin system for modular loading rules.
+* **[Bundles](#production-bundles):** Dynamically link requires to bundle files.
 
 Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 27KB. In future, with native implementations, the polyfill should no longer be necessary. Like jQuery provides for the DOM, this library can smoothes over inconsistiencies or missing practical functionality provided by the native System loader.
 
@@ -35,7 +36,8 @@ Contents
 3. [Build Workflows](#build-workflows)
   * [Compiling ES6 to ES5 and AMD](#compiling-es6-to-es5-and-amd)
   * [Compiling into a single file](#building-amd-modules-into-a-single-file)
-  * [AMD Named Define Production Support](#enabling-amd-production-support)
+  * [Production Bundles](#production-bundles)
+  * [CSP-Compatible AMD Production](#csp-compatible-amd-production)
 4. [Advanced Customization](#advanced-customization)
 
 Getting Started
@@ -493,18 +495,47 @@ _If not compiling from ES6, replace `app-built` with `app`, and the last argumen
 
 This will build all dependencies of `app-built/main` into a single file, `app-built.js` located in the same folder as the `app` folder.
 
-#### Enabling AMD Production Support
+_Note that this build workflow only supports ES6 and AMD, and doesn't fully support plugins, CommonJS or global script loading. ES6-specific build workflows are the area of active development._
+
+#### Production Bundles
+
+To use this single bundle instead of having separate requires, we can use bundle configuration.
+
+This is necessary so that an import of `app/main` can be routed to the correct bundle, instead of triggering a request to `/app/main.js`.
+
+We set this up with the configuration:
+
+```html
+  <script>
+    // we want to load 'app-built' from this location, not '/lib/app-built.js'
+    System.paths['app-built'] = '/app-built.js';
+
+    // create the bundle
+    System.bundles['app-built'] = ['app/main'];
+
+    System.import('app/main').then(function(m) { 
+      // app/main now loaded from the bundle, and not a separate request
+    });
+  </script>
+```
+
+This informs the loader that it should load the bundle module `/app-built.js` to find the module `app/main`.
+
+Any number of modules can be listed as belonging to the bundle.
+
+#### CSP-Compatible AMD Production
 
 SystemJS comes with a separate build for AMD production only. This is fully CSP-compatible using script tag injection to load scripts, while still remaining an
 extension of the ES6 Module Loader.
 
-Replace the `system.js` file with `dist/system-production.js`.
+Replace the `system.js` file with `dist/system-amd-production.js`.
 
-We then also add configuration so SystemJS knows to load `app-built` instead of `app/main`:
+Since we have compiled everything into AMD with the above, our production config can still work:
 
 ```html
   <script src="system-production.js"></script>
   <script>
+    System.paths['app-built'] = '/app-built.js';
     System.bundles['app-built'] = ['app/main'];
     System.import('app/main').then(function(m) { 
       //... 
@@ -512,12 +543,7 @@ We then also add configuration so SystemJS knows to load `app-built` instead of 
   </script>
 ```
 
-The `bundles` configuration tells the loader that when getting a load to `app/main`, it should load the `app-built` bundle first to get that module.
-
-Additional modules that may be primary endpoints can also be added to the list.
-
-_Note that this build workflow doesn't fully support plugins, CommonJS or global script loading. A build workflow specific to the ES6 Module Loader is needed in these scenarios, which
-is currently under development._
+_Note that this CSP-compatibility mode doesn't fully support plugins, CommonJS or global script loading._
 
 Advanced Customization
 ------
