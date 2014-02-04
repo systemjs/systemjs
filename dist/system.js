@@ -286,7 +286,7 @@ global.upgradeSystemLoader = function() {
         if (!(_deps instanceof Array)) {
           factory = _deps;
           // CommonJS AMD form
-          _deps = ['require', 'exports', 'module'].concat(System.format.cjs.deps(load, global, eval));
+          _deps = ['require', 'exports', 'module'].concat(System.format.cjs.deps(load, global));
         }
         
         
