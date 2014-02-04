@@ -236,11 +236,12 @@ global.upgradeSystemLoader = function() {
     return deps;
   }
 
-  function prepareExecute(depNames, load, module) {
+  function prepareExecute(depNames, load, checkTranspiled) {
+    var isTranspiled = checkTranspiled && load.source && load.source.match('/__transpiledModule/');
     var meta = load.metadata;
     var deps = [];
     for (var i = 0; i < depNames.length; i++)
-      deps[i] = System.getModule(depNames[i]);
+      deps[i] = isTranspiled ? System.get(depNames[i]) : System.getModule(depNames[i]);
 
     var module, exports;
 
@@ -297,7 +298,7 @@ global.upgradeSystemLoader = function() {
           System.defined[name] = {
             deps: _deps,
             execute: function() {
-              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0), _load);
+              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0), _load, global['$traceurRuntime']);
               var output = factory.apply(global, execs.deps) || execs.module && execs.module.exports;
 
               if (output instanceof global.Module)
@@ -336,7 +337,7 @@ global.upgradeSystemLoader = function() {
     execute: function(depNames, load, global, exec) {
       if (!load.metadata.factory)
         return;
-      var execs = prepareExecute(depNames, load);
+      var execs = prepareExecute(depNames, load, global['$traceurRuntime']);
       return load.metadata.factory.apply(global, execs.deps) || execs.module && execs.module.exports;
     }
   };
