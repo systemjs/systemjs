@@ -504,7 +504,7 @@ global.upgradeSystemLoader = function() {
 };
 
 (function() {
-  if (!global.System) {
+  if (!global.System && !global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
       var scripts = document.getElementsByTagName('script');
