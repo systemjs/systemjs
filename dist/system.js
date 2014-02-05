@@ -237,7 +237,7 @@ global.upgradeSystemLoader = function() {
   }
 
   function prepareExecute(depNames, load, checkTranspiled) {
-    var isTranspiled = checkTranspiled && load.source && load.source.match('/__transpiledModule/');
+    var isTranspiled = checkTranspiled && load.source && load.source.match(/__transpiledModule/);
     var meta = load.metadata;
     var deps = [];
     for (var i = 0; i < depNames.length; i++)
