@@ -275,12 +275,15 @@ global.upgradeSystemLoader = function() {
           _deps = name;
           name = null;
         }
+
         if (!(_deps instanceof Array)) {
           factory = _deps;
           // CommonJS AMD form
+          var src = load.source;
+          load.source = factory.toString();
           _deps = ['require', 'exports', 'module'].concat(System.format.cjs.deps(load, global));
+          load.source = src;
         }
-        
         
         if (typeof factory != 'function')
           factory = (function(factory) {
