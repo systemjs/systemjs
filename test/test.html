@@ -143,6 +143,16 @@
         }
       },
       {
+        name: 'Support the empty module',
+        run: function(complete, err) {
+          System.import('@empty').then(complete, err);
+        },
+        confirm: function(m) {
+          if (!m)
+            return 'no empty module';
+        }
+      },
+      {
         name: 'Global script with shim config exports',
         run: function(complete, err) {
           System.shim['tests/global-shim-config-exports'] = { exports: 'p' };

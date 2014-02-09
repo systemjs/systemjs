@@ -45,6 +45,9 @@ global.upgradeSystemLoader = function() {
   System.getModule = function(key) {
     return checkDefaultOnly(System.get(key));  
   }
+
+  // support the empty module, as a concept
+  System.set('@empty', Module({}));
   
   // patch System.import to do normalization
   var systemImport = System.import;
