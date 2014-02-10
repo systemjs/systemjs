@@ -865,13 +865,13 @@ global.upgradeSystemLoader = function() {
       v2Parts.splice(2, 1, v2Parts[2].substr(0, prereleaseIndex), v2Parts[2].substr(prereleaseIndex + 1));
     for (var i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
       if (!v1Parts[i])
-        return true;
+        return 1;
       else if (!v2Parts[i])
-        return false;
+        return -1;
       if (v1Parts[i] != v2Parts[i])
-        return v1Parts[i] > v2Parts[i];
+        return parseInt(v1Parts[i]) > parseInt(v2Parts[i]) ? 1 : -1;
     }
-    return true;
+    return 0;
   }
   
   var systemNormalize = System.normalize;
@@ -963,7 +963,7 @@ global.upgradeSystemLoader = function() {
           // if I have requested x, find any x.y / x.y.z-b
           if (curVersion.substr(0, version.length) == version && curVersion.charAt(version.length).match(/^[\.\-]?$/)) {
             // if a minimum version, then check too
-            if (!minVersion || minVersion && semverCompare(curVersion, minVersion))
+            if (!minVersion || minVersion && semverCompare(curVersion, minVersion) != -1)
               return packageName + '@' + curVersion + normalized.substr(packageName.length + version.length + 1);
           }
         }
