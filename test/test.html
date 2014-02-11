@@ -167,9 +167,6 @@
         name: 'Map configuration',
         run: function(complete, err) {
           System.map['maptest'] = 'tests/map-test';
-          System.map['tests/contextual-map'] = {
-            maptest: 'tests/contextual-map-dep'
-          };
           System.import('maptest').then(complete, err)
         },
         confirm: function(m) {
@@ -190,11 +187,43 @@
       {
         name: 'Contextual map configuration',
         run: function(complete, err) {
+          System.map['tests/contextual-map'] = {
+            maptest: 'tests/contextual-map-dep'
+          };
           System.import('tests/contextual-map').then(complete, err);
         },
         confirm: function(m) {
           if (m.mapdep != 'mapdep')
             return 'Contextual map dep not loaded';
+        }
+      },
+      {
+        name: 'Submodule contextual map configuration',
+        run: function(complete, err) {
+          System.map['tests/subcontextual-map'] = {
+            dep: 'tests/subcontextual-mapdep'
+          };
+          System.import('tests/subcontextual-map/submodule').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m != 'submapdep')
+            return 'Submodule contextual map not loaded';
+        }
+      },
+      {
+        name: 'Contextual map with shim',
+        run: function(complete, err) {
+          System.shim['tests/shim-map-test'] = {
+            deps: ['shim-map-dep']
+          };
+          System.map['tests/shim-map-test'] = {
+            'shim-map-dep': 'tests/shim-map-test-dep'
+          };
+          System.import('tests/shim-map-test').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m != 'depvalue')
+            return 'shim dep not loaded';
         }
       },
       {

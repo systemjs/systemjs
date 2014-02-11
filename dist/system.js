@@ -469,8 +469,8 @@ global.upgradeSystemLoader = function() {
         if (typeof shim == 'object') {
           if (shim.exports)
             load.metadata.globalExport = shim.exports;
-          if (shim.imports)
-            shim = shim.imports;
+          if (shim.deps || shim.imports)
+            shim = shim.deps || shim.imports;
         }
         if (shim instanceof Array)
           deps = deps.concat(shim);
@@ -558,9 +558,9 @@ global.upgradeSystemLoader = function() {
       // plugin name is part after "!" or the extension itself
       var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
 
-      // normalize the plugin name
+      // normalize the plugin name relative to the same parent
       return new Promise(function(resolve) {
-        resolve(System.normalize(pluginName)); 
+        resolve(System.normalize(pluginName, parentName, parentAddress)); 
       })
       // normalize the plugin argument
       .then(function(_pluginName) {
