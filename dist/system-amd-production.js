@@ -49,18 +49,19 @@ global.upgradeSystemLoader = function() {
   // support the empty module, as a concept
   System.set('@empty', Module({}));
   
-  // patch System.import to do normalization
+  
   var systemImport = System.import;
+  var loadingPromises = {};
   System.import = function(name, options) {
-    // normalize name first
+    // patch System.import to do normalization
     return new Promise(function(resolve) {
       resolve(System.normalize.call(this, name, options && options.name, options && options.address))
     })
+    // add defaultOnly support
     .then(function(name) {
-      return systemImport.call(System, name, options);
-    })
-    .then(function(module) {
-      return checkDefaultOnly(module);
+      return Promise.resolve(systemImport.call(System, name, options)).then(function(module) {
+        return checkDefaultOnly(module);
+      });
     });
   }
 

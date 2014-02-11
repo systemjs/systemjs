@@ -72,6 +72,19 @@
         }
       },
       {
+        name: 'Importing a mapped loaded module',
+        run: function(complete, err) {
+          System.map['default1'] = 'tests/default1';
+          System.import('default1').then(function() {
+            System.import('default1').then(complete, err);
+          }, err);
+        },
+        confirm: function(m) {
+          if (!m)
+            return 'no module';
+        }
+      },
+      {
         name: 'Error handling',
         run: function(complete, err) {
           System.import('tests/error').then(complete, err);
