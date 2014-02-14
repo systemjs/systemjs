@@ -254,17 +254,11 @@
       {
         name: 'Loading an AMD named define',
         run: function(complete, err) {
-          System.import('tests/nameddefine').then(function(m1) {
-            System.import('another-define').then(function(m2) {
-              complete(m1, m2);
-            });
-          }, err);
+          System.import('tests/nameddefine').then(complete, err);
         },
         confirm: function(m1, m2) {
           if (!m1.converter)
             return 'Showdown not loaded!';
-          if (m2.named != 'define')
-            return 'Second named define not created';
         }
       },
       {
@@ -374,6 +368,18 @@
         }
       },
       {
+        name: 'Mapping to a plugin',
+        run: function(complete, err) {
+          System.map['pluginrequest'] = 'tests/compiled.coffee!';
+          System.map['coffee'] = 'tests/compiler-plugin';
+          System.import('pluginrequest').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.extra != 'yay!')
+            return 'Plugin not applying.';
+        }
+      },
+      {
         name: 'Legacy plugin',
         run: function(complete, err) {
           System.import('tests/default1.js!tests/legacy-plugin').then(complete, err);
@@ -399,7 +405,7 @@
         name: 'Loading from jspm',
         run: function(complete, err) {
           System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
-          System.import('npm:underscore').then(complete);
+          System.import('npm:underscore').then(complete, err);
         },
         confirm: function(m) {
           if (typeof m.chain != 'function')

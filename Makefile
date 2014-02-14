@@ -22,16 +22,16 @@ all: system system-amd-production
 system:
 	$(START) \
 	$(FORMATS) \
+	lib/system-map.js \
 	lib/system-plugins.js \
 	lib/system-bundles.js \
-	lib/system-map.js \
 	lib/system-versions.js \
 	$(END)
 
 system-amd-production:
 	$(START) \
+	lib/system-map.js \
 	lib/system-amd-production.js \
 	lib/system-bundles.js \
-	lib/system-map.js \
 	lib/system-versions.js \
 	$(END)

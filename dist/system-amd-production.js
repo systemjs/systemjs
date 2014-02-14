@@ -66,6 +66,112 @@ global.upgradeSystemLoader = function() {
   }
 
 })();
+/*
+  SystemJS map support
+  
+  Provides map configuration through
+    System.map['jquery'] = 'some/module/map'
+
+  As well as contextual map config through
+    System.map['bootstrap'] = {
+      jquery: 'some/module/map2'
+    }
+
+  Note that this applies for subpaths, just like RequireJS
+
+  jquery      -> 'some/module/map'
+  jquery/path -> 'some/module/map/path'
+  bootstrap   -> 'bootstrap'
+
+  Inside any module name of the form 'bootstrap' or 'bootstrap/*'
+    jquery    -> 'some/module/map2'
+    jquery/p  -> 'some/module/map2/p'
+
+  Maps are carefully applied from most specific contextual map, to least specific global map
+*/
+(function() {
+
+  System.map = System.map || {};
+
+
+  // return the number of prefix parts (separated by '/') matching the name
+  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
+  function prefixMatchLength(name, prefix) {
+    var prefixParts = prefix.split('/');
+    var nameParts = name.split('/');
+    if (prefixParts.length > nameParts.length)
+      return 0;
+    for (var i = 0; i < prefixParts.length; i++)
+      if (nameParts[i] != prefixParts[i])
+        return 0;
+    return prefixParts.length;
+  }
+
+
+  // given a relative-resolved module name and normalized parent name,
+  // apply the map configuration
+  function applyMap(name, parentName) {
+
+    var curMatch, curMatchLength = 0;
+    var curParent, curParentMatchLength = 0;
+    
+    // first find most specific contextual match
+    if (parentName) {
+      for (var p in System.map) {
+        var curMap = System.map[p];
+        if (typeof curMap != 'object')
+          continue;
+
+        // most specific parent match wins first
+        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
+          continue;
+
+        for (var q in curMap) {
+          // most specific name match wins
+          if (prefixMatchLength(name, q) <= curMatchLength)
+            continue;
+
+          curMatch = q;
+          curMatchLength = q.split('/').length;
+          curParent = p;
+          curParentMatchLength = p.split('/').length;
+        }
+      }
+      if (curMatch) {
+        var subPath = name.split('/').splice(curMatchLength).join('/');
+        return System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
+      }
+    }
+
+    // if we didn't find a contextual match, try the global map
+    for (var p in System.map) {
+      var curMap = System.map[p];
+      if (typeof curMap != 'string')
+        continue;
+
+      if (prefixMatchLength(name, p) <= curMatchLength)
+        continue;
+
+      curMatch = p;
+      curMatchLength = p.split('/').length;
+    }
+    
+    // return a match if any
+    if (!curMatch)
+      return name;
+    
+    var subPath = name.split('/').splice(curMatchLength).join('/');
+    return System.map[curMatch] + (subPath ? '/' + subPath : '');
+  }
+
+  var systemNormalize = System.normalize.bind(System);
+  System.normalize = function(name, parentName, parentAddress) {
+    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
+    .then(function(name) {
+      return applyMap(name, parentName);
+    });
+  }
+})();
 (function(global) {
 
   var head = document.getElementsByTagName('head')[0];
@@ -184,9 +290,23 @@ global.upgradeSystemLoader = function() {
     for (var b in System.bundles) {
       if (System.bundles[b].indexOf(load.name) == -1)
         continue;
+      // we do manual normalization in case the bundle is mapped
+      // this is so we can still know the normalized name is a bundle
+      return Promise.resolve(System.normalize(b))
+      .then(function(normalized) {
+        System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
+        return System.load(normalized);
+      });
       return System.import(b).then(function() { return ''; });
     }
     return systemFetch.apply(this, arguments);
+  }
+
+  var systemLocate = System.locate;
+  System.locate = function(load) {
+    if (System.bundles[load.name])
+      load.metadata.bundle = true;
+    return systemLocate.call(this, load);
   }
 
   var systemInstantiate = System.instantiate;
@@ -199,7 +319,7 @@ global.upgradeSystemLoader = function() {
     }
 
     // if it is a bundle itself, it doesn't define anything
-    if (System.bundles[load.name])
+    if (load.metadata.bundle)
       return {
         deps: [],
         execute: function() {
@@ -211,112 +331,6 @@ global.upgradeSystemLoader = function() {
   }
 
 })();/*
-  SystemJS map support
-  
-  Provides map configuration through
-    System.map['jquery'] = 'some/module/map'
-
-  As well as contextual map config through
-    System.map['bootstrap'] = {
-      jquery: 'some/module/map2'
-    }
-
-  Note that this applies for subpaths, just like RequireJS
-
-  jquery      -> 'some/module/map'
-  jquery/path -> 'some/module/map/path'
-  bootstrap   -> 'bootstrap'
-
-  Inside any module name of the form 'bootstrap' or 'bootstrap/*'
-    jquery    -> 'some/module/map2'
-    jquery/p  -> 'some/module/map2/p'
-
-  Maps are carefully applied from most specific contextual map, to least specific global map
-*/
-(function() {
-
-  System.map = System.map || {};
-
-
-  // return the number of prefix parts (separated by '/') matching the name
-  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
-  function prefixMatchLength(name, prefix) {
-    var prefixParts = prefix.split('/');
-    var nameParts = name.split('/');
-    if (prefixParts.length > nameParts.length)
-      return 0;
-    for (var i = 0; i < prefixParts.length; i++)
-      if (nameParts[i] != prefixParts[i])
-        return 0;
-    return prefixParts.length;
-  }
-
-
-  // given a relative-resolved module name and normalized parent name,
-  // apply the map configuration
-  function applyMap(name, parentName) {
-
-    var curMatch, curMatchLength = 0;
-    var curParent, curParentMatchLength = 0;
-    
-    // first find most specific contextual match
-    if (parentName) {
-      for (var p in System.map) {
-        var curMap = System.map[p];
-        if (typeof curMap != 'object')
-          continue;
-
-        // most specific parent match wins first
-        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
-          continue;
-
-        for (var q in curMap) {
-          // most specific name match wins
-          if (prefixMatchLength(name, q) <= curMatchLength)
-            continue;
-
-          curMatch = q;
-          curMatchLength = q.split('/').length;
-          curParent = p;
-          curParentMatchLength = p.split('/').length;
-        }
-      }
-      if (curMatch) {
-        var subPath = name.split('/').splice(curMatchLength).join('/');
-        return System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
-      }
-    }
-
-    // if we didn't find a contextual match, try the global map
-    for (var p in System.map) {
-      var curMap = System.map[p];
-      if (typeof curMap != 'string')
-        continue;
-
-      if (prefixMatchLength(name, p) <= curMatchLength)
-        continue;
-
-      curMatch = p;
-      curMatchLength = p.split('/').length;
-    }
-    
-    // return a match if any
-    if (!curMatch)
-      return name;
-    
-    var subPath = name.split('/').splice(curMatchLength).join('/');
-    return System.map[curMatch] + (subPath ? '/' + subPath : '');
-  }
-
-  var systemNormalize = System.normalize.bind(System);
-  System.normalize = function(name, parentName, parentAddress) {
-    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
-    .then(function(name) {
-      return applyMap(name, parentName);
-    });
-  }
-})();
-/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms

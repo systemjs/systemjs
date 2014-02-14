@@ -271,14 +271,25 @@ global.upgradeSystemLoader = function() {
 
       var deps;
       var meta = load.metadata;
-
+      var defined = false;
       global.define = function(name, _deps, factory) {
+        if (defined)
+          return;
 
         if (typeof name != 'string') {
           factory = _deps;
           _deps = name;
           name = null;
         }
+        else {
+          // only allow named defines for bundles
+          if (!meta.bundle)
+            name = null;
+        }
+
+        // anonymous modules must only call define once
+        if (!name)
+          defined = true;
 
         if (!(_deps instanceof Array)) {
           factory = _deps;
@@ -534,162 +545,6 @@ global.upgradeSystemLoader = function() {
     }
   };
 })();/*
-  SystemJS Plugin Support
-
-  Supports plugin syntax with "!"
-
-  The plugin name is loaded as a module itself, and can override standard loader hooks
-  for the plugin resource. See the plugin section of the systemjs readme.
-*/
-(function() {
-  var systemNormalize = System.normalize;
-  System.normalize = function(name, parentName, parentAddress) {
-    name = name.trim();
-
-    // if parent is a plugin, normalize against the parent plugin argument only
-    var parentPluginIndex;
-    if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
-      parentName = parentName.substr(0, parentPluginIndex);
-
-    // if this is a plugin, normalize the plugin name and the argument
-    var pluginIndex = name.lastIndexOf('!');
-    if (pluginIndex != -1) {
-      var argumentName = name.substr(0, pluginIndex);
-
-      // plugin name is part after "!" or the extension itself
-      var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
-
-      // normalize the plugin name relative to the same parent
-      return new Promise(function(resolve) {
-        resolve(System.normalize(pluginName, parentName, parentAddress)); 
-      })
-      // normalize the plugin argument
-      .then(function(_pluginName) {
-        pluginName = _pluginName;
-        return System.normalize(argumentName, parentName, parentAddress);
-      })
-      .then(function(argumentName) {
-        return argumentName + '!' + pluginName;
-      });
-    }
-
-    // standard normalization
-    return systemNormalize.call(this, name, parentName, parentAddress);
-  }
-
-  var systemLocate = System.locate;
-  System.locate = function(load) {
-    var name = load.name;
-
-    // plugin
-    var pluginIndex = name.lastIndexOf('!');
-    if (pluginIndex != -1) {
-      var pluginName = name.substr(pluginIndex + 1);
-
-      // the name to locate is the plugin argument only
-      load.name = name.substr(0, pluginIndex);
-
-      // load the plugin module
-      return System.load(pluginName)
-      .then(function() {
-        var plugin = System.get(pluginName);
-        plugin = plugin.default || plugin;
-
-        // store the plugin module itself on the metadata
-        load.metadata.plugin = plugin;
-        load.metadata.pluginName = pluginName;
-        load.metadata.pluginArgument = load.name;
-
-        // run plugin locate if given
-        if (plugin.locate)
-          return plugin.locate.call(System, load);
-
-        // otherwise use standard locate without '.js' extension adding
-        else
-          return new Promise(function(resolve) {
-            resolve(System.locate(load));
-          })
-          .then(function(address) {
-            return address.substr(0, address.length - 3);
-          });
-      });
-    }
-
-    return systemLocate.call(this, load);
-  }
-
-  var systemFetch = System.fetch;
-  System.fetch = function(load) {
-    // support legacy plugins
-    var self = this;
-    if (typeof load.metadata.plugin == 'function') {
-      return new Promise(function(fulfill, reject) {
-        load.metadata.plugin(load.metadata.pluginArgument, load.address, function(url, callback, errback) {
-          systemFetch.call(self, { name: load.name, address: url, metadata: {} }).then(callback, errback);
-        }, fulfill, reject);
-      });
-    }
-    return (load.metadata.plugin && load.metadata.plugin.fetch || systemFetch).call(this, load);
-  }
-
-  var systemTranslate = System.translate;
-  System.translate = function(load) {
-    var plugin = load.metadata.plugin;
-    if (plugin && plugin.translate)
-      return plugin.translate.call(this, load);
-
-    return systemTranslate.call(this, load);
-  }
-
-})();(function() {
-
-  // bundles support (just like RequireJS)
-  // bundle name is module name of bundle itself
-  // bundle is array of modules defined by the bundle
-  // when a module in the bundle is requested, the bundle is loaded instead
-  // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
-  System.bundles = System.bundles || {};
-
-  // store a cache of defined modules
-  // of the form System.defined['moduleName'] = { deps: [], execute: function() {} }
-  System.defined = System.defined || {};
-
-  var systemFetch = System.fetch;
-  System.fetch = function(load) {
-    // if the module is already defined, skip fetch
-    if (System.defined[load.name])
-      return '';
-    // if this module is in a bundle, load the bundle first then
-    for (var b in System.bundles) {
-      if (System.bundles[b].indexOf(load.name) == -1)
-        continue;
-      return System.import(b).then(function() { return ''; });
-    }
-    return systemFetch.apply(this, arguments);
-  }
-
-  var systemInstantiate = System.instantiate;
-  System.instantiate = function(load) {
-    // if the module has been defined by a bundle, use that
-    if (System.defined[load.name]) {
-      var instantiateResult = System.defined[load.name];
-      delete System.defined[load.name];
-      return instantiateResult;
-    }
-
-    // if it is a bundle itself, it doesn't define anything
-    if (System.bundles[load.name])
-      return {
-        deps: [],
-        execute: function() {
-          return new Module({});
-        }
-      };
-
-    return systemInstantiate.apply(this, arguments);
-  }
-
-})();/*
   SystemJS map support
   
   Provides map configuration through
@@ -796,6 +651,179 @@ global.upgradeSystemLoader = function() {
   }
 })();
 /*
+  SystemJS Plugin Support
+
+  Supports plugin syntax with "!"
+
+  The plugin name is loaded as a module itself, and can override standard loader hooks
+  for the plugin resource. See the plugin section of the systemjs readme.
+*/
+(function() {
+  var systemNormalize = System.normalize;
+  System.normalize = function(name, parentName, parentAddress) {
+    // if parent is a plugin, normalize against the parent plugin argument only
+    var parentPluginIndex;
+    if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
+      parentName = parentName.substr(0, parentPluginIndex);
+
+    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
+    .then(function(name) {
+      name = name.trim();
+
+      // if this is a plugin, normalize the plugin name and the argument
+      var pluginIndex = name.lastIndexOf('!');
+      if (pluginIndex != -1) {
+        var argumentName = name.substr(0, pluginIndex);
+
+        // plugin name is part after "!" or the extension itself
+        var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
+
+        // normalize the plugin name relative to the same parent
+        return new Promise(function(resolve) {
+          resolve(System.normalize(pluginName, parentName, parentAddress)); 
+        })
+        // normalize the plugin argument
+        .then(function(_pluginName) {
+          pluginName = _pluginName;
+          return System.normalize(argumentName, parentName, parentAddress);
+        })
+        .then(function(argumentName) {
+          return argumentName + '!' + pluginName;
+        });
+      }
+
+      // standard normalization
+      return name;
+    });
+  }
+
+  var systemLocate = System.locate;
+  System.locate = function(load) {
+    var name = load.name;
+
+    // plugin
+    var pluginIndex = name.lastIndexOf('!');
+    if (pluginIndex != -1) {
+      var pluginName = name.substr(pluginIndex + 1);
+
+      // the name to locate is the plugin argument only
+      load.name = name.substr(0, pluginIndex);
+
+      // load the plugin module
+      return System.load(pluginName)
+      .then(function() {
+        var plugin = System.get(pluginName);
+        plugin = plugin.default || plugin;
+
+        // store the plugin module itself on the metadata
+        load.metadata.plugin = plugin;
+        load.metadata.pluginName = pluginName;
+        load.metadata.pluginArgument = load.name;
+
+        // run plugin locate if given
+        if (plugin.locate)
+          return plugin.locate.call(System, load);
+
+        // otherwise use standard locate without '.js' extension adding
+        else
+          return new Promise(function(resolve) {
+            resolve(System.locate(load));
+          })
+          .then(function(address) {
+            return address.substr(0, address.length - 3);
+          });
+      });
+    }
+
+    return systemLocate.call(this, load);
+  }
+
+  var systemFetch = System.fetch;
+  System.fetch = function(load) {
+    // support legacy plugins
+    var self = this;
+    if (typeof load.metadata.plugin == 'function') {
+      return new Promise(function(fulfill, reject) {
+        load.metadata.plugin(load.metadata.pluginArgument, load.address, function(url, callback, errback) {
+          systemFetch.call(self, { name: load.name, address: url, metadata: {} }).then(callback, errback);
+        }, fulfill, reject);
+      });
+    }
+    return (load.metadata.plugin && load.metadata.plugin.fetch || systemFetch).call(this, load);
+  }
+
+  var systemTranslate = System.translate;
+  System.translate = function(load) {
+    var plugin = load.metadata.plugin;
+    if (plugin && plugin.translate)
+      return plugin.translate.call(this, load);
+
+    return systemTranslate.call(this, load);
+  }
+
+})();(function() {
+
+  // bundles support (just like RequireJS)
+  // bundle name is module name of bundle itself
+  // bundle is array of modules defined by the bundle
+  // when a module in the bundle is requested, the bundle is loaded instead
+  // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
+  System.bundles = System.bundles || {};
+
+  // store a cache of defined modules
+  // of the form System.defined['moduleName'] = { deps: [], execute: function() {} }
+  System.defined = System.defined || {};
+
+  var systemFetch = System.fetch;
+  System.fetch = function(load) {
+    // if the module is already defined, skip fetch
+    if (System.defined[load.name])
+      return '';
+    // if this module is in a bundle, load the bundle first then
+    for (var b in System.bundles) {
+      if (System.bundles[b].indexOf(load.name) == -1)
+        continue;
+      // we do manual normalization in case the bundle is mapped
+      // this is so we can still know the normalized name is a bundle
+      return Promise.resolve(System.normalize(b))
+      .then(function(normalized) {
+        System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
+        return System.load(normalized);
+      });
+      return System.import(b).then(function() { return ''; });
+    }
+    return systemFetch.apply(this, arguments);
+  }
+
+  var systemLocate = System.locate;
+  System.locate = function(load) {
+    if (System.bundles[load.name])
+      load.metadata.bundle = true;
+    return systemLocate.call(this, load);
+  }
+
+  var systemInstantiate = System.instantiate;
+  System.instantiate = function(load) {
+    // if the module has been defined by a bundle, use that
+    if (System.defined[load.name]) {
+      var instantiateResult = System.defined[load.name];
+      delete System.defined[load.name];
+      return instantiateResult;
+    }
+
+    // if it is a bundle itself, it doesn't define anything
+    if (load.metadata.bundle)
+      return {
+        deps: [],
+        execute: function() {
+          return new Module({});
+        }
+      };
+
+    return systemInstantiate.apply(this, arguments);
+  }
+
+})();/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms
