@@ -380,6 +380,18 @@
         }
       },
       {
+        name: 'Mapping a plugin argument',
+        run: function(complete, err) {
+          System.map['bootstrap'] = 'tests/bootstrap@^3.1.1';
+          System.versions['tests/bootstrap'] = '3.1.1';
+          System.import('bootstrap/test.coffee!coffee').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.extra != 'yay!')
+            return 'not working';
+        }
+      },
+      {
         name: 'Legacy plugin',
         run: function(complete, err) {
           System.import('tests/default1.js!tests/legacy-plugin').then(complete, err);

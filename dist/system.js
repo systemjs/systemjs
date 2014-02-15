@@ -951,6 +951,9 @@ global.upgradeSystemLoader = function() {
 
       // translate '^' handling as described above
       if (minVersion) {
+        // remove the ^
+        normalized = normalized.substr(0, index + 1) + normalized.substr(index + 1 + version.length);
+
         // >= 1.0.0
         if (semverMatch[1] > 0) {
           minVersion = version;
@@ -967,9 +970,6 @@ global.upgradeSystemLoader = function() {
           semverMatch = [0, 0, semverMatch[3]]
         }
         version = semverMatch.join('.');
-
-        // remove the ^ now
-        normalized = normalized.substr(0, index + 1) + version;
       }
 
       // if not a semver, we cant help
