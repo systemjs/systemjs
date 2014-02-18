@@ -511,6 +511,14 @@ global.upgradeSystemLoader = function() {
         versions.sort(semverCompare);
         packageVersions[packageName] = versions.length == 1 ? versions[0] : versions;
 
+        // if this is an x.y.z, remove any x.y, x
+        // if this is an x.y, remove any x
+        var index;
+        if (semverMatch[3] && (index = versions.indexOf(semverMatch[1] + '.' + semverMatch[2])) != -1)
+          versions.splice(index, 1);
+        if (semverMatch[2] && (index = versions.indexOf(semverMatch[1])) != -1)
+          versions.splice(index, 1);
+
         // could also add a catch here to another System.import, so if the import fails we can remove the version
       }
 
