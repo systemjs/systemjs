@@ -50,9 +50,9 @@ global.upgradeSystemLoader = function() {
   System.set('@empty', Module({}));
   
   
-  var systemImport = System.import;
+  var systemImport = System['import'];
   var loadingPromises = {};
-  System.import = function(name, options) {
+  System['import'] = function(name, options) {
     // patch System.import to do normalization
     return new Promise(function(resolve) {
       resolve(System.normalize.call(this, name, options && options.name, options && options.address))
