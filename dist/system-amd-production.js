@@ -257,7 +257,7 @@ global.upgradeSystemLoader = function() {
     // amd require
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
-        return System.import(name, referer);
+        return System['import'](name, referer);
       })).then(callback, errback);
 
     // commonjs require
@@ -297,7 +297,7 @@ global.upgradeSystemLoader = function() {
         System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
         return System.load(normalized);
       });
-      return System.import(b).then(function() { return ''; });
+      return System['import'](b).then(function() { return ''; });
     }
     return systemFetch.apply(this, arguments);
   }
