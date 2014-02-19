@@ -714,7 +714,7 @@ global.upgradeSystemLoader = function() {
       return System.load(pluginName)
       .then(function() {
         var plugin = System.get(pluginName);
-        plugin = plugin.default || plugin;
+        plugin = plugin['default'] || plugin;
 
         // store the plugin module itself on the metadata
         load.metadata.plugin = plugin;
