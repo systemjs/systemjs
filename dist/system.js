@@ -791,7 +791,7 @@ global.upgradeSystemLoader = function() {
         System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
         return System.load(normalized);
       });
-      return System.import(b).then(function() { return ''; });
+      return System['import'](b).then(function() { return ''; });
     }
     return systemFetch.apply(this, arguments);
   }
