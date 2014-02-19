@@ -378,6 +378,7 @@ global.upgradeSystemLoader = function() {
       setTimeout(f, 7);
     }
   };
+  System.set('@@nodeProcess', Module(nodeProcess));
 
   System.format.cjs = {
     detect: function(load) {
@@ -916,14 +917,12 @@ global.upgradeSystemLoader = function() {
       var version, semverMatch, nextChar, versions;
       var index = normalized.indexOf('@');
 
-      // see if this module corresponds to a package already in out versioned packages list
+      // see if this module corresponds to a package already in our versioned packages list
       
       // no version specified - check against the list (given we don't know the package name)
       if (index == -1) {
         for (var p in packageVersions) {
           versions = packageVersions[p];
-          if (typeof versions == 'string')
-            versions = [versions];
           if (normalized.substr(0, p.length) != p)
             continue;
 
@@ -933,13 +932,14 @@ global.upgradeSystemLoader = function() {
             continue;
 
           // match -> take latest version
-          return p + '@' + versions[versions.length - 1] + normalized.substr(p.length);
+          return p + '@' + (typeof versions == 'string' ? versions : versions[versions.length - 1]) + normalized.substr(p.length);
         }
         return normalized;
       }
 
       // get the version info
       version = normalized.substr(index + 1).split('/')[0];
+      var versionLength = version.length;
 
       var minVersion;
       if (version.substr(0, 1) == '^') {
@@ -949,13 +949,37 @@ global.upgradeSystemLoader = function() {
 
       semverMatch = version.match(semverRegEx);
 
-      // translate '^' handling as described above
-      if (minVersion) {
-        // remove the ^
-        normalized = normalized.substr(0, index + 1) + normalized.substr(index + 1 + version.length);
+      // if not a semver, we cant help
+      if (!semverMatch)
+        return normalized;
 
+      // translate '^' in range to simpler range form
+      if (minVersion) {
+        // ^0 -> 0
+        // ^1 -> 1
+        if (!semverMatch[2])
+          minVersion = false;
+        
+        if (!semverMatch[3]) {
+          
+          // ^1.1 -> ^1.1.0
+          if (semverMatch[2] > 0)
+            semverMatch[3] = '0';
+
+          // ^0.1 -> 0.1
+          // ^0.0 -> 0.0
+          else
+            minVersion = false;
+        }
+      }
+
+      if (minVersion) {
         // >= 1.0.0
         if (semverMatch[1] > 0) {
+          if (!semverMatch[2])
+            version = semverMatch[1] + '.0.0';
+          if (!semverMatch[3])
+            version = semverMatch[1] + '.0';
           minVersion = version;
           semverMatch = [semverMatch[1]];
         }
@@ -966,15 +990,12 @@ global.upgradeSystemLoader = function() {
         }
         // >= 0.0.0
         else {
+          // NB compatible with prerelease is just prelease itself?
           minVersion = false;
-          semverMatch = [0, 0, semverMatch[3]]
+          semverMatch = [0, 0, semverMatch[3]];
         }
         version = semverMatch.join('.');
       }
-
-      // if not a semver, we cant help
-      if (!semverMatch)
-        return normalized;
 
       var packageName = normalized.substr(0, index);
 
@@ -993,26 +1014,27 @@ global.upgradeSystemLoader = function() {
           if (curVersion.substr(0, version.length) == version && curVersion.charAt(version.length).match(/^[\.\-]?$/)) {
             // if a minimum version, then check too
             if (!minVersion || minVersion && semverCompare(curVersion, minVersion) != -1)
-              return packageName + '@' + curVersion + normalized.substr(packageName.length + version.length + 1);
+              return packageName + '@' + curVersion + normalized.substr(packageName.length + versionLength + 1);
           }
         }
 
+      // no match
       // record the package and semver for reuse since we're now asking the server
       // x.y and x versions will now be latest by default, so they are useful in the version list
       if (versions.indexOf(version) == -1) {
         versions.push(version);
         versions.sort(semverCompare);
-        packageVersions[packageName] = versions.length == 1 ? versions[0] : versions;
+
+        normalized = packageName + '@' + version + normalized.substr(packageName.length + versionLength + 1);
 
         // if this is an x.y.z, remove any x.y, x
         // if this is an x.y, remove any x
-        var index;
         if (semverMatch[3] && (index = versions.indexOf(semverMatch[1] + '.' + semverMatch[2])) != -1)
           versions.splice(index, 1);
         if (semverMatch[2] && (index = versions.indexOf(semverMatch[1])) != -1)
           versions.splice(index, 1);
 
-        // could also add a catch here to another System.import, so if the import fails we can remove the version
+        packageVersions[packageName] = versions.length == 1 ? versions[0] : versions;
       }
 
       return normalized;

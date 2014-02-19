@@ -5,9 +5,14 @@
     System.paths = {
       '*': 'https://registry.jspm.io/*.js',
       'github:*': 'https://github.jspm.io/*.js',
-      'npm:*': 'https://npm.jspm.io/*.js'
+      'npm:*': 'https://npm.jspm.io/*.js',
+      '~/*': '*.js'
     };
-    System.import('github:guybedford/requirebin-shader/shader').catch(function(e) {
+
+    System.import('npm:glsl-exports@^0.0.0').then(function(s) {
+    // System.import('npm:gl-vao@0.0').then(function(s) {
+      console.log(s);
+    }).catch(function(e) {
       setTimeout(function() {
         throw e;
       }, 1);
