@@ -257,7 +257,7 @@ global.upgradeSystemLoader = function() {
     // amd require
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
-        return System['import'](name, referer);
+        return System.import(name, referer);
       })).then(callback, errback);
 
     // commonjs require
@@ -276,6 +276,11 @@ global.upgradeSystemLoader = function() {
   // when a module in the bundle is requested, the bundle is loaded instead
   // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
   System.bundles = System.bundles || {};
+  
+  // register a new module for instantiation
+  System.register = function(name, deps, execute) {
+    System.defined[name] = {  deps: deps, execute: execute };  
+  }
 
   // store a cache of defined modules
   // of the form System.defined['moduleName'] = { deps: [], execute: function() {} }
@@ -297,7 +302,7 @@ global.upgradeSystemLoader = function() {
         System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
         return System.load(normalized);
       });
-      return System['import'](b).then(function() { return ''; });
+      return System.import(b).then(function() { return ''; });
     }
     return systemFetch.apply(this, arguments);
   }
@@ -330,7 +335,8 @@ global.upgradeSystemLoader = function() {
     return systemInstantiate.apply(this, arguments);
   }
 
-})();/*
+})();
+/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms
