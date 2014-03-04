@@ -11,7 +11,7 @@ global.upgradeSystemLoader = function() {
   delete global.upgradeSystemLoader;
 /*
   SystemJS Core
-  Adds normalization to the import function, as well as __defaultOnly support
+  Adds normalization to the import function, as well as __useDefault support
 */
 (function() {
   // check we have System
@@ -19,11 +19,11 @@ global.upgradeSystemLoader = function() {
     throw 'System not defined. Include the `es6-module-loader.js` polyfill before SystemJS.';
 
   /*
-    __defaultOnly
+    __useDefault
     
     When a module object looks like:
     new Module({
-      __defaultOnly: true,
+      __useDefault: true,
       default: 'some-module'
     })
 
@@ -31,19 +31,19 @@ global.upgradeSystemLoader = function() {
 
     Useful for module.exports = function() {} handling
   */
-  var checkDefaultOnly = function(module) {
+  var checkUseDefault = function(module) {
     if (!(module instanceof Module)) {
       var out = [];
       for (var i = 0; i < module.length; i++)
-        out[i] = checkDefaultOnly(module[i]);
+        out[i] = checkUseDefault(module[i]);
       return out;
     }
-    return module.__defaultOnly ? module['default'] : module;
+    return module.__useDefault ? module['default'] : module;
   }
   
-  // a variation on System.get that does the __defaultOnly check
+  // a variation on System.get that does the __useDefault check
   System.getModule = function(key) {
-    return checkDefaultOnly(System.get(key));  
+    return checkUseDefault(System.get(key));  
   }
 
   // support the empty module, as a concept
@@ -57,10 +57,10 @@ global.upgradeSystemLoader = function() {
     return new Promise(function(resolve) {
       resolve(System.normalize.call(this, name, options && options.name, options && options.address))
     })
-    // add defaultOnly support
+    // add useDefault support
     .then(function(name) {
       return Promise.resolve(systemImport.call(System, name, options)).then(function(module) {
-        return checkDefaultOnly(module);
+        return checkUseDefault(module);
       });
     });
   }
@@ -227,10 +227,10 @@ global.upgradeSystemLoader = function() {
       execute: function() {
         var args = [];
         for (var i = 0; i < arguments.length; i++)
-          args.push(System.get(arguments[i]));
+          args.push(System.getModule(arguments[i]));
 
         var output = factory.apply(this, args);
-        return new global.Module(output && output.__transpiledModule ? (delete output.__transpiledModule, output) : { __defaultOnly: true, 'default': output });
+        return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
 
@@ -243,6 +243,16 @@ global.upgradeSystemLoader = function() {
 
   // no translate at all
   System.translate = function() {}
+
+  // instantiate defaults to null
+  System.instantiate = function() {
+    return {
+      deps: [],
+      execute: function() {
+        return new Module({});
+      }
+    };
+  }
 
 
   /*
@@ -262,7 +272,7 @@ global.upgradeSystemLoader = function() {
 
     // commonjs require
     else if (typeof names == 'string')
-      return System.get(names);
+      return System.getModule(names);
 
     else
       throw 'Invalid require';

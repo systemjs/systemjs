@@ -3,9 +3,9 @@
 <script>
   // window.Promise = null
 </script>
-<script src="../../es6-module-loader/lib/es6-module-loader.js" type="text/javascript"></script>
-<script src="../dist/system-production.js" type="text/javascript"></script>
-<!-- <script src="../dist/system-production.min.js" type="text/javascript"></script> -->
+<script src="../../es6-module-loader/tmp/es6-module-loader.js" type="text/javascript"></script>
+<script src="../dist/system-amd-production.js" type="text/javascript"></script>
+<!-- <script src="../dist/system-amd-production.min.js" type="text/javascript"></script> -->
 
 <script>
   System.import('test-runner').then(function(runner) {
@@ -26,12 +26,12 @@
         name: 'Loading an AMD named define',
         run: function(complete, err) {
           System.import('tests/nameddefine').then(function() {
-            System.import('showdown').then(complete, err);
+            System.import('another-define').then(complete, err);
           }, err);
         },
         confirm: function(m) {
-          if (!m.converter)
-            return 'Showdown not loaded!';
+          if (m.named != 'define')
+            return 'Named define not working';
         }
       },
       {

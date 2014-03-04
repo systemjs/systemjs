@@ -13,7 +13,7 @@ Features include:
 * **[Plugins](#plugins):** A dynamic plugin system for modular loading rules.
 * **[Bundles](#production-bundles):** Dynamically link requires to bundle files.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (17KB minified) for a combined footprint of 27KB. In future, with native implementations, the polyfill should no longer be necessary. Like jQuery provides for the DOM, this library can smoothes over inconsistiencies or missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (15KB minified) for a combined footprint of 27KB. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
 Runs in the browser and NodeJS.
 

@@ -11,7 +11,7 @@ global.upgradeSystemLoader = function() {
   delete global.upgradeSystemLoader;
 /*
   SystemJS Core
-  Adds normalization to the import function, as well as __defaultOnly support
+  Adds normalization to the import function, as well as __useDefault support
 */
 (function() {
   // check we have System
@@ -19,11 +19,11 @@ global.upgradeSystemLoader = function() {
     throw 'System not defined. Include the `es6-module-loader.js` polyfill before SystemJS.';
 
   /*
-    __defaultOnly
+    __useDefault
     
     When a module object looks like:
     new Module({
-      __defaultOnly: true,
+      __useDefault: true,
       default: 'some-module'
     })
 
@@ -31,19 +31,19 @@ global.upgradeSystemLoader = function() {
 
     Useful for module.exports = function() {} handling
   */
-  var checkDefaultOnly = function(module) {
+  var checkUseDefault = function(module) {
     if (!(module instanceof Module)) {
       var out = [];
       for (var i = 0; i < module.length; i++)
-        out[i] = checkDefaultOnly(module[i]);
+        out[i] = checkUseDefault(module[i]);
       return out;
     }
-    return module.__defaultOnly ? module['default'] : module;
+    return module.__useDefault ? module['default'] : module;
   }
   
-  // a variation on System.get that does the __defaultOnly check
+  // a variation on System.get that does the __useDefault check
   System.getModule = function(key) {
-    return checkDefaultOnly(System.get(key));  
+    return checkUseDefault(System.get(key));  
   }
 
   // support the empty module, as a concept
@@ -57,10 +57,10 @@ global.upgradeSystemLoader = function() {
     return new Promise(function(resolve) {
       resolve(System.normalize.call(this, name, options && options.name, options && options.address))
     })
-    // add defaultOnly support
+    // add useDefault support
     .then(function(name) {
       return Promise.resolve(systemImport.call(System, name, options)).then(function(module) {
-        return checkDefaultOnly(module);
+        return checkUseDefault(module);
       });
     });
   }
@@ -70,6 +70,8 @@ global.upgradeSystemLoader = function() {
   SystemJS Formats
 
   Provides modular support for format detections.
+
+  Also dynamically loads Traceur if ES6 syntax is found.
 
   Add a format with:
     System.formats.push('myformatname');
@@ -86,13 +88,24 @@ global.upgradeSystemLoader = function() {
   
   See the AMD, global and CommonJS format extensions for examples.
 */
-(function() {
+(function(global) {
 
   System.format = {};
   System.formats = [];
 
+  var curSystem = System;
+
+  var curScript = document.getElementsByTagName('script');
+  curScript = curScript[curScript.length - 1];
+
+  // set the path to traceur
+  var traceurSrc = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, curScript.src.lastIndexOf('/') + 1) + 'traceur.js';
+
   // also in ESML, build.js
   var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
+  
+  // es6 module forwarding - allow detecting without Traceur
+  var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
 
   // module format hint regex
   var formatHintRegEx = /^(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["']([^'"]+)["'][;\n]/;
@@ -112,10 +125,30 @@ global.upgradeSystemLoader = function() {
         format = load.metadata.format = formatMatch[5];
     }
 
+    if (name == '@traceur')
+      format = 'global';
+
     // es6 handled by core
+
+    // support alias modules without needing Traceur
+    var match;
+    if (!global.traceur && (format == 'es6' || !format) && (match = load.source.match(aliasRegEx))) {
+      return {
+        deps: [match[1] || match[2]],
+        execute: function(depName) {
+          return System.get(depName);
+        }
+      };
+    }
+
     if (format == 'es6' || !format && load.source.match(es6RegEx)) {
-      load.metadata.es6 = true;
-      return systemInstantiate.call(System, load);
+      // dynamically load Traceur if necessary
+      if (!global.traceur)
+        return System.import('@traceur', { address: traceurSrc }).then(function() {
+          return systemInstantiate.call(System, load);
+        });
+      else
+        return systemInstantiate.call(System, load);
     }
 
     // if it is shimmed, assume it is a global script
@@ -143,7 +176,7 @@ global.upgradeSystemLoader = function() {
     function exec() {
       try {
         Function('global', 'with(global) { ' + load.source + ' \n }'
-        + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n]+)/)
+        + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n'"]+)/)
         ? '\n//# sourceURL=' + load.address : '')).call(global, global);
       }
       catch(e) {
@@ -151,6 +184,10 @@ global.upgradeSystemLoader = function() {
           e.message = 'Evaluating ' + load.address + '\n\t' + e.message;
         throw e;
       }
+
+      // traceur overwrites System - write it back
+      if (load.name == '@traceur')
+        global.System = curSystem;
     }
     var deps = curFormat.deps(load, global, exec);
 
@@ -167,7 +204,7 @@ global.upgradeSystemLoader = function() {
         if (output instanceof global.Module)
           return output;
         else
-          return new global.Module(output && output.__transpiledModule ? (delete output.__transpiledModule, output) : { __defaultOnly: true, 'default': output });
+          return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
   }
@@ -237,15 +274,28 @@ global.upgradeSystemLoader = function() {
       meta.moduleIndex = index;
       deps.splice(index, 1);
     }
+
     return deps;
   }
 
-  function prepareExecute(depNames, load, checkTranspiled) {
-    var isTranspiled = checkTranspiled && load.source && load.source.match(/__transpiledModule/);
+  function prepareExecute(depNames, load) {
     var meta = load.metadata;
     var deps = [];
-    for (var i = 0; i < depNames.length; i++)
-      deps[i] = isTranspiled ? System.get(depNames[i]) : System.getModule(depNames[i]);
+    for (var i = 0; i < depNames.length; i++) {
+      var module = System.get(depNames[i]);
+      if (module.__useDefault) {
+        module = module['default'];
+      }
+      else if (!module.__esModule) {
+        // compatibility -> ES6 modules must have a __esModule flag
+        // we clone the module object to handle this
+        var moduleClone = { __esModule: true };
+        for (var p in module)
+          moduleClone[p] = module[p];
+        module = moduleClone;
+      }
+      deps[i] = module;
+    }
 
     var module, exports;
 
@@ -316,13 +366,13 @@ global.upgradeSystemLoader = function() {
           System.defined[name] = {
             deps: _deps,
             execute: function() {
-              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0), _load, global['$traceurRuntime']);
+              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0), _load);
               var output = factory.apply(global, execs.deps) || execs.module && execs.module.exports;
 
               if (output instanceof global.Module)
                 return output;
               else
-                return new global.Module(output && output.__transpiledModule ? (delete output.__transpiledModule, output) : { __defaultOnly: true, 'default': output });
+                return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
             }
           }
         }
@@ -355,7 +405,7 @@ global.upgradeSystemLoader = function() {
     execute: function(depNames, load, global, exec) {
       if (!load.metadata.factory)
         return;
-      var execs = prepareExecute(depNames, load, global['$traceurRuntime']);
+      var execs = prepareExecute(depNames, load);
       return load.metadata.factory.apply(global, execs.deps) || execs.module && execs.module.exports;
     }
   };
