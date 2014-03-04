@@ -115,7 +115,9 @@ global.upgradeSystemLoader = function() {
   System.instantiate = function(load) {
     var name = load.name || '';
 
-    if (!load.source || name == 'traceur')
+    load.source = load.source || '';
+
+    if (name == 'traceur')
       return systemInstantiate.call(this, load);
 
     // set load.metadata.format from metadata or format hints in the source
