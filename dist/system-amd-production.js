@@ -268,7 +268,9 @@ global.upgradeSystemLoader = function() {
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
         return System.import(name, referer);
-      })).then(callback, errback);
+      })).then(function(mods) {
+        return callback.apply(this, mods);
+      }, errback);
 
     // commonjs require
     else if (typeof names == 'string')
@@ -278,7 +280,8 @@ global.upgradeSystemLoader = function() {
       throw 'Invalid require';
   }
 
-})(typeof window != 'undefined' ? window : global);(function() {
+})(typeof window != 'undefined' ? window : global);
+(function() {
 
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
