@@ -7,6 +7,7 @@ Designed as a small collection of extensions to the ES6 specification System loa
 
 Features include:
 
+* **Core**: Some small fixes to the spec loader behavior.
 * **[Formats](#module-format-hints):** Dynamically load AMD, CommonJS and global scripts (as well as ES6 modules) detecting the format automatically, or with format hints.
 * **[Map](#map-config):** Map configuration.
 * **[Versions](#multi-version-semver-support):** Multi-version support for semver compatible version ranges (`@^1.2.3` syntax).
