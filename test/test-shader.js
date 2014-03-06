@@ -1,6 +1,6 @@
 "use strict"
 
-/* var shell = require("npm:gl-now@0.0")()
+var shell = require("npm:gl-now@0.0")()
 var createTileMap = require("npm:gl-tile-map@0.3")
 var createBuffer = require("npm:gl-buffer@0.1")
 var createVAO = require("npm:gl-vao@0.0")
@@ -11,7 +11,7 @@ var ops = require("npm:ndarray-ops@1.1")
 var createAOMesh = require("npm:ao-mesher@0.2")
 
 var shaderVsh = require("npm:ao-shader@0.2/lib/ao.vsh!text");
-var shaderFsh = require("npm:ao-shader@0.2/lib/ao.fsh!text"); */
+var shaderFsh = require("npm:ao-shader@0.2/lib/ao.fsh!text");
 
 var createShader = require('npm:gl-shader@0.0.6');
 

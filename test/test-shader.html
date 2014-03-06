@@ -9,9 +9,7 @@
       '~/*': '*.js'
     };
 
-    System.import('npm:glsl-exports@^0.0.0').then(function(s) {
-    // System.import('npm:gl-vao@0.0').then(function(s) {
-      console.log(s);
+    System.import('~/test-shader').then(function(s) {
     }).catch(function(e) {
       setTimeout(function() {
         throw e;
