@@ -281,6 +281,21 @@ global.upgradeSystemLoader = function() {
   }
 
 })(typeof window != 'undefined' ? window : global);
+/*
+  System bundles
+
+  Allows a bundle module to be specified which will be dynamically 
+  loaded before trying to load a given module.
+
+  For example:
+  System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
+
+  Will result in a load to "mybundle" whenever a load to "jquery"
+  or "bootstrap/js/bootstrap" is made.
+
+  In this way, the bundle becomes the request that provides the module
+*/
+
 (function() {
 
   // bundles support (just like RequireJS)
@@ -289,20 +304,6 @@ global.upgradeSystemLoader = function() {
   // when a module in the bundle is requested, the bundle is loaded instead
   // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
   System.bundles = System.bundles || {};
-  
-  // register a new module for instantiation
-  System.register = function(name, deps, execute) {
-    System.defined[name] = {  
-      deps: deps,
-      execute: function() {
-        return Module(execute.apply(this, arguments));
-      }
-    };  
-  }
-
-  // store a cache of defined modules
-  // of the form System.defined['moduleName'] = { deps: [], execute: function() {} }
-  System.defined = System.defined || {};
 
   var systemFetch = System.fetch;
   System.fetch = function(load) {
@@ -334,13 +335,6 @@ global.upgradeSystemLoader = function() {
 
   var systemInstantiate = System.instantiate;
   System.instantiate = function(load) {
-    // if the module has been defined by a bundle, use that
-    if (System.defined[load.name]) {
-      var instantiateResult = System.defined[load.name];
-      delete System.defined[load.name];
-      return instantiateResult;
-    }
-
     // if it is a bundle itself, it doesn't define anything
     if (load.metadata.bundle)
       return {
@@ -355,6 +349,40 @@ global.upgradeSystemLoader = function() {
 
 })();
 /*
+  Implementation of the System.register bundling method
+
+  This allows the output of Traceur to populate the
+  module registry of the System loader
+*/
+
+(function() {
+
+  // instantiation cache for System.register
+  System.defined = {};
+
+  // register a new module for instantiation
+  System.register = function(name, deps, execute) {
+    System.defined[name] = {  
+      deps: deps,
+      execute: function() {
+        return Module(execute.apply(this, arguments));
+      }
+    };
+  }
+
+  var systemInstantiate = System.instantiate;
+  System.instantiate = function(load) {
+    // if the module has been defined by a bundle, use that
+    if (System.defined[load.name]) {
+      var instantiateResult = System.defined[load.name];
+      delete System.defined[load.name];
+      return instantiateResult;
+    }
+
+    return systemInstantiate.apply(this, arguments);
+  }
+
+})();/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms

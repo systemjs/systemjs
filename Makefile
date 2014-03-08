@@ -25,6 +25,7 @@ system:
 	lib/system-map.js \
 	lib/system-plugins.js \
 	lib/system-bundles.js \
+	lib/system-register.js \
 	lib/system-versions.js \
 	$(END)
 
@@ -33,5 +34,6 @@ system-amd-production:
 	lib/system-map.js \
 	lib/system-amd-production.js \
 	lib/system-bundles.js \
+	lib/system-register.js \
 	lib/system-versions.js \
 	$(END)
