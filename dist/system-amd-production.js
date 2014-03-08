@@ -292,7 +292,12 @@ global.upgradeSystemLoader = function() {
   
   // register a new module for instantiation
   System.register = function(name, deps, execute) {
-    System.defined[name] = {  deps: deps, execute: execute };  
+    System.defined[name] = {  
+      deps: deps,
+      execute: function() {
+        return Module(execute.apply(this, arguments));
+      }
+    };  
   }
 
   // store a cache of defined modules
