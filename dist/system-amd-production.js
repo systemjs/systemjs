@@ -307,9 +307,6 @@ global.upgradeSystemLoader = function() {
 
   var systemFetch = System.fetch;
   System.fetch = function(load) {
-    // if the module is already defined, skip fetch
-    if (System.defined[load.name])
-      return '';
     // if this module is in a bundle, load the bundle first then
     for (var b in System.bundles) {
       if (System.bundles[b].indexOf(load.name) == -1)
@@ -369,6 +366,14 @@ global.upgradeSystemLoader = function() {
       }
     };
   }
+  
+  var systemFetch = System.fetch;
+  System.fetch = function(load) {
+    // if the module is already defined, skip fetch
+    if (System.defined[load.name])
+      return '';
+    return systemFetch.apply(this, arguments);
+  }
 
   var systemInstantiate = System.instantiate;
   System.instantiate = function(load) {
@@ -382,7 +387,8 @@ global.upgradeSystemLoader = function() {
     return systemInstantiate.apply(this, arguments);
   }
 
-})();/*
+})();
+/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms
