@@ -13,10 +13,12 @@ global.upgradeSystemLoader = function() {
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
 */
-(function() {
+(function(global) {
   // check we have System
   if (typeof System == 'undefined')
     throw 'System not defined. Include the `es6-module-loader.js` polyfill before SystemJS.';
+
+  var curSystem = System;
 
   /*
     __useDefault
@@ -65,7 +67,23 @@ global.upgradeSystemLoader = function() {
     });
   }
 
-})();
+  // define exec for custom instan
+  System.__exec = function(load) {
+    try {
+      Function('global', 'with(global) { ' + load.source + ' \n }'
+      + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n'"]+)/)
+      ? '\n//# sourceURL=' + load.address : '')).call(global, global);
+    }
+    catch(e) {
+      if (e.name == 'SyntaxError')
+        e.message = 'Evaluating ' + load.address + '\n\t' + e.message;
+      throw e;
+    }
+    // traceur overwrites System - write it back
+    if (load.name == '@traceur')
+      global.System = curSystem;
+  }
+})(typeof window == 'undefined' ? global : window);
 /*
   SystemJS Formats
 
@@ -92,8 +110,6 @@ global.upgradeSystemLoader = function() {
 
   System.format = {};
   System.formats = [];
-
-  var curSystem = System;
 
   if (typeof window != 'undefined') {
     var curScript = document.getElementsByTagName('script');
@@ -176,23 +192,7 @@ global.upgradeSystemLoader = function() {
       throw new TypeError('No format found for ' + (format ? format : load.address));
 
     // now invoke format instantiation
-    function exec() {
-      try {
-        Function('global', 'with(global) { ' + load.source + ' \n }'
-        + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n'"]+)/)
-        ? '\n//# sourceURL=' + load.address : '')).call(global, global);
-      }
-      catch(e) {
-        if (e.name == 'SyntaxError')
-          e.message = 'Evaluating ' + load.address + '\n\t' + e.message;
-        throw e;
-      }
-
-      // traceur overwrites System - write it back
-      if (load.name == '@traceur')
-        global.System = curSystem;
-    }
-    var deps = curFormat.deps(load, global, exec);
+    var deps = curFormat.deps(load, global);
 
     // remove duplicates from deps first
     for (var i = 0; i < deps.length; i++)
@@ -202,7 +202,7 @@ global.upgradeSystemLoader = function() {
     return {
       deps: deps,
       execute: function() {
-        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0), load, global, exec);
+        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0), load, global);
 
         if (output instanceof global.Module)
           return output;
@@ -320,7 +320,7 @@ global.upgradeSystemLoader = function() {
     detect: function(load) {
       return !!load.source.match(amdRegEx);
     },
-    deps: function(load, global, exec) {
+    deps: function(load, global) {
 
       var deps;
       var meta = load.metadata;
@@ -391,7 +391,7 @@ global.upgradeSystemLoader = function() {
       delete global.module;
       delete global.exports;
 
-      exec();
+      System.__exec(load);
 
       // deps not defined for an AMD module that defines a different name
       deps = deps || [];
@@ -439,7 +439,7 @@ global.upgradeSystemLoader = function() {
       cjsRequireRegEx.lastIndex = 0;
       return !!(cjsRequireRegEx.exec(load.source) || cjsExportsRegEx.exec(load.source));
     },
-    deps: function(load, global, exec) {
+    deps: function(load, global) {
       cjsExportsRegEx.lastIndex = 0;
       cjsRequireRegEx.lastIndex = 0;
 
@@ -457,7 +457,7 @@ global.upgradeSystemLoader = function() {
 
       return deps;
     },
-    execute: function(depNames, load, global, exec) {
+    execute: function(depNames, load, global) {
       var dirname = load.address.split('/');
       dirname.pop();
       dirname = dirname.join('/');
@@ -484,7 +484,7 @@ global.upgradeSystemLoader = function() {
 
       load.source = glString + load.source;
 
-      exec();
+      System.__exec(load);
 
       delete global._g;
 
@@ -520,7 +520,7 @@ global.upgradeSystemLoader = function() {
     detect: function() {
       return true;
     },
-    deps: function(load, global, exec) {
+    deps: function(load, global) {
       var match, deps;
       if (match = load.source.match(globalShimRegEx)) {
         deps = match[2].match(globalImportRegEx);
@@ -543,7 +543,7 @@ global.upgradeSystemLoader = function() {
       }
       return deps;
     },
-    execute: function(depNames, load, global, exec) {
+    execute: function(depNames, load, global) {
       var globalExport = load.metadata.globalExport;
 
       // first, we add all the dependency module properties to the global
@@ -564,7 +564,7 @@ global.upgradeSystemLoader = function() {
       if (globalExport)
         load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
 
-      exec();
+      System.__exec(load);
 
       // check for global changes, creating the globalObject for the module
       // if many globals, then a module object for those is created
@@ -851,8 +851,10 @@ global.upgradeSystemLoader = function() {
       .then(function(normalized) {
         System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
         return System.load(normalized);
+      })
+      .then(function() {
+        return '';
       });
-      return System.import(b).then(function() { return ''; });
     }
     return systemFetch.apply(this, arguments);
   }
@@ -871,6 +873,7 @@ global.upgradeSystemLoader = function() {
       return {
         deps: [],
         execute: function() {
+          System.__exec(load);
           return new Module({});
         }
       };

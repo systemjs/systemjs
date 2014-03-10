@@ -13,10 +13,12 @@ global.upgradeSystemLoader = function() {
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
 */
-(function() {
+(function(global) {
   // check we have System
   if (typeof System == 'undefined')
     throw 'System not defined. Include the `es6-module-loader.js` polyfill before SystemJS.';
+
+  var curSystem = System;
 
   /*
     __useDefault
@@ -65,7 +67,23 @@ global.upgradeSystemLoader = function() {
     });
   }
 
-})();
+  // define exec for custom instan
+  System.__exec = function(load) {
+    try {
+      Function('global', 'with(global) { ' + load.source + ' \n }'
+      + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n'"]+)/)
+      ? '\n//# sourceURL=' + load.address : '')).call(global, global);
+    }
+    catch(e) {
+      if (e.name == 'SyntaxError')
+        e.message = 'Evaluating ' + load.address + '\n\t' + e.message;
+      throw e;
+    }
+    // traceur overwrites System - write it back
+    if (load.name == '@traceur')
+      global.System = curSystem;
+  }
+})(typeof window == 'undefined' ? global : window);
 /*
   SystemJS map support
   
@@ -317,8 +335,10 @@ global.upgradeSystemLoader = function() {
       .then(function(normalized) {
         System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
         return System.load(normalized);
+      })
+      .then(function() {
+        return '';
       });
-      return System.import(b).then(function() { return ''; });
     }
     return systemFetch.apply(this, arguments);
   }
@@ -337,6 +357,7 @@ global.upgradeSystemLoader = function() {
       return {
         deps: [],
         execute: function() {
+          System.__exec(load);
           return new Module({});
         }
       };
