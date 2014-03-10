@@ -646,6 +646,7 @@ global.upgradeSystemLoader = function() {
 
     var curMatch, curMatchLength = 0;
     var curParent, curParentMatchLength = 0;
+    var subPath;
     
     // first find most specific contextual match
     if (parentName) {
@@ -675,7 +676,14 @@ global.upgradeSystemLoader = function() {
       }
     }
 
-    // if we didn't find a contextual match, try the global map
+    // if we found a contextual match, apply it now
+    if (curMatch) {
+      subPath = name.split('/').splice(curMatchLength).join('/');
+      name = System.map[curMatch] + (subPath ? '/' + subPath : '');
+      curMatchLength = 0;
+    }
+
+    // now do the global map
     for (var p in System.map) {
       var curMap = System.map[p];
       if (typeof curMap != 'string')
@@ -692,11 +700,12 @@ global.upgradeSystemLoader = function() {
     if (!curMatch)
       return name;
     
-    var subPath = name.split('/').splice(curMatchLength).join('/');
+    subPath = name.split('/').splice(curMatchLength).join('/');
     return System.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
   var systemNormalize = System.normalize.bind(System);
+  var mapped = {};
   System.normalize = function(name, parentName, parentAddress) {
     return Promise.resolve(systemNormalize(name, parentName, parentAddress))
     .then(function(name) {
