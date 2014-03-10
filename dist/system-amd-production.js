@@ -156,16 +156,12 @@ global.upgradeSystemLoader = function() {
           curParentMatchLength = p.split('/').length;
         }
       }
-      if (curMatch) {
-        var subPath = name.split('/').splice(curMatchLength).join('/');
-        return System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
-      }
     }
 
     // if we found a contextual match, apply it now
     if (curMatch) {
       subPath = name.split('/').splice(curMatchLength).join('/');
-      name = System.map[curMatch] + (subPath ? '/' + subPath : '');
+      name = System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
       curMatchLength = 0;
     }
 
@@ -183,7 +179,7 @@ global.upgradeSystemLoader = function() {
     }
     
     // return a match if any
-    if (!curMatch)
+    if (!curMatchLength)
       return name;
     
     subPath = name.split('/').splice(curMatchLength).join('/');
