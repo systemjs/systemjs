@@ -426,10 +426,19 @@ global.upgradeSystemLoader = function() {
   var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
+  var noop = function() {}
   var nodeProcess = {
     nextTick: function(f) {
       setTimeout(f, 7);
-    }
+    },
+    browser: true,
+    env: {},
+    argv: [],
+    on: noop,
+    once: noop,
+    off: noop,
+    emit: noop,
+    cwd: function() { return '/' }
   };
   System.set('@@nodeProcess', Module(nodeProcess));
 
