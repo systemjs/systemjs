@@ -133,9 +133,6 @@ global.upgradeSystemLoader = function() {
 
     load.source = load.source || '';
 
-    if (name == 'traceur')
-      return systemInstantiate.call(this, load);
-
     // set load.metadata.format from metadata or format hints in the source
     var format = load.metadata.format;
     if (!format) {
