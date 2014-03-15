@@ -213,7 +213,7 @@ global.upgradeSystemLoader = function() {
 /*
   SystemJS AMD Format
   Provides the AMD module format definition at System.format.amd
-  as well as a RequireJS-style require on System.requirejs
+  as well as a RequireJS-style require on System.require
 */
 (function() {
   System.formats.push('amd');
@@ -225,9 +225,9 @@ global.upgradeSystemLoader = function() {
 
   /*
     AMD-compatible require
-    To copy RequireJS, set window.require = window.requirejs = System.requirejs
+    To copy RequireJS, set window.require = window.requirejs = System.require
   */
-  var require = System.requirejs = function(names, callback, errback, referer) {
+  var require = System.require = function(names, callback, errback, referer) {
     // in amd, first arg can be a config object... we just ignore
     if (typeof names == 'object' && !(names instanceof Array))
       return require.apply(null, Array.prototype.splice.call(arguments, 1));
