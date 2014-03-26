@@ -148,7 +148,7 @@ index.html:
     System.paths['app/*'] = '/app/*.js'; 
   </script>
   <script>
-    System.import('main');
+    System.import('app/main');
   </script>
 ```
 
@@ -331,7 +331,7 @@ Map configuration alters the module name at the normalization stage. It is usefu
 Example:
 
 ```javascript
-  System.map['jquery'] = 'app/jquery@1.8.3';
+  System.map['jquery'] = 'app/jquery@1.8.2';
 
   System.import('jquery') // behaves identical to System.import('app/jquery@1.8.2')
 ```
@@ -468,7 +468,7 @@ Build the application into AMD and ES5:
 
 This will compile all ES6 files in the directory `app` into corresponding AMD files in `app-built`.
 
-In our application HTML, we now need to include [`traceur-runtime.js`](https://github.com/ModuleLoader/es6-module-loader/blob/master/dist/traceur-runtime.js) before es6-module-loader.js:
+In our application HTML, we now need to include `traceur-runtime.js` (this is found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
 
 ```html
   <script src="traceur-runtime.js"></script>
@@ -540,7 +540,7 @@ Replace the `system.js` file with `dist/system-amd-production.js`.
 Since we have compiled everything into AMD with the above, our production config can still work:
 
 ```html
-  <script src="system-production.js"></script>
+  <script src="system-amd-production.js"></script>
   <script>
     System.paths['app-built'] = '/app-built.js';
     System.bundles['app-built'] = ['app/main'];
