@@ -8,7 +8,7 @@
 (function(global) {
 
 global.upgradeSystemLoader = function() {
-  delete global.upgradeSystemLoader;
+  global.upgradeSystemLoader = undefined;
 /*
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
@@ -53,7 +53,6 @@ global.upgradeSystemLoader = function() {
   
   
   var systemImport = System['import'];
-  var loadingPromises = {};
   System['import'] = function(name, options) {
     // patch System.import to do normalization
     return new Promise(function(resolve) {
@@ -80,8 +79,10 @@ global.upgradeSystemLoader = function() {
       throw e;
     }
     // traceur overwrites System - write it back
-    if (load.name == '@traceur')
+    if (load.name == '@traceur') {
+      global.traceurSystem = global.System;
       global.System = curSystem;
+    }
   }
 })(typeof window == 'undefined' ? global : window);
 /*
@@ -186,10 +187,10 @@ global.upgradeSystemLoader = function() {
     return System.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
-  var systemNormalize = System.normalize.bind(System);
+  var systemNormalize = System.normalize;
   var mapped = {};
   System.normalize = function(name, parentName, parentAddress) {
-    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
+    return Promise.resolve(systemNormalize.call(System, name, parentName, parentAddress))
     .then(function(name) {
       return applyMap(name, parentName);
     });
@@ -654,8 +655,9 @@ global.upgradeSystemLoader = function() {
       global.upgradeSystemLoader();
     }
   }
-  else
+  else {
     global.upgradeSystemLoader();
+  }
 })();
 
 
