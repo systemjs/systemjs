@@ -1,1 +1,1 @@
-export var mapdep = 'mapdep';
+exports.mapdep = 'mapdep';

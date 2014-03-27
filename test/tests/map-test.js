@@ -1,1 +1,1 @@
-export { dep as maptest } from './map-test-dep';
+exports.maptest = require('./map-test-dep').dep;

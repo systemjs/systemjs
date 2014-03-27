@@ -11,80 +11,6 @@
   System['import']('test-runner').then(function(runner) {
     runner.execute([
       {
-        name: 'Wrapper module support',
-        run: function(complete, err) {
-          System['import']('tests/wrapper').then(complete, err);
-        },
-        confirm: function(m) {
-          if (m['default'] != 'default1')
-            return 'Wrapper module not defined.';
-        }
-      },
-      {
-        name: 'Basic exporting & importing',
-        run: function(complete, err) {
-          var m1, m2, m3, m4, err;
-          var checkComplete = function() {
-            if (m1 && m2 && m3 && m4 && err)
-              complete(m1, m2, m3, m4);
-          }
-          System['import']('tests/default1').then(function(_m1) {
-            if (m1 === undefined)
-              m1 = null;
-            else
-              m1 = _m1;
-            checkComplete();
-          })['catch'](err);
-          System['import']('tests/default1').then(function(_m1) {
-            if (m1 === undefined)
-              m1 = null;
-            else
-              m1 = _m1;
-            checkComplete();
-          })['catch'](err);
-          System['import']('tests/default2').then(function(_m2) {
-            m2 = _m2;
-            checkComplete();
-          })['catch'](err);
-          System['import']('tests/asdf').then(function() {
-          }, function(_err) {
-            err = _err;
-            checkComplete();
-          })['catch'](err);
-          System['import']('tests/default3').then(function(_m3) {
-            m3 = _m3;
-            checkComplete();
-          })['catch'](err);
-          System['import']('tests/module').then(function(_m4) {
-            m4 = _m4;
-            checkComplete();
-          })['catch'](err);
-        },
-        confirm: function(m1, m2, m3, m4) {
-          if (m1['default'] != 'default1')
-            return 'Error defining default 1';
-          if (m2['default'] != 'default2')
-            return 'Error defining default 2';
-          if (m3['default'] != 'default3')
-            return 'Error defining default 3';
-          if (m4.test != 'default3')
-            return 'Error defining module';
-        }
-      },
-      {
-        name: 'Importing a mapped loaded module',
-        run: function(complete, err) {
-          System.map['default1'] = 'tests/default1';
-          System['import']('default1').then(function() {
-            System['import']('default1').then(complete, err);
-          }, err);
-        },
-        confirm: function(m) {
-          if (!m)
-            return 'no module';
-        }
-      },
-      {
         name: 'Error handling',
         run: function(complete, err) {
           System['import']('tests/error').then(complete, err);
@@ -294,14 +220,6 @@
         }
       },
       {
-        name: 'Loading ES6 with format hint',
-        run: function(complete, err) {
-          System['import']('tests/es6-format').then(complete, err);
-        },
-        confirm: function(m) {
-        }
-      },
-      {
         name: 'Loading AMD with format hint',
         run: function(complete, err) {
           System['import']('tests/amd-format').then(complete, err);
@@ -319,28 +237,6 @@
         confirm: function(m) {
           if (m.cjs != 'cjs')
             return 'CJS not loaded';
-        }
-      },
-      {
-        name: 'Module Name meta',
-        run: function(complete, err) {
-          System['import']('tests/reflection').then(complete, err);
-        },
-        confirm: function(m) {
-          if (m.myname != 'tests/reflection')
-            return 'Module name not returned';
-        }
-      },
-      {
-        name: 'Relative dyanamic loading',
-        run: function(complete, err) {
-          System['import']('tests/reldynamic').then(function(m) {
-            m.dynamicLoad().then(complete, err);
-          }, err);
-        },
-        confirm: function(m) {
-          if (m.dynamic != 'module')
-            return 'Dynamic load failed';
         }
       },
       {
@@ -394,13 +290,9 @@
       {
         name: 'Legacy plugin',
         run: function(complete, err) {
-          System['import']('tests/default1.js!tests/legacy-plugin').then(complete, err);
+          System['import']('tests/global.js!tests/legacy-plugin').then(complete, err);
         },
         confirm: function(m) {
-          if (!m['default'])
-            return 'No Default';
-          if (!m.plugin)
-            return 'Not transpiled';
         }
       },
       {
@@ -422,6 +314,110 @@
         confirm: function(m) {
           if (typeof m.chain != 'function')
             return 'Not loaded';
+        }
+      },
+      {
+        name: 'Wrapper module support',
+        run: function(complete, err) {
+          System['import']('tests/wrapper').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m['default'] != 'default1')
+            return 'Wrapper module not defined.';
+        }
+      },
+      {
+        name: 'Basic exporting & importing',
+        run: function(complete, err) {
+          var m1, m2, m3, m4, err;
+          var checkComplete = function() {
+            if (m1 && m2 && m3 && m4 && err)
+              complete(m1, m2, m3, m4);
+          }
+          System['import']('tests/default1').then(function(_m1) {
+            if (m1 === undefined)
+              m1 = null;
+            else
+              m1 = _m1;
+            checkComplete();
+          })['catch'](err);
+          System['import']('tests/default1').then(function(_m1) {
+            if (m1 === undefined)
+              m1 = null;
+            else
+              m1 = _m1;
+            checkComplete();
+          })['catch'](err);
+          System['import']('tests/default2').then(function(_m2) {
+            m2 = _m2;
+            checkComplete();
+          })['catch'](err);
+          System['import']('tests/asdf').then(function() {
+          }, function(_err) {
+            err = _err;
+            checkComplete();
+          })['catch'](err);
+          System['import']('tests/default3').then(function(_m3) {
+            m3 = _m3;
+            checkComplete();
+          })['catch'](err);
+          System['import']('tests/module').then(function(_m4) {
+            m4 = _m4;
+            checkComplete();
+          })['catch'](err);
+        },
+        confirm: function(m1, m2, m3, m4) {
+          if (m1['default'] != 'default1')
+            return 'Error defining default 1';
+          if (m2['default'] != 'default2')
+            return 'Error defining default 2';
+          if (m3['default'] != 'default3')
+            return 'Error defining default 3';
+          if (m4.test != 'default3')
+            return 'Error defining module';
+        }
+      },
+      {
+        name: 'Importing a mapped loaded module',
+        run: function(complete, err) {
+          System.map['default1'] = 'tests/default1';
+          System['import']('default1').then(function() {
+            System['import']('default1').then(complete, err);
+          }, err);
+        },
+        confirm: function(m) {
+          if (!m)
+            return 'no module';
+        }
+      },
+      {
+        name: 'Loading ES6 with format hint',
+        run: function(complete, err) {
+          System['import']('tests/es6-format').then(complete, err);
+        },
+        confirm: function(m) {
+        }
+      },
+      {
+        name: 'Module Name meta',
+        run: function(complete, err) {
+          System['import']('tests/reflection').then(complete, err);
+        },
+        confirm: function(m) {
+          if (m.myname != 'tests/reflection')
+            return 'Module name not returned';
+        }
+      },
+      {
+        name: 'Relative dyanamic loading',
+        run: function(complete, err) {
+          System['import']('tests/reldynamic').then(function(m) {
+            m.dynamicLoad().then(complete, err);
+          }, err);
+        },
+        confirm: function(m) {
+          if (m.dynamic != 'module')
+            return 'Dynamic load failed';
         }
       }
     ]);

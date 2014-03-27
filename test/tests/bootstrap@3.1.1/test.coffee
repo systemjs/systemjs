@@ -1,1 +1,1 @@
-export var p = 4;
+exports.p = 4;

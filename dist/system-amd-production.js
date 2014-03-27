@@ -311,7 +311,7 @@ global.upgradeSystemLoader = function() {
     // amd require
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
-        return System.import(name, referer);
+        return System['import'](name, referer);
       })).then(function(mods) {
         return callback.apply(this, mods);
       }, errback);

@@ -1,1 +1,1 @@
-export * from 'maptest';
+module.exports = require('maptest');

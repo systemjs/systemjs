@@ -181,7 +181,7 @@ global.upgradeSystemLoader = function() {
     if (format == 'es6' || !format && load.source.match(es6RegEx)) {
       // dynamically load Traceur if necessary
       if (!global.traceur)
-        return System.import('@traceur', { address: traceurSrc }).then(function() {
+        return System['import']('@traceur', { address: traceurSrc }).then(function() {
           return systemInstantiate.call(System, load);
         });
       else
@@ -387,7 +387,7 @@ global.upgradeSystemLoader = function() {
           System.defined[name] = {
             deps: _deps,
             execute: function() {
-              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0), _load);
+              var execs = prepareExecute(Array.prototype.splice.call(arguments, 0, arguments.length), _load);
               var output = factory.apply(global, execs.deps) || execs.module && execs.module.exports;
 
               if (output instanceof global.Module)
@@ -571,6 +571,7 @@ global.upgradeSystemLoader = function() {
       return deps;
     },
     execute: function(depNames, load, global) {
+      var hasOwnProperty = global.hasOwnProperty;
       var globalExport = load.metadata.globalExport;
 
       // first, we add all the dependency module properties to the global
@@ -585,7 +586,7 @@ global.upgradeSystemLoader = function() {
       // in order to detect changes
       var globalObj = {};
       for (var g in global)
-        if (global.hasOwnProperty(g))
+        if (!hasOwnProperty || global.hasOwnProperty(g))
           globalObj[g] = global[g];
 
       if (globalExport)
@@ -606,7 +607,7 @@ global.upgradeSystemLoader = function() {
       else {
         moduleGlobal = {};
         for (var g in global) {
-          if (global.hasOwnProperty(g) && g != global && globalObj[g] != global[g]) {
+          if ((!hasOwnProperty || global.hasOwnProperty(g)) && g != global && globalObj[g] != global[g]) {
             moduleGlobal[g] = global[g];
             if (singleGlobal) {
               if (singleGlobal !== global[g])

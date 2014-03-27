@@ -1,1 +1,1 @@
-export var output = "plugin output";
+exports.output = "plugin output";
