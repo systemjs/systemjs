@@ -1185,7 +1185,7 @@ global.upgradeSystemLoader = function() {
       // determine the current script path as the base path
       var scripts = document.getElementsByTagName('script');
       var curPath = scripts[scripts.length - 1].src;
-      var basePath = curPath.substr(0, sLastIndexOf.call(curPath, '/') + 1);
+      var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );

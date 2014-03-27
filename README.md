@@ -14,9 +14,9 @@ Features include:
 * **[Plugins](#plugins):** A dynamic plugin system for modular loading rules.
 * **[Bundles](#production-bundles):** Dynamically link requires to bundle files.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (15KB minified) for a combined footprint of 27KB. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7.4KB) for a combined total footprint of 12KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
-Runs in the browser and NodeJS.
+Runs in IE8+ and NodeJS.
 
 Contents
 ---
@@ -40,13 +40,14 @@ Contents
   * [Production Bundles](#production-bundles)
   * [CSP-Compatible AMD Production](#csp-compatible-amd-production)
 4. [Advanced Customization](#advanced-customization)
+5. [Contributing](#contributing)
 
 Getting Started
 ---
 
 ### Including the Loader
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.5.1/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.5.1/dist/traceur.js) from the [ES6-loader polyfill](https://github.com/ModuleLoader/es6-module-loader) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.5.4/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/google/traceur-compiler/blob/0.0.32/bin/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 Then include `dist/system.js` with a script tag in the page:
 
@@ -255,6 +256,23 @@ app/sample-global.js:
   System.import('app/sample-global').then(function(sampleGlobal) {
     console.log(sampleGlobal); // 'world'
   });
+```
+
+**IE8 Support**
+
+In IE8, automatic global detection only works for globals defined to the global object directly:
+
+```javascript
+  (function(global) {
+    global.myGlobal = 'This works in IE8';
+  })(typeof window != 'undefined' ? window : global);
+```
+
+Implicit globals aren't enumerable on the `window` object so will require the global export to be specified with a shim:
+
+```javascript
+  var someGlobal = 'IE8 wont detect this';
+  anotherGlobal = 'unless using an explicit shim';
 ```
 
 #### Specifying the Global Export Name
@@ -672,6 +690,25 @@ Each loader hook can either return directly or return a thenable for the value.
 
 The other loader hooks are also treated identically to the specification.
 
+## Contributing
+
+Contributions are welcome. The goal of SystemJS is to encourage loaders made out of small self-contained features.
+
+Since different builds can be created for different use cases, new builds or new features are welcome to be submitted for
+consideration with pull requests.
+
+#### Running the tests
+
+The tests assume that [Traceur Compiler](https://github.com/google/traceur-compiler), [ES6 Module Loader](https://github.com/ModuleLoader/es6-module-loader) 
+and [SystemJS](https://github.com/systemjs/systemjs) are all cloned into the same folder:
+
+```
+  traceur-compiler/
+  es6-module-loader/
+  systemjs/
+```
+
+Then run `systemjs/tests/test.html` in a browser over a local server or with file access flags enabled.
 
 License
 ---
