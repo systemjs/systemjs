@@ -19,7 +19,7 @@ global.upgradeSystemLoader = function() {
     return -1;
   };
 
-  var sLastIndexOf = String.prototype.lastIndexOf || function(c) {
+  var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
     for (var i = this.length - 1; i >= 0; i--) {
       if (this[i] === c) {
         return i;
@@ -27,8 +27,6 @@ global.upgradeSystemLoader = function() {
     }
     return -i;
   };
-
-  var aLastIndexOf = Array.prototype.lastIndexOf || sLastIndexOf;
 /*
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
@@ -266,7 +264,7 @@ global.upgradeSystemLoader = function() {
       })(factory);
 
     for (var i = 0; i < deps.length; i++)
-      if (aLastIndexOf.call(deps, deps[i]) != i)
+      if (lastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     var instantiate = {

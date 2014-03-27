@@ -1,1 +1,1 @@
-shimdep = shimmapdep;
+window.shimdep = shimmapdep;

@@ -19,7 +19,7 @@ global.upgradeSystemLoader = function() {
     return -1;
   };
 
-  var sLastIndexOf = String.prototype.lastIndexOf || function(c) {
+  var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
     for (var i = this.length - 1; i >= 0; i--) {
       if (this[i] === c) {
         return i;
@@ -27,8 +27,6 @@ global.upgradeSystemLoader = function() {
     }
     return -i;
   };
-
-  var aLastIndexOf = Array.prototype.lastIndexOf || sLastIndexOf;
 /*
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
@@ -136,7 +134,7 @@ global.upgradeSystemLoader = function() {
     var curScript = document.getElementsByTagName('script');
     curScript = curScript[curScript.length - 1];
     // set the path to traceur
-    var traceurSrc = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, sLastIndexOf.call(curScript.src, '/') + 1) + 'traceur.js';
+    var traceurSrc = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, curScript.src.lastIndexOf('/') + 1) + 'traceur.js';
   }
 
   // also in ESML, build.js
@@ -214,7 +212,7 @@ global.upgradeSystemLoader = function() {
 
     // remove duplicates from deps first
     for (var i = 0; i < deps.length; i++)
-      if (aLastIndexOf.call(deps, deps[i]) != i)
+      if (lastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     return {
@@ -278,7 +276,7 @@ global.upgradeSystemLoader = function() {
 
   function prepareDeps(deps, meta) {
     for (var i = 0; i < deps.length; i++)
-      if (aLastIndexOf.call(deps, deps[i]) != i)
+      if (lastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     // remove system dependencies
@@ -761,12 +759,12 @@ global.upgradeSystemLoader = function() {
     return Promise.resolve(systemNormalize(name, parentName, parentAddress))
     .then(function(name) {
       // if this is a plugin, normalize the plugin name and the argument
-      var pluginIndex = sLastIndexOf.call(name, '!');
+      var pluginIndex = name.lastIndexOf('!');
       if (pluginIndex != -1) {
         var argumentName = name.substr(0, pluginIndex);
 
         // plugin name is part after "!" or the extension itself
-        var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(sLastIndexOf.call(argumentName, '.') + 1);
+        var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
 
         // normalize the plugin name relative to the same parent
         return new Promise(function(resolve) {
@@ -792,7 +790,7 @@ global.upgradeSystemLoader = function() {
     var name = load.name;
 
     // plugin
-    var pluginIndex = sLastIndexOf.call(name, '!');
+    var pluginIndex = name.lastIndexOf('!');
     if (pluginIndex != -1) {
       var pluginName = name.substr(pluginIndex + 1);
 
