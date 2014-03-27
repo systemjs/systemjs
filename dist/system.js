@@ -9,6 +9,26 @@
 
 global.upgradeSystemLoader = function() {
   global.upgradeSystemLoader = undefined;
+
+  // Define an IE-friendly shim good-enough for purposes
+  var indexOf = Array.prototype.indexOf || function(item) { 
+    for (var i = 0, thisLen = this.length; i < thisLen; i++) {
+      if (this[i] === item)
+        return i;
+    }
+    return -1;
+  };
+
+  var sLastIndexOf = String.prototype.lastIndexOf || function(c) {
+    for (var i = this.length - 1; i >= 0; i--) {
+      if (this[i] === c) {
+        return i;
+      }
+    }
+    return -i;
+  };
+
+  var aLastIndexOf = Array.prototype.lastIndexOf || sLastIndexOf;
 /*
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
@@ -116,7 +136,7 @@ global.upgradeSystemLoader = function() {
     var curScript = document.getElementsByTagName('script');
     curScript = curScript[curScript.length - 1];
     // set the path to traceur
-    var traceurSrc = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, curScript.src.lastIndexOf('/') + 1) + 'traceur.js';
+    var traceurSrc = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, sLastIndexOf.call(curScript.src, '/') + 1) + 'traceur.js';
   }
 
   // also in ESML, build.js
@@ -194,7 +214,7 @@ global.upgradeSystemLoader = function() {
 
     // remove duplicates from deps first
     for (var i = 0; i < deps.length; i++)
-      if (deps.lastIndexOf(deps[i]) != i)
+      if (aLastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     return {
@@ -250,28 +270,28 @@ global.upgradeSystemLoader = function() {
   }
   function makeRequire(parentName, deps, depsNormalized) {
     return function(names, callback, errback) {
-      if (typeof names == 'string' && deps.indexOf(names) != -1)
-        return System.getModule(depsNormalized[deps.indexOf(names)]);
+      if (typeof names == 'string' && indexOf.call(deps, names) != -1)
+        return System.getModule(depsNormalized[indexOf.call(deps, names)]);
       return require(names, callback, errback, { name: parentName });
     }
   }
 
   function prepareDeps(deps, meta) {
     for (var i = 0; i < deps.length; i++)
-      if (deps.lastIndexOf(deps[i]) != i)
+      if (aLastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     // remove system dependencies
     var index;
-    if ((index = deps.indexOf('require')) != -1) {
+    if ((index = indexOf.call(deps, 'require')) != -1) {
       meta.requireIndex = index;
       deps.splice(index, 1);
     }
-    if ((index = deps.indexOf('exports')) != -1) {
+    if ((index = indexOf.call(deps, 'exports')) != -1) {
       meta.exportsIndex = index;
       deps.splice(index, 1);
     }
-    if ((index = deps.indexOf('module')) != -1) {
+    if ((index = indexOf.call(deps, 'module')) != -1) {
       meta.moduleIndex = index;
       deps.splice(index, 1);
     }
@@ -386,8 +406,8 @@ global.upgradeSystemLoader = function() {
       global.define.amd = {};
 
       // ensure no NodeJS environment detection
-      delete global.module;
-      delete global.exports;
+      global.module = undefined;
+      global.exports = undefined;
 
       System.__exec(load);
 
@@ -396,7 +416,7 @@ global.upgradeSystemLoader = function() {
 
       deps = prepareDeps(deps, meta);
 
-      delete global.define;
+      global.define = undefined;
 
       meta.deps = deps;
 
@@ -476,7 +496,7 @@ global.upgradeSystemLoader = function() {
         exports: {},
         process: nodeProcess,
         require: function(d) {
-          var index = deps.indexOf(d);
+          var index = indexOf.call(deps, d);
           if (index != -1)
             return System.getModule(depNames[index]);
         },
@@ -493,7 +513,7 @@ global.upgradeSystemLoader = function() {
 
       System.__exec(load);
 
-      delete global._g;
+      global._g = undefined;
 
       return globals.module.exports;
     }
@@ -729,20 +749,18 @@ global.upgradeSystemLoader = function() {
   System.normalize = function(name, parentName, parentAddress) {
     // if parent is a plugin, normalize against the parent plugin argument only
     var parentPluginIndex;
-    if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
+    if (parentName && (parentPluginIndex = indexOf.call(parentName, '!')) != -1)
       parentName = parentName.substr(0, parentPluginIndex);
 
     return Promise.resolve(systemNormalize(name, parentName, parentAddress))
     .then(function(name) {
-      name = name.trim();
-
       // if this is a plugin, normalize the plugin name and the argument
-      var pluginIndex = name.lastIndexOf('!');
+      var pluginIndex = sLastIndexOf.call(name, '!');
       if (pluginIndex != -1) {
         var argumentName = name.substr(0, pluginIndex);
 
         // plugin name is part after "!" or the extension itself
-        var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
+        var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(sLastIndexOf.call(argumentName, '.') + 1);
 
         // normalize the plugin name relative to the same parent
         return new Promise(function(resolve) {
@@ -768,7 +786,7 @@ global.upgradeSystemLoader = function() {
     var name = load.name;
 
     // plugin
-    var pluginIndex = name.lastIndexOf('!');
+    var pluginIndex = sLastIndexOf.call(name, '!');
     if (pluginIndex != -1) {
       var pluginName = name.substr(pluginIndex + 1);
 
@@ -855,7 +873,7 @@ global.upgradeSystemLoader = function() {
   System.fetch = function(load) {
     // if this module is in a bundle, load the bundle first then
     for (var b in System.bundles) {
-      if (System.bundles[b].indexOf(load.name) == -1)
+      if (indexOf.call(System.bundles[b], load.name) == -1)
         continue;
       // we do manual normalization in case the bundle is mapped
       // this is so we can still know the normalized name is a bundle
@@ -1002,9 +1020,9 @@ global.upgradeSystemLoader = function() {
     var v1Parts = v1.split('.');
     var v2Parts = v2.split('.');
     var prereleaseIndex;
-    if (v1Parts[2] && (prereleaseIndex = v1Parts[2].indexOf('-')) != -1)
+    if (v1Parts[2] && (prereleaseIndex = indexOf.call(v1Parts[2], '-')) != -1)
       v1Parts.splice(2, 1, v1Parts[2].substr(0, prereleaseIndex), v1Parts[2].substr(prereleaseIndex + 1));
-    if (v2Parts[2] && (prereleaseIndex = v2Parts[2].indexOf('-')) != -1)
+    if (v2Parts[2] && (prereleaseIndex = indexOf.call(v2Parts[2], '-')) != -1)
       v2Parts.splice(2, 1, v2Parts[2].substr(0, prereleaseIndex), v2Parts[2].substr(prereleaseIndex + 1));
     for (var i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
       if (!v1Parts[i])
@@ -1028,7 +1046,7 @@ global.upgradeSystemLoader = function() {
     return Promise.resolve(systemNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
       var version, semverMatch, nextChar, versions;
-      var index = normalized.indexOf('@');
+      var index = indexOf.call(normalized, '@');
 
       // see if this module corresponds to a package already in our versioned packages list
       
@@ -1134,7 +1152,7 @@ global.upgradeSystemLoader = function() {
       // no match
       // record the package and semver for reuse since we're now asking the server
       // x.y and x versions will now be latest by default, so they are useful in the version list
-      if (versions.indexOf(version) == -1) {
+      if (indexOf.call(versions, version) == -1) {
         versions.push(version);
         versions.sort(semverCompare);
 
@@ -1142,9 +1160,9 @@ global.upgradeSystemLoader = function() {
 
         // if this is an x.y.z, remove any x.y, x
         // if this is an x.y, remove any x
-        if (semverMatch[3] && (index = versions.indexOf(semverMatch[1] + '.' + semverMatch[2])) != -1)
+        if (semverMatch[3] && (index = indexOf.call(versions, semverMatch[1] + '.' + semverMatch[2])) != -1)
           versions.splice(index, 1);
-        if (semverMatch[2] && (index = versions.indexOf(semverMatch[1])) != -1)
+        if (semverMatch[2] && (index = indexOf.call(versions, semverMatch[1])) != -1)
           versions.splice(index, 1);
 
         packageVersions[packageName] = versions.length == 1 ? versions[0] : versions;
@@ -1163,7 +1181,7 @@ global.upgradeSystemLoader = function() {
       // determine the current script path as the base path
       var scripts = document.getElementsByTagName('script');
       var curPath = scripts[scripts.length - 1].src;
-      var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+      var basePath = curPath.substr(0, sLastIndexOf.call(curPath, '/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );

@@ -9,6 +9,26 @@
 
 global.upgradeSystemLoader = function() {
   global.upgradeSystemLoader = undefined;
+
+  // Define an IE-friendly shim good-enough for purposes
+  var indexOf = Array.prototype.indexOf || function(item) { 
+    for (var i = 0, thisLen = this.length; i < thisLen; i++) {
+      if (this[i] === item)
+        return i;
+    }
+    return -1;
+  };
+
+  var sLastIndexOf = String.prototype.lastIndexOf || function(c) {
+    for (var i = this.length - 1; i >= 0; i--) {
+      if (this[i] === c) {
+        return i;
+      }
+    }
+    return -i;
+  };
+
+  var aLastIndexOf = Array.prototype.lastIndexOf || sLastIndexOf;
 /*
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
@@ -243,7 +263,7 @@ global.upgradeSystemLoader = function() {
       })(factory);
 
     for (var i = 0; i < deps.length; i++)
-      if (deps.lastIndexOf(deps[i]) != i)
+      if (lastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     var instantiate = {
@@ -333,7 +353,7 @@ global.upgradeSystemLoader = function() {
   System.fetch = function(load) {
     // if this module is in a bundle, load the bundle first then
     for (var b in System.bundles) {
-      if (System.bundles[b].indexOf(load.name) == -1)
+      if (indexOf.call(System.bundles[b], load.name) == -1)
         continue;
       // we do manual normalization in case the bundle is mapped
       // this is so we can still know the normalized name is a bundle
@@ -480,9 +500,9 @@ global.upgradeSystemLoader = function() {
     var v1Parts = v1.split('.');
     var v2Parts = v2.split('.');
     var prereleaseIndex;
-    if (v1Parts[2] && (prereleaseIndex = v1Parts[2].indexOf('-')) != -1)
+    if (v1Parts[2] && (prereleaseIndex = indexOf.call(v1Parts[2], '-')) != -1)
       v1Parts.splice(2, 1, v1Parts[2].substr(0, prereleaseIndex), v1Parts[2].substr(prereleaseIndex + 1));
-    if (v2Parts[2] && (prereleaseIndex = v2Parts[2].indexOf('-')) != -1)
+    if (v2Parts[2] && (prereleaseIndex = indexOf.call(v2Parts[2], '-')) != -1)
       v2Parts.splice(2, 1, v2Parts[2].substr(0, prereleaseIndex), v2Parts[2].substr(prereleaseIndex + 1));
     for (var i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
       if (!v1Parts[i])
@@ -506,7 +526,7 @@ global.upgradeSystemLoader = function() {
     return Promise.resolve(systemNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
       var version, semverMatch, nextChar, versions;
-      var index = normalized.indexOf('@');
+      var index = indexOf.call(normalized, '@');
 
       // see if this module corresponds to a package already in our versioned packages list
       
@@ -612,7 +632,7 @@ global.upgradeSystemLoader = function() {
       // no match
       // record the package and semver for reuse since we're now asking the server
       // x.y and x versions will now be latest by default, so they are useful in the version list
-      if (versions.indexOf(version) == -1) {
+      if (indexOf.call(versions, version) == -1) {
         versions.push(version);
         versions.sort(semverCompare);
 
@@ -620,9 +640,9 @@ global.upgradeSystemLoader = function() {
 
         // if this is an x.y.z, remove any x.y, x
         // if this is an x.y, remove any x
-        if (semverMatch[3] && (index = versions.indexOf(semverMatch[1] + '.' + semverMatch[2])) != -1)
+        if (semverMatch[3] && (index = indexOf.call(versions, semverMatch[1] + '.' + semverMatch[2])) != -1)
           versions.splice(index, 1);
-        if (semverMatch[2] && (index = versions.indexOf(semverMatch[1])) != -1)
+        if (semverMatch[2] && (index = indexOf.call(versions, semverMatch[1])) != -1)
           versions.splice(index, 1);
 
         packageVersions[packageName] = versions.length == 1 ? versions[0] : versions;
@@ -641,7 +661,7 @@ global.upgradeSystemLoader = function() {
       // determine the current script path as the base path
       var scripts = document.getElementsByTagName('script');
       var curPath = scripts[scripts.length - 1].src;
-      var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+      var basePath = curPath.substr(0, sLastIndexOf.call(curPath, '/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
