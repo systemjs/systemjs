@@ -753,7 +753,7 @@ global.upgradeSystemLoader = function() {
   System.normalize = function(name, parentName, parentAddress) {
     // if parent is a plugin, normalize against the parent plugin argument only
     var parentPluginIndex;
-    if (parentName && (parentPluginIndex = indexOf.call(parentName, '!')) != -1)
+    if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
       parentName = parentName.substr(0, parentPluginIndex);
 
     return Promise.resolve(systemNormalize(name, parentName, parentAddress))
@@ -1050,7 +1050,7 @@ global.upgradeSystemLoader = function() {
     return Promise.resolve(systemNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
       var version, semverMatch, nextChar, versions;
-      var index = indexOf.call(normalized, '@');
+      var index = normalized.indexOf('@');
 
       // see if this module corresponds to a package already in our versioned packages list
       
@@ -1061,7 +1061,7 @@ global.upgradeSystemLoader = function() {
           if (normalized.substr(0, p.length) != p)
             continue;
 
-          nextChar = normalized.charAt(p.length);
+          nextChar = normalized.substr(p.length, 1);
 
           if (nextChar && nextChar != '/')
             continue;
@@ -1146,7 +1146,7 @@ global.upgradeSystemLoader = function() {
           var curVersion = versions[i];
           // if I have requested x.y, find an x.y.z-b
           // if I have requested x, find any x.y / x.y.z-b
-          if (curVersion.substr(0, version.length) == version && curVersion.charAt(version.length).match(/^[\.\-]?$/)) {
+          if (curVersion.substr(0, version.length) == version && curVersion.substr(version.length, 1).match(/^[\.\-]?$/)) {
             // if a minimum version, then check too
             if (!minVersion || minVersion && semverCompare(curVersion, minVersion) != -1)
               return packageName + '@' + curVersion + normalized.substr(packageName.length + versionLength + 1);
