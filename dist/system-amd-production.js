@@ -154,6 +154,7 @@ global.upgradeSystemLoader = function() {
     var curMatch, curMatchLength = 0;
     var curParent, curParentMatchLength = 0;
     var subPath;
+    var nameParts;
     
     // first find most specific contextual match
     if (parentName) {
@@ -181,7 +182,8 @@ global.upgradeSystemLoader = function() {
 
     // if we found a contextual match, apply it now
     if (curMatch) {
-      subPath = name.split('/').splice(curMatchLength).join('/');
+      nameParts = name.split('/');
+      subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
       name = System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
       curMatchLength = 0;
     }
@@ -203,7 +205,8 @@ global.upgradeSystemLoader = function() {
     if (!curMatchLength)
       return name;
     
-    subPath = name.split('/').splice(curMatchLength).join('/');
+    nameParts = name.split('/');
+    subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
     return System.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
@@ -263,7 +266,7 @@ global.upgradeSystemLoader = function() {
       })(factory);
 
     for (var i = 0; i < deps.length; i++)
-      if (lastIndexOf.call(deps, deps[i]) != i)
+      if (aLastIndexOf.call(deps, deps[i]) != i)
         deps.splice(i--, 1);
 
     var instantiate = {
@@ -306,7 +309,7 @@ global.upgradeSystemLoader = function() {
   var require = System.requirejs = function(names, callback, errback, referer) {
     // in amd, first arg can be a config object... we just ignore
     if (typeof names == 'object' && !(names instanceof Array))
-      return require.apply(null, Array.prototype.splice.call(arguments, 1));
+      return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
 
     // amd require
     if (names instanceof Array)

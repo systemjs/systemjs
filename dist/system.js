@@ -220,7 +220,7 @@ global.upgradeSystemLoader = function() {
     return {
       deps: deps,
       execute: function() {
-        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0), load, global);
+        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load, global);
 
         if (output instanceof global.Module)
           return output;
@@ -251,7 +251,7 @@ global.upgradeSystemLoader = function() {
   var require = System.require = function(names, callback, errback, referer) {
     // in amd, first arg can be a config object... we just ignore
     if (typeof names == 'object' && !(names instanceof Array))
-      return require.apply(null, Array.prototype.splice.call(arguments, 1));
+      return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
 
     // amd require
     if (names instanceof Array)
@@ -607,6 +607,8 @@ global.upgradeSystemLoader = function() {
       else {
         moduleGlobal = {};
         for (var g in global) {
+          if (!hasOwnProperty && (g == 'sessionStorage' || g == 'localStorage' || g == 'clipboardData' || g == 'frames'))
+            continue;
           if ((!hasOwnProperty || global.hasOwnProperty(g)) && g != global && globalObj[g] != global[g]) {
             moduleGlobal[g] = global[g];
             if (singleGlobal) {
@@ -675,6 +677,7 @@ global.upgradeSystemLoader = function() {
     var curMatch, curMatchLength = 0;
     var curParent, curParentMatchLength = 0;
     var subPath;
+    var nameParts;
     
     // first find most specific contextual match
     if (parentName) {
@@ -702,7 +705,8 @@ global.upgradeSystemLoader = function() {
 
     // if we found a contextual match, apply it now
     if (curMatch) {
-      subPath = name.split('/').splice(curMatchLength).join('/');
+      nameParts = name.split('/');
+      subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
       name = System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
       curMatchLength = 0;
     }
@@ -724,7 +728,8 @@ global.upgradeSystemLoader = function() {
     if (!curMatchLength)
       return name;
     
-    subPath = name.split('/').splice(curMatchLength).join('/');
+    nameParts = name.split('/');
+    subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
     return System.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
