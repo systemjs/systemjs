@@ -9,7 +9,8 @@
       '~/*': '*.js'
     };
 
-    System.import('~/test-shader').then(function(s) {
+    System.import('npm:voxel-demo').then(function(s) {
+      console.log('loaded');
     }).catch(function(e) {
       setTimeout(function() {
         throw e;
