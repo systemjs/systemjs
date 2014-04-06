@@ -265,7 +265,7 @@ global.upgradeSystemLoader = function() {
 
     else
       throw 'Invalid require';
-  }
+  };
   function makeRequire(parentName, deps, depsNormalized) {
     return function(names, callback, errback) {
       if (typeof names == 'string' && indexOf.call(deps, names) != -1)
@@ -342,23 +342,20 @@ global.upgradeSystemLoader = function() {
       var meta = load.metadata;
       var defined = false;
       global.define = function(name, _deps, factory) {
-        if (defined)
-          return;
-
+      	
         if (typeof name != 'string') {
           factory = _deps;
           _deps = name;
           name = null;
         }
-        else {
-          // only allow named defines for bundles
-          if (!meta.bundle)
-            name = null;
-        }
 
         // anonymous modules must only call define once
-        if (!name)
+        if (!name && defined) {
+          throw "Multiple anonymous defines for module " + load.name;
+        }
+        if (!name) {
           defined = true;
+        }
 
         if (!(_deps instanceof Array)) {
           factory = _deps;
@@ -393,14 +390,14 @@ global.upgradeSystemLoader = function() {
               else
                 return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
             }
-          }
+          };
         }
         else {
           // we are defining this module
           deps = _deps;
           meta.factory = factory;
         }
-      }
+      };
       global.define.amd = {};
 
       // ensure no NodeJS environment detection
