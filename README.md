@@ -18,6 +18,8 @@ Designed to work with the [ES6 Module Loader polyfill](https://github.com/Module
 
 Runs in IE8+ and NodeJS.
 
+For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
+
 Contents
 ---
 
