@@ -1,3 +1,1 @@
-setTimeout(function() {
-  throw 'error';
-}, 1000);
+foo / bar

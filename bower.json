@@ -2,6 +2,7 @@
   "name": "system.js",
   "version": "0.5.4",
   "dependencies": {
-    "es6-module-loader": "0.5.4"
+    "traceur": "0.0.32",
+    "qunit": "~1.12.0"
   }
 }
