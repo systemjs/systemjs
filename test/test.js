@@ -457,3 +457,47 @@ for(var i=0; i < oldTests.length; i++) {
 	makeAsyncTest(oldTests[i])
 }
 
+asyncTest("normalize hook", function(){
+	
+	System.format.normalized = {
+		detect: function(load){
+			return !!load.source.match(/getNormal\(/);
+		},
+		deps: function(load, global){
+			var deps;
+			global.getNormal = function(dep, factory){
+				deps = [dep];
+				load.metadata.factory = factory;
+			};
+			System.__exec(load);
+			console.log("deps", deps)
+			return deps;
+		},
+		execute: function(depNames, load){
+			var module = System.get( depNames[0] );
+			if (module.__useDefault) {
+		      module = module['default'];
+		    }
+			
+			return load.metadata.factory( module );
+		},
+		normalize: function(name, referer, refererAddress, baseNormalize){
+			console.log("normalize")
+			var parts = name.split("/"),
+				last = ( parts.pop() || "");
+			return baseNormalize(parts.join("/")+"/normalized-"+last);
+		}
+	};
+	System.formats.unshift("normalized")
+	
+	System.import("tests/normalized").then(function(m){
+		equal(m.dep.name, "normalized-module!", "wes able to hook into normalized");
+		start()
+	},
+	function(){
+		ok(false, "could not load normalized module")
+		start();
+	});
+	
+});
+

@@ -127,6 +127,9 @@ global.upgradeSystemLoader = function() {
 */
 (function(global) {
 
+  // a table of instantiating load records
+  var instantiating = {};
+
   System.format = {};
   System.formats = [];
 
@@ -207,6 +210,9 @@ global.upgradeSystemLoader = function() {
     if (!format || !curFormat)
       throw new TypeError('No format found for ' + (format ? format : load.address));
 
+    load.metadata.format = format;
+	instantiating[load.name] = load;
+
     // now invoke format instantiation
     var deps = curFormat.deps(load, global);
 
@@ -219,14 +225,29 @@ global.upgradeSystemLoader = function() {
       deps: deps,
       execute: function() {
         var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load, global);
-
+		delete instantiating[load.name];
         if (output instanceof global.Module)
           return output;
         else
           return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
-  }
+  };
+  var systemFormatNormalize = System.normalize;
+  System.normalize = function(name, refererName, refererAdress) {
+  	var load = instantiating[refererName],
+  		format = load && this.format[load.metadata.format],
+  		normalize = format && format.normalize;
+  	if(normalize) {
+  		return normalize.call(this, name, refererName, refererAdress, systemFormatNormalize);
+  		if(res != null) {
+  			return res;
+  		}
+  	} 
+	return systemFormatNormalize.apply(this, arguments);
+  	
+  };
+
 
 })(typeof window != 'undefined' ? window : global);
 /*
@@ -351,7 +372,7 @@ global.upgradeSystemLoader = function() {
 
         // anonymous modules must only call define once
         if ( !name && defined ) {
-          throw "system.js - multiple anonymous defines for "+name+" module";
+          throw "system.js - multiple anonymous defines for "+ load.name+" module";
         }
         if (!name) {
           defined = true;
