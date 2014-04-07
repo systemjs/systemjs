@@ -1,1 +1,1 @@
-exports.name = 'normalized-module!';
+exports.name='normalized-module!';
