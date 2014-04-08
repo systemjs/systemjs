@@ -10,10 +10,9 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "bower": "1.2.8",
     "es6-module-loader": "~0.5.4"
   },
-  "scripts": {
-    "install": "node node_modules/bower/bin/bower install"
+  "devDependencies": {
+    "qunitjs": "~1.12.0"
   }
 }

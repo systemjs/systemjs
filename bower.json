@@ -3,6 +3,6 @@
   "version": "0.5.4",
   "dependencies": {
     "traceur": "0.0.32",
-    "qunit": "~1.12.0"
+    "es6-module-loader": "~0.5.4"
   }
 }
