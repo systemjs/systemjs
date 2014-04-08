@@ -701,16 +701,9 @@ consideration with pull requests.
 
 #### Running the tests
 
-The tests assume that [Traceur Compiler](https://github.com/google/traceur-compiler), [ES6 Module Loader](https://github.com/ModuleLoader/es6-module-loader) 
-and [SystemJS](https://github.com/systemjs/systemjs) are all cloned into the same folder:
+To install the dependencies correctly, run `bower install` from the root of the repo, then open `test/test.html` in a browser with a local server
+or file access flags enabled.
 
-```
-  traceur-compiler/
-  es6-module-loader/
-  systemjs/
-```
-
-Then run `systemjs/tests/test.html` in a browser over a local server or with file access flags enabled.
 
 License
 ---

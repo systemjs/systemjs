@@ -11,8 +11,5 @@
   "license": "MIT",
   "dependencies": {
     "es6-module-loader": "~0.5.4"
-  },
-  "devDependencies": {
-    "qunitjs": "~1.12.0"
   }
 }

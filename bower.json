@@ -4,5 +4,8 @@
   "dependencies": {
     "traceur": "0.0.32",
     "es6-module-loader": "~0.5.4"
+  },
+  "devDependencies": {
+    "qunit": "~1.12.0"
   }
 }
