@@ -82,7 +82,16 @@ global.upgradeSystemLoader = function() {
         return checkUseDefault(module);
       });
     });
-  }
+  };
+  System.meta = {};
+  var systemLocate = System.locate;
+  System.locate = function(load){
+  	var systemMetadata = System.meta[load.name]
+    for(var prop in systemMetadata) {
+      load.metadata[prop] = systemMetadata[prop];
+    }
+    return systemLocate.apply(this, arguments);
+  };
 
   // define exec for custom instan
   System.__exec = function(load) {
@@ -190,8 +199,12 @@ global.upgradeSystemLoader = function() {
     }
 
     // if it is shimmed, assume it is a global script
-    if (System.shim && System.shim[load.name])
-      format = 'global';
+    var meta;
+    if (meta = System.meta[load.name]) {
+      if(meta.format) {
+        format = meta.format;
+      }
+    }
 
     // if we don't know the format, run detection first
     if (!format || !this.format[format])
@@ -570,25 +583,18 @@ global.upgradeSystemLoader = function() {
         if (deps)
           for (var i = 0; i < deps.length; i++)
             deps[i] = deps[i].substr(8);
-        load.metadata.globalExport = match[5];
+        load.metadata.export = match[5];
       }
       deps = deps || [];
-      var shim;
-      if (shim = System.shim[load.name]) {
-        if (typeof shim == 'object') {
-          if (shim.exports)
-            load.metadata.globalExport = shim.exports;
-          if (shim.deps || shim.imports)
-            shim = shim.deps || shim.imports;
-        }
-        if (shim instanceof Array)
-          deps = deps.concat(shim);
+      var meta;
+      if (meta = System.meta[load.name]) {
+        deps.push.apply(deps, meta.deps || meta.imports || []);
       }
       return deps;
     },
     execute: function(depNames, load, global) {
       var hasOwnProperty = global.hasOwnProperty;
-      var globalExport = load.metadata.globalExport;
+      var globalExport = load.metadata.export;
 
       // first, we add all the dependency module properties to the global
       for (var i = 0; i < depNames.length; i++) {
@@ -756,7 +762,7 @@ global.upgradeSystemLoader = function() {
     .then(function(name) {
       return applyMap(name, parentName);
     });
-  }
+  };
 })();
 /*
   SystemJS Plugin Support

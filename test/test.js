@@ -45,7 +45,7 @@ asyncTest('Global script with inline exports', function() {
 });
 
 asyncTest('Global script with shim config', function() {
-  System.shim['tests/global-shim-config'] = ['./global-shim-config-dep'];
+  System.meta['tests/global-shim-config'] = {deps: ['./global-shim-config-dep']};
   System['import']('tests/global-shim-config').then(function(m) {
     ok(m == 'shimmed', 'Not shimmed');
     start();
@@ -53,7 +53,7 @@ asyncTest('Global script with shim config', function() {
 });
 
 asyncTest('Global script loading that detects as AMD with shim config', function() {
-  System.shim['tests/global-shim-amd'] = true;
+  System.meta['tests/global-shim-amd'] = {format: "global"};
   System['import']('tests/global-shim-amd').then(function(m) {
     ok(m == 'global', 'Not shimmed');
     start();
@@ -68,7 +68,7 @@ asyncTest('Support the empty module', function() {
 });
 
 asyncTest('Global script with shim config exports', function() {
-  System.shim['tests/global-shim-config-exports'] = { exports: 'p' };
+  System.meta['tests/global-shim-config-exports'] = { exports: 'p' };
   System['import']('tests/global-shim-config-exports').then(function(m) {
     ok(m == 'export', 'Exports not shimmed');
     start();
@@ -111,7 +111,7 @@ asyncTest('Submodule contextual map configuration', function() {
 });
 
 asyncTest('Contextual map with shim', function() {
-  System.shim['tests/shim-map-test'] = {
+  System.meta['tests/shim-map-test'] = {
     deps: ['shim-map-dep']
   };
   System.map['tests/shim-map-test'] = {
@@ -352,9 +352,38 @@ asyncTest("normalize hook", function(){
 	};
 	System.formats.unshift("normalized");
 	System['import']('tests/amd-cjs-module').then(function(m) {
-   	 ok(m.test == 'hi', 'Not defined');
-    	start();
-  	}, err);
+    ok(m.test == 'hi', 'Not defined');
+      start();
+    }, err);
 	
 	
 });
+
+
+asyncTest("System.meta", function(){
+	
+	System.meta = {
+		'tests/global-multi' : {
+			arbitraryMetaProperty: true,
+			exports: "jQuery"
+		}
+	};
+	var oldLocate = System.locate;
+	System.locate = function(load){
+      var res = oldLocate.apply(this, arguments);
+      if(load.name == "tests/global-multi") {
+        ok(load.metadata.arbitraryMetaProperty, "got arbitrary metadata");
+      }
+	  return res;
+	};
+	
+	
+	System.formats.unshift("normalized");
+	System['import']('tests/global-multi').then(function(m) {
+      ok(m.jquery === 'here', 'exports works right');
+      start();
+    }, err);
+});
+
+
+

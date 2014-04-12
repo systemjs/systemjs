@@ -82,7 +82,16 @@ global.upgradeSystemLoader = function() {
         return checkUseDefault(module);
       });
     });
-  }
+  };
+  System.meta = {};
+  var systemLocate = System.locate;
+  System.locate = function(load){
+  	var systemMetadata = System.meta[load.name]
+    for(var prop in systemMetadata) {
+      load.metadata[prop] = systemMetadata[prop];
+    }
+    return systemLocate.apply(this, arguments);
+  };
 
   // define exec for custom instan
   System.__exec = function(load) {
@@ -215,7 +224,7 @@ global.upgradeSystemLoader = function() {
     .then(function(name) {
       return applyMap(name, parentName);
     });
-  }
+  };
 })();
 (function(global) {
 
