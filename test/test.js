@@ -386,5 +386,33 @@ asyncTest("System.meta", function(){
     }, err);
 });
 
+/*
+asyncTest("System.clone", function(){
+	
+  System.map['maptest'] = 'tests/map-test';
+  
+  var ClonedSystem  = System.clone();
+  ClonedSystem.map['maptest'] = 'tests/map-test';
+  
+  var systemDef = System['import']('maptest');
+  var cloneDef = ClonedSystem['import']('maptest');
+  
+  systemDef.then(function(){
+  	console.log("got system");
+  });
+  cloneDef.then(function(){
+  	console.log("got cloned");
+  })
+  
+  Promise.all(System['import']('maptest'), ClonedSystem['import']('maptest'), function(m, mClone){
+  	ok(m.maptest == 'maptest', 'Mapped module not loaded');
+  	ok(mClone.maptest == 'maptest', 'Mapped module not loaded');
+  	ok(mClone !== m, "different modules");
+    start();
+  }); 
+	
+});*/
+
+
 
 QUnit.start();

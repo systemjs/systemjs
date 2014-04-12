@@ -6,9 +6,25 @@
  */
 
 (function(__$global) {
+  // helpers
+  var extend = function(d, s){
+    for(var prop in s) {
+  	  d[prop] = s[prop]	
+  	}
+  	return d;
+  }
+	
+  var cloneSystemLoader = function(System){
+  	var Loader = __$global.Loader || __$global.LoaderPolyfill;
+  	var loader = new Loader(System);
+  	loader.baseURL = System.baseURL;
+  	loader.paths = extend({}, System.paths);
+  	return loader;
+  }
 
-__$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
+
+  var upgradeLoader = function(baseLoader) {
+  	var System = cloneSystemLoader(baseLoader);// Define an IE-friendly shim good-enough for purposes
 var indexOf = Array.prototype.indexOf || function(item) { 
   for (var i = 0, thisLen = this.length; i < thisLen; i++) {
     if (this[i] === item)
@@ -31,7 +47,7 @@ var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
 function core(loader) {
   (function() {
 
-    var curSystem = System;
+    var curSystem = loader;
 
     /*
       __useDefault
@@ -1279,6 +1295,7 @@ versions(System);
 
   if (__$global.systemMainEntryPoint)
     System['import'](__$global.systemMainEntryPoint);
+  return System;
 };
 
 (function() {
@@ -1286,22 +1303,33 @@ versions(System);
   var curScript = scripts[scripts.length - 1];
   __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
 
+  __$global.upgradeSystemLoader = function(){
+    __$global.upgradeSystemLoader = undefined;
+    __$global.System = upgradeLoader(System);
+  };
+
   if (!__$global.System || __$global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
       var curPath = curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+      
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
     }
     else {
       var es6ModuleLoader = require('es6-module-loader');
+      var originalSystemLoader = es6ModuleLoader.System;
       __$global.System = es6ModuleLoader.System;
       __$global.Loader = es6ModuleLoader.Loader;
       __$global.Module = es6ModuleLoader.Module;
-      module.exports = __$global.System;
       __$global.upgradeSystemLoader();
+      __$global.System.clone = function(){
+      	return upgradeLoader(originalSystemLoader);
+      }
+      module.exports = __$global.System;
+      
     }
   }
   else {
