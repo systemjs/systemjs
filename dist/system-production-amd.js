@@ -157,119 +157,114 @@ function core(loader) {
       loader.global.System = curSystem;
     }
   }
-}/*
-  SystemJS map support
-  
-  Provides map configuration through
-    System.map['jquery'] = 'some/module/map'
+}function amdScriptLoader(loader) {
 
-  As well as contextual map config through
-    System.map['bootstrap'] = {
-      jquery: 'some/module/map2'
-    }
+  var head = document.getElementsByTagName('head')[0];
 
-  Note that this applies for subpaths, just like RequireJS
+  // override fetch to use script injection
+  loader.fetch = function(load) {
+    // if already defined, skip
+    if (loader.defined[load.name])
+      return '';
 
-  jquery      -> 'some/module/map'
-  jquery/path -> 'some/module/map/path'
-  bootstrap   -> 'bootstrap'
-
-  Inside any module name of the form 'bootstrap' or 'bootstrap/*'
-    jquery    -> 'some/module/map2'
-    jquery/p  -> 'some/module/map2/p'
-
-  Maps are carefully applied from most specific contextual map, to least specific global map
-*/
-function map(loader) {
-
-  loader.map = loader.map || {};
-
-
-  // return the number of prefix parts (separated by '/') matching the name
-  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
-  function prefixMatchLength(name, prefix) {
-    var prefixParts = prefix.split('/');
-    var nameParts = name.split('/');
-    if (prefixParts.length > nameParts.length)
-      return 0;
-    for (var i = 0; i < prefixParts.length; i++)
-      if (nameParts[i] != prefixParts[i])
-        return 0;
-    return prefixParts.length;
-  }
-
-
-  // given a relative-resolved module name and normalized parent name,
-  // apply the map configuration
-  function applyMap(name, parentName) {
-
-    var curMatch, curMatchLength = 0;
-    var curParent, curParentMatchLength = 0;
-    var subPath;
-    var nameParts;
-    
-    // first find most specific contextual match
-    if (parentName) {
-      for (var p in loader.map) {
-        var curMap = loader.map[p];
-        if (typeof curMap != 'object')
-          continue;
-
-        // most specific parent match wins first
-        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
-          continue;
-
-        for (var q in curMap) {
-          // most specific name match wins
-          if (prefixMatchLength(name, q) <= curMatchLength)
-            continue;
-
-          curMatch = q;
-          curMatchLength = q.split('/').length;
-          curParent = p;
-          curParentMatchLength = p.split('/').length;
-        }
-      }
-    }
-
-    // if we found a contextual match, apply it now
-    if (curMatch) {
-      nameParts = name.split('/');
-      subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-      name = loader.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
-      curMatchLength = 0;
-    }
-
-    // now do the global map
-    for (var p in loader.map) {
-      var curMap = loader.map[p];
-      if (typeof curMap != 'string')
-        continue;
-
-      if (prefixMatchLength(name, p) <= curMatchLength)
-        continue;
-
-      curMatch = p;
-      curMatchLength = p.split('/').length;
-    }
-    
-    // return a match if any
-    if (!curMatchLength)
-      return name;
-    
-    nameParts = name.split('/');
-    subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-    return loader.map[curMatch] + (subPath ? '/' + subPath : '');
-  }
-
-  var loaderNormalize = loader.normalize;
-  var mapped = {};
-  loader.normalize = function(name, parentName, parentAddress) {
-    return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
-    .then(function(name) {
-      return applyMap(name, parentName);
+    // script injection fetch system
+    return new Promise(function(resolve, reject) {
+      var s = document.createElement('script');
+      s.async = true;
+      s.addEventListener('load', function(evt) {
+        if (lastAnonymous)
+          loader.defined[load.name] = lastAnonymous;
+        lastAnonymous = null;
+        resolve('');
+      }, false);
+      s.addEventListener('error', function(err) {
+        reject(err);
+      }, false);
+      s.src = load.address;
+      head.appendChild(s);
     });
   }
+  var lastAnonymous = null;
+  loader.global.define = function(name, deps, factory) {
+    // anonymous define
+    if (typeof name != 'string') {
+      factory = deps;
+      deps = name;
+      name = null;
+    }
+
+    if (!(deps instanceof Array)) {
+      factory = deps;
+      deps = [];
+    }
+
+    if (typeof factory != 'function')
+      factory = (function(factory) {
+        return function() { return factory; }
+      })(factory);
+
+    for (var i = 0; i < deps.length; i++)
+      if (lastIndexOf.call(deps, deps[i]) != i)
+        deps.splice(i--, 1);
+
+    var instantiate = {
+      deps: deps,
+      execute: function() {
+        var args = [];
+        for (var i = 0; i < arguments.length; i++)
+          args.push(loader.getModule(arguments[i]));
+
+        var output = factory.apply(this, args);
+        return new loader.global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
+      }
+    };
+
+    if (name)
+      loader.defined[name] = instantiate;
+    else
+      lastAnonymous = instantiate;
+  }
+  loader.global.define.amd = {};  
+
+  // no translate at all
+  loader.translate = function() {}
+
+  // instantiate defaults to null
+  loader.instantiate = function() {
+    return {
+      deps: [],
+      execute: function() {
+        return new Module({});
+      }
+    };
+  }
+
+
+  /*
+    AMD-compatible require
+    To copy RequireJS, set window.require = window.requirejs = loader.requirejs
+  */
+  var require = loader.requirejs = function(names, callback, errback, referer) {
+    // in amd, first arg can be a config object... we just ignore
+    if (typeof names == 'object' && !(names instanceof Array))
+      return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
+
+    // amd require
+    if (names instanceof Array)
+      Promise.all(names.map(function(name) {
+        return loader['import'](name, referer);
+      })).then(function(mods) {
+        return callback.apply(this, mods);
+      }, errback);
+
+    // commonjs require
+    else if (typeof names == 'string')
+      return loader.getModule(names);
+
+    else
+      throw 'Invalid require';
+  }
+
 }
 /*
   System bundles
@@ -364,7 +359,7 @@ function register(loader) {
     // if the module is already defined, skip fetch
     if (loader.defined[load.name])
       return '';
-    return systemFetch.apply(this, arguments);
+    return loaderFetch.apply(this, arguments);
   }
 
   var loaderInstantiate = loader.instantiate;
@@ -597,6 +592,11 @@ function versions(loader) {
     });
   }
 }
+core(System);
+productionAMD(System);
+bundles(System);
+register(System);
+versions(System);
 };
 
 (function() {
