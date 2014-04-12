@@ -82,7 +82,7 @@ global.upgradeSystemLoader = function() {
         return checkUseDefault(module);
       });
     });
-  }
+  };
 
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
   function parseURI(url) {
@@ -139,12 +139,17 @@ global.upgradeSystemLoader = function() {
   // override locate to allow baseURL to be document-relative
   var systemLocate = System.locate;
   var normalizedBaseURL;
+  System.meta = {};
   System.locate = function(load) {
     if (this.baseURL != normalizedBaseURL)
       this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-
+    
+    var systemMetadata = System.meta[load.name]
+    for(var prop in systemMetadata) {
+      load.metadata[prop] = systemMetadata[prop];
+    }
     return Promise.resolve(systemLocate.call(this, load));
-  }
+  };
 
   // define exec for custom instan
   System.__exec = function(load) {
@@ -188,6 +193,9 @@ global.upgradeSystemLoader = function() {
   See the AMD, global and CommonJS format extensions for examples.
 */
 (function(global) {
+
+  // a table of instantiating load records
+  var instantiating = {};
 
   System.format = {};
   System.formats = [];
@@ -249,8 +257,12 @@ global.upgradeSystemLoader = function() {
     }
 
     // if it is shimmed, assume it is a global script
-    if (System.shim && System.shim[load.name])
-      format = 'global';
+    var meta;
+    if (meta = System.meta[load.name]) {
+      if(meta.format) {
+        format = meta.format;
+      }
+    }
 
     // if we don't know the format, run detection first
     if (!format || !this.format[format])
@@ -269,6 +281,9 @@ global.upgradeSystemLoader = function() {
     if (!format || !curFormat)
       throw new TypeError('No format found for ' + (format ? format : load.address));
 
+    load.metadata.format = format;
+	instantiating[load.name] = load;
+
     // now invoke format instantiation
     var deps = curFormat.deps(load, global);
 
@@ -281,14 +296,29 @@ global.upgradeSystemLoader = function() {
       deps: deps,
       execute: function() {
         var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load, global);
-
+		delete instantiating[load.name];
         if (output instanceof global.Module)
           return output;
         else
           return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
-  }
+  };
+  var systemFormatNormalize = System.normalize;
+  System.normalize = function(name, refererName, refererAdress) {
+  	var load = instantiating[refererName],
+  		format = load && this.format[load.metadata.format],
+  		normalize = format && format.normalize;
+  	if(normalize) {
+  		return normalize.call(this, name, refererName, refererAdress, systemFormatNormalize);
+  		if(res != null) {
+  			return res;
+  		}
+  	} 
+	return systemFormatNormalize.apply(this, arguments);
+  	
+  };
+
 
 })(typeof window != 'undefined' ? window : global);
 /*
@@ -611,25 +641,18 @@ global.upgradeSystemLoader = function() {
         if (deps)
           for (var i = 0; i < deps.length; i++)
             deps[i] = deps[i].substr(8);
-        load.metadata.globalExport = match[5];
+        load.metadata.exports = match[5];
       }
       deps = deps || [];
-      var shim;
-      if (shim = System.shim[load.name]) {
-        if (typeof shim == 'object') {
-          if (shim.exports)
-            load.metadata.globalExport = shim.exports;
-          if (shim.deps || shim.imports)
-            shim = shim.deps || shim.imports;
-        }
-        if (shim instanceof Array)
-          deps = deps.concat(shim);
+      var meta;
+      if (meta = System.meta[load.name]) {
+        deps.push.apply(deps, meta.deps || meta.imports || []);
       }
       return deps;
     },
     execute: function(depNames, load, global) {
       var hasOwnProperty = global.hasOwnProperty;
-      var globalExport = load.metadata.globalExport;
+      var globalExport = load.metadata.exports;
 
       // first, we add all the dependency module properties to the global
       for (var i = 0; i < depNames.length; i++) {
@@ -797,7 +820,7 @@ global.upgradeSystemLoader = function() {
     .then(function(name) {
       return applyMap(name, parentName);
     });
-  }
+  };
 })();
 /*
   SystemJS Plugin Support

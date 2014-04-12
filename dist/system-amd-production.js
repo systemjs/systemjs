@@ -82,7 +82,7 @@ global.upgradeSystemLoader = function() {
         return checkUseDefault(module);
       });
     });
-  }
+  };
 
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
   function parseURI(url) {
@@ -139,12 +139,17 @@ global.upgradeSystemLoader = function() {
   // override locate to allow baseURL to be document-relative
   var systemLocate = System.locate;
   var normalizedBaseURL;
+  System.meta = {};
   System.locate = function(load) {
     if (this.baseURL != normalizedBaseURL)
       this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-
+    
+    var systemMetadata = System.meta[load.name]
+    for(var prop in systemMetadata) {
+      load.metadata[prop] = systemMetadata[prop];
+    }
     return Promise.resolve(systemLocate.call(this, load));
-  }
+  };
 
   // define exec for custom instan
   System.__exec = function(load) {
@@ -277,7 +282,7 @@ global.upgradeSystemLoader = function() {
     .then(function(name) {
       return applyMap(name, parentName);
     });
-  }
+  };
 })();
 (function(global) {
 
