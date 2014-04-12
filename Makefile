@@ -1,39 +1,35 @@
-define START
+
+START = \
 	cat lib/banner.js \
 	lib/polyfill-wrapper-start.js \
-	lib/system-core.js
-endef
+	lib/polyfills.js > dist/$@.js;
 
-define FORMATS
-	lib/system-formats.js \
-	lib/system-format-amd.js \
-	lib/system-format-cjs.js \
-	lib/system-format-global.js
-endef
-
-define END
-	lib/polyfill-wrapper-end.js > dist/$@.js
-	cat lib/banner.js > dist/$@.min.js
+END = \
+	cat lib/polyfill-wrapper-end.js >> dist/$@.js; \
+	cat lib/banner.js > dist/$@.min.js; \
 	uglifyjs dist/$@.js -cm >> dist/$@.min.js
-endef
 
-all: system system-amd-production
+SystemJS = core formats formatAMD formatCJS formatGlobal map plugins bundles register versions
+SystemProductionAMD = core productionAMD bundles register versions
+
+all: system system-production-amd
 
 system:
-	$(START) \
-	$(FORMATS) \
-	lib/system-map.js \
-	lib/system-plugins.js \
-	lib/system-bundles.js \
-	lib/system-register.js \
-	lib/system-versions.js \
+	$(START)
+	for extension in $(SystemJS); do \
+		cat lib/extension-$$extension.js >> dist/$@.js; \
+	done
+	for extension in $(SystemJS); do \
+		echo $$extension"(System);" >> dist/$@.js; \
+	done
 	$(END)
 
-system-amd-production:
-	$(START) \
-	lib/system-map.js \
-	lib/system-amd-production.js \
-	lib/system-bundles.js \
-	lib/system-register.js \
-	lib/system-versions.js \
+system-production-amd:
+	$(START)
+	for extension in $(SystemProductionAMD); do \
+		cat lib/extension-$$extension.js >> dist/$@.js; \
+	done
+	for extension in $(SystemProductionAMD); do \
+		echo $$extension"(System);" >> dist/$@.js; \
+	done
 	$(END)
