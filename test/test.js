@@ -344,7 +344,6 @@ asyncTest("normalize hook", function(){
 			return load.metadata.factory( module );
 		},
 		normalize: function(name, referer, refererAddress, baseNormalize){
-			console.log("normalize")
 			var parts = name.split("/"),
 				last = ( parts.pop() || "");
 			return baseNormalize(parts.join("/")+"/normalized-"+last);
