@@ -326,7 +326,7 @@ js/jquery-plugin.js:
 
 The primary use for having all this information in the module is that global scripts can be converted into modular scripts with complete accuracy by an automated process based on simple configuration instead of manual conversion.
 
-This information can equally be provided through configuration with `System.shim[module/name] = { deps: [], exports: '' }`, but it is recommended to inline it within the file for stronger modularity.
+This information can equally be provided through configuration with `System.meta[module/name] = { deps: [], exports: '' }`, but it is recommended to inline it within the file for stronger modularity.
 
 ### AMD Compatibility Layer
 

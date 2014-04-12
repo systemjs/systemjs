@@ -45,7 +45,7 @@ asyncTest('Global script with inline exports', function() {
 });
 
 asyncTest('Global script with shim config', function() {
-  System.shim['tests/global-shim-config'] = ['./global-shim-config-dep'];
+  System.meta['tests/global-shim-config'] = { deps: ['./global-shim-config-dep'] };
   System['import']('tests/global-shim-config').then(function(m) {
     ok(m == 'shimmed', 'Not shimmed');
     start();
@@ -53,7 +53,7 @@ asyncTest('Global script with shim config', function() {
 });
 
 asyncTest('Global script loading that detects as AMD with shim config', function() {
-  System.shim['tests/global-shim-amd'] = true;
+  System.meta['tests/global-shim-amd'] = { format: 'global' };
   System['import']('tests/global-shim-amd').then(function(m) {
     ok(m == 'global', 'Not shimmed');
     start();
@@ -68,7 +68,7 @@ asyncTest('Support the empty module', function() {
 });
 
 asyncTest('Global script with shim config exports', function() {
-  System.shim['tests/global-shim-config-exports'] = { exports: 'p' };
+  System.meta['tests/global-shim-config-exports'] = { exports: 'p' };
   System['import']('tests/global-shim-config-exports').then(function(m) {
     ok(m == 'export', 'Exports not shimmed');
     start();
@@ -111,7 +111,7 @@ asyncTest('Submodule contextual map configuration', function() {
 });
 
 asyncTest('Contextual map with shim', function() {
-  System.shim['tests/shim-map-test'] = {
+  System.meta['tests/shim-map-test'] = {
     deps: ['shim-map-dep']
   };
   System.map['tests/shim-map-test'] = {
@@ -207,6 +207,7 @@ asyncTest('Mapping to a plugin', function() {
 asyncTest('Mapping a plugin argument', function() {
   System.map['bootstrap'] = 'tests/bootstrap@^3.1.1';
   System.versions['tests/bootstrap'] = '3.1.1';
+  System.map['coffee'] = 'tests/compiler-plugin';
   System['import']('bootstrap/test.coffee!coffee').then(function(m) {
     ok(m.extra == 'yay!', 'not working');
     start();

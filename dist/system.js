@@ -129,12 +129,19 @@ function core(loader) {
     }
   }
 
+  // System.meta provides default metadata
+  System.meta = {};
+
   // override locate to allow baseURL to be document-relative
   var loaderLocate = loader.locate;
   var normalizedBaseURL;
   loader.locate = function(load) {
     if (this.baseURL != normalizedBaseURL)
       this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+    var meta = System.meta[load.name];
+    for (var p in meta)
+      load.metadata[p] = meta[p];
 
     return Promise.resolve(loaderLocate.call(this, load));
   }
@@ -170,7 +177,7 @@ function core(loader) {
       detect: function(source, load) {
         return false / depArray;
       },
-      execute: function(load, depMap, global, execute) {
+      execute: function(load, deps) {
         return moduleObj; // (doesnt have to be a Module instance)
       }
     }
@@ -241,7 +248,7 @@ function formats(loader) {
     }
 
     // if it is shimmed, assume it is a global script
-    if (loader.shim && loader.shim[load.name])
+    if (load.metadata.exports || load.metadata.deps)
       format = 'global';
 
     // if we don't know the format, run detection first
@@ -262,7 +269,7 @@ function formats(loader) {
       throw new TypeError('No format found for ' + (format ? format : load.address));
 
     // now invoke format instantiation
-    var deps = curFormat.deps(load, loader.global);
+    var deps = curFormat.deps(load);
 
     // remove duplicates from deps first
     for (var i = 0; i < deps.length; i++)
@@ -272,7 +279,7 @@ function formats(loader) {
     return {
       deps: deps,
       execute: function() {
-        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load, loader.global);
+        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load);
 
         if (output instanceof loader.global.Module)
           return output;
@@ -390,7 +397,9 @@ function formatAMD(loader) {
     detect: function(load) {
       return !!load.source.match(amdRegEx);
     },
-    deps: function(load, global) {
+    deps: function(load) {
+
+      var global = loader.global;
 
       var deps;
       var meta = load.metadata;
@@ -472,11 +481,11 @@ function formatAMD(loader) {
       return deps;
 
     },
-    execute: function(depNames, load, global, exec) {
+    execute: function(depNames, load) {
       if (!load.metadata.factory)
         return;
       var execs = prepareExecute(depNames, load);
-      return load.metadata.factory.apply(global, execs.deps) || execs.module && execs.module.exports;
+      return load.metadata.factory.apply(loader.global, execs.deps) || execs.module && execs.module.exports;
     }
   };
 }/*
@@ -514,7 +523,7 @@ function formatCJS(loader) {
       cjsRequireRegEx.lastIndex = 0;
       return !!(cjsRequireRegEx.exec(load.source) || cjsExportsRegEx.exec(load.source));
     },
-    deps: function(load, global) {
+    deps: function(load) {
       cjsExportsRegEx.lastIndex = 0;
       cjsRequireRegEx.lastIndex = 0;
 
@@ -532,15 +541,15 @@ function formatCJS(loader) {
 
       return deps;
     },
-    execute: function(depNames, load, global) {
+    execute: function(depNames, load) {
       var dirname = load.address.split('/');
       dirname.pop();
       dirname = dirname.join('/');
 
       var deps = load.metadata.deps;
 
-      var globals = global._g = {
-        global: global,
+      var globals = loader.global._g = {
+        global: loader.global,
         exports: {},
         process: nodeProcess,
         require: function(d) {
@@ -561,7 +570,7 @@ function formatCJS(loader) {
 
       loader.__exec(load);
 
-      global._g = undefined;
+      loader.global._g = undefined;
 
       return globals.module.exports;
     }
@@ -595,47 +604,38 @@ function formatGlobal(loader) {
     detect: function() {
       return true;
     },
-    deps: function(load, global) {
+    deps: function(load) {
       var match, deps;
       if (match = load.source.match(globalShimRegEx)) {
         deps = match[2].match(globalImportRegEx);
         if (deps)
           for (var i = 0; i < deps.length; i++)
             deps[i] = deps[i].substr(8);
-        load.metadata.globalExport = match[5];
+        load.metadata.exports = match[5];
       }
       deps = deps || [];
-      var shim;
-      if (shim = loader.shim[load.name]) {
-        if (typeof shim == 'object') {
-          if (shim.exports)
-            load.metadata.globalExport = shim.exports;
-          if (shim.deps || shim.imports)
-            shim = shim.deps || shim.imports;
-        }
-        if (shim instanceof Array)
-          deps = deps.concat(shim);
-      }
+      if (load.metadata.deps)
+        deps = deps.concat(load.metadata.deps);
       return deps;
     },
-    execute: function(depNames, load, global) {
-      var hasOwnProperty = global.hasOwnProperty;
-      var globalExport = load.metadata.globalExport;
+    execute: function(depNames, load) {
+      var hasOwnProperty = loader.global.hasOwnProperty;
+      var globalExport = load.metadata.exports;
 
       // first, we add all the dependency module properties to the global
       for (var i = 0; i < depNames.length; i++) {
         var moduleGlobal = moduleGlobals[depNames[i]];
         if (moduleGlobal)
           for (var m in moduleGlobal)
-            global[m] = moduleGlobal[m];
+            loader.global[m] = moduleGlobal[m];
       }
 
       // now store a complete copy of the global object
       // in order to detect changes
       var globalObj = {};
-      for (var g in global)
-        if (!hasOwnProperty || global.hasOwnProperty(g))
-          globalObj[g] = global[g];
+      for (var g in loader.global)
+        if (!hasOwnProperty || loader.global.hasOwnProperty(g))
+          globalObj[g] = loader.global[g];
 
       if (globalExport)
         load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
@@ -648,23 +648,23 @@ function formatGlobal(loader) {
       var singleGlobal, moduleGlobal;
       if (globalExport) {
         var firstPart = globalExport.split('.')[0];
-        singleGlobal = eval.call(global, globalExport);
+        singleGlobal = eval.call(loader.global, globalExport);
         moduleGlobal = {};
-        moduleGlobal[firstPart] = global[firstPart];
+        moduleGlobal[firstPart] = loader.global[firstPart];
       }
       else {
         moduleGlobal = {};
-        for (var g in global) {
+        for (var g in loader.global) {
           if (!hasOwnProperty && (g == 'sessionStorage' || g == 'localStorage' || g == 'clipboardData' || g == 'frames'))
             continue;
-          if ((!hasOwnProperty || global.hasOwnProperty(g)) && g != global && globalObj[g] != global[g]) {
-            moduleGlobal[g] = global[g];
+          if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && globalObj[g] != loader.global[g]) {
+            moduleGlobal[g] = loader.global[g];
             if (singleGlobal) {
-              if (singleGlobal !== global[g])
+              if (singleGlobal !== loader.global[g])
                 singleGlobal = false;
             }
             else if (singleGlobal !== false)
-              singleGlobal = global[g];
+              singleGlobal = loader.global[g];
           }
         }
       }
@@ -915,7 +915,6 @@ function plugins(loader) {
 */
 
 function bundles(loader) {
-
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
   // bundle is array of modules defined by the bundle
