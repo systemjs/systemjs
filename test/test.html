@@ -14,8 +14,13 @@
 		<div id="qunit-test-area"></div>
 
 		<script src="../bower_components/es6-module-loader/dist/es6-module-loader.js"></script>
-		<script src="../dist/system.js" data-traceur-src="../bower_components/traceur/traceur.js" type="text/javascript"></script>
 		<script src="../bower_components/qunit/qunit/qunit.js"></script>
-		<script src="test.js"></script>
+		<script>
+			QUnit.config.autostart = false;
+		</script>
+		<script src="../dist/system.js" data-traceur-src="../bower_components/traceur/traceur.js" data-main='test' type="text/javascript"></script>
+
+		
+		
 	</body>
 </html>

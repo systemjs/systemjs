@@ -5,10 +5,10 @@
  * MIT License
  */
 
-(function(global) {
+(function(__$global) {
 
-global.upgradeSystemLoader = function() {
-  global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
+__$global.upgradeSystemLoader = function() {
+  __$global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
 var indexOf = Array.prototype.indexOf || function(item) { 
   for (var i = 0, thisLen = this.length; i < thisLen; i++) {
     if (this[i] === item)
@@ -29,271 +29,168 @@ var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
   Adds normalization to the import function, as well as __useDefault support
 */
 function core(loader) {
-  var curSystem = System;
+  (function() {
 
-  /*
-    __useDefault
-    
-    When a module object looks like:
-    new Module({
-      __useDefault: true,
-      default: 'some-module'
-    })
+    var curSystem = System;
 
-    Then the import of that module is taken to be the 'default' export and not the module object itself.
+    /*
+      __useDefault
+      
+      When a module object looks like:
+      new Module({
+        __useDefault: true,
+        default: 'some-module'
+      })
 
-    Useful for module.exports = function() {} handling
-  */
-  var checkUseDefault = function(module) {
-    if (!(module instanceof Module)) {
-      var out = [];
-      for (var i = 0; i < module.length; i++)
-        out[i] = checkUseDefault(module[i]);
-      return out;
+      Then the import of that module is taken to be the 'default' export and not the module object itself.
+
+      Useful for module.exports = function() {} handling
+    */
+    var checkUseDefault = function(module) {
+      if (!(module instanceof Module)) {
+        var out = [];
+        for (var i = 0; i < module.length; i++)
+          out[i] = checkUseDefault(module[i]);
+        return out;
+      }
+      return module.__useDefault ? module['default'] : module;
     }
-    return module.__useDefault ? module['default'] : module;
-  }
-  
-  // a variation on System.get that does the __useDefault check
-  loader.getModule = function(key) {
-    return checkUseDefault(loader.get(key));  
-  }
+    
+    // a variation on System.get that does the __useDefault check
+    loader.getModule = function(key) {
+      return checkUseDefault(loader.get(key));  
+    }
 
-  // support the empty module, as a concept
-  loader.set('@empty', Module({}));
-  
-  
-  var loaderImport = loader['import'];
-  loader['import'] = function(name, options) {
-    // patch loader.import to do normalization
-    return new Promise(function(resolve) {
-      resolve(loader.normalize.call(this, name, options && options.name, options && options.address))
-    })
-    // add useDefault support
-    .then(function(name) {
-      return Promise.resolve(loaderImport.call(loader, name, options)).then(function(module) {
-        return checkUseDefault(module);
+    // support the empty module, as a concept
+    loader.set('@empty', Module({}));
+    
+    
+    var loaderImport = loader['import'];
+    loader['import'] = function(name, options) {
+      // patch loader.import to do normalization
+      return new Promise(function(resolve) {
+        resolve(loader.normalize.call(this, name, options && options.name, options && options.address))
+      })
+      // add useDefault support
+      .then(function(name) {
+        return Promise.resolve(loaderImport.call(loader, name, options)).then(function(module) {
+          return checkUseDefault(module);
+        });
       });
-    });
-  };
-
-  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
-  function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
-    return (m ? {
-      href     : m[0] || '',
-      protocol : m[1] || '',
-      authority: m[2] || '',
-      host     : m[3] || '',
-      hostname : m[4] || '',
-      port     : m[5] || '',
-      pathname : m[6] || '',
-      search   : m[7] || '',
-      hash     : m[8] || ''
-    } : null);
-  }
-  function toAbsoluteURL(base, href) {
-    function removeDotSegments(input) {
-      var output = [];
-      input.replace(/^(\.\.?(\/|$))+/, '')
-        .replace(/\/(\.(\/|$))+/g, '/')
-        .replace(/\/\.\.$/, '/../')
-        .replace(/\/?[^\/]*/g, function (p) {
-          if (p === '/..')
-            output.pop();
-          else
-            output.push(p);
-      });
-      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
     }
 
-    href = parseURI(href || '');
-    base = parseURI(base || '');
-
-    return !href || !base ? null : (href.protocol || base.protocol) +
-      (href.protocol || href.authority ? href.authority : base.authority) +
-      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
-      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
-      href.hash;
-  }
-  var baseURI;
-  if (typeof window == 'undefined') {
-    baseURI = __dirname;
-  }
-  else {
-    baseURI = document.baseURI;
-    if (!baseURI) {
-      var bases = document.getElementsByTagName('base');
-      baseURI = bases[0] && bases[0].href || window.location.href;
+    // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
+    function parseURI(url) {
+      var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+      // authority = '//' + user + ':' + pass '@' + hostname + ':' port
+      return (m ? {
+        href     : m[0] || '',
+        protocol : m[1] || '',
+        authority: m[2] || '',
+        host     : m[3] || '',
+        hostname : m[4] || '',
+        port     : m[5] || '',
+        pathname : m[6] || '',
+        search   : m[7] || '',
+        hash     : m[8] || ''
+      } : null);
     }
-  }
+    function toAbsoluteURL(base, href) {
+      function removeDotSegments(input) {
+        var output = [];
+        input.replace(/^(\.\.?(\/|$))+/, '')
+          .replace(/\/(\.(\/|$))+/g, '/')
+          .replace(/\/\.\.$/, '/../')
+          .replace(/\/?[^\/]*/g, function (p) {
+            if (p === '/..')
+              output.pop();
+            else
+              output.push(p);
+        });
+        return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
+      }
 
-  // override locate to allow baseURL to be document-relative
-  var loaderLocate = loader.locate;
-  var normalizedBaseURL;
-<<<<<<< HEAD
-  System.meta = {};
-  System.locate = function(load) {
-    if (this.baseURL != normalizedBaseURL)
-      this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-    
-    var systemMetadata = System.meta[load.name]
-    for(var prop in systemMetadata) {
-      load.metadata[prop] = systemMetadata[prop];
+      href = parseURI(href || '');
+      base = parseURI(base || '');
+
+      return !href || !base ? null : (href.protocol || base.protocol) +
+        (href.protocol || href.authority ? href.authority : base.authority) +
+        removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
+        (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
+        href.hash;
     }
-    return Promise.resolve(systemLocate.call(this, load));
-  };
-=======
-  loader.locate = function(load) {
-    if (this.baseURL != normalizedBaseURL)
-      this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-
-    return Promise.resolve(loaderLocate.call(this, load));
-  }
->>>>>>> 7c88ccb25d8fc63f9f8df6f5e387a988c55f820f
-
-  // define exec for custom instan
-  loader.__exec = function(load) {
-    try {
-      Function('global', 'with(global) { ' + load.source + ' \n }'
-      + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n'"]+)/)
-      ? '\n//# sourceURL=' + load.address : '')).call(loader.global, loader.global);
+    var baseURI;
+    if (typeof window == 'undefined') {
+      baseURI = __dirname;
     }
-    catch(e) {
-      if (e.name == 'SyntaxError')
-        e.message = 'Evaluating ' + load.address + '\n\t' + e.message;
-      throw e;
-    }
-    // traceur overwrites System - write it back
-    if (load.name == '@traceur') {
-      loader.global.traceurSystem = loader.global.System;
-      loader.global.System = curSystem;
-    }
-  }
-}/*
-  SystemJS map support
-  
-  Provides map configuration through
-    System.map['jquery'] = 'some/module/map'
-
-  As well as contextual map config through
-    System.map['bootstrap'] = {
-      jquery: 'some/module/map2'
-    }
-
-  Note that this applies for subpaths, just like RequireJS
-
-  jquery      -> 'some/module/map'
-  jquery/path -> 'some/module/map/path'
-  bootstrap   -> 'bootstrap'
-
-  Inside any module name of the form 'bootstrap' or 'bootstrap/*'
-    jquery    -> 'some/module/map2'
-    jquery/p  -> 'some/module/map2/p'
-
-  Maps are carefully applied from most specific contextual map, to least specific global map
-*/
-function map(loader) {
-
-  loader.map = loader.map || {};
-
-
-  // return the number of prefix parts (separated by '/') matching the name
-  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
-  function prefixMatchLength(name, prefix) {
-    var prefixParts = prefix.split('/');
-    var nameParts = name.split('/');
-    if (prefixParts.length > nameParts.length)
-      return 0;
-    for (var i = 0; i < prefixParts.length; i++)
-      if (nameParts[i] != prefixParts[i])
-        return 0;
-    return prefixParts.length;
-  }
-
-
-  // given a relative-resolved module name and normalized parent name,
-  // apply the map configuration
-  function applyMap(name, parentName) {
-
-    var curMatch, curMatchLength = 0;
-    var curParent, curParentMatchLength = 0;
-    var subPath;
-    var nameParts;
-    
-    // first find most specific contextual match
-    if (parentName) {
-      for (var p in loader.map) {
-        var curMap = loader.map[p];
-        if (typeof curMap != 'object')
-          continue;
-
-        // most specific parent match wins first
-        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
-          continue;
-
-        for (var q in curMap) {
-          // most specific name match wins
-          if (prefixMatchLength(name, q) <= curMatchLength)
-            continue;
-
-          curMatch = q;
-          curMatchLength = q.split('/').length;
-          curParent = p;
-          curParentMatchLength = p.split('/').length;
-        }
+    else {
+      baseURI = document.baseURI;
+      if (!baseURI) {
+        var bases = document.getElementsByTagName('base');
+        baseURI = bases[0] && bases[0].href || window.location.href;
       }
     }
 
-    // if we found a contextual match, apply it now
-    if (curMatch) {
-      nameParts = name.split('/');
-      subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-      name = loader.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
-      curMatchLength = 0;
+    // System.meta provides default metadata
+    System.meta = {};
+
+    // override locate to allow baseURL to be document-relative
+    var loaderLocate = loader.locate;
+    var normalizedBaseURL;
+    loader.locate = function(load) {
+      if (this.baseURL != normalizedBaseURL)
+        this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+      var meta = System.meta[load.name];
+      for (var p in meta)
+        load.metadata[p] = meta[p];
+
+      return Promise.resolve(loaderLocate.call(this, load));
     }
 
-    // now do the global map
-    for (var p in loader.map) {
-      var curMap = loader.map[p];
-      if (typeof curMap != 'string')
-        continue;
+    // define exec for custom instantiations
+    loader.__exec = function(load) {
 
-      if (prefixMatchLength(name, p) <= curMatchLength)
-        continue;
+      // support sourceMappingURL (efficiently)
+      var sourceMappingURL;
+      var lastLineIndex = load.source.lastIndexOf('\n');
+      if (lastLineIndex != -1) {
+        if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
+          sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22));
+      }
 
-      curMatch = p;
-      curMatchLength = p.split('/').length;
+      __eval(load.source, loader.global, load.address, sourceMappingURL);
+
+      // traceur overwrites System - write it back
+      if (load.name == '@traceur') {
+        loader.global.traceurSystem = loader.global.System;
+        loader.global.System = curSystem;
+      }
     }
-    
-    // return a match if any
-    if (!curMatchLength)
-      return name;
-    
-    nameParts = name.split('/');
-    subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-    return loader.map[curMatch] + (subPath ? '/' + subPath : '');
+
+  })();
+
+  function __eval(__source, __global, __address, __sourceMap) {
+    try {
+      __source = 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }'
+        + '\n//# sourceURL=' + __address
+        + (__sourceMap ? '\n//# sourceMappingURL=' + __sourceMap : '');
+      eval(__source);
+    }
+    catch(e) {
+      if (e.name == 'SyntaxError')
+        e.message = 'Evaluating ' + __address + '\n\t' + e.message;
+      throw e;
+    }
   }
-
-  var loaderNormalize = loader.normalize;
-  var mapped = {};
-  loader.normalize = function(name, parentName, parentAddress) {
-    return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
-    .then(function(name) {
-      return applyMap(name, parentName);
-    });
-<<<<<<< HEAD
-  };
-})();
-(function(global) {
+}function amdScriptLoader(loader) {
 
   var head = document.getElementsByTagName('head')[0];
 
   // override fetch to use script injection
-  System.fetch = function(load) {
+  loader.fetch = function(load) {
     // if already defined, skip
-    if (System.defined[load.name])
+    if (loader.defined[load.name])
       return '';
 
     // script injection fetch system
@@ -302,7 +199,7 @@ function map(loader) {
       s.async = true;
       s.addEventListener('load', function(evt) {
         if (lastAnonymous)
-          System.defined[load.name] = lastAnonymous;
+          loader.defined[load.name] = lastAnonymous;
         lastAnonymous = null;
         resolve('');
       }, false);
@@ -314,7 +211,7 @@ function map(loader) {
     });
   }
   var lastAnonymous = null;
-  global.define = function(name, deps, factory) {
+  loader.global.define = function(name, deps, factory) {
     // anonymous define
     if (typeof name != 'string') {
       factory = deps;
@@ -341,25 +238,25 @@ function map(loader) {
       execute: function() {
         var args = [];
         for (var i = 0; i < arguments.length; i++)
-          args.push(System.getModule(arguments[i]));
+          args.push(loader.getModule(arguments[i]));
 
         var output = factory.apply(this, args);
-        return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
+        return new loader.global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
 
     if (name)
-      System.defined[name] = instantiate;
+      loader.defined[name] = instantiate;
     else
       lastAnonymous = instantiate;
   }
-  global.define.amd = {};  
+  loader.global.define.amd = {};  
 
   // no translate at all
-  System.translate = function() {}
+  loader.translate = function() {}
 
   // instantiate defaults to null
-  System.instantiate = function() {
+  loader.instantiate = function() {
     return {
       deps: [],
       execute: function() {
@@ -371,9 +268,9 @@ function map(loader) {
 
   /*
     AMD-compatible require
-    To copy RequireJS, set window.require = window.requirejs = System.requirejs
+    To copy RequireJS, set window.require = window.requirejs = loader.requirejs
   */
-  var require = System.requirejs = function(names, callback, errback, referer) {
+  var require = loader.requirejs = function(names, callback, errback, referer) {
     // in amd, first arg can be a config object... we just ignore
     if (typeof names == 'object' && !(names instanceof Array))
       return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
@@ -381,24 +278,20 @@ function map(loader) {
     // amd require
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
-        return System['import'](name, referer);
+        return loader['import'](name, referer);
       })).then(function(mods) {
         return callback.apply(this, mods);
       }, errback);
 
     // commonjs require
     else if (typeof names == 'string')
-      return System.getModule(names);
+      return loader.getModule(names);
 
     else
       throw 'Invalid require';
   }
 
-})(typeof window != 'undefined' ? window : global);
-=======
-  }
 }
->>>>>>> 7c88ccb25d8fc63f9f8df6f5e387a988c55f820f
 /*
   System bundles
 
@@ -415,7 +308,6 @@ function map(loader) {
 */
 
 function bundles(loader) {
-
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
   // bundle is array of modules defined by the bundle
@@ -492,7 +384,7 @@ function register(loader) {
     // if the module is already defined, skip fetch
     if (loader.defined[load.name])
       return '';
-    return systemFetch.apply(this, arguments);
+    return loaderFetch.apply(this, arguments);
   }
 
   var loaderInstantiate = loader.instantiate;
@@ -725,14 +617,25 @@ function versions(loader) {
     });
   }
 }
+core(System);
+productionAMD(System);
+bundles(System);
+register(System);
+versions(System);
+
+  if (__$global.systemMainEntryPoint)
+    System['import'](__$global.systemMainEntryPoint);
 };
 
 (function() {
-  if (!global.System || global.System.registerModule) {
+  var scripts = document.getElementsByTagName('script');
+  var curScript = scripts[scripts.length - 1];
+  __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
+
+  if (!__$global.System || __$global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
-      var scripts = document.getElementsByTagName('script');
-      var curPath = scripts[scripts.length - 1].src;
+      var curPath = curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
@@ -740,16 +643,20 @@ function versions(loader) {
     }
     else {
       var es6ModuleLoader = require('es6-module-loader');
-      global.System = es6ModuleLoader.System;
-      global.Loader = es6ModuleLoader.Loader;
-      global.Module = es6ModuleLoader.Module;
-      module.exports = global.System;
-      global.upgradeSystemLoader();
+      __$global.System = es6ModuleLoader.System;
+      __$global.Loader = es6ModuleLoader.Loader;
+      __$global.Module = es6ModuleLoader.Module;
+      module.exports = __$global.System;
+      __$global.upgradeSystemLoader();
     }
   }
   else {
-    global.upgradeSystemLoader();
+    __$global.upgradeSystemLoader();
   }
+
+  var configPath = curScript.getAttribute('data-config');
+  if (configPath)
+    document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
 })();
 
 

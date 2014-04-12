@@ -5,172 +5,185 @@
  * MIT License
  */
 
-(function(global) {
+(function(__$global) {
 
-global.upgradeSystemLoader = function() {
-  global.upgradeSystemLoader = undefined;
+__$global.upgradeSystemLoader = function() {
+  __$global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
+var indexOf = Array.prototype.indexOf || function(item) { 
+  for (var i = 0, thisLen = this.length; i < thisLen; i++) {
+    if (this[i] === item)
+      return i;
+  }
+  return -1;
+}
 
-  // Define an IE-friendly shim good-enough for purposes
-  var indexOf = Array.prototype.indexOf || function(item) { 
-    for (var i = 0, thisLen = this.length; i < thisLen; i++) {
-      if (this[i] === item)
-        return i;
+var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
+  for (var i = this.length - 1; i >= 0; i--) {
+    if (this[i] === c) {
+      return i;
     }
-    return -1;
-  };
-
-  var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
-    for (var i = this.length - 1; i >= 0; i--) {
-      if (this[i] === c) {
-        return i;
-      }
-    }
-    return -i;
-  };
-/*
+  }
+  return -i;
+}/*
   SystemJS Core
   Adds normalization to the import function, as well as __useDefault support
 */
-(function(global) {
-  // check we have System
-  if (typeof System == 'undefined')
-    throw 'System not defined. Include the `es6-module-loader.js` polyfill before SystemJS.';
+function core(loader) {
+  (function() {
 
-  var curSystem = System;
+    var curSystem = System;
 
-  /*
-    __useDefault
+    /*
+      __useDefault
+      
+      When a module object looks like:
+      new Module({
+        __useDefault: true,
+        default: 'some-module'
+      })
+
+      Then the import of that module is taken to be the 'default' export and not the module object itself.
+
+      Useful for module.exports = function() {} handling
+    */
+    var checkUseDefault = function(module) {
+      if (!(module instanceof Module)) {
+        var out = [];
+        for (var i = 0; i < module.length; i++)
+          out[i] = checkUseDefault(module[i]);
+        return out;
+      }
+      return module.__useDefault ? module['default'] : module;
+    }
     
-    When a module object looks like:
-    new Module({
-      __useDefault: true,
-      default: 'some-module'
-    })
-
-    Then the import of that module is taken to be the 'default' export and not the module object itself.
-
-    Useful for module.exports = function() {} handling
-  */
-  var checkUseDefault = function(module) {
-    if (!(module instanceof Module)) {
-      var out = [];
-      for (var i = 0; i < module.length; i++)
-        out[i] = checkUseDefault(module[i]);
-      return out;
-    }
-    return module.__useDefault ? module['default'] : module;
-  }
-  
-  // a variation on System.get that does the __useDefault check
-  System.getModule = function(key) {
-    return checkUseDefault(System.get(key));  
-  }
-
-  // support the empty module, as a concept
-  System.set('@empty', Module({}));
-  
-  
-  var systemImport = System['import'];
-  System['import'] = function(name, options) {
-    // patch System.import to do normalization
-    return new Promise(function(resolve) {
-      resolve(System.normalize.call(this, name, options && options.name, options && options.address))
-    })
-    // add useDefault support
-    .then(function(name) {
-      return Promise.resolve(systemImport.call(System, name, options)).then(function(module) {
-        return checkUseDefault(module);
-      });
-    });
-  };
-
-  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
-  function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
-    return (m ? {
-      href     : m[0] || '',
-      protocol : m[1] || '',
-      authority: m[2] || '',
-      host     : m[3] || '',
-      hostname : m[4] || '',
-      port     : m[5] || '',
-      pathname : m[6] || '',
-      search   : m[7] || '',
-      hash     : m[8] || ''
-    } : null);
-  }
-  function toAbsoluteURL(base, href) {
-    function removeDotSegments(input) {
-      var output = [];
-      input.replace(/^(\.\.?(\/|$))+/, '')
-        .replace(/\/(\.(\/|$))+/g, '/')
-        .replace(/\/\.\.$/, '/../')
-        .replace(/\/?[^\/]*/g, function (p) {
-          if (p === '/..')
-            output.pop();
-          else
-            output.push(p);
-      });
-      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
+    // a variation on System.get that does the __useDefault check
+    loader.getModule = function(key) {
+      return checkUseDefault(loader.get(key));  
     }
 
-    href = parseURI(href || '');
-    base = parseURI(base || '');
-
-    return !href || !base ? null : (href.protocol || base.protocol) +
-      (href.protocol || href.authority ? href.authority : base.authority) +
-      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
-      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
-      href.hash;
-  }
-  var baseURI;
-  if (typeof window == 'undefined') {
-    baseURI = __dirname;
-  }
-  else {
-    baseURI = document.baseURI;
-    if (!baseURI) {
-      var bases = document.getElementsByTagName('base');
-      baseURI = bases[0] && bases[0].href || window.location.href;
-    }
-  }
-
-  // override locate to allow baseURL to be document-relative
-  var systemLocate = System.locate;
-  var normalizedBaseURL;
-  System.meta = {};
-  System.locate = function(load) {
-    if (this.baseURL != normalizedBaseURL)
-      this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+    // support the empty module, as a concept
+    loader.set('@empty', Module({}));
     
-    var systemMetadata = System.meta[load.name]
-    for(var prop in systemMetadata) {
-      load.metadata[prop] = systemMetadata[prop];
+    
+    var loaderImport = loader['import'];
+    loader['import'] = function(name, options) {
+      // patch loader.import to do normalization
+      return new Promise(function(resolve) {
+        resolve(loader.normalize.call(this, name, options && options.name, options && options.address))
+      })
+      // add useDefault support
+      .then(function(name) {
+        return Promise.resolve(loaderImport.call(loader, name, options)).then(function(module) {
+          return checkUseDefault(module);
+        });
+      });
     }
-    return Promise.resolve(systemLocate.call(this, load));
-  };
 
-  // define exec for custom instan
-  System.__exec = function(load) {
+    // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
+    function parseURI(url) {
+      var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+      // authority = '//' + user + ':' + pass '@' + hostname + ':' port
+      return (m ? {
+        href     : m[0] || '',
+        protocol : m[1] || '',
+        authority: m[2] || '',
+        host     : m[3] || '',
+        hostname : m[4] || '',
+        port     : m[5] || '',
+        pathname : m[6] || '',
+        search   : m[7] || '',
+        hash     : m[8] || ''
+      } : null);
+    }
+    function toAbsoluteURL(base, href) {
+      function removeDotSegments(input) {
+        var output = [];
+        input.replace(/^(\.\.?(\/|$))+/, '')
+          .replace(/\/(\.(\/|$))+/g, '/')
+          .replace(/\/\.\.$/, '/../')
+          .replace(/\/?[^\/]*/g, function (p) {
+            if (p === '/..')
+              output.pop();
+            else
+              output.push(p);
+        });
+        return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
+      }
+
+      href = parseURI(href || '');
+      base = parseURI(base || '');
+
+      return !href || !base ? null : (href.protocol || base.protocol) +
+        (href.protocol || href.authority ? href.authority : base.authority) +
+        removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
+        (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
+        href.hash;
+    }
+    var baseURI;
+    if (typeof window == 'undefined') {
+      baseURI = __dirname;
+    }
+    else {
+      baseURI = document.baseURI;
+      if (!baseURI) {
+        var bases = document.getElementsByTagName('base');
+        baseURI = bases[0] && bases[0].href || window.location.href;
+      }
+    }
+
+    // System.meta provides default metadata
+    System.meta = {};
+
+    // override locate to allow baseURL to be document-relative
+    var loaderLocate = loader.locate;
+    var normalizedBaseURL;
+    loader.locate = function(load) {
+      if (this.baseURL != normalizedBaseURL)
+        this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+      var meta = System.meta[load.name];
+      for (var p in meta)
+        load.metadata[p] = meta[p];
+
+      return Promise.resolve(loaderLocate.call(this, load));
+    }
+
+    // define exec for custom instantiations
+    loader.__exec = function(load) {
+
+      // support sourceMappingURL (efficiently)
+      var sourceMappingURL;
+      var lastLineIndex = load.source.lastIndexOf('\n');
+      if (lastLineIndex != -1) {
+        if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
+          sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22));
+      }
+
+      __eval(load.source, loader.global, load.address, sourceMappingURL);
+
+      // traceur overwrites System - write it back
+      if (load.name == '@traceur') {
+        loader.global.traceurSystem = loader.global.System;
+        loader.global.System = curSystem;
+      }
+    }
+
+  })();
+
+  function __eval(__source, __global, __address, __sourceMap) {
     try {
-      Function('global', 'with(global) { ' + load.source + ' \n }'
-      + (load.address && !load.source.match(/\/\/[@#] ?(sourceURL|sourceMappingURL)=([^\n'"]+)/)
-      ? '\n//# sourceURL=' + load.address : '')).call(global, global);
+      __source = 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }'
+        + '\n//# sourceURL=' + __address
+        + (__sourceMap ? '\n//# sourceMappingURL=' + __sourceMap : '');
+      eval(__source);
     }
     catch(e) {
       if (e.name == 'SyntaxError')
-        e.message = 'Evaluating ' + load.address + '\n\t' + e.message;
+        e.message = 'Evaluating ' + __address + '\n\t' + e.message;
       throw e;
     }
-    // traceur overwrites System - write it back
-    if (load.name == '@traceur') {
-      global.traceurSystem = global.System;
-      global.System = curSystem;
-    }
   }
-})(typeof window == 'undefined' ? global : window);
-/*
+}/*
   SystemJS Formats
 
   Provides modular support for format detections.
@@ -183,7 +196,7 @@ global.upgradeSystemLoader = function() {
       detect: function(source, load) {
         return false / depArray;
       },
-      execute: function(load, depMap, global, execute) {
+      execute: function(load, deps) {
         return moduleObj; // (doesnt have to be a Module instance)
       }
     }
@@ -192,19 +205,19 @@ global.upgradeSystemLoader = function() {
   
   See the AMD, global and CommonJS format extensions for examples.
 */
-(function(global) {
+function formats(loader) {
 
   // a table of instantiating load records
   var instantiating = {};
 
-  System.format = {};
-  System.formats = [];
+  loader.format = {};
+  loader.formats = [];
 
   if (typeof window != 'undefined') {
     var curScript = document.getElementsByTagName('script');
     curScript = curScript[curScript.length - 1];
     // set the path to traceur
-    System.paths['@traceur'] = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, curScript.src.lastIndexOf('/') + 1) + 'traceur.js';
+    loader.paths['@traceur'] = curScript.getAttribute('data-traceur-src') || curScript.src.substr(0, curScript.src.lastIndexOf('/') + 1) + 'traceur.js';
   }
 
   // also in ESML, build.js
@@ -216,8 +229,8 @@ global.upgradeSystemLoader = function() {
   // module format hint regex
   var formatHintRegEx = /^(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["']([^'"]+)["'][;\n]/;
 
-  var systemInstantiate = System.instantiate;
-  System.instantiate = function(load) {
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
     var name = load.name || '';
 
     load.source = load.source || '';
@@ -237,32 +250,29 @@ global.upgradeSystemLoader = function() {
 
     // support alias modules without needing Traceur
     var match;
-    if (!global.traceur && (format == 'es6' || !format) && (match = load.source.match(aliasRegEx))) {
+    if (!loader.global.traceur && (format == 'es6' || !format) && (match = load.source.match(aliasRegEx))) {
       return {
         deps: [match[1] || match[2]],
         execute: function(depName) {
-          return System.get(depName);
+          return loader.get(depName);
         }
       };
     }
 
     if (format == 'es6' || !format && load.source.match(es6RegEx)) {
       // dynamically load Traceur if necessary
-      if (!global.traceur)
-        return System['import']('@traceur').then(function() {
-          return systemInstantiate.call(System, load);
+      if (!loader.global.traceur)
+        return loader['import']('@traceur').then(function() {
+          return loaderInstantiate.call(loader, load);
         });
       else
-        return systemInstantiate.call(System, load);
+        return loaderInstantiate.call(loader, load);
     }
 
     // if it is shimmed, assume it is a global script
-    var meta;
-    if (meta = System.meta[load.name]) {
-      if(meta.format) {
-        format = meta.format;
-      }
-    }
+
+    if (load.metadata.exports || load.metadata.deps)
+      format = 'global';
 
     // if we don't know the format, run detection first
     if (!format || !this.format[format])
@@ -285,7 +295,7 @@ global.upgradeSystemLoader = function() {
 	instantiating[load.name] = load;
 
     // now invoke format instantiation
-    var deps = curFormat.deps(load, global);
+    var deps = curFormat.deps(load);
 
     // remove duplicates from deps first
     for (var i = 0; i < deps.length; i++)
@@ -295,12 +305,12 @@ global.upgradeSystemLoader = function() {
     return {
       deps: deps,
       execute: function() {
-        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load, global);
+        var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load);
 		delete instantiating[load.name];
-        if (output instanceof global.Module)
+        if (output instanceof loader.global.Module)
           return output;
         else
-          return new global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
+          return new loader.global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
   };
@@ -320,14 +330,14 @@ global.upgradeSystemLoader = function() {
   };
 
 
-})(typeof window != 'undefined' ? window : global);
+}
 /*
   SystemJS AMD Format
   Provides the AMD module format definition at System.format.amd
   as well as a RequireJS-style require on System.require
 */
-(function() {
-  System.formats.push('amd');
+function formatAMD(loader) {
+  loader.formats.push('amd');
 
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
@@ -336,9 +346,9 @@ global.upgradeSystemLoader = function() {
 
   /*
     AMD-compatible require
-    To copy RequireJS, set window.require = window.requirejs = System.require
+    To copy RequireJS, set window.require = window.requirejs = loader.require
   */
-  var require = System.require = function(names, callback, errback, referer) {
+  var require = loader.require = function(names, callback, errback, referer) {
     // in amd, first arg can be a config object... we just ignore
     if (typeof names == 'object' && !(names instanceof Array))
       return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
@@ -346,14 +356,14 @@ global.upgradeSystemLoader = function() {
     // amd require
     if (names instanceof Array)
       Promise.all(names.map(function(name) {
-        return System['import'](name, referer);
+        return loader['import'](name, referer);
       })).then(function(modules) {
         callback.apply(null, modules);
       }, errback);
 
     // commonjs require
     else if (typeof names == 'string')
-      return System.getModule(names);
+      return loader.getModule(names);
 
     else
       throw 'Invalid require';
@@ -361,7 +371,7 @@ global.upgradeSystemLoader = function() {
   function makeRequire(parentName, deps, depsNormalized) {
     return function(names, callback, errback) {
       if (typeof names == 'string' && indexOf.call(deps, names) != -1)
-        return System.getModule(depsNormalized[indexOf.call(deps, names)]);
+        return loader.getModule(depsNormalized[indexOf.call(deps, names)]);
       return require(names, callback, errback, { name: parentName });
     }
   }
@@ -393,7 +403,7 @@ global.upgradeSystemLoader = function() {
     var meta = load.metadata;
     var deps = [];
     for (var i = 0; i < depNames.length; i++) {
-      var module = System.get(depNames[i]);
+      var module = loader.get(depNames[i]);
       if (module.__useDefault) {
         module = module['default'];
       }
@@ -424,11 +434,13 @@ global.upgradeSystemLoader = function() {
     };
   }
 
-  System.format.amd = {
+  loader.format.amd = {
     detect: function(load) {
       return !!load.source.match(amdRegEx);
     },
-    deps: function(load, global) {
+    deps: function(load) {
+
+      var global = loader.global;
 
       var deps;
       var meta = load.metadata;
@@ -454,7 +466,7 @@ global.upgradeSystemLoader = function() {
           // CommonJS AMD form
           var src = load.source;
           load.source = factory.toString();
-          _deps = ['require', 'exports', 'module'].concat(System.format.cjs.deps(load, global));
+          _deps = ['require', 'exports', 'module'].concat(loader.format.cjs.deps(load, global));
           load.source = src;
         }
         
@@ -471,7 +483,7 @@ global.upgradeSystemLoader = function() {
             metadata: {}
           };
           _deps = prepareDeps(_deps, _load.metadata);
-          System.defined[name] = {
+          loader.defined[name] = {
             deps: _deps,
             execute: function() {
               var execs = prepareExecute(Array.prototype.splice.call(arguments, 0, arguments.length), _load);
@@ -496,7 +508,7 @@ global.upgradeSystemLoader = function() {
       global.module = undefined;
       global.exports = undefined;
 
-      System.__exec(load);
+      loader.__exec(load);
 
       // deps not defined for an AMD module that defines a different name
       deps = deps || [];
@@ -510,20 +522,19 @@ global.upgradeSystemLoader = function() {
       return deps;
 
     },
-    execute: function(depNames, load, global, exec) {
+    execute: function(depNames, load) {
       if (!load.metadata.factory)
         return;
       var execs = prepareExecute(depNames, load);
-      return load.metadata.factory.apply(global, execs.deps) || execs.module && execs.module.exports;
+      return load.metadata.factory.apply(loader.global, execs.deps) || execs.module && execs.module.exports;
     }
   };
-})();
-/*
+}/*
   SystemJS CommonJS Format
   Provides the CommonJS module format definition at System.format.cjs
 */
-(function() {
-  System.formats.push('cjs');
+function formatCJS(loader) {
+  loader.formats.push('cjs');
 
   // CJS Module Format
   // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
@@ -545,15 +556,15 @@ global.upgradeSystemLoader = function() {
     emit: noop,
     cwd: function() { return '/' }
   };
-  System.set('@@nodeProcess', Module(nodeProcess));
+  loader.set('@@nodeProcess', Module(nodeProcess));
 
-  System.format.cjs = {
+  loader.format.cjs = {
     detect: function(load) {
       cjsExportsRegEx.lastIndex = 0;
       cjsRequireRegEx.lastIndex = 0;
       return !!(cjsRequireRegEx.exec(load.source) || cjsExportsRegEx.exec(load.source));
     },
-    deps: function(load, global) {
+    deps: function(load) {
       cjsExportsRegEx.lastIndex = 0;
       cjsRequireRegEx.lastIndex = 0;
 
@@ -571,21 +582,21 @@ global.upgradeSystemLoader = function() {
 
       return deps;
     },
-    execute: function(depNames, load, global) {
+    execute: function(depNames, load) {
       var dirname = load.address.split('/');
       dirname.pop();
       dirname = dirname.join('/');
 
       var deps = load.metadata.deps;
 
-      var globals = global._g = {
-        global: global,
+      var globals = loader.global._g = {
+        global: loader.global,
         exports: {},
         process: nodeProcess,
         require: function(d) {
           var index = indexOf.call(deps, d);
           if (index != -1)
-            return System.getModule(depNames[index]);
+            return loader.getModule(depNames[index]);
         },
         __filename: load.address,
         __dirname: dirname,
@@ -598,14 +609,14 @@ global.upgradeSystemLoader = function() {
 
       load.source = glString + load.source;
 
-      System.__exec(load);
+      loader.__exec(load);
 
-      global._g = undefined;
+      loader.global._g = undefined;
 
       return globals.module.exports;
     }
   };
-})();/*
+}/*
   SystemJS Global Format
   Provides the global support at System.format.global
   Supports inline shim syntax with:
@@ -616,8 +627,8 @@ global.upgradeSystemLoader = function() {
   Also detects writes to the global object avoiding global collisions.
   See the SystemJS readme global support section for further information.
 */
-(function() {
-  System.formats.push('global');
+function formatGlobal(loader) {
+  loader.formats.push('global');
 
   // Global
   var globalShimRegEx = /(["']global["'];\s*)((['"]import [^'"]+['"];\s*)*)(['"]export ([^'"]+)["'])?/;
@@ -627,14 +638,14 @@ global.upgradeSystemLoader = function() {
   // to contain the union of the defined properties of its dependent modules
   var moduleGlobals = {};
 
-  // also support a System.shim system
-  System.shim = {};
+  // also support a loader.shim system
+  loader.shim = {};
 
-  System.format.global = {
+  loader.format.global = {
     detect: function() {
       return true;
     },
-    deps: function(load, global) {
+    deps: function(load) {
       var match, deps;
       if (match = load.source.match(globalShimRegEx)) {
         deps = match[2].match(globalImportRegEx);
@@ -644,14 +655,12 @@ global.upgradeSystemLoader = function() {
         load.metadata.exports = match[5];
       }
       deps = deps || [];
-      var meta;
-      if (meta = System.meta[load.name]) {
-        deps.push.apply(deps, meta.deps || meta.imports || []);
-      }
+      if (load.metadata.deps)
+        deps = deps.concat(load.metadata.deps);
       return deps;
     },
-    execute: function(depNames, load, global) {
-      var hasOwnProperty = global.hasOwnProperty;
+    execute: function(depNames, load) {
+      var hasOwnProperty = loader.global.hasOwnProperty;
       var globalExport = load.metadata.exports;
 
       // first, we add all the dependency module properties to the global
@@ -659,20 +668,20 @@ global.upgradeSystemLoader = function() {
         var moduleGlobal = moduleGlobals[depNames[i]];
         if (moduleGlobal)
           for (var m in moduleGlobal)
-            global[m] = moduleGlobal[m];
+            loader.global[m] = moduleGlobal[m];
       }
 
       // now store a complete copy of the global object
       // in order to detect changes
       var globalObj = {};
-      for (var g in global)
-        if (!hasOwnProperty || global.hasOwnProperty(g))
-          globalObj[g] = global[g];
+      for (var g in loader.global)
+        if (!hasOwnProperty || loader.global.hasOwnProperty(g))
+          globalObj[g] = loader.global[g];
 
       if (globalExport)
         load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
 
-      System.__exec(load);
+      loader.__exec(load);
 
       // check for global changes, creating the globalObject for the module
       // if many globals, then a module object for those is created
@@ -680,23 +689,23 @@ global.upgradeSystemLoader = function() {
       var singleGlobal, moduleGlobal;
       if (globalExport) {
         var firstPart = globalExport.split('.')[0];
-        singleGlobal = eval.call(global, globalExport);
+        singleGlobal = eval.call(loader.global, globalExport);
         moduleGlobal = {};
-        moduleGlobal[firstPart] = global[firstPart];
+        moduleGlobal[firstPart] = loader.global[firstPart];
       }
       else {
         moduleGlobal = {};
-        for (var g in global) {
+        for (var g in loader.global) {
           if (!hasOwnProperty && (g == 'sessionStorage' || g == 'localStorage' || g == 'clipboardData' || g == 'frames'))
             continue;
-          if ((!hasOwnProperty || global.hasOwnProperty(g)) && g != global && globalObj[g] != global[g]) {
-            moduleGlobal[g] = global[g];
+          if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && globalObj[g] != loader.global[g]) {
+            moduleGlobal[g] = loader.global[g];
             if (singleGlobal) {
-              if (singleGlobal !== global[g])
+              if (singleGlobal !== loader.global[g])
                 singleGlobal = false;
             }
             else if (singleGlobal !== false)
-              singleGlobal = global[g];
+              singleGlobal = loader.global[g];
           }
         }
       }
@@ -708,7 +717,8 @@ global.upgradeSystemLoader = function() {
         return new Module(moduleGlobal);
     }
   };
-})();/*
+}
+/*
   SystemJS map support
   
   Provides map configuration through
@@ -731,9 +741,9 @@ global.upgradeSystemLoader = function() {
 
   Maps are carefully applied from most specific contextual map, to least specific global map
 */
-(function() {
+function map(loader) {
 
-  System.map = System.map || {};
+  loader.map = loader.map || {};
 
 
   // return the number of prefix parts (separated by '/') matching the name
@@ -761,8 +771,8 @@ global.upgradeSystemLoader = function() {
     
     // first find most specific contextual match
     if (parentName) {
-      for (var p in System.map) {
-        var curMap = System.map[p];
+      for (var p in loader.map) {
+        var curMap = loader.map[p];
         if (typeof curMap != 'object')
           continue;
 
@@ -787,13 +797,13 @@ global.upgradeSystemLoader = function() {
     if (curMatch) {
       nameParts = name.split('/');
       subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-      name = System.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
+      name = loader.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
       curMatchLength = 0;
     }
 
     // now do the global map
-    for (var p in System.map) {
-      var curMap = System.map[p];
+    for (var p in loader.map) {
+      var curMap = loader.map[p];
       if (typeof curMap != 'string')
         continue;
 
@@ -810,18 +820,18 @@ global.upgradeSystemLoader = function() {
     
     nameParts = name.split('/');
     subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-    return System.map[curMatch] + (subPath ? '/' + subPath : '');
+    return loader.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
-  var systemNormalize = System.normalize;
+  var loaderNormalize = loader.normalize;
   var mapped = {};
-  System.normalize = function(name, parentName, parentAddress) {
-    return Promise.resolve(systemNormalize.call(System, name, parentName, parentAddress))
+  loader.normalize = function(name, parentName, parentAddress) {
+    return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
     .then(function(name) {
       return applyMap(name, parentName);
     });
-  };
-})();
+  }
+}
 /*
   SystemJS Plugin Support
 
@@ -830,15 +840,15 @@ global.upgradeSystemLoader = function() {
   The plugin name is loaded as a module itself, and can override standard loader hooks
   for the plugin resource. See the plugin section of the systemjs readme.
 */
-(function() {
-  var systemNormalize = System.normalize;
-  System.normalize = function(name, parentName, parentAddress) {
+function plugins(loader) {
+  var loaderNormalize = loader.normalize;
+  loader.normalize = function(name, parentName, parentAddress) {
     // if parent is a plugin, normalize against the parent plugin argument only
     var parentPluginIndex;
     if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
       parentName = parentName.substr(0, parentPluginIndex);
 
-    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
+    return Promise.resolve(loaderNormalize(name, parentName, parentAddress))
     .then(function(name) {
       // if this is a plugin, normalize the plugin name and the argument
       var pluginIndex = name.lastIndexOf('!');
@@ -850,12 +860,12 @@ global.upgradeSystemLoader = function() {
 
         // normalize the plugin name relative to the same parent
         return new Promise(function(resolve) {
-          resolve(System.normalize(pluginName, parentName, parentAddress)); 
+          resolve(loader.normalize(pluginName, parentName, parentAddress)); 
         })
         // normalize the plugin argument
         .then(function(_pluginName) {
           pluginName = _pluginName;
-          return System.normalize(argumentName, parentName, parentAddress);
+          return loader.normalize(argumentName, parentName, parentAddress);
         })
         .then(function(argumentName) {
           return argumentName + '!' + pluginName;
@@ -867,8 +877,8 @@ global.upgradeSystemLoader = function() {
     });
   }
 
-  var systemLocate = System.locate;
-  System.locate = function(load) {
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
     var name = load.name;
 
     // plugin
@@ -880,9 +890,9 @@ global.upgradeSystemLoader = function() {
       load.name = name.substr(0, pluginIndex);
 
       // load the plugin module
-      return System.load(pluginName)
+      return loader.load(pluginName)
       .then(function() {
-        var plugin = System.get(pluginName);
+        var plugin = loader.get(pluginName);
         plugin = plugin['default'] || plugin;
 
         // store the plugin module itself on the metadata
@@ -892,12 +902,12 @@ global.upgradeSystemLoader = function() {
 
         // run plugin locate if given
         if (plugin.locate)
-          return plugin.locate.call(System, load);
+          return plugin.locate.call(loader, load);
 
         // otherwise use standard locate without '.js' extension adding
         else
           return new Promise(function(resolve) {
-            resolve(System.locate(load));
+            resolve(loader.locate(load));
           })
           .then(function(address) {
             return address.substr(0, address.length - 3);
@@ -905,33 +915,33 @@ global.upgradeSystemLoader = function() {
       });
     }
 
-    return systemLocate.call(this, load);
+    return loaderLocate.call(this, load);
   }
 
-  var systemFetch = System.fetch;
-  System.fetch = function(load) {
+  var loaderFetch = loader.fetch;
+  loader.fetch = function(load) {
     // support legacy plugins
     var self = this;
     if (typeof load.metadata.plugin == 'function') {
       return new Promise(function(fulfill, reject) {
         load.metadata.plugin(load.metadata.pluginArgument, load.address, function(url, callback, errback) {
-          systemFetch.call(self, { name: load.name, address: url, metadata: {} }).then(callback, errback);
+          loaderFetch.call(self, { name: load.name, address: url, metadata: {} }).then(callback, errback);
         }, fulfill, reject);
       });
     }
-    return (load.metadata.plugin && load.metadata.plugin.fetch || systemFetch).call(this, load);
+    return (load.metadata.plugin && load.metadata.plugin.fetch || loaderFetch).call(this, load);
   }
 
-  var systemTranslate = System.translate;
-  System.translate = function(load) {
+  var loaderTranslate = loader.translate;
+  loader.translate = function(load) {
     var plugin = load.metadata.plugin;
     if (plugin && plugin.translate)
       return plugin.translate.call(this, load);
 
-    return systemTranslate.call(this, load);
+    return loaderTranslate.call(this, load);
   }
 
-})();/*
+}/*
   System bundles
 
   Allows a bundle module to be specified which will be dynamically 
@@ -946,73 +956,71 @@ global.upgradeSystemLoader = function() {
   In this way, the bundle becomes the request that provides the module
 */
 
-(function() {
-
+function bundles(loader) {
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
   // bundle is array of modules defined by the bundle
   // when a module in the bundle is requested, the bundle is loaded instead
   // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
-  System.bundles = System.bundles || {};
+  loader.bundles = loader.bundles || {};
 
-  var systemFetch = System.fetch;
-  System.fetch = function(load) {
+  var loaderFetch = loader.fetch;
+  loader.fetch = function(load) {
     // if this module is in a bundle, load the bundle first then
-    for (var b in System.bundles) {
-      if (indexOf.call(System.bundles[b], load.name) == -1)
+    for (var b in loader.bundles) {
+      if (indexOf.call(loader.bundles[b], load.name) == -1)
         continue;
       // we do manual normalization in case the bundle is mapped
       // this is so we can still know the normalized name is a bundle
-      return Promise.resolve(System.normalize(b))
+      return Promise.resolve(loader.normalize(b))
       .then(function(normalized) {
-        System.bundles[normalized] = System.bundles[normalized] || System.bundles[b];
-        return System.load(normalized);
+        loader.bundles[normalized] = loader.bundles[normalized] || loader.bundles[b];
+        return loader.load(normalized);
       })
       .then(function() {
         return '';
       });
     }
-    return systemFetch.apply(this, arguments);
+    return loaderFetch.apply(this, arguments);
   }
 
-  var systemLocate = System.locate;
-  System.locate = function(load) {
-    if (System.bundles[load.name])
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    if (loader.bundles[load.name])
       load.metadata.bundle = true;
-    return systemLocate.call(this, load);
+    return loaderLocate.call(this, load);
   }
 
-  var systemInstantiate = System.instantiate;
-  System.instantiate = function(load) {
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
     // if it is a bundle itself, it doesn't define anything
     if (load.metadata.bundle)
       return {
         deps: [],
         execute: function() {
-          System.__exec(load);
+          loader.__exec(load);
           return new Module({});
         }
       };
 
-    return systemInstantiate.apply(this, arguments);
+    return loaderInstantiate.apply(this, arguments);
   }
 
-})();
-/*
-  Implementation of the System.register bundling method
+}/*
+  Implementation of the loader.register bundling method
 
   This allows the output of Traceur to populate the
-  module registry of the System loader
+  module registry of the loader loader
 */
 
-(function() {
+function register(loader) {
 
-  // instantiation cache for System.register
-  System.defined = {};
+  // instantiation cache for loader.register
+  loader.defined = {};
 
   // register a new module for instantiation
-  System.register = function(name, deps, execute) {
-    System.defined[name] = {  
+  loader.register = function(name, deps, execute) {
+    loader.defined[name] = {  
       deps: deps,
       execute: function() {
         return Module(execute.apply(this, arguments));
@@ -1020,27 +1028,27 @@ global.upgradeSystemLoader = function() {
     };
   }
   
-  var systemFetch = System.fetch;
-  System.fetch = function(load) {
+  var loaderFetch = loader.fetch;
+  loader.fetch = function(load) {
     // if the module is already defined, skip fetch
-    if (System.defined[load.name])
+    if (loader.defined[load.name])
       return '';
-    return systemFetch.apply(this, arguments);
+    return loaderFetch.apply(this, arguments);
   }
 
-  var systemInstantiate = System.instantiate;
-  System.instantiate = function(load) {
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
     // if the module has been defined by a bundle, use that
-    if (System.defined[load.name]) {
-      var instantiateResult = System.defined[load.name];
-      delete System.defined[load.name];
+    if (loader.defined[load.name]) {
+      var instantiateResult = loader.defined[load.name];
+      delete loader.defined[load.name];
       return instantiateResult;
     }
 
-    return systemInstantiate.apply(this, arguments);
+    return loaderInstantiate.apply(this, arguments);
   }
 
-})();
+}
 /*
   SystemJS Semver Version Addon
   
@@ -1098,7 +1106,7 @@ global.upgradeSystemLoader = function() {
   Prereleases in this versions list are also allowed to satisfy ranges when present.
 */
 
-(function() {
+function versions(loader) {
   // match x, x.y, x.y.z, x.y.z-prerelease.1
   var semverRegEx = /^(\d+)(?:\.(\d+)(?:\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?)?)?$/;
 
@@ -1121,15 +1129,15 @@ global.upgradeSystemLoader = function() {
     return 0;
   }
   
-  var systemNormalize = System.normalize;
+  var loaderNormalize = loader.normalize;
 
-  System.versions = System.versions || {};
+  loader.versions = loader.versions || {};
 
   // hook normalize and store a record of all versioned packages
-  System.normalize = function(name, parentName, parentAddress) {
-    var packageVersions = System.versions;
+  loader.normalize = function(name, parentName, parentAddress) {
+    var packageVersions = loader.versions;
     // run all other normalizers first
-    return Promise.resolve(systemNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
+    return Promise.resolve(loaderNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
       var version, semverMatch, nextChar, versions;
       var index = normalized.indexOf('@');
@@ -1257,16 +1265,31 @@ global.upgradeSystemLoader = function() {
       return normalized;
     });
   }
+}
+core(System);
+formats(System);
+formatAMD(System);
+formatCJS(System);
+formatGlobal(System);
+map(System);
+plugins(System);
+bundles(System);
+register(System);
+versions(System);
 
-})();
+  if (__$global.systemMainEntryPoint)
+    System['import'](__$global.systemMainEntryPoint);
 };
 
 (function() {
-  if (!global.System || global.System.registerModule) {
+  var scripts = document.getElementsByTagName('script');
+  var curScript = scripts[scripts.length - 1];
+  __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
+
+  if (!__$global.System || __$global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
-      var scripts = document.getElementsByTagName('script');
-      var curPath = scripts[scripts.length - 1].src;
+      var curPath = curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
@@ -1274,16 +1297,20 @@ global.upgradeSystemLoader = function() {
     }
     else {
       var es6ModuleLoader = require('es6-module-loader');
-      global.System = es6ModuleLoader.System;
-      global.Loader = es6ModuleLoader.Loader;
-      global.Module = es6ModuleLoader.Module;
-      module.exports = global.System;
-      global.upgradeSystemLoader();
+      __$global.System = es6ModuleLoader.System;
+      __$global.Loader = es6ModuleLoader.Loader;
+      __$global.Module = es6ModuleLoader.Module;
+      module.exports = __$global.System;
+      __$global.upgradeSystemLoader();
     }
   }
   else {
-    global.upgradeSystemLoader();
+    __$global.upgradeSystemLoader();
   }
+
+  var configPath = curScript.getAttribute('data-config');
+  if (configPath)
+    document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
 })();
 
 

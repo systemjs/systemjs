@@ -8,7 +8,7 @@ function err(e) {
     start();
   });  
 }
-
+console.log("HERE");
 asyncTest('Error handling', function() {
   System['import']('tests/error').then(err, function() {
     ok(true);
@@ -45,7 +45,7 @@ asyncTest('Global script with inline exports', function() {
 });
 
 asyncTest('Global script with shim config', function() {
-  System.meta['tests/global-shim-config'] = {deps: ['./global-shim-config-dep']};
+  System.meta['tests/global-shim-config'] = { deps: ['./global-shim-config-dep'] };
   System['import']('tests/global-shim-config').then(function(m) {
     ok(m == 'shimmed', 'Not shimmed');
     start();
@@ -53,7 +53,7 @@ asyncTest('Global script with shim config', function() {
 });
 
 asyncTest('Global script loading that detects as AMD with shim config', function() {
-  System.meta['tests/global-shim-amd'] = {format: "global"};
+  System.meta['tests/global-shim-amd'] = { format: 'global' };
   System['import']('tests/global-shim-amd').then(function(m) {
     ok(m == 'global', 'Not shimmed');
     start();
@@ -84,6 +84,7 @@ asyncTest('Map configuration', function() {
 });
 
 asyncTest('Map configuration subpath', function() {
+  System.map['maptest'] = 'tests/map-test';
   System['import']('maptest/sub').then(function(m) {
     ok(m.maptest == 'maptestsub', 'Mapped folder not loaded');
     start();
@@ -207,6 +208,7 @@ asyncTest('Mapping to a plugin', function() {
 asyncTest('Mapping a plugin argument', function() {
   System.map['bootstrap'] = 'tests/bootstrap@^3.1.1';
   System.versions['tests/bootstrap'] = '3.1.1';
+  System.map['coffee'] = 'tests/compiler-plugin';
   System['import']('bootstrap/test.coffee!coffee').then(function(m) {
     ok(m.extra == 'yay!', 'not working');
     start();
@@ -385,4 +387,4 @@ asyncTest("System.meta", function(){
 });
 
 
-
+QUnit.start();
