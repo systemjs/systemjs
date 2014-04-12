@@ -129,12 +129,19 @@ function core(loader) {
     }
   }
 
+  // System.meta provides default metadata
+  System.meta = {};
+
   // override locate to allow baseURL to be document-relative
   var loaderLocate = loader.locate;
   var normalizedBaseURL;
   loader.locate = function(load) {
     if (this.baseURL != normalizedBaseURL)
       this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+    var meta = System.meta[load.name];
+    for (var p in meta)
+      load.metadata[p] = meta[p];
 
     return Promise.resolve(loaderLocate.call(this, load));
   }
@@ -282,7 +289,6 @@ function core(loader) {
 */
 
 function bundles(loader) {
-
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
   // bundle is array of modules defined by the bundle
