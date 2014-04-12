@@ -84,6 +84,7 @@ asyncTest('Map configuration', function() {
 });
 
 asyncTest('Map configuration subpath', function() {
+  System.map['maptest'] = 'tests/map-test';
   System['import']('maptest/sub').then(function(m) {
     ok(m.maptest == 'maptestsub', 'Mapped folder not loaded');
     start();
