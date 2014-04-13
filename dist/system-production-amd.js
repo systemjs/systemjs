@@ -653,9 +653,12 @@ versions(System);
   
   __$global.upgradeSystemLoader = function(){
     __$global.upgradeSystemLoader = undefined;
+    var originalSystemLoader = __$global.System;
     __$global.System = upgradeLoader(System);
+    __$global.System.clone = function(){
+      	return upgradeLoader(originalSystemLoader);
+    }
   };
-
   if (!__$global.System || __$global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
@@ -673,9 +676,6 @@ versions(System);
       __$global.Loader = es6ModuleLoader.Loader;
       __$global.Module = es6ModuleLoader.Module;
       __$global.upgradeSystemLoader();
-      __$global.System.clone = function(){
-      	return upgradeLoader(originalSystemLoader);
-      }
       module.exports = __$global.System;
       
     }
