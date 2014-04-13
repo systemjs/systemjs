@@ -47,8 +47,6 @@ var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
 function core(loader) {
   (function() {
 
-    var curSystem = loader;
-
     /*
       __useDefault
       
@@ -148,7 +146,7 @@ function core(loader) {
     }
 
     // System.meta provides default metadata
-    System.meta = {};
+    loader.meta = {};
 
     // override locate to allow baseURL to be document-relative
     var loaderLocate = loader.locate;
@@ -157,7 +155,7 @@ function core(loader) {
       if (this.baseURL != normalizedBaseURL)
         this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
 
-      var meta = System.meta[load.name];
+      var meta = loader.meta[load.name];
       for (var p in meta)
         load.metadata[p] = meta[p];
 
@@ -166,7 +164,11 @@ function core(loader) {
 
     // define exec for custom instantiations
     loader.__exec = function(load) {
-
+      // loader on window
+      var restoreLoaderAsSystem = false;
+      if(load.name == '@traceur' && loader === loader.global.System) {
+      	restoreLoaderAsSystem = true;
+      }
       // support sourceMappingURL (efficiently)
       var sourceMappingURL;
       var lastLineIndex = load.source.lastIndexOf('\n');
@@ -178,9 +180,9 @@ function core(loader) {
       __eval(load.source, loader.global, load.address, sourceMappingURL);
 
       // traceur overwrites System - write it back
-      if (load.name == '@traceur') {
+      if (restoreLoaderAsSystem) {
         loader.global.traceurSystem = loader.global.System;
-        loader.global.System = curSystem;
+        loader.global.System = loader;
       }
     }
 
@@ -330,8 +332,8 @@ function formats(loader) {
       }
     };
   };
-  var systemFormatNormalize = System.normalize;
-  System.normalize = function(name, refererName, refererAdress) {
+  var systemFormatNormalize = loader.normalize;
+  loader.normalize = function(name, refererName, refererAdress) {
   	var load = instantiating[refererName],
   		format = load && this.format[load.metadata.format],
   		normalize = format && format.normalize;
@@ -1282,21 +1284,21 @@ function versions(loader) {
     });
   }
 }
-core(System);
-formats(System);
-formatAMD(System);
-formatCJS(System);
-formatGlobal(System);
-map(System);
-plugins(System);
-bundles(System);
-register(System);
-versions(System);
+  core(System);
+  formats(System);
+  formatAMD(System);
+  formatCJS(System);
+  formatGlobal(System);
+  map(System);
+  plugins(System);
+  bundles(System);
+  register(System);
+  versions(System);
 
   if (__$global.systemMainEntryPoint)
     System['import'](__$global.systemMainEntryPoint);
   return System;
-};
+}; // upgradeLoader end
 
 (function() {
   if (typeof window != 'undefined') {
