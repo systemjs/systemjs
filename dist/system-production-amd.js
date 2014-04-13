@@ -121,7 +121,7 @@ function core(loader) {
     }
     var baseURI;
     if (typeof window == 'undefined') {
-      baseURI = __dirname;
+      baseURI = __dirname + '/';
     }
     else {
       baseURI = document.baseURI;
@@ -183,7 +183,8 @@ function core(loader) {
       throw e;
     }
   }
-}function amdScriptLoader(loader) {
+}
+function amdScriptLoader(loader) {
 
   var head = document.getElementsByTagName('head')[0];
 
