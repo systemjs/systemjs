@@ -1337,10 +1337,11 @@ versions(System);
   else {
     __$global.upgradeSystemLoader();
   }
-
-  var configPath = curScript.getAttribute('data-config');
-  if (configPath)
-    document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
+  if (typeof window != 'undefined') {
+    var configPath = curScript.getAttribute('data-config');
+    if (configPath)
+      document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
+  }
 })();
 
 
