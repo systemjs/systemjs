@@ -645,10 +645,12 @@ versions(System);
 };
 
 (function() {
-  var scripts = document.getElementsByTagName('script');
-  var curScript = scripts[scripts.length - 1];
-  __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
-
+  if (typeof window != 'undefined') {
+    var scripts = document.getElementsByTagName('script');
+    var curScript = scripts[scripts.length - 1];
+    __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
+  }
+  
   __$global.upgradeSystemLoader = function(){
     __$global.upgradeSystemLoader = undefined;
     __$global.System = upgradeLoader(System);
