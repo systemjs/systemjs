@@ -351,19 +351,20 @@ function bundles(loader) {
       });
     }
     return loaderFetch.apply(this, arguments);
-  }
+  };
 
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
     if (loader.bundles[load.name])
       load.metadata.bundle = true;
     return loaderLocate.call(this, load);
-  }
+  };
 
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
+    var result = loaderInstantiate.apply(this, arguments);
     // if it is a bundle itself, it doesn't define anything
-    if (load.metadata.bundle)
+    if (load.metadata.bundle) {
       return {
         deps: [],
         execute: function() {
@@ -371,9 +372,10 @@ function bundles(loader) {
           return new Module({});
         }
       };
-
-    return loaderInstantiate.apply(this, arguments);
-  }
+    } else {
+      return result;
+    }
+  };
 
 }/*
   Implementation of the loader.register bundling method
