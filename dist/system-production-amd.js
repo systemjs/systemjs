@@ -695,11 +695,11 @@ versions(System);
   else {
     __$global.upgradeSystemLoader();
   }
-  if (typeof window != 'undefined') {
+  /*if (typeof window != 'undefined') {
     var configPath = curScript.getAttribute('data-config');
     if (configPath)
       document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
-  }
+  }*/
 })();
 
 
