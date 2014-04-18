@@ -1312,9 +1312,9 @@ function versions(loader) {
 
 (function() {
   if (typeof window != 'undefined') {
-    var scripts = document.getElementsByTagName('script');
+    /*var scripts = document.getElementsByTagName('script');
     var curScript = scripts[scripts.length - 1];
-    __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
+    __$global.systemMainEntryPoint = curScript.getAttribute('data-main');*/
   }
   
   __$global.upgradeSystemLoader = function(){
