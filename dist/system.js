@@ -1017,7 +1017,6 @@ function bundles(loader) {
       return {
         deps: [],
         execute: function() {
-          loader.__exec(load);
           return new Module({});
         }
       };
