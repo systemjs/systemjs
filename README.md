@@ -515,10 +515,10 @@ Install the optimzer:
 Build modules into a single file (assuming the main entry point is `app-built/main`):
 
 ```
-  r.js -o name=app-built/main out=app-built.js paths.app=app-built
+  r.js -o name=app/main out=app-built.js paths.app=app-built
 ```
 
-_If not compiling from ES6, replace `app-built` with `app`, and the last argument setting `paths.app` is not necessary._
+_If not compiling from ES6, the last argument setting `paths.app` is not necessary._
 
 This will build all dependencies of `app-built/main` into a single file, `app-built.js` located in the same folder as the `app` folder.
 
