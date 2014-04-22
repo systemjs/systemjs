@@ -902,7 +902,7 @@ function plugins(loader) {
       // standard normalization
       return name;
     });
-  }
+  };
 
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
@@ -915,11 +915,12 @@ function plugins(loader) {
 
       // the name to locate is the plugin argument only
       load.name = name.substr(0, pluginIndex);
-
+      
+      var pluginLoader = loader.pluginLoader || loader;
       // load the plugin module
-      return loader.load(pluginName)
+      return pluginLoader.load(pluginName)
       .then(function() {
-        var plugin = loader.get(pluginName);
+        var plugin = pluginLoader.get(pluginName);
         plugin = plugin['default'] || plugin;
 
         // store the plugin module itself on the metadata
@@ -943,7 +944,7 @@ function plugins(loader) {
     }
 
     return loaderLocate.call(this, load);
-  }
+  };
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
@@ -957,7 +958,7 @@ function plugins(loader) {
       });
     }
     return (load.metadata.plugin && load.metadata.plugin.fetch || loaderFetch).call(this, load);
-  }
+  };
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
@@ -966,7 +967,7 @@ function plugins(loader) {
       return plugin.translate.call(this, load);
 
     return loaderTranslate.call(this, load);
-  }
+  };
 
 }/*
   System bundles
