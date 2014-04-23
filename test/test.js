@@ -8,7 +8,7 @@ function err(e) {
     start();
   });  
 }
-console.log("HERE");
+
 asyncTest('Error handling', function() {
   System['import']('tests/error').then(err, function() {
     ok(true);
@@ -413,6 +413,15 @@ asyncTest("System.clone", function(){
 	
 });*/
 
-
+asyncTest("bundled defines without dependencies", function(){
+	System.bundles["tests/amd-bundle/amd-bundled"] = ["tests/amd-bundle",'amd-dependency'];
+	System['import']("tests/amd-bundle").then(function(value){
+		equal(value.name, "tests/amd-bundle");
+		start();
+	}, function(e){
+		ok(false, "got error "+e);
+		start();
+	});
+});
 
 QUnit.start();
