@@ -135,7 +135,7 @@ function core(loader) {
     }
     var baseURI;
     if (typeof window == 'undefined') {
-      baseURI = __dirname;
+      baseURI = __dirname + '/';
     }
     else {
       baseURI = document.baseURI;
@@ -210,7 +210,8 @@ function core(loader) {
       throw e;
     }
   }
-}function amdScriptLoader(loader) {
+}
+function amdScriptLoader(loader) {
 
   var head = document.getElementsByTagName('head')[0];
 
@@ -405,6 +406,13 @@ function register(loader) {
         return Module(execute.apply(this, arguments));
       }
     };
+  }
+  
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    if (loader.defined[load.name])
+      return '';
+    return loaderLocate.apply(this, arguments);
   }
   
   var loaderFetch = loader.fetch;
