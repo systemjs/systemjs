@@ -425,4 +425,31 @@ asyncTest("bundled defines without dependencies", function(){
 	});
 });
 
+asyncTest("plugin instantiate hook", function(){
+	var testEl = document.createElement("div");
+	testEl.id = "test-element";
+	
+	document.body.appendChild(testEl);
+	
+	var instantiate = System.instantiate;
+	System.instantiate = function(load){
+		if( load.name.indexOf( "tests/build_types/test.css") === 0 ) {
+			equal(load.metadata.buildType, "css", "buildType set");
+		}
+		
+		return instantiate.apply(this, arguments);
+	};
+	
+	System['import']("tests/build_types/test.css!tests/build_types/css").then(function(value){
+		equal(testEl.clientWidth, 200, "style added to the page");
+		document.body.removeChild(testEl);
+		System.instantiate = instantiate;
+		start();
+		
+	}, function(e){
+		ok(false, "got error "+e);
+		start();
+	});
+});
+
 QUnit.start();
