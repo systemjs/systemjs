@@ -510,7 +510,8 @@ function formatAMD(loader) {
             address: name,
             metadata: {}
           };
-          _deps = prepareDeps(_deps, _load.metadata);
+          _load.metadata.deps = _deps = prepareDeps(_deps, _load.metadata);
+          
           loader.defined[name] = {
             deps: _deps,
             execute: function() {

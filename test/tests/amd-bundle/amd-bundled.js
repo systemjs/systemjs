@@ -6,7 +6,7 @@ define('amd-dependency', function () {
 });
 //main
 define('tests/amd-bundle', function(require, exports, module) {
-	var res = require("amd-dependency").default;
+	var res = require("amd-dependency");
 	return {
 		name: 'tests/amd-bundle',
 		dep: res

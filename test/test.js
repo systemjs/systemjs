@@ -416,7 +416,8 @@ asyncTest("System.clone", function(){
 asyncTest("bundled defines without dependencies", function(){
 	System.bundles["tests/amd-bundle/amd-bundled"] = ["tests/amd-bundle",'amd-dependency'];
 	System['import']("tests/amd-bundle").then(function(value){
-		equal(value.name, "tests/amd-bundle");
+		equal(value.name, "tests/amd-bundle","got the right module value");
+		console.log(value.dep);
 		start();
 	}, function(e){
 		ok(false, "got error "+e);
