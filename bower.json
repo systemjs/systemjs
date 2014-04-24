@@ -3,7 +3,7 @@
   "version": "0.5.5",
   "dependencies": {
     "traceur": "0.0.32",
-    "es6-module-loader": "~0.5.4"
+    "es6-module-loader": "git://github.com/ModuleLoader/es6-module-loader.git#master"
   },
   "devDependencies": {
     "qunit": "~1.12.0"

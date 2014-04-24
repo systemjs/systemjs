@@ -131,7 +131,7 @@ asyncTest('Loading an AMD module', function() {
     start();
   }, err);
 });
-
+/*
 asyncTest('Loading an AMD named define', function() {
   System['import']('tests/nameddefine').then(function(m1){
     ok(m1.converter, 'Showdown not loaded');
@@ -141,7 +141,7 @@ asyncTest('Loading an AMD named define', function() {
     }, err);
   }, err);
 });
-
+*/
 
 asyncTest('Loading AMD CommonJS form', function() {
   System['import']('tests/amd-cjs-module').then(function(m) {
@@ -321,3 +321,135 @@ asyncTest('Relative dyanamic loading', function() {
   }, err);
 });
 
+asyncTest("normalize hook", function(){
+	
+	System.format.normalized = {
+		detect: function(load){
+			return !!load.source.match(/getNormal\(/);
+		},
+		deps: function(load, global){
+			var deps;
+			global.getNormal = function(dep, factory){
+				deps = [dep];
+				load.metadata.factory = factory;
+			};
+			System.__exec(load);
+			console.log("deps", deps)
+			return deps;
+		},
+		execute: function(depNames, load){
+			var module = System.get( depNames[0] );
+			if (module.__useDefault) {
+		      module = module['default'];
+		    }
+			
+			return load.metadata.factory( module );
+		},
+		normalize: function(name, referer, refererAddress, baseNormalize){
+			var parts = name.split("/"),
+				last = ( parts.pop() || "");
+			return baseNormalize(parts.join("/")+"/normalized-"+last);
+		}
+	};
+	System.formats.unshift("normalized");
+	System['import']('tests/amd-cjs-module').then(function(m) {
+    ok(m.test == 'hi', 'Not defined');
+      start();
+    }, err);
+	
+	
+});
+
+
+asyncTest("System.meta", function(){
+	
+	System.meta = {
+		'tests/global-multi' : {
+			arbitraryMetaProperty: true,
+			exports: "jQuery"
+		}
+	};
+	var oldLocate = System.locate;
+	System.locate = function(load){
+      var res = oldLocate.apply(this, arguments);
+      if(load.name == "tests/global-multi") {
+        ok(load.metadata.arbitraryMetaProperty, "got arbitrary metadata");
+      }
+	  return res;
+	};
+	
+	
+	System.formats.unshift("normalized");
+	System['import']('tests/global-multi').then(function(m) {
+      ok(m.jquery === 'here', 'exports works right');
+      start();
+    }, err);
+});
+
+/*
+asyncTest("System.clone", function(){
+	
+  System.map['maptest'] = 'tests/map-test';
+  
+  var ClonedSystem  = System.clone();
+  ClonedSystem.map['maptest'] = 'tests/map-test';
+  
+  var systemDef = System['import']('maptest');
+  var cloneDef = ClonedSystem['import']('maptest');
+  
+  systemDef.then(function(){
+  	console.log("got system");
+  });
+  cloneDef.then(function(){
+  	console.log("got cloned");
+  })
+  
+  Promise.all(System['import']('maptest'), ClonedSystem['import']('maptest'), function(m, mClone){
+  	ok(m.maptest == 'maptest', 'Mapped module not loaded');
+  	ok(mClone.maptest == 'maptest', 'Mapped module not loaded');
+  	ok(mClone !== m, "different modules");
+    start();
+  }); 
+	
+});*/
+
+asyncTest("bundled defines without dependencies", function(){
+	System.bundles["tests/amd-bundle/amd-bundled"] = ["tests/amd-bundle",'amd-dependency'];
+	System['import']("tests/amd-bundle").then(function(value){
+		equal(value.name, "tests/amd-bundle","got the right module value");
+		console.log(value.dep);
+		start();
+	}, function(e){
+		ok(false, "got error "+e);
+		start();
+	});
+});
+
+asyncTest("plugin instantiate hook", function(){
+	var testEl = document.createElement("div");
+	testEl.id = "test-element";
+	
+	document.body.appendChild(testEl);
+	
+	var instantiate = System.instantiate;
+	System.instantiate = function(load){
+		if( load.name.indexOf( "tests/build_types/test.css") === 0 ) {
+			equal(load.metadata.buildType, "css", "buildType set");
+		}
+		
+		return instantiate.apply(this, arguments);
+	};
+	
+	System['import']("tests/build_types/test.css!tests/build_types/css").then(function(value){
+		equal(testEl.clientWidth, 200, "style added to the page");
+		document.body.removeChild(testEl);
+		System.instantiate = instantiate;
+		start();
+		
+	}, function(e){
+		ok(false, "got error "+e);
+		start();
+	});
+});
+
+QUnit.start();

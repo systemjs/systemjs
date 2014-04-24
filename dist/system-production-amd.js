@@ -6,9 +6,25 @@
  */
 
 (function(__$global) {
+  // helpers
+  var extend = function(d, s){
+    for(var prop in s) {
+  	  d[prop] = s[prop]	
+  	}
+  	return d;
+  }
+	
+  var cloneSystemLoader = function(System){
+  	var Loader = __$global.Loader || __$global.LoaderPolyfill;
+  	var loader = new Loader(System);
+  	loader.baseURL = System.baseURL;
+  	loader.paths = extend({}, System.paths);
+  	return loader;
+  }
 
-__$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
+
+  var upgradeLoader = function(baseLoader) {
+  	var System = cloneSystemLoader(baseLoader);// Define an IE-friendly shim good-enough for purposes
 var indexOf = Array.prototype.indexOf || function(item) { 
   for (var i = 0, thisLen = this.length; i < thisLen; i++) {
     if (this[i] === item)
@@ -30,8 +46,6 @@ var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
 */
 function core(loader) {
   (function() {
-
-    var curSystem = System;
 
     /*
       __useDefault
@@ -132,7 +146,7 @@ function core(loader) {
     }
 
     // System.meta provides default metadata
-    System.meta = {};
+    loader.meta = {};
 
     // override locate to allow baseURL to be document-relative
     var loaderLocate = loader.locate;
@@ -141,16 +155,29 @@ function core(loader) {
       if (this.baseURL != normalizedBaseURL)
         this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
 
-      var meta = System.meta[load.name];
+      var meta = loader.meta[load.name];
       for (var p in meta)
         load.metadata[p] = meta[p];
 
       return Promise.resolve(loaderLocate.call(this, load));
     }
+    
+    var loaderTranslate = loader.translate;
+    loader.translate = function(load){
+      // add in meta here too in case System.define was used
+      var meta = loader.meta[load.name];
+      for (var p in meta)
+        load.metadata[p] = meta[p];
+      return loaderTranslate(load);
+    };
 
     // define exec for custom instantiations
     loader.__exec = function(load) {
-
+      // loader on window
+      var restoreLoaderAsSystem = false;
+      if(load.name == '@traceur' && loader === loader.global.System) {
+      	restoreLoaderAsSystem = true;
+      }
       // support sourceMappingURL (efficiently)
       var sourceMappingURL;
       var lastLineIndex = load.source.lastIndexOf('\n');
@@ -162,9 +189,9 @@ function core(loader) {
       __eval(load.source, loader.global, load.address, sourceMappingURL);
 
       // traceur overwrites System - write it back
-      if (load.name == '@traceur') {
+      if (restoreLoaderAsSystem) {
         loader.global.traceurSystem = loader.global.System;
-        loader.global.System = curSystem;
+        loader.global.System = loader;
       }
     }
 
@@ -334,29 +361,14 @@ function bundles(loader) {
       });
     }
     return loaderFetch.apply(this, arguments);
-  }
+  };
 
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
     if (loader.bundles[load.name])
       load.metadata.bundle = true;
     return loaderLocate.call(this, load);
-  }
-
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    // if it is a bundle itself, it doesn't define anything
-    if (load.metadata.bundle)
-      return {
-        deps: [],
-        execute: function() {
-          loader.__exec(load);
-          return new Module({});
-        }
-      };
-
-    return loaderInstantiate.apply(this, arguments);
-  }
+  };
 
 }/*
   Implementation of the loader.register bundling method
@@ -378,6 +390,13 @@ function register(loader) {
         return Module(execute.apply(this, arguments));
       }
     };
+  }
+  
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    if (loader.defined[load.name])
+      return '';
+    return loaderLocate.apply(this, arguments);
   }
   
   var loaderFetch = loader.fetch;
@@ -626,38 +645,53 @@ versions(System);
 
   if (__$global.systemMainEntryPoint)
     System['import'](__$global.systemMainEntryPoint);
-};
+  return System;
+}; // upgradeLoader end
 
 (function() {
-  var scripts = document.getElementsByTagName('script');
-  var curScript = scripts[scripts.length - 1];
-  __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
-
+  if (typeof window != 'undefined') {
+    /*var scripts = document.getElementsByTagName('script');
+    var curScript = scripts[scripts.length - 1];
+    __$global.systemMainEntryPoint = curScript.getAttribute('data-main');*/
+  }
+  
+  __$global.upgradeSystemLoader = function(){
+    __$global.upgradeSystemLoader = undefined;
+    var originalSystemLoader = __$global.System;
+    __$global.System = upgradeLoader(System);
+    __$global.System.clone = function(){
+      	return upgradeLoader(originalSystemLoader);
+    }
+  };
   if (!__$global.System || __$global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
       var curPath = curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+      
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
     }
     else {
       var es6ModuleLoader = require('es6-module-loader');
+      var originalSystemLoader = es6ModuleLoader.System;
       __$global.System = es6ModuleLoader.System;
       __$global.Loader = es6ModuleLoader.Loader;
       __$global.Module = es6ModuleLoader.Module;
-      module.exports = __$global.System;
       __$global.upgradeSystemLoader();
+      module.exports = __$global.System;
+      
     }
   }
   else {
     __$global.upgradeSystemLoader();
   }
-
-  var configPath = curScript.getAttribute('data-config');
-  if (configPath)
-    document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
+  /*if (typeof window != 'undefined') {
+    var configPath = curScript.getAttribute('data-config');
+    if (configPath)
+      document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
+  }*/
 })();
 
 

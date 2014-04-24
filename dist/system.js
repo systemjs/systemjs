@@ -6,9 +6,25 @@
  */
 
 (function(__$global) {
+  // helpers
+  var extend = function(d, s){
+    for(var prop in s) {
+  	  d[prop] = s[prop]	
+  	}
+  	return d;
+  }
+	
+  var cloneSystemLoader = function(System){
+  	var Loader = __$global.Loader || __$global.LoaderPolyfill;
+  	var loader = new Loader(System);
+  	loader.baseURL = System.baseURL;
+  	loader.paths = extend({}, System.paths);
+  	return loader;
+  }
 
-__$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
+
+  var upgradeLoader = function(baseLoader) {
+  	var System = cloneSystemLoader(baseLoader);// Define an IE-friendly shim good-enough for purposes
 var indexOf = Array.prototype.indexOf || function(item) { 
   for (var i = 0, thisLen = this.length; i < thisLen; i++) {
     if (this[i] === item)
@@ -30,8 +46,6 @@ var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
 */
 function core(loader) {
   (function() {
-
-    var curSystem = System;
 
     /*
       __useDefault
@@ -132,7 +146,7 @@ function core(loader) {
     }
 
     // System.meta provides default metadata
-    System.meta = {};
+    loader.meta = {};
 
     // override locate to allow baseURL to be document-relative
     var loaderLocate = loader.locate;
@@ -141,16 +155,29 @@ function core(loader) {
       if (this.baseURL != normalizedBaseURL)
         this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
 
-      var meta = System.meta[load.name];
+      var meta = loader.meta[load.name];
       for (var p in meta)
         load.metadata[p] = meta[p];
 
       return Promise.resolve(loaderLocate.call(this, load));
     }
+    
+    var loaderTranslate = loader.translate;
+    loader.translate = function(load){
+      // add in meta here too in case System.define was used
+      var meta = loader.meta[load.name];
+      for (var p in meta)
+        load.metadata[p] = meta[p];
+      return loaderTranslate(load);
+    };
 
     // define exec for custom instantiations
     loader.__exec = function(load) {
-
+      // loader on window
+      var restoreLoaderAsSystem = false;
+      if(load.name == '@traceur' && loader === loader.global.System) {
+      	restoreLoaderAsSystem = true;
+      }
       // support sourceMappingURL (efficiently)
       var sourceMappingURL;
       var lastLineIndex = load.source.lastIndexOf('\n');
@@ -162,9 +189,9 @@ function core(loader) {
       __eval(load.source, loader.global, load.address, sourceMappingURL);
 
       // traceur overwrites System - write it back
-      if (load.name == '@traceur') {
+      if (restoreLoaderAsSystem) {
         loader.global.traceurSystem = loader.global.System;
-        loader.global.System = curSystem;
+        loader.global.System = loader;
       }
     }
 
@@ -207,6 +234,9 @@ function core(loader) {
   See the AMD, global and CommonJS format extensions for examples.
 */
 function formats(loader) {
+
+  // a table of instantiating load records
+  var instantiating = {};
 
   loader.format = {};
   loader.formats = [];
@@ -268,6 +298,7 @@ function formats(loader) {
     }
 
     // if it is shimmed, assume it is a global script
+
     if (load.metadata.exports || load.metadata.deps)
       format = 'global';
 
@@ -288,6 +319,9 @@ function formats(loader) {
     if (!format || !curFormat)
       throw new TypeError('No format found for ' + (format ? format : load.address));
 
+    load.metadata.format = format;
+	instantiating[load.name] = load;
+
     // now invoke format instantiation
     var deps = curFormat.deps(load);
 
@@ -300,14 +334,29 @@ function formats(loader) {
       deps: deps,
       execute: function() {
         var output = curFormat.execute.call(this, Array.prototype.splice.call(arguments, 0, arguments.length), load);
-
+		delete instantiating[load.name];
         if (output instanceof loader.global.Module)
           return output;
         else
           return new loader.global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
       }
     };
-  }
+  };
+  var systemFormatNormalize = loader.normalize;
+  loader.normalize = function(name, refererName, refererAdress) {
+  	var load = instantiating[refererName],
+  		format = load && this.format[load.metadata.format],
+  		normalize = format && format.normalize;
+  	if(normalize) {
+  		return normalize.call(this, name, refererName, refererAdress, systemFormatNormalize);
+  		if(res != null) {
+  			return res;
+  		}
+  	} 
+	return systemFormatNormalize.apply(this, arguments);
+  	
+  };
+
 
 }
 /*
@@ -461,7 +510,8 @@ function formatAMD(loader) {
             address: name,
             metadata: {}
           };
-          _deps = prepareDeps(_deps, _load.metadata);
+          _load.metadata.deps = _deps = prepareDeps(_deps, _load.metadata);
+          
           loader.defined[name] = {
             deps: _deps,
             execute: function() {
@@ -696,7 +746,8 @@ function formatGlobal(loader) {
         return new Module(moduleGlobal);
     }
   };
-}/*
+}
+/*
   SystemJS map support
   
   Provides map configuration through
@@ -853,7 +904,7 @@ function plugins(loader) {
       // standard normalization
       return name;
     });
-  }
+  };
 
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
@@ -866,18 +917,19 @@ function plugins(loader) {
 
       // the name to locate is the plugin argument only
       load.name = name.substr(0, pluginIndex);
-
+      
+      var pluginLoader = loader.pluginLoader || loader;
       // load the plugin module
-      return loader.load(pluginName)
+      return pluginLoader.load(pluginName)
       .then(function() {
-        var plugin = loader.get(pluginName);
+        var plugin = pluginLoader.get(pluginName);
         plugin = plugin['default'] || plugin;
 
         // store the plugin module itself on the metadata
         load.metadata.plugin = plugin;
         load.metadata.pluginName = pluginName;
         load.metadata.pluginArgument = load.name;
-
+		load.metadata.buildType = plugin.buildType || "js";
         // run plugin locate if given
         if (plugin.locate)
           return plugin.locate.call(loader, load);
@@ -894,7 +946,7 @@ function plugins(loader) {
     }
 
     return loaderLocate.call(this, load);
-  }
+  };
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
@@ -908,7 +960,7 @@ function plugins(loader) {
       });
     }
     return (load.metadata.plugin && load.metadata.plugin.fetch || loaderFetch).call(this, load);
-  }
+  };
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
@@ -917,8 +969,17 @@ function plugins(loader) {
       return plugin.translate.call(this, load);
 
     return loaderTranslate.call(this, load);
-  }
+  };
+  
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load){
+  	var plugin = load.metadata.plugin;
+    if (plugin && plugin.instantiate)
+      return plugin.instantiate.call(this, load);
 
+    return loaderInstantiate.call(this, load);
+  };
+  
 }/*
   System bundles
 
@@ -960,29 +1021,14 @@ function bundles(loader) {
       });
     }
     return loaderFetch.apply(this, arguments);
-  }
+  };
 
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
     if (loader.bundles[load.name])
       load.metadata.bundle = true;
     return loaderLocate.call(this, load);
-  }
-
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    // if it is a bundle itself, it doesn't define anything
-    if (load.metadata.bundle)
-      return {
-        deps: [],
-        execute: function() {
-          loader.__exec(load);
-          return new Module({});
-        }
-      };
-
-    return loaderInstantiate.apply(this, arguments);
-  }
+  };
 
 }/*
   Implementation of the loader.register bundling method
@@ -1004,6 +1050,13 @@ function register(loader) {
         return Module(execute.apply(this, arguments));
       }
     };
+  }
+  
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    if (loader.defined[load.name])
+      return '';
+    return loaderLocate.apply(this, arguments);
   }
   
   var loaderFetch = loader.fetch;
@@ -1244,51 +1297,66 @@ function versions(loader) {
     });
   }
 }
-core(System);
-formats(System);
-formatAMD(System);
-formatCJS(System);
-formatGlobal(System);
-map(System);
-plugins(System);
-bundles(System);
-register(System);
-versions(System);
+  core(System);
+  formats(System);
+  formatAMD(System);
+  formatCJS(System);
+  formatGlobal(System);
+  map(System);
+  plugins(System);
+  bundles(System);
+  register(System);
+  versions(System);
 
   if (__$global.systemMainEntryPoint)
     System['import'](__$global.systemMainEntryPoint);
-};
+  return System;
+}; // upgradeLoader end
 
 (function() {
-  var scripts = document.getElementsByTagName('script');
-  var curScript = scripts[scripts.length - 1];
-  __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
-
+  if (typeof window != 'undefined') {
+    /*var scripts = document.getElementsByTagName('script');
+    var curScript = scripts[scripts.length - 1];
+    __$global.systemMainEntryPoint = curScript.getAttribute('data-main');*/
+  }
+  
+  __$global.upgradeSystemLoader = function(){
+    __$global.upgradeSystemLoader = undefined;
+    var originalSystemLoader = __$global.System;
+    __$global.System = upgradeLoader(System);
+    __$global.System.clone = function(){
+      	return upgradeLoader(originalSystemLoader);
+    }
+  };
   if (!__$global.System || __$global.System.registerModule) {
     if (typeof window != 'undefined') {
       // determine the current script path as the base path
       var curPath = curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+      
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
     }
     else {
       var es6ModuleLoader = require('es6-module-loader');
+      var originalSystemLoader = es6ModuleLoader.System;
       __$global.System = es6ModuleLoader.System;
       __$global.Loader = es6ModuleLoader.Loader;
       __$global.Module = es6ModuleLoader.Module;
-      module.exports = __$global.System;
       __$global.upgradeSystemLoader();
+      module.exports = __$global.System;
+      
     }
   }
   else {
     __$global.upgradeSystemLoader();
   }
-
-  var configPath = curScript.getAttribute('data-config');
-  if (configPath)
-    document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
+  /*if (typeof window != 'undefined') {
+    var configPath = curScript.getAttribute('data-config');
+    if (configPath)
+      document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
+  }*/
 })();
 
 
