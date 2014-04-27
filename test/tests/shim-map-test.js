@@ -1,1 +1,1 @@
-window.shimdep = shimmapdep;
+(typeof window != 'undefined' ? window : global).shimdep = shimmapdep;

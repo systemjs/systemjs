@@ -1,4 +1,7 @@
 'global';
 'import ./global-dep';
 
-window.newDep = jQuery.v;
+
+(function(window) {
+  window.newDep = jjQuery.v;
+})(typeof window != 'undefined' ? window : global);

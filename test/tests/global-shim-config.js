@@ -1,1 +1,3 @@
-window.ME = dep;
+(function(window) {
+  window.ME = dep;
+})(typeof window != 'undefined' ? window : global);

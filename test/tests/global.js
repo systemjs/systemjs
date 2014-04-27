@@ -1,6 +1,6 @@
-window.jQuery = {
+jjQuery = {
   v: '2.0..0'
 };
-window.another = {
+another = {
   some: 'thing'
 };

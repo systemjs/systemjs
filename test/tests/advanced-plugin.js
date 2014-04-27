@@ -20,5 +20,5 @@ exports.fetch = function(load) {
 }
 
 exports.translate = function(load) {
-  return 'window.q = "' + load.source + ':' + load.name + '";';
+  return '(typeof window != "undefined" ? window : global).q = "' + load.source + ':' + load.name + '";';
 }

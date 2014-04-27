@@ -11,5 +11,11 @@
   "license": "MIT",
   "dependencies": {
     "es6-module-loader": "~0.5.4"
+  },
+  "devDependencies": {
+    "qunit": "^0.6.2"
+  },
+  "scripts": {
+    "test": "qunit -c s:./dist/system.js -t ./test/test.js"
   }
 }

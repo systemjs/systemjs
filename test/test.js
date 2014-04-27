@@ -1,6 +1,13 @@
+"global";
+
 QUnit.config.testTimeout = 2000;
 
-module("SystemJS");
+QUnit.module("SystemJS");
+
+if (typeof window == 'undefined') {
+  var path = require('path');
+  System.baseURL = path.resolve(__dirname, 'test');
+}
 
 function err(e) {
   setTimeout(function() {
@@ -18,7 +25,7 @@ asyncTest('Error handling', function() {
 
 asyncTest('Global script loading', function() {
   System['import']('tests/global').then(function(m) {
-    ok(m.jQuery && m.another, 'Global objects not defined');
+    ok(m.jjQuery && m.another, 'Global objects not defined');
     start();
   }, err);
 });
@@ -229,13 +236,13 @@ asyncTest('Advanced compiler plugin', function() {
   }, err);
 });
 
-asyncTest('Loading from jspm', function() {
+/* asyncTest('Loading from jspm', function() {
   System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
   System['import']('npm:underscore').then(function(m) {
     ok(m && typeof m.chain == 'function', 'Not loaded');
     start();
   }, err);
-});
+}); */
 
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
@@ -320,4 +327,3 @@ asyncTest('Relative dyanamic loading', function() {
     }, err);
   }, err);
 });
-

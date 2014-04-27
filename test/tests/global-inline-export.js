@@ -1,6 +1,9 @@
 "global";
-"export window.p.r";
+"export p.r";
 
-window.p = {
-  r: 'r'
-};
+(function(window) {
+
+  window.p = {
+    r: 'r'
+  };
+})(typeof window != 'undefined' ? window : global);
