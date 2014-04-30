@@ -5,14 +5,21 @@ START = \
 	lib/polyfills.js > dist/$@.js;
 
 END = \
-	cat lib/polyfill-wrapper-end.js >> dist/$@.js; \
-	cat lib/banner.js > dist/$@.min.js; \
-	uglifyjs dist/$@.js -cm >> dist/$@.min.js
+	cat lib/polyfill-wrapper-end.js >> dist/$@.js;
+	
 
 SystemJS = core formats formatAMD formatCJS formatGlobal map plugins bundles register versions
 SystemProductionAMD = core productionAMD bundles register versions
 
-all: system system-production-amd
+all: system system-production-amd uglify
+
+uglify:
+	cat lib/banner.js > dist/system.min.js;
+	uglifyjs dist/system.js -cm >> dist/system.min.js
+
+	cat lib/banner.js > dist/system-production-amd.min.js;
+	uglifyjs dist/system-production-amd.js -cm >> dist/system-production-amd.min.js
+	
 
 system:
 	$(START)
