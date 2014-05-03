@@ -1,15 +1,10 @@
 
-START = \
-	cat lib/banner.js \
-	lib/polyfill-wrapper-start.js \
-	lib/polyfills.js > dist/$@.js;
+START = cat lib/banner.js lib/polyfill-wrapper-start.js > dist/$@.js;
 
-END = \
-	cat lib/polyfill-wrapper-end.js >> dist/$@.js;
-	
+END = cat lib/polyfill-wrapper-end.js >> dist/$@.js;
 
-SystemJS = core formats formatAMD formatCJS formatGlobal map plugins bundles register versions
-SystemProductionAMD = core productionAMD bundles register versions
+SystemJS = core meta register global cjs amd map plugins bundles versions
+SystemProductionAMD = core register scriptLoader map bundles versions
 
 all: system system-production-amd uglify
 

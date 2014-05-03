@@ -7,77 +7,179 @@
 
 (function(__$global) {
 
-__$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;// Define an IE-friendly shim good-enough for purposes
-var indexOf = Array.prototype.indexOf || function(item) { 
-  for (var i = 0, thisLen = this.length; i < thisLen; i++) {
+// indexOf polyfill for IE
+var indexOf = Array.prototype.indexOf || function(item) {
+  for (var i = 0, l = this.length; i < l; i++)
     if (this[i] === item)
       return i;
-  }
   return -1;
 }
 
-var lastIndexOf = Array.prototype.lastIndexOf || function(c) {
-  for (var i = this.length - 1; i >= 0; i--) {
-    if (this[i] === c) {
-      return i;
-    }
-  }
-  return -i;
-}/*
-  SystemJS Core
-  Adds normalization to the import function, as well as __useDefault support
-*/
+__$global.upgradeSystemLoader = function() {
+  __$global.upgradeSystemLoader = undefined;/*
+ * SystemJS Core
+ * Code should be vaguely readable
+ * 
+ */
 function core(loader) {
   (function() {
-
-    var curSystem = System;
 
     /*
       __useDefault
       
       When a module object looks like:
-      new Module({
+      Module({
         __useDefault: true,
         default: 'some-module'
       })
 
-      Then the import of that module is taken to be the 'default' export and not the module object itself.
+      Then importing that module provides the 'some-module'
+      result directly instead of the full module.
 
-      Useful for module.exports = function() {} handling
+      Useful for eg module.exports = function() {}
     */
-    var checkUseDefault = function(module) {
-      if (!(module instanceof Module)) {
-        var out = [];
-        for (var i = 0; i < module.length; i++)
-          out[i] = checkUseDefault(module[i]);
-        return out;
-      }
-      return module.__useDefault ? module['default'] : module;
-    }
-    
-    // a variation on System.get that does the __useDefault check
-    loader.getModule = function(key) {
-      return checkUseDefault(loader.get(key));  
+    var loaderImport = loader['import'];
+    loader['import'] = function(name, options) {
+      return loaderImport.call(this, name, options).then(function(module) {
+        return module.__useDefault ? module['default'] : module;
+      });
     }
 
     // support the empty module, as a concept
     loader.set('@empty', Module({}));
-    
-    
-    var loaderImport = loader['import'];
-    loader['import'] = function(name, options) {
-      // patch loader.import to do normalization
-      return new Promise(function(resolve) {
-        resolve(loader.normalize.call(this, name, options && options.name, options && options.address))
-      })
-      // add useDefault support
-      .then(function(name) {
-        return Promise.resolve(loaderImport.call(loader, name, options)).then(function(module) {
-          return checkUseDefault(module);
-        });
+
+    /*
+      Config
+      Extends config merging one deep only
+
+      loader.config({
+        some: 'random',
+        config: 'here',
+        deep: {
+          config: { too: 'too' }
+        }
       });
+
+      <=>
+
+      loader.some = 'random';
+      loader.config = 'here'
+      loader.deep = loader.deep || {};
+      loader.deep.config = { too: 'too' };
+    */
+    loader.config = function(cfg) {
+      for (var c in cfg) {
+        var v = cfg[c];
+        if (typeof v == 'object') {
+          this[c] = this[c] || {};
+          for (var p in v)
+            this[c][p] = v[p];
+        }
+        else
+          this[c] = v;
+      }
     }
+
+    // override locate to allow baseURL to be document-relative
+    var baseURI;
+    if (typeof window == 'undefined') {
+      baseURI = __dirname + '/';
+    }
+    else {
+      baseURI = document.baseURI;
+      if (!baseURI) {
+        var bases = document.getElementsByTagName('base');
+        baseURI = bases[0] && bases[0].href || window.location.href;
+      }
+    }
+    var loaderLocate = loader.locate;
+    var normalizedBaseURL;
+    loader.locate = function(load) {
+      if (this.baseURL != normalizedBaseURL) {
+        normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+        if (normalizedBaseURL.substr(normalizedBaseURL.length - 1, 1) != '/')
+          normalizedBaseURL += '/';
+
+        this.baseURL = normalizedBaseURL;
+      }
+
+      return Promise.resolve(loaderLocate.call(this, load));
+    }
+
+
+    // Traceur conveniences
+    var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
+    var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
+
+    var loaderTranslate = loader.translate;
+    loader.translate = function(load) {
+      var loader = this;
+
+      loader.__exec = exec;
+
+      // support ES6 alias modules ("export * from 'module';") without needing Traceur
+      var match;
+      if (!loader.global.traceur && (load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
+        var depName = match[1] || match[2];
+        load.metadata.deps = [depName];
+        load.metadata.execute = function(require) {
+          return require(depName);
+        }
+      }
+
+      // detect ES6
+      if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
+        load.metadata.format = 'es6';
+
+        // dynamically load Traceur for ES6 if necessary
+        if (!loader.global.traceur)
+          return loader['import']('@traceur').then(function() {
+            return loaderTranslate.call(loader, load);
+          });
+      }
+
+      return loaderTranslate.call(loader, load);
+    }
+
+    // always load Traceur as a global
+    var loaderInstantiate = loader.instantiate;
+    loader.instantiate = function(load) {
+      var loader = this;
+      if (load.name == '@traceur') {
+        loader.__exec(load);
+        return {
+          deps: [],
+          execute: function() {}
+        };
+      }
+      return loaderInstantiate.call(loader, load);
+    }
+
+
+    // define exec for easy evaluation of a load record (load.name, load.source, load.address)
+    // main feature is source maps support handling
+    var curSystem
+    function exec(load) {
+      if (load.name == '@traceur')
+        curSystem = System;
+      // support sourceMappingURL (efficiently)
+      var sourceMappingURL;
+      var lastLineIndex = load.source.lastIndexOf('\n');
+      if (lastLineIndex != -1) {
+        if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
+          sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22));
+      }
+
+      __eval(load.source, this.global, load.address, sourceMappingURL);
+
+      // traceur overwrites System - write it back
+      if (load.name == '@traceur') {
+        this.global.traceurSystem = this.global.System;
+        this.global.System = curSystem;
+      }
+    }
+    loader.__exec = exec;
 
     // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
     function parseURI(url) {
@@ -119,54 +221,6 @@ function core(loader) {
         (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
         href.hash;
     }
-    var baseURI;
-    if (typeof window == 'undefined') {
-      baseURI = __dirname + '/';
-    }
-    else {
-      baseURI = document.baseURI;
-      if (!baseURI) {
-        var bases = document.getElementsByTagName('base');
-        baseURI = bases[0] && bases[0].href || window.location.href;
-      }
-    }
-
-    // System.meta provides default metadata
-    System.meta = {};
-
-    // override locate to allow baseURL to be document-relative
-    var loaderLocate = loader.locate;
-    var normalizedBaseURL;
-    loader.locate = function(load) {
-      if (this.baseURL != normalizedBaseURL)
-        this.baseURL = normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-
-      var meta = System.meta[load.name];
-      for (var p in meta)
-        load.metadata[p] = meta[p];
-
-      return Promise.resolve(loaderLocate.call(this, load));
-    }
-
-    // define exec for custom instantiations
-    loader.__exec = function(load) {
-
-      // support sourceMappingURL (efficiently)
-      var sourceMappingURL;
-      var lastLineIndex = load.source.lastIndexOf('\n');
-      if (lastLineIndex != -1) {
-        if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
-          sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22));
-      }
-
-      __eval(load.source, loader.global, load.address, sourceMappingURL);
-
-      // traceur overwrites System - write it back
-      if (load.name == '@traceur') {
-        loader.global.traceurSystem = loader.global.System;
-        loader.global.System = curSystem;
-      }
-    }
 
   })();
 
@@ -184,24 +238,370 @@ function core(loader) {
     }
   }
 }
-function amdScriptLoader(loader) {
+/*
+ * Instantiate registry extension
+ *
+ * Supports Traceur System.register 'instantiate' output for loading ES6 as ES5.
+ *
+ * - Creates the loader.register function
+ * - Also supports metadata.format = 'register' in instantiate for anonymous register modules
+ * - Also supports metadata.deps, metadata.execute and metadata.executingRequire
+ *     for handling dynamic modules alongside register-transformed ES6 modules
+ *
+ * Works as a standalone extension provided there is a
+ * loader.__exec(load) like the one set in SystemJS core
+ *
+ */
+
+function register(loader) {
+  if (typeof indexOf == 'undefined')
+    indexOf = Array.prototype.indexOf;
+  if (!loader.__exec)
+    throw "loader.__exec(load) needs to be provided for loader.register. See SystemJS core for an implementation example.";
+
+  function dedupe(deps) {
+    var newDeps = [];
+    for (var i = 0; i < deps.length)
+      if (indexOf.call(newDeps, deps[i]) == -1)
+        newDeps.push(deps[i])
+    return newDeps;
+  }
+
+  // Registry side table
+  // Registry Entry Contains:
+  //    - deps 
+  //    - declare for register modules
+  //    - execute for dynamic modules, also after declare for register modules
+  //    - declarative boolean indicating which of the above
+  //    - normalizedDeps derived from deps, created in instantiate
+  //    - depMap array derived from deps, populated gradually in link
+  //    - groupIndex used by group linking algorithm
+  //    - module a raw module exports object with no wrapper
+  //    - evaluated indiciating whether evaluation has happend for declarative modules
+  // After linked and evaluated, entries are removed
+  var lastRegister;
+  function register(name, deps, declare) {
+    if (declare.length == 0)
+      throw 'Invalid System.register form. Ensure setting --modules=instantiate if using Traceur.';
+
+    loader.defined = loader.defined || {};
+
+    if (typeof name != 'string') {
+      declare = deps;
+      deps = name;
+      name = null;
+    }
+
+    lastRegister = {
+      deps: deps,
+      declare: declare,
+      declarative: true
+    };
+
+    if (name)
+      loader.defined[name] = lastRegister;
+  }
+  loader.register = register;
+
+  function buildGroups(entry, loader, groups) {
+
+    groups[entry.groupIndex] = groups[entry.groupIndex] || [];
+
+    if (indexOf.call(groups[entry.groupIndex], entry) != -1)
+      return;
+
+    groups[entry.groupIndex].push(entry);
+
+    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+      var depName = entry.normalizedDeps[i];
+      var depEntry = loader.defined[depName];
+      
+      // not in the registry means already linked / ES6
+      if (!depEntry)
+        continue;
+      
+      // now we know the entry is in our unlinked linkage group
+      var depGroupIndex = entry.groupIndex + (depEntry.declarative != entry.declarative);
+
+      if (depEntry.groupIndex === undefined) {
+        depEntry.groupIndex = depGroupIndex;
+      }
+      else if (depEntry.groupIndex != depGroupIndex) {
+        throw new TypeError('System.register mixed dependency cycle');
+      }
+
+      buildGroups(entry, loader, groups);
+    }
+  }
+
+  function link(name, loader) {
+    var startEntry = loader.defined[name];
+
+    startEntry.groupIndex = 0;
+
+    var groups = buildGroups(name, loader, []);
+
+    var curGroupDeclarative = startEntry.declarative == groups.length % 2;
+    for (var i = groups.length - 1; i >= 0; i--) {
+      var group = groups[i];
+      for (var j = 0; j < group.length; j++) {
+        var entry = group[j];
+
+        // link each group
+        if (curGroupDeclarative)
+          linkDeclarativeModule(entry, loader);
+        else
+          linkDynamicModule(entry, loader);
+      }
+      curGroupDeclarative = !curGroupDeclarative; 
+    }
+  }
+
+  function linkDeclarativeModule(entry, loader) {
+    // only link if already not already started linking (stops at circular)
+    if (entry.module)
+      return;
+
+    // declare the module with an empty depMap
+    var depMap = [];
+
+    var declaration = load.declare.call(loader.global, depMap);
+    
+    entry.module = declaration.exports;
+    entry.exportStar = declaration.exportStar;
+    entry.execute = declaration.execute;
+
+    var module = entry.module;
+
+    // now link all the module dependencies
+    // amending the depMap as we go
+    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+      var depName = entry.normalizedDeps[i];
+      var depEntry = loader.defined[depName];
+      
+      // part of another linking group - use loader.get
+      if (!depEntry) {
+        depModule = loader.get(depName);
+      }
+      // if dependency already linked, use that
+      else if (depEntry.module) {
+        depModule = depEntry.module;
+      }
+      // otherwise we need to link the dependency
+      else {
+        linkDeclarativeModule(depEntry, loader);
+        depModule = depEntry.module;
+      }
+
+      if (entry.exportStar && indexOf.call(entry.exportStar, entry.normalizedDeps[i]) != -1) {
+        // we are exporting * from this dependency
+        (function(depModule) {
+          for (var p in depModule) (function(p) {
+            // if the property is already defined throw?
+            Object.defineProperty(module, p, {
+              enumerable: true,
+              get: function() {
+                return depModule[p];
+              },
+              set: function(value) {
+                depModule[p] = value;
+              }
+            });
+          })(p);
+        })(depModule);
+      }
+
+      depMap[i] = depModule;
+    }
+  }
+
+  // An analog to loader.get covering execution of all three layers (real declarative, simulated declarative, simulated dynamic)
+  function getModule(name, loader) {
+    var entry = loader.defined[name];
+
+    if (!entry)
+      return loader.get(name);
+
+    if (entry.declarative)
+      ensureEvaluated(name, [], loader);
+    
+    else if (!entry.evaluated)
+      linkDynamicModule(entry, loader);
+
+    return entry.module;
+  }
+
+  function linkDynamicModule(entry, loader) {
+    if (entry.module)
+      return;
+
+    entry.module = {};
+
+    // AMD requires execute the tree first
+    if (!entry.executingRequire) {
+      for (var i = 0; i < entry.normalizedDeps.length; i++) {
+        var depName = entry.normalizedDeps[i];
+        var depEntry = loader.defined[depName];
+        linkDynamicModule(depEntry, loader);
+      }
+    }
+
+    // now execute
+    entry.evaluated = true;
+    var output = entry.execute(function(name) {
+      for (var i = 0; i < entry.deps.length; i++) {
+        if (entry.deps[i] != name)
+          continue;
+        return getModule(entry.normalizedDeps[i], loader);
+      }
+    }, entry.module, name);
+    
+    if (output)
+      entry.module = output;
+  }
+
+  // given a module, and the list of modules for this current branch,
+  // ensure that each of the dependencies of this module is evaluated
+  //  (unless one is a circular dependency already in the list of seen
+  //   modules, in which case we execute it)
+  // then evaluate the module itself
+  // depth-first left to right execution to match ES6 modules
+  function ensureEvaluated(moduleName, seen, loader) {
+    var entry = loader.defined[moduleName];
+
+    // if already seen, that means it's an already-evaluated non circular dependency
+    if (!entry.declarative || entry.evaluated || indexOf.call(seen, moduleName) != -1)
+      return;
+
+    seen.push(moduleName);
+
+    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+      var depName = entry.normalizedDeps[i];
+      
+      // circular -> execute now if not already executed
+      if (indexOf.call(seen, depName) != -1) {
+        var depEntry = loader.defined[depName];
+        if (depEntry && !depEntry.evaluated) {
+          depEntry.execute.call(loader.global);
+          delete depEntry.execute;
+        }
+      }
+      // in turn ensure dependencies are evaluated
+      else
+        ensureEvaluated(depName, seen);
+    }
+
+    // we've evaluated all dependencies so evaluate this module now
+    entry.execute.call(loader.global);
+    entry.evaluated = true;
+  }
+
+  var registerRegEx = /asdf/;
+
+
+  var loaderTranslate = loader.translate;
+  loader.translate = function(load) {
+    loader.register = register;
+
+    // run detection for register format here
+    if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
+      load.metadata.format = 'register';
+
+    load.metadata.deps = [];
+    return loaderTranslate.call(this, load);
+  }
+
+
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
+    var loader = this;
+
+    var entry;
+    
+    if (loader.defined[load.name])
+      entry = loader.defined[load.name];
+
+    else if (load.metadata.execute) {
+      entry = {
+        deps: load.metadata.deps || [],
+        execute: load.metadata.execute,
+        executingRequire: load.metadata.executingRequire // NodeJS-style requires or not
+      };
+    }
+    else if (load.metadata.format == 'register') {
+      lastRegister = null;
+      loader.__exec(load);
+
+      // for a bundle, take the last defined module
+      // in the bundle to be the bundle itself
+      if (lastRegister)
+        entry = lastRegister;
+    }
+
+    if (!entry)
+      return loaderInstantiate.call(this, load);
+
+
+    // first, normalize all dependencies
+    var normalizePromises = [];
+    for (var i = 0; i < deps.length; i++)
+      normalizePromises.push(Promise.resolve(loader.normalize(deps[i], load.name)));
+   
+    return Promise.all(normalizePromises).then(function(normalizedDeps) {
+
+      entry.normalizedDeps = normalizedDeps;
+
+      // create the empty dep map - this is our key deferred dependency binding object passed into declare
+      entry.depMap = [];
+
+      entry.deps = dedupe(entry.deps);
+
+      return {
+        deps: entry.deps,
+        execute: function() {
+          // recursively ensure that the module and all its 
+          // dependencies are linked (with dependency group handling)
+          link(load.name, loader);
+
+          // now handle dependency execution in correct order
+          ensureEvaluated(load.name, [], loader);
+
+          // remove from the registry
+          delete loader.defined[load.name];
+
+          var module = Module(entry.module);
+
+          // if the entry is an alias, set the alias too
+          for (var name in loader.defined) {
+            if (loader.defined[name].execute != entry.execute)
+              continue;
+            if (!loader.has(name))
+              loader.set(name, module);
+          }
+
+          // return the defined module object
+          return module;
+        }
+      };
+    });
+  }
+}
+/*
+ * Script tag fetch
+ */
+
+function scriptLoader(loader) {
+  if (typeof indexOf == 'undefined')
+    indexOf = Array.prototype.indexOf;
 
   var head = document.getElementsByTagName('head')[0];
 
   // override fetch to use script injection
   loader.fetch = function(load) {
-    // if already defined, skip
-    if (loader.defined[load.name])
-      return '';
-
-    // script injection fetch system
     return new Promise(function(resolve, reject) {
       var s = document.createElement('script');
       s.async = true;
       s.addEventListener('load', function(evt) {
-        if (lastAnonymous)
-          loader.defined[load.name] = lastAnonymous;
-        lastAnonymous = null;
         resolve('');
       }, false);
       s.addEventListener('error', function(err) {
@@ -211,87 +611,121 @@ function amdScriptLoader(loader) {
       head.appendChild(s);
     });
   }
-  var lastAnonymous = null;
-  loader.global.define = function(name, deps, factory) {
-    // anonymous define
-    if (typeof name != 'string') {
-      factory = deps;
-      deps = name;
-      name = null;
+}
+/*
+  SystemJS map support
+  
+  Provides map configuration through
+    System.map['jquery'] = 'some/module/map'
+
+  As well as contextual map config through
+    System.map['bootstrap'] = {
+      jquery: 'some/module/map2'
     }
 
-    if (!(deps instanceof Array)) {
-      factory = deps;
-      deps = [];
+  Note that this applies for subpaths, just like RequireJS
+
+  jquery      -> 'some/module/map'
+  jquery/path -> 'some/module/map/path'
+  bootstrap   -> 'bootstrap'
+
+  Inside any module name of the form 'bootstrap' or 'bootstrap/*'
+    jquery    -> 'some/module/map2'
+    jquery/p  -> 'some/module/map2/p'
+
+  Maps are carefully applied from most specific contextual map, to least specific global map
+*/
+function map(loader) {
+  loader.map = loader.map || {};
+
+
+  // return the number of prefix parts (separated by '/') matching the name
+  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
+  function prefixMatchLength(name, prefix) {
+    var prefixParts = prefix.split('/');
+    var nameParts = name.split('/');
+    if (prefixParts.length > nameParts.length)
+      return 0;
+    for (var i = 0; i < prefixParts.length; i++)
+      if (nameParts[i] != prefixParts[i])
+        return 0;
+    return prefixParts.length;
+  }
+
+
+  // given a relative-resolved module name and normalized parent name,
+  // apply the map configuration
+  function applyMap(name, parentName, loader) {
+
+    var curMatch, curMatchLength = 0;
+    var curParent, curParentMatchLength = 0;
+    var subPath;
+    var nameParts;
+    
+    // first find most specific contextual match
+    if (parentName) {
+      for (var p in loader.map) {
+        var curMap = loader.map[p];
+        if (typeof curMap != 'object')
+          continue;
+
+        // most specific parent match wins first
+        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
+          continue;
+
+        for (var q in curMap) {
+          // most specific name match wins
+          if (prefixMatchLength(name, q) <= curMatchLength)
+            continue;
+
+          curMatch = q;
+          curMatchLength = q.split('/').length;
+          curParent = p;
+          curParentMatchLength = p.split('/').length;
+        }
+      }
     }
 
-    if (typeof factory != 'function')
-      factory = (function(factory) {
-        return function() { return factory; }
-      })(factory);
+    // if we found a contextual match, apply it now
+    if (curMatch) {
+      nameParts = name.split('/');
+      subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
+      name = loader.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
+      curMatchLength = 0;
+    }
 
-    for (var i = 0; i < deps.length; i++)
-      if (lastIndexOf.call(deps, deps[i]) != i)
-        deps.splice(i--, 1);
+    // now do the global map
+    for (var p in loader.map) {
+      var curMap = loader.map[p];
+      if (typeof curMap != 'string')
+        continue;
 
-    var instantiate = {
-      deps: deps,
-      execute: function() {
-        var args = [];
-        for (var i = 0; i < arguments.length; i++)
-          args.push(loader.getModule(arguments[i]));
+      if (prefixMatchLength(name, p) <= curMatchLength)
+        continue;
 
-        var output = factory.apply(this, args);
-        return new loader.global.Module(output && output.__esModule ? output : { __useDefault: true, 'default': output });
-      }
-    };
-
-    if (name)
-      loader.defined[name] = instantiate;
-    else
-      lastAnonymous = instantiate;
-  }
-  loader.global.define.amd = {};  
-
-  // no translate at all
-  loader.translate = function() {}
-
-  // instantiate defaults to null
-  loader.instantiate = function() {
-    return {
-      deps: [],
-      execute: function() {
-        return new Module({});
-      }
-    };
+      curMatch = p;
+      curMatchLength = p.split('/').length;
+    }
+    
+    // return a match if any
+    if (!curMatchLength)
+      return name;
+    
+    nameParts = name.split('/');
+    subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
+    return loader.map[curMatch] + (subPath ? '/' + subPath : '');
   }
 
-
-  /*
-    AMD-compatible require
-    To copy RequireJS, set window.require = window.requirejs = loader.requirejs
-  */
-  var require = loader.requirejs = function(names, callback, errback, referer) {
-    // in amd, first arg can be a config object... we just ignore
-    if (typeof names == 'object' && !(names instanceof Array))
-      return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
-
-    // amd require
-    if (names instanceof Array)
-      Promise.all(names.map(function(name) {
-        return loader['import'](name, referer);
-      })).then(function(mods) {
-        return callback.apply(this, mods);
-      }, errback);
-
-    // commonjs require
-    else if (typeof names == 'string')
-      return loader.getModule(names);
-
-    else
-      throw 'Invalid require';
+  var loaderNormalize = loader.normalize;
+  loader.normalize = function(name, parentName, parentAddress) {
+    var loader = this;
+    if (!loader.map)
+      loader.map = {};
+    return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
+    .then(function(name) {
+      return applyMap(name, parentName, loader);
+    });
   }
-
 }
 /*
   System bundles
@@ -309,6 +743,9 @@ function amdScriptLoader(loader) {
 */
 
 function bundles(loader) {
+  if (typeof indexOf == 'undefined')
+    indexOf = Array.prototype.indexOf;
+
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
   // bundle is array of modules defined by the bundle
@@ -318,6 +755,9 @@ function bundles(loader) {
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
+    if (!loader.bundles)
+      loader.bundles = {};
+
     // if this module is in a bundle, load the bundle first then
     for (var b in loader.bundles) {
       if (indexOf.call(loader.bundles[b], load.name) == -1)
@@ -335,80 +775,7 @@ function bundles(loader) {
     }
     return loaderFetch.apply(this, arguments);
   }
-
-  var loaderLocate = loader.locate;
-  loader.locate = function(load) {
-    if (loader.bundles[load.name])
-      load.metadata.bundle = true;
-    return loaderLocate.call(this, load);
-  }
-
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    // if it is a bundle itself, it doesn't define anything
-    if (load.metadata.bundle)
-      return {
-        deps: [],
-        execute: function() {
-          loader.__exec(load);
-          return new Module({});
-        }
-      };
-
-    return loaderInstantiate.apply(this, arguments);
-  }
-
 }/*
-  Implementation of the loader.register bundling method
-
-  This allows the output of Traceur to populate the
-  module registry of the loader loader
-*/
-
-function register(loader) {
-
-  // instantiation cache for loader.register
-  loader.defined = {};
-
-  // register a new module for instantiation
-  loader.register = function(name, deps, execute) {
-    loader.defined[name] = {  
-      deps: deps,
-      execute: function() {
-        return Module(execute.apply(this, arguments));
-      }
-    };
-  }
-  
-  var loaderLocate = loader.locate;
-  loader.locate = function(load) {
-    if (loader.defined[load.name])
-      return '';
-    return loaderLocate.apply(this, arguments);
-  }
-  
-  var loaderFetch = loader.fetch;
-  loader.fetch = function(load) {
-    // if the module is already defined, skip fetch
-    if (loader.defined[load.name])
-      return '';
-    return loaderFetch.apply(this, arguments);
-  }
-
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    // if the module has been defined by a bundle, use that
-    if (loader.defined[load.name]) {
-      var instantiateResult = loader.defined[load.name];
-      delete loader.defined[load.name];
-      return instantiateResult;
-    }
-
-    return loaderInstantiate.apply(this, arguments);
-  }
-
-}
-/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms
@@ -466,6 +833,9 @@ function register(loader) {
 */
 
 function versions(loader) {
+  if (typeof indexOf == 'undefined')
+    indexOf = Array.prototype.indexOf;
+
   // match x, x.y, x.y.z, x.y.z-prerelease.1
   var semverRegEx = /^(\d+)(?:\.(\d+)(?:\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?)?)?$/;
 
@@ -486,15 +856,16 @@ function versions(loader) {
         return parseInt(v1Parts[i]) > parseInt(v2Parts[i]) ? 1 : -1;
     }
     return 0;
-  }
+  }  
   
-  var loaderNormalize = loader.normalize;
 
   loader.versions = loader.versions || {};
 
-  // hook normalize and store a record of all versioned packages
+  var loaderNormalize = loader.normalize;
   loader.normalize = function(name, parentName, parentAddress) {
-    var packageVersions = loader.versions;
+    if (!loader.versions)
+      loader.versions = {};
+    var packageVersions = this.versions;
     // run all other normalizers first
     return Promise.resolve(loaderNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
@@ -626,46 +997,62 @@ function versions(loader) {
   }
 }
 core(System);
-productionAMD(System);
-bundles(System);
 register(System);
+scriptLoader(System);
+map(System);
+bundles(System);
 versions(System);
+  System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
 
-  if (__$global.systemMainEntryPoint)
-    System['import'](__$global.systemMainEntryPoint);
+  var configPath = __$curScript.getAttribute('data-config');
+  if (configPath === '')
+    configPath = System.baseURL + 'config.json';
+
+  var main = __$curScript.getAttribute('data-main');
+
+  (!configPath ? Promise.resolve() :
+    Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))
+    .then(JSON.parse)
+    .then(System.config)
+  ).then(function() {
+    if (main)
+      return System['import'](main);
+  })
+  ['catch'](function(e) {
+    setTimeout(function() {
+      throw e;
+    })
+  });
+
 };
 
-(function() {
+var __$curScript;
+
+(function(global) {
   if (typeof window != 'undefined') {
     var scripts = document.getElementsByTagName('script');
-    var curScript = scripts[scripts.length - 1];
-    __$global.systemMainEntryPoint = curScript.getAttribute('data-main');
+    __$curScript = scripts[scripts.length - 1];
 
-    if (!__$global.System || __$global.System.registerModule) {      
+    if (!global.System || global.System.registerModule) {
       // determine the current script path as the base path
-      var curPath = curScript.src;
+      var curPath = __$curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
     }
     else {
-      __$global.upgradeSystemLoader();
+      global.upgradeSystemLoader();
     }
-
-    var configPath = curScript.getAttribute('data-config');
-    if (configPath)
-      document.write('<' + 'script type="text/javascript src="' + configPath + '">' + '<' + '/script>');
   }
   else {
     var es6ModuleLoader = require('es6-module-loader');
-    __$global.System = es6ModuleLoader.System;
-    __$global.Loader = es6ModuleLoader.Loader;
-    __$global.Module = es6ModuleLoader.Module;
-    module.exports = __$global.System;
-    __$global.upgradeSystemLoader();
+    global.System = es6ModuleLoader.System;
+    global.Loader = es6ModuleLoader.Loader;
+    global.Module = es6ModuleLoader.Module;
+    module.exports = global.System;
+    global.upgradeSystemLoader();
   }
-})();
-
+})(__$global);
 
 })(typeof window != 'undefined' ? window : global);
