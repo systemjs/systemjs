@@ -130,14 +130,14 @@ function core(loader) {
 
       // detect ES6
       if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
-        console.log('load traceur');
         load.metadata.format = 'es6';
 
         // dynamically load Traceur for ES6 if necessary
-        if (!loader.global.traceur)
+        if (!loader.global.traceur) {
           return loader['import']('@traceur').then(function() {
             return loaderTranslate.call(loader, load);
           });
+        }
       }
 
       return loaderTranslate.call(loader, load);
@@ -539,7 +539,8 @@ function register(loader) {
       for (var i = 0; i < entry.normalizedDeps.length; i++) {
         var depName = entry.normalizedDeps[i];
         var depEntry = loader.defined[depName];
-        linkDynamicModule(depEntry, loader);
+        if (depEntry)
+          linkDynamicModule(depEntry, loader);
       }
     }
 
@@ -599,6 +600,14 @@ function register(loader) {
   }
 
   var registerRegEx = /System\.register/;
+
+  var loaderFetch = loader.fetch;
+  loader.fetch = function(load) {
+    var loader = this;
+    if (loader.defined && loader.defined[load.name])
+      return '';
+    return loaderFetch(load);
+  }
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
@@ -1230,7 +1239,7 @@ function plugins(loader) {
       var pluginLoader = loader.pluginLoader || loader;
 
       // load the plugin module
-      return pluginLoader.load(pluginName)
+      return pluginLoader['import'](pluginName)
       .then(function() {
         var plugin = pluginLoader.get(pluginName);
         plugin = plugin['default'] || plugin;
@@ -1260,29 +1269,41 @@ function plugins(loader) {
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
+    var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.fetch)
-      return load.metadata.plugin.fetch.call(this, load, function(load) {
-        return loaderFetch.call(this, load);
+      return Promise.resolve(load.metadata.plugin.fetch.call(loader, load)).then(function(source) {
+        if (source === undefined)
+          return loaderFetch.call(loader, load);
+        else
+          return source;
       });
     else
-      return loaderFetch.call(this, load);
+      return loaderFetch.call(loader, load);
   }
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
+    var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.translate)
-      return load.metadata.plugin.translate.call(this, load, function(load) {
-        return loaderTranslate.call(this, load);
+      return Promise.resolve(load.metadata.plugin.translate.call(loader, load)).then(function(source) {
+        if (source === undefined)
+          return loaderTranslate.call(loader, load);  
+        else
+          return source;
       });
     else
-      return loaderTranslate.call(this, load);
+      return loaderTranslate.call(loader, load);
   }
 
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
+    var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.instantiate)
-      return load.metadata.plugin.instantiate.call(this, load, function(load) {
-        return loaderInstantiate.call(this, load);
+      return Promise.resolve(load.metadata.plugin.instantiate.call(this, load)).then(function(result) {
+        if (result === undefined)
+          return loaderInstantiate.call(this, load);
+        else
+          return result;
       });
     else
       return loaderInstantiate.call(this, load);
@@ -1574,6 +1595,9 @@ versions(System);
     configPath = System.baseURL + 'config.json';
 
   var main = __$curScript.getAttribute('data-main');
+
+  if (!System.paths['@traceur'])
+    System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');
 
   (!configPath ? Promise.resolve() :
     Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))

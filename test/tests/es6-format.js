@@ -1,4 +1,4 @@
-"es6";
+"format es6";
 
 class q {
 }

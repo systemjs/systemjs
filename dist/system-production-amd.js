@@ -133,10 +133,11 @@ function core(loader) {
         load.metadata.format = 'es6';
 
         // dynamically load Traceur for ES6 if necessary
-        if (!loader.global.traceur)
+        if (!loader.global.traceur) {
           return loader['import']('@traceur').then(function() {
             return loaderTranslate.call(loader, load);
           });
+        }
       }
 
       return loaderTranslate.call(loader, load);
@@ -261,7 +262,7 @@ function register(loader) {
 
   function dedupe(deps) {
     var newDeps = [];
-    for (var i = 0; i < deps.length)
+    for (var i = 0; i < deps.length; i++)
       if (indexOf.call(newDeps, deps[i]) == -1)
         newDeps.push(deps[i])
     return newDeps;
@@ -284,7 +285,8 @@ function register(loader) {
     if (declare.length == 0)
       throw 'Invalid System.register form. Ensure setting --modules=instantiate if using Traceur.';
 
-    loader.defined = loader.defined || {};
+    if (!loader.defined)
+      loader.defined = {};
 
     if (typeof name != 'string') {
       declare = deps;
@@ -301,6 +303,7 @@ function register(loader) {
     if (name)
       loader.defined[name] = lastRegister;
   }
+  loader.defined = loader.defined || {};
   loader.register = register;
 
   function buildGroups(entry, loader, groups) {
@@ -339,7 +342,9 @@ function register(loader) {
 
     startEntry.groupIndex = 0;
 
-    var groups = buildGroups(name, loader, []);
+    var groups = [];
+
+    buildGroups(startEntry, loader, groups);
 
     var curGroupDeclarative = startEntry.declarative == groups.length % 2;
     for (var i = groups.length - 1; i >= 0; i--) {
@@ -442,19 +447,25 @@ function register(loader) {
       for (var i = 0; i < entry.normalizedDeps.length; i++) {
         var depName = entry.normalizedDeps[i];
         var depEntry = loader.defined[depName];
-        linkDynamicModule(depEntry, loader);
+        if (depEntry)
+          linkDynamicModule(depEntry, loader);
       }
     }
 
     // now execute
-    entry.evaluated = true;
-    var output = entry.execute(function(name) {
-      for (var i = 0; i < entry.deps.length; i++) {
-        if (entry.deps[i] != name)
-          continue;
-        return getModule(entry.normalizedDeps[i], loader);
-      }
-    }, entry.module, name);
+    try {
+      entry.evaluated = true;
+      var output = entry.execute(function(name) {
+        for (var i = 0; i < entry.deps.length; i++) {
+          if (entry.deps[i] != name)
+            continue;
+          return getModule(entry.normalizedDeps[i], loader);
+        }
+      }, entry.module, name);
+    }
+    catch(e) {
+      throw e;
+    }
     
     if (output)
       entry.module = output;
@@ -496,18 +507,26 @@ function register(loader) {
     entry.evaluated = true;
   }
 
-  var registerRegEx = /asdf/;
+  var registerRegEx = /System\.register/;
 
+  var loaderFetch = loader.fetch;
+  loader.fetch = function(load) {
+    var loader = this;
+    if (loader.defined && loader.defined[load.name])
+      return '';
+    return loaderFetch(load);
+  }
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
     loader.register = register;
 
+    load.metadata.deps = load.metadata.deps || [];
+
     // run detection for register format here
     if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
       load.metadata.format = 'register';
 
-    load.metadata.deps = [];
     return loaderTranslate.call(this, load);
   }
 
@@ -519,10 +538,10 @@ function register(loader) {
     var entry;
     
     if (loader.defined[load.name])
-      entry = loader.defined[load.name];
+      loader.defined[load.name] = entry = loader.defined[load.name];
 
     else if (load.metadata.execute) {
-      entry = {
+      loader.defined[load.name] = entry = {
         deps: load.metadata.deps || [],
         execute: load.metadata.execute,
         executingRequire: load.metadata.executingRequire // NodeJS-style requires or not
@@ -535,17 +554,18 @@ function register(loader) {
       // for a bundle, take the last defined module
       // in the bundle to be the bundle itself
       if (lastRegister)
-        entry = lastRegister;
+        loader.defined[load.name] = entry = lastRegister;
     }
 
     if (!entry)
       return loaderInstantiate.call(this, load);
 
+    entry.deps = dedupe(entry.deps);
 
     // first, normalize all dependencies
     var normalizePromises = [];
-    for (var i = 0; i < deps.length; i++)
-      normalizePromises.push(Promise.resolve(loader.normalize(deps[i], load.name)));
+    for (var i = 0; i < entry.deps.length; i++)
+      normalizePromises.push(Promise.resolve(loader.normalize(entry.deps[i], load.name)));
    
     return Promise.all(normalizePromises).then(function(normalizedDeps) {
 
@@ -553,8 +573,6 @@ function register(loader) {
 
       // create the empty dep map - this is our key deferred dependency binding object passed into declare
       entry.depMap = [];
-
-      entry.deps = dedupe(entry.deps);
 
       return {
         deps: entry.deps,
@@ -578,7 +596,6 @@ function register(loader) {
             if (!loader.has(name))
               loader.set(name, module);
           }
-
           // return the defined module object
           return module;
         }
@@ -637,7 +654,6 @@ function scriptLoader(loader) {
 */
 function map(loader) {
   loader.map = loader.map || {};
-
 
   // return the number of prefix parts (separated by '/') matching the name
   // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
@@ -1009,6 +1025,9 @@ versions(System);
     configPath = System.baseURL + 'config.json';
 
   var main = __$curScript.getAttribute('data-main');
+
+  if (!System.paths['@traceur'])
+    System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');
 
   (!configPath ? Promise.resolve() :
     Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))

@@ -139,7 +139,7 @@ asyncTest('Loading an AMD module', function() {
   }, err);
 });
 
-/*asyncTest('Loading an AMD named define', function() {
+asyncTest('Loading an AMD named define', function() {
   System['import']('tests/nameddefine').then(function(m1){
     ok(m1.converter, 'Showdown not loaded');
     System['import']('another-define').then(function(m2) {
@@ -222,20 +222,13 @@ asyncTest('Mapping a plugin argument', function() {
   }, err);
 });
 
-asyncTest('Legacy plugin', function() {
-  System['import']('tests/global.js!tests/legacy-plugin').then(function(m) {
-    expect(0);
-    start();
-  }, err);
-});
-
 asyncTest('Advanced compiler plugin', function() {
   System['import']('tests/compiler-test!tests/advanced-plugin').then(function(m) {
     ok(m == 'custom fetch:tests/compiler-test!tests/advanced-plugin', m);
     start();
   }, err);
 });
-
+/*
 asyncTest('Loading from jspm', function() {
   System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
   System['import']('npm:underscore').then(function(m) {
@@ -243,6 +236,7 @@ asyncTest('Loading from jspm', function() {
     start();
   }, err);
 });
+*/
 
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
@@ -326,4 +320,4 @@ asyncTest('Relative dyanamic loading', function() {
       start();
     }, err);
   }, err);
-}); */
+});
