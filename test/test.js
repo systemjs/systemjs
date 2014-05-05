@@ -361,12 +361,10 @@ asyncTest('System.register Circular', function() {
   }, err);
 });
 
-
-
-asyncTest('AMD, CJS circular, System.register circular, ES6 circular', function() {
+asyncTest('AMD -> System.register circular -> ES6', function() {
+  System['import']('tests/all-layers1').then(function(m) {
+    ok(m == true)
+    start();
+  }, err);
 });
-/*
-asyncTest('CJS loading ES6 circular, CJS circular, System.register circular', function() {
-
-}); */
 

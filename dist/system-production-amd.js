@@ -316,11 +316,19 @@ function register(loader) {
       // now we know the entry is in our unlinked linkage group
       var depGroupIndex = entry.groupIndex + (depEntry.declarative != entry.declarative);
 
-      if (depEntry.groupIndex === undefined) {
+      // the group index of an entry is always the maximum
+      if (depEntry.groupIndex === undefined || depEntry.groupIndex < depGroupIndex) {
+        
+        // if already in a group, remove from the old group
+        if (depEntry.groupIndex) {
+          groups[depEntry.groupIndex].splice(groups[depEntry.groupIndex].indexOf(depEntry), 1);
+
+          // if the old group is empty, then we have a mixed depndency cycle
+          if (groups[depEntry.groupIndex].length == 0)
+            throw new TypeError("Mixed dependency cycle detected");
+        }
+
         depEntry.groupIndex = depGroupIndex;
-      }
-      else if (depEntry.groupIndex != depGroupIndex) {
-        throw new TypeError('System.register mixed dependency cycle');
       }
 
       buildGroups(depEntry, loader, groups);
@@ -336,7 +344,7 @@ function register(loader) {
 
     buildGroups(startEntry, loader, groups);
 
-    var curGroupDeclarative = startEntry.declarative == groups.length % 2;
+    var curGroupDeclarative = !!startEntry.declarative == groups.length % 2;
     for (var i = groups.length - 1; i >= 0; i--) {
       var group = groups[i];
       for (var j = 0; j < group.length; j++) {
@@ -482,8 +490,12 @@ function register(loader) {
 
     for (var i = 0; i < entry.normalizedDeps.length; i++) {
       var depName = entry.normalizedDeps[i];
-      if (indexOf.call(seen, depName) == -1)
-        ensureEvaluated(depName, seen, loader);
+      if (indexOf.call(seen, depName) == -1) {
+        if (!loader.defined[depName])
+          loader.get(depName);
+        else
+          ensureEvaluated(depName, seen, loader);
+      }
     }
 
     if (entry.evaluated)
