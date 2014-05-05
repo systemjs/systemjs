@@ -82,7 +82,7 @@ function core(loader) {
   // override locate to allow baseURL to be document-relative
   var baseURI;
   if (typeof window == 'undefined') {
-    baseURI = __dirname + '/';
+    baseURI = process.cwd() + '/';
   }
   else {
     baseURI = document.baseURI;
@@ -99,7 +99,6 @@ function core(loader) {
 
       if (normalizedBaseURL.substr(normalizedBaseURL.length - 1, 1) != '/')
         normalizedBaseURL += '/';
-
       this.baseURL = normalizedBaseURL;
     }
 
@@ -288,7 +287,7 @@ function register(loader) {
     lastRegister = {
       deps: deps,
       declare: declare,
-      declarative: true
+      declarative: true,
     };
 
     if (name)
@@ -454,6 +453,15 @@ function register(loader) {
       }
     }
 
+    // lookup the module name if it is in the registry
+    var moduleName;
+    for (var d in loader.defined) {
+      if (loader.defined[d] != entry)
+        continue;
+      moduleName = d;
+      break;
+    }
+
     // now execute
     try {
       entry.evaluated = true;
@@ -463,7 +471,7 @@ function register(loader) {
             continue;
           return getModule(entry.normalizedDeps[i], loader);
         }
-      }, entry.module, name);
+      }, entry.module, moduleName);
     }
     catch(e) {
       throw e;
@@ -1024,30 +1032,33 @@ scriptLoader(System);
 map(System);
 bundles(System);
 versions(System);
-  System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
+  
+  if (__$curScript) {
+    System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
 
-  var configPath = __$curScript.getAttribute('data-config');
-  if (configPath === '')
-    configPath = System.baseURL + 'config.json';
+    var configPath = __$curScript.getAttribute('data-config');
+    if (configPath === '')
+      configPath = System.baseURL + 'config.json';
 
-  var main = __$curScript.getAttribute('data-main');
+    var main = __$curScript.getAttribute('data-main');
 
-  if (!System.paths['@traceur'])
-    System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');
+    if (!System.paths['@traceur'])
+      System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');
 
-  (!configPath ? Promise.resolve() :
-    Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))
-    .then(JSON.parse)
-    .then(System.config)
-  ).then(function() {
-    if (main)
-      return System['import'](main);
-  })
-  ['catch'](function(e) {
-    setTimeout(function() {
-      throw e;
+    (!configPath ? Promise.resolve() :
+      Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))
+      .then(JSON.parse)
+      .then(System.config)
+    ).then(function() {
+      if (main)
+        return System['import'](main);
     })
-  });
+    ['catch'](function(e) {
+      setTimeout(function() {
+        throw e;
+      })
+    });
+  }
 
 };
 

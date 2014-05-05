@@ -5,8 +5,7 @@ QUnit.config.testTimeout = 2000;
 QUnit.module("SystemJS");
 
 if (typeof window == 'undefined') {
-  var path = require('path');
-  System.baseURL = path.resolve(__dirname, 'test');
+  System.baseURL = 'test';
 }
 
 function err(e) {
