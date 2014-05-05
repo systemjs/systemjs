@@ -1462,7 +1462,7 @@ function versions(loader) {
       // see if this module corresponds to a package already in our versioned packages list
       
       // no version specified - check against the list (given we don't know the package name)
-      if (index == -1) {
+      if (index == -1 || index == 0) {
         for (var p in packageVersions) {
           versions = packageVersions[p];
           if (normalized.substr(0, p.length) != p)
