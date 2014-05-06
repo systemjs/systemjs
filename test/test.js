@@ -228,6 +228,29 @@ asyncTest('Advanced compiler plugin', function() {
   }, err);
 });
 
+asyncTest('AMD Circular', function() {
+  System['import']('tests/amd-circular1').then(function(m) {
+    ok(m.outFunc() == 5, 'Expected execution');
+    start();
+  })['catch'](err);
+});
+
+asyncTest('CJS Circular', function() {
+  System['import']('tests/cjs-circular1').then(function(m) {
+    ok(m.first == 'second value');
+    ok(m.firstWas == 'first value', 'Original value');
+    start();
+  }, err);
+});
+
+asyncTest('System.register Circular', function() {
+  System['import']('tests/register-circular1').then(function(m) {
+    ok(m.q == 3, 'Binding not allocated');
+    ok(m.r == 5, 'Binding not updated');
+    start();
+  }, err);
+});
+
 //asyncTest('Loading from jspm', function() {
 //  System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
 //  System['import']('npm:underscore').then(function(m) {
@@ -329,33 +352,10 @@ asyncTest('ES6 Circular', function() {
   }, err);
 });
 
-asyncTest('AMD Circular', function() {
-  System['import']('tests/amd-circular1').then(function(m) {
-    ok(m.outFunc() == 5, 'Expected execution');
-    start();
-  })['catch'](err);
-});
-
-asyncTest('CJS Circular', function() {
-  System['import']('tests/cjs-circular1').then(function(m) {
-    ok(m.first == 'second value');
-    ok(m.firstWas == 'first value', 'Original value');
-    start();
-  }, err);
-});
-
 asyncTest('AMD & CJS circular, ES6 Circular', function() {
   System['import']('tests/all-circular1').then(function(m) {
     ok(m.q == 4);
     ok(m.o.checkObj() == 'changed');
-    start();
-  }, err);
-});
-
-asyncTest('System.register Circular', function() {
-  System['import']('tests/register-circular1').then(function(m) {
-    ok(m.q == 3, 'Binding not allocated');
-    ok(m.r == 5, 'Binding not updated');
     start();
   }, err);
 });

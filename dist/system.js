@@ -175,7 +175,7 @@ function core(loader) {
     var lastLineIndex = load.source.lastIndexOf('\n');
     if (lastLineIndex != -1) {
       if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
-        sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22));
+        sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 23));
     }
 
     __eval(load.source, loader.global, load.address, sourceMappingURL);
@@ -891,7 +891,7 @@ function cjs(loader) {
         load.source = glString + load.source;
 
         // disable AMD detection
-        delete loader.global.define;
+        loader.global.define = undefined;
 
         loader.__exec(load);
 
