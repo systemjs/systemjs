@@ -7,16 +7,17 @@
 
 (function(__$global) {
 
-// indexOf polyfill for IE
-var indexOf = Array.prototype.indexOf || function(item) {
-  for (var i = 0, l = this.length; i < l; i++)
-    if (this[i] === item)
-      return i;
-  return -1;
-}
-
 __$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;/*
+  __$global.upgradeSystemLoader = undefined;
+
+  // indexOf polyfill for IE
+  var indexOf = Array.prototype.indexOf || function(item) {
+    for (var i = 0, l = this.length; i < l; i++)
+      if (this[i] === item)
+        return i;
+    return -1;
+  }
+/*
  * SystemJS Core
  * Code should be vaguely readable
  * 
@@ -612,22 +613,33 @@ function register(loader) {
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
-    if (loader.defined && loader.defined[load.name])
+    if (loader.defined && loader.defined[load.name]) {
+      load.metadata.format = 'defined';
       return '';
+    }
     return loaderFetch(load);
   }
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
-    loader.register = register;
+    this.register = register;
 
     load.metadata.deps = load.metadata.deps || [];
 
-    // run detection for register format here
-    if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
-      load.metadata.format = 'register';
+    // we run the meta detection here (register is after meta)
+    return Promise.resolve(loaderTranslate.call(this, load)).then(function(source) {
+      
+      // dont run format detection for globals shimmed
+      // ideally this should be in the global extension, but there is
+      // currently no neat way to separate it
+      if (load.metadata.init || load.metadata.exports)
+        load.metadata.format = load.metadata.format || 'global';
 
-    return loaderTranslate.call(this, load);
+      // run detection for register format
+      if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
+        load.metadata.format = 'register';
+      return source;
+    });
   }
 
 
@@ -673,8 +685,6 @@ function register(loader) {
 
       // create the empty dep map - this is our key deferred dependency binding object passed into declare
       entry.depMap = [];
-
-      entry.asdfasdf = 'asdf' + Math.random();
 
       return {
         deps: entry.deps,
@@ -722,6 +732,7 @@ function register(loader) {
   See the SystemJS readme global support section for further information.
 */
 function global(loader) {
+
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
@@ -828,6 +839,8 @@ function cjs(loader) {
 
     return deps;
   }
+
+  loader._getCJSDeps = getCJSDeps;
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
@@ -961,6 +974,14 @@ function amd(loader) {
 
   var lastDefine;
   function createDefine(loader) {
+
+    lastDefine = null;
+
+    // ensure no NodeJS environment detection
+    loader.global.module = undefined;
+    loader.global.exports = undefined;
+
+
     if (loader.global.define && loader.global.define.loader == loader)
       return;
 
@@ -1037,6 +1058,22 @@ function amd(loader) {
     loader.global.define.amd = {};
     loader.global.define.loader = loader;
   }
+
+  if (loader.scriptLoader) {
+    var loaderFetch = loader.fetch;
+    var scriptLoader = true;
+    loader.fetch = function(load) {
+      createDefine(this);
+      return Promise.resolve(loaderFetch.call(this, load)).then(function(source) {
+        if (lastDefine) {
+          load.metadata.format = 'defined';
+          load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
+          load.metadata.execute = lastDefine.execute;
+        }
+        return source;
+      });
+    }
+  }
   
 
   var loaderInstantiate = loader.instantiate;
@@ -1045,13 +1082,8 @@ function amd(loader) {
 
     if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
       load.metadata.format = 'amd';
+        
       createDefine(loader);
-
-      lastDefine = null;
-
-      // ensure no NodeJS environment detection
-      loader.global.module = undefined;
-      loader.global.exports = undefined;
 
       loader.__exec(load);
 
@@ -1172,9 +1204,29 @@ function map(loader) {
     var loader = this;
     if (!loader.map)
       loader.map = {};
+
+    var isPackage = false;
+    if (name.substr(name.length - 1, 1) == '/') {
+      isPackage = true;
+      name += '#';
+    }
+
     return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
     .then(function(name) {
-      return applyMap(name, parentName, loader);
+      name = applyMap(name, parentName, loader);
+
+      // Normalize "module/" into "module/module"
+      // Convenient for packages
+      if (isPackage) {
+        var nameParts = name.split('/');
+        nameParts.pop();
+        var pkgName = nameParts.pop();
+        nameParts.push(pkgName);
+        nameParts.push(pkgName);
+        name = nameParts.join('/');
+      }
+
+      return name;
     });
   }
 }
@@ -1276,12 +1328,7 @@ function plugins(loader) {
   loader.fetch = function(load) {
     var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.fetch)
-      return Promise.resolve(load.metadata.plugin.fetch.call(loader, load)).then(function(source) {
-        if (source === undefined)
-          return loaderFetch.call(loader, load);
-        else
-          return source;
-      });
+      return load.metadata.plugin.fetch.call(loader, load);
     else
       return loaderFetch.call(loader, load);
   }
@@ -1290,12 +1337,7 @@ function plugins(loader) {
   loader.translate = function(load) {
     var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.translate)
-      return Promise.resolve(load.metadata.plugin.translate.call(loader, load)).then(function(source) {
-        if (source === undefined)
-          return loaderTranslate.call(loader, load);  
-        else
-          return source;
-      });
+      return load.metadata.plugin.translate.call(loader, load, loaderTranslate);
     else
       return loaderTranslate.call(loader, load);
   }
@@ -1304,12 +1346,7 @@ function plugins(loader) {
   loader.instantiate = function(load) {
     var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.instantiate)
-      return Promise.resolve(load.metadata.plugin.instantiate.call(this, load)).then(function(result) {
-        if (result === undefined)
-          return loaderInstantiate.call(this, load);
-        else
-          return result;
-      });
+      return load.metadata.plugin.instantiate.call(loader, load, loaderInstantiate);
     else
       return loaderInstantiate.call(this, load);
   }
@@ -1598,8 +1635,8 @@ versions(System);
     System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
 
     var configPath = __$curScript.getAttribute('data-config');
-    if (configPath === '')
-      configPath = System.baseURL + 'config.json';
+    if (configPath && configPath.substr(configPath.length - 1) === '/')
+      configPath += 'config.json';
 
     var main = __$curScript.getAttribute('data-main');
 

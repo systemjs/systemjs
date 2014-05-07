@@ -7,16 +7,17 @@
 
 (function(__$global) {
 
-// indexOf polyfill for IE
-var indexOf = Array.prototype.indexOf || function(item) {
-  for (var i = 0, l = this.length; i < l; i++)
-    if (this[i] === item)
-      return i;
-  return -1;
-}
-
 __$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;/*
+  __$global.upgradeSystemLoader = undefined;
+
+  // indexOf polyfill for IE
+  var indexOf = Array.prototype.indexOf || function(item) {
+    for (var i = 0, l = this.length; i < l; i++)
+      if (this[i] === item)
+        return i;
+    return -1;
+  }
+/*
  * SystemJS Core
  * Code should be vaguely readable
  * 
@@ -229,6 +230,34 @@ function core(loader) {
       (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
       href.hash;
   }
+}
+/*
+ * Script tag fetch
+ */
+
+function scriptLoader(loader) {
+  if (typeof indexOf == 'undefined')
+    indexOf = Array.prototype.indexOf;
+
+  var head = document.getElementsByTagName('head')[0];
+
+  // override fetch to use script injection
+  loader.fetch = function(load) {
+    return new Promise(function(resolve, reject) {
+      var s = document.createElement('script');
+      s.async = true;
+      s.addEventListener('load', function(evt) {
+        resolve('');
+      }, false);
+      s.addEventListener('error', function(err) {
+        reject(err);
+      }, false);
+      s.src = load.address;
+      head.appendChild(s);
+    });
+  }
+
+  loader.scriptLoader = true;
 }
 /*
  * Instantiate registry extension
@@ -519,22 +548,33 @@ function register(loader) {
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
-    if (loader.defined && loader.defined[load.name])
+    if (loader.defined && loader.defined[load.name]) {
+      load.metadata.format = 'defined';
       return '';
+    }
     return loaderFetch(load);
   }
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
-    loader.register = register;
+    this.register = register;
 
     load.metadata.deps = load.metadata.deps || [];
 
-    // run detection for register format here
-    if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
-      load.metadata.format = 'register';
+    // we run the meta detection here (register is after meta)
+    return Promise.resolve(loaderTranslate.call(this, load)).then(function(source) {
+      
+      // dont run format detection for globals shimmed
+      // ideally this should be in the global extension, but there is
+      // currently no neat way to separate it
+      if (load.metadata.init || load.metadata.exports)
+        load.metadata.format = load.metadata.format || 'global';
 
-    return loaderTranslate.call(this, load);
+      // run detection for register format
+      if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
+        load.metadata.format = 'register';
+      return source;
+    });
   }
 
 
@@ -581,8 +621,6 @@ function register(loader) {
       // create the empty dep map - this is our key deferred dependency binding object passed into declare
       entry.depMap = [];
 
-      entry.asdfasdf = 'asdf' + Math.random();
-
       return {
         deps: entry.deps,
         execute: function() {
@@ -618,32 +656,290 @@ function register(loader) {
   }
 }
 /*
- * Script tag fetch
- */
+  SystemJS CommonJS Format
+*/
+function cjs(loader) {
 
-function scriptLoader(loader) {
-  if (typeof indexOf == 'undefined')
-    indexOf = Array.prototype.indexOf;
+  // CJS Module Format
+  // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
+  var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
+  var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+  var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
-  var head = document.getElementsByTagName('head')[0];
+  function getCJSDeps(source) {
+    cjsExportsRegEx.lastIndex = 0;
+    cjsRequireRegEx.lastIndex = 0;
 
-  // override fetch to use script injection
-  loader.fetch = function(load) {
-    return new Promise(function(resolve, reject) {
-      var s = document.createElement('script');
-      s.async = true;
-      s.addEventListener('load', function(evt) {
-        resolve('');
-      }, false);
-      s.addEventListener('error', function(err) {
-        reject(err);
-      }, false);
-      s.src = load.address;
-      head.appendChild(s);
-    });
+    var deps = [];
+
+    // remove comments from the source first
+    var source = source.replace(commentRegEx, '');
+
+    var match;
+
+    while (match = cjsRequireRegEx.exec(source))
+      deps.push(match[2] || match[3]);
+
+    return deps;
   }
-}
-/*
+
+  loader._getCJSDeps = getCJSDeps;
+
+  var loaderTranslate = loader.translate;
+  loader.translate = function(load) {
+    var loader = this;
+    if (!loader._getCJSDeps)
+      loader._getCJSDeps = getCJSDeps;
+    return loaderTranslate.call(loader, load);
+  }
+
+
+  var noop = function() {}
+  var nodeProcess = {
+    nextTick: function(f) {
+      setTimeout(f, 7);
+    },
+    browser: typeof window != 'undefined',
+    env: {},
+    argv: [],
+    on: noop,
+    once: noop,
+    off: noop,
+    emit: noop,
+    cwd: function() { return '/' }
+  };
+  loader.set('@@nodeProcess', Module(nodeProcess));
+
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
+
+    if (!load.metadata.format) {
+      cjsExportsRegEx.lastIndex = 0;
+      cjsRequireRegEx.lastIndex = 0;
+      if (cjsRequireRegEx.exec(load.source) || cjsExportsRegEx.exec(load.source))
+        load.metadata.format = 'cjs';
+    }
+
+    if (load.metadata.format == 'cjs') {
+      load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(getCJSDeps(load.source)) : load.metadata.deps;
+
+      load.metadata.executingRequire = true;
+
+      load.metadata.execute = function(require, exports, moduleName) {
+        var dirname = load.address.split('/');
+        dirname.pop();
+        dirname = dirname.join('/');
+
+        var globals = loader.global._g = {
+          global: loader.global,
+          exports: exports,
+          module: { exports: exports },
+          process: nodeProcess,
+          require: require,
+          __filename: load.address,
+          __dirname: dirname
+        };
+
+        var glString = '';
+        for (var _g in globals)
+          glString += 'var ' + _g + ' = _g.' + _g + ';';
+
+        load.source = glString + load.source;
+
+        // disable AMD detection
+        loader.global.define = undefined;
+
+        loader.__exec(load);
+
+        loader.global._g = undefined;
+
+        var output = globals.module.exports;
+
+        if (output && output.__esModule)
+          return output;
+        else if (output !== undefined)
+          return { __useDefault: true, 'default': output };
+      }
+    }
+
+    return loaderInstantiate.call(this, load);
+  };
+}/*
+  SystemJS AMD Format
+  Provides the AMD module format definition at System.format.amd
+  as well as a RequireJS-style require on System.require
+*/
+function amd(loader) {
+
+  // AMD Module Format Detection RegEx
+  // define([.., .., ..], ...)
+  // define(varName); || define(function(require, exports) {}); || define({})
+  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+
+  /*
+    AMD-compatible require
+    To copy RequireJS, set window.require = window.requirejs = loader.require
+  */
+  function require(names, callback, errback, referer) {
+    // 'this' is bound to the loader
+    var loader = this;
+
+    // in amd, first arg can be a config object... we just ignore
+    if (typeof names == 'object' && !(names instanceof Array))
+      return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
+
+    // amd require
+    if (names instanceof Array)
+      Promise.all(names.map(function(name) {
+        return loader['import'](name, referer);
+      })).then(function(modules) {
+        callback.apply(null, modules);
+      }, errback);
+
+    // commonjs require
+    else if (typeof names == 'string') {
+      var module = loader.get(names);
+      return module.__useDefault ? module['default'] : module;
+    }
+
+    else
+      throw 'Invalid require';
+  };
+  loader.require = require;
+
+  function makeRequire(parentName, staticRequire, loader) {
+    return function(names, callback, errback) {
+      if (typeof names == 'string')
+        return staticRequire(names);
+      return require.call(loader, names, callback, errback, { name: parentName });
+    }
+  }
+
+  var lastDefine;
+  function createDefine(loader) {
+
+    lastDefine = null;
+
+    // ensure no NodeJS environment detection
+    loader.global.module = undefined;
+    loader.global.exports = undefined;
+
+
+    if (loader.global.define && loader.global.define.loader == loader)
+      return;
+
+    loader.global.define = function(name, deps, factory) {
+      if (typeof name != 'string') {
+        factory = deps;
+        deps = name;
+        name = null;
+      }
+      if (!(deps instanceof Array)) {
+        factory = deps;
+        // CommonJS AMD form
+        if (!loader._getCJSDeps)
+          throw "AMD extension needs CJS extension for AMD CJS support";
+        deps = ['require', 'exports', 'module'].concat(loader._getCJSDeps(factory.toString()));
+      }
+
+      if (typeof factory != 'function')
+        factory = (function(factory) {
+          return function() { return factory; }
+        })(factory);
+
+      // a module file can only define one anonymous module
+      if (!name && lastDefine)
+        throw "Multiple defines for anonymous module";
+
+      // remove system dependencies
+      var requireIndex, exportsIndex, moduleIndex
+      if ((requireIndex = indexOf.call(deps, 'require')) != -1)
+        deps.splice(requireIndex, 1);
+
+      if ((exportsIndex = indexOf.call(deps, 'exports')) != -1)
+        deps.splice(exportsIndex, 1);
+      
+      if ((moduleIndex = indexOf.call(deps, 'module')) != -1)
+        deps.splice(moduleIndex, 1);
+
+      lastDefine = {
+        deps: deps,
+        execute: function(require, exports, moduleName) {
+
+          var depValues = [];
+          for (var i = 0; i < deps.length; i++)
+            depValues.push(require(deps[i]));
+
+          var module;
+
+          // add back in system dependencies
+          if (moduleIndex != -1)
+            depValues.splice(moduleIndex, 0, exports, module = { id: moduleName, uri: loader.baseURL + moduleName, config: function() { return {}; }, exports: exports });
+          
+          if (exportsIndex != -1)
+            depValues.splice(exportsIndex, 0, exports);
+          
+          if (requireIndex != -1)
+            depValues.splice(requireIndex, 0, makeRequire(moduleName, require, loader));
+
+          var output = factory.apply(loader.global, depValues);
+
+          output = output || module && module.exports;
+
+          if (output && output.__esModule)
+            return output;
+          else if (output !== undefined)
+            return { __useDefault: true, 'default': output };
+        }
+      };
+
+      // attaches to loader.defined as dynamic
+      if (name)
+        loader.defined[name] = lastDefine;
+    };
+    
+    loader.global.define.amd = {};
+    loader.global.define.loader = loader;
+  }
+
+  if (loader.scriptLoader) {
+    var loaderFetch = loader.fetch;
+    var scriptLoader = true;
+    loader.fetch = function(load) {
+      createDefine(this);
+      return Promise.resolve(loaderFetch.call(this, load)).then(function(source) {
+        if (lastDefine) {
+          load.metadata.format = 'defined';
+          load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
+          load.metadata.execute = lastDefine.execute;
+        }
+        return source;
+      });
+    }
+  }
+  
+
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
+    var loader = this;
+
+    if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
+      load.metadata.format = 'amd';
+        
+      createDefine(loader);
+
+      loader.__exec(load);
+
+      if (!lastDefine)
+        throw "AMD module " + load.name + " did not define";
+
+      load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
+      load.metadata.execute = lastDefine.execute;
+    }
+
+    return loaderInstantiate.call(loader, load);
+  }
+}/*
   SystemJS map support
   
   Provides map configuration through
@@ -751,9 +1047,29 @@ function map(loader) {
     var loader = this;
     if (!loader.map)
       loader.map = {};
+
+    var isPackage = false;
+    if (name.substr(name.length - 1, 1) == '/') {
+      isPackage = true;
+      name += '#';
+    }
+
     return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
     .then(function(name) {
-      return applyMap(name, parentName, loader);
+      name = applyMap(name, parentName, loader);
+
+      // Normalize "module/" into "module/module"
+      // Convenient for packages
+      if (isPackage) {
+        var nameParts = name.split('/');
+        nameParts.pop();
+        var pkgName = nameParts.pop();
+        nameParts.push(pkgName);
+        nameParts.push(pkgName);
+        name = nameParts.join('/');
+      }
+
+      return name;
     });
   }
 }
@@ -1027,8 +1343,10 @@ function versions(loader) {
   }
 }
 core(System);
-register(System);
 scriptLoader(System);
+register(System);
+cjs(System);
+amd(System);
 map(System);
 bundles(System);
 versions(System);
@@ -1037,8 +1355,8 @@ versions(System);
     System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
 
     var configPath = __$curScript.getAttribute('data-config');
-    if (configPath === '')
-      configPath = System.baseURL + 'config.json';
+    if (configPath && configPath.substr(configPath.length - 1) === '/')
+      configPath += 'config.json';
 
     var main = __$curScript.getAttribute('data-main');
 

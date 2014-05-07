@@ -130,6 +130,14 @@ asyncTest('Contextual map with shim', function() {
   }, err);
 });
 
+asyncTest('Package loading shorthand', function() {
+  System.map['tests/package'] = 'tests/some-package';
+  System['import']('tests/package/').then(function(m) {
+    ok(m.isPackage);
+    start();
+  }, err);
+});
+
 asyncTest('Loading an AMD module', function() {
   System['import']('tests/amd-module').then(function(m) {
     ok(m.amd == true, 'Incorrect module');
