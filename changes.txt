@@ -1,0 +1,45 @@
+SystemJS New Features
+
+CONFIG
+---
+
+main / data-main - loaded after config
+config / data-config - if no value, uses "config.json". If a value, loaded relative to baseURL
+baseurl / data-baseurl - sets loader baseURL
+System.config() - overrides System.x values
+
+META
+---
+
+System.meta['module/name']
+
+"format amd";
+
+FORMATS
+---
+
+Formats are now supported through meta as opposed to System.formats
+
+This system was rewritten to allow circular references
+
+metadata.deps
+metadata.execute(require, exports, moduleName)
+metadata.executingRequire
+
+System.register
+---
+
+Example
+
+
+Plugins
+---
+
+New hook handling is based on modifying the load record.
+
+The load record is then passed through the default hook next automatically.
+
+If you return a value, you had better know what you are doing, as skipping the default will disable other extension features,
+which may not be obvious (for example meta hooks into translate).
+
+Instantiate hook now avaiable.
