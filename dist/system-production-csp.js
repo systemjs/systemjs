@@ -1,7 +1,7 @@
 /*
- * SystemJS
+ * SystemJS v0.6.0
  * 
- * Copyright (c) 2013 Guy Bedford
+ * Copyright (c) 2014 Guy Bedford
  * MIT License
  */
 
@@ -17,221 +17,20 @@ __$global.upgradeSystemLoader = function() {
         return i;
     return -1;
   }
-/*
- * SystemJS Core
- * Code should be vaguely readable
- * 
- */
-function core(loader) {
+
+  // clone the original System loader
+  var originalSystem = __$global.System;
+  var System = __$global.System = new LoaderPolyfill(originalSystem);
+  System.baseURL = originalSystem.baseURL;
+  System.paths = { '*': '*.js' };
+  System.originalSystem = originalSystem;
+
+  System.noConflict = function() {
+    __$global.SystemJS = System;
+    __$global.System = System.originalSystem;
+  }
 
   /*
-    __useDefault
-    
-    When a module object looks like:
-    Module({
-      __useDefault: true,
-      default: 'some-module'
-    })
-
-    Then importing that module provides the 'some-module'
-    result directly instead of the full module.
-
-    Useful for eg module.exports = function() {}
-  */
-  var loaderImport = loader['import'];
-  loader['import'] = function(name, options) {
-    return loaderImport.call(this, name, options).then(function(module) {
-      return module.__useDefault ? module['default'] : module;
-    });
-  }
-
-  // support the empty module, as a concept
-  loader.set('@empty', Module({}));
-
-  /*
-    Config
-    Extends config merging one deep only
-
-    loader.config({
-      some: 'random',
-      config: 'here',
-      deep: {
-        config: { too: 'too' }
-      }
-    });
-
-    <=>
-
-    loader.some = 'random';
-    loader.config = 'here'
-    loader.deep = loader.deep || {};
-    loader.deep.config = { too: 'too' };
-  */
-  loader.config = function(cfg) {
-    for (var c in cfg) {
-      var v = cfg[c];
-      if (typeof v == 'object') {
-        this[c] = this[c] || {};
-        for (var p in v)
-          this[c][p] = v[p];
-      }
-      else
-        this[c] = v;
-    }
-  }
-
-  // override locate to allow baseURL to be document-relative
-  var baseURI;
-  if (typeof window == 'undefined') {
-    baseURI = process.cwd() + '/';
-  }
-  else {
-    baseURI = document.baseURI;
-    if (!baseURI) {
-      var bases = document.getElementsByTagName('base');
-      baseURI = bases[0] && bases[0].href || window.location.href;
-    }
-  }
-  var loaderLocate = loader.locate;
-  var normalizedBaseURL;
-  loader.locate = function(load) {
-    if (this.baseURL != normalizedBaseURL) {
-      normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-
-      if (normalizedBaseURL.substr(normalizedBaseURL.length - 1, 1) != '/')
-        normalizedBaseURL += '/';
-      this.baseURL = normalizedBaseURL;
-    }
-
-    return Promise.resolve(loaderLocate.call(this, load));
-  }
-
-
-  // Traceur conveniences
-  var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
-  var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
-
-  var loaderTranslate = loader.translate;
-  loader.translate = function(load) {
-    var loader = this;
-
-    loader.__exec = exec;
-
-    if (load.name == '@traceur')
-      return loaderTranslate.call(loader, load);
-
-    // support ES6 alias modules ("export * from 'module';") without needing Traceur
-    var match;
-    if (!loader.global.traceur && (load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
-      var depName = match[1] || match[2];
-      load.metadata.deps = [depName];
-      load.metadata.execute = function(require) {
-        return require(depName);
-      }
-    }
-
-    // detect ES6
-    if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
-      load.metadata.format = 'es6';
-
-      // dynamically load Traceur for ES6 if necessary
-      if (!loader.global.traceur) {
-        return loader['import']('@traceur').then(function() {
-          return loaderTranslate.call(loader, load);
-        });
-      }
-    }
-
-    return loaderTranslate.call(loader, load);
-  }
-
-  // always load Traceur as a global
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    var loader = this;
-    if (load.name == '@traceur') {
-      loader.__exec(load);
-      return {
-        deps: [],
-        execute: function() {
-          return Module({});
-        }
-      };
-    }
-    return loaderInstantiate.call(loader, load);
-  }
-
-
-  // define exec for easy evaluation of a load record (load.name, load.source, load.address)
-  // main feature is source maps support handling
-  var curSystem, curModule;
-  function exec(load) {
-    var loader = this;
-    if (load.name == '@traceur') {
-      curSystem = System;
-      curModule = Module;
-    }
-    // support sourceMappingURL (efficiently)
-    var sourceMappingURL;
-    var lastLineIndex = load.source.lastIndexOf('\n');
-    if (lastLineIndex != -1) {
-      if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
-        sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 23));
-    }
-
-    __eval(load.source, loader.global, load.address, sourceMappingURL);
-
-    // traceur overwrites System and Module - write them back
-    if (load.name == '@traceur') {
-      loader.global.traceurSystem = loader.global.System;
-      loader.global.System = curSystem;
-      //loader.global.Module = curModule;
-    }
-  }
-  loader.__exec = exec;
-
-  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
-  function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
-    return (m ? {
-      href     : m[0] || '',
-      protocol : m[1] || '',
-      authority: m[2] || '',
-      host     : m[3] || '',
-      hostname : m[4] || '',
-      port     : m[5] || '',
-      pathname : m[6] || '',
-      search   : m[7] || '',
-      hash     : m[8] || ''
-    } : null);
-  }
-  function toAbsoluteURL(base, href) {
-    function removeDotSegments(input) {
-      var output = [];
-      input.replace(/^(\.\.?(\/|$))+/, '')
-        .replace(/\/(\.(\/|$))+/g, '/')
-        .replace(/\/\.\.$/, '/../')
-        .replace(/\/?[^\/]*/g, function (p) {
-          if (p === '/..')
-            output.pop();
-          else
-            output.push(p);
-      });
-      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
-    }
-
-    href = parseURI(href || '');
-    base = parseURI(base || '');
-
-    return !href || !base ? null : (href.protocol || base.protocol) +
-      (href.protocol || href.authority ? href.authority : base.authority) +
-      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
-      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
-      href.hash;
-  }
-}
-/*
  * Script tag fetch
  */
 
@@ -273,12 +72,39 @@ function scriptLoader(loader) {
  * loader.__exec(load) like the one set in SystemJS core
  *
  */
-
 function register(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
-  if (!loader.__exec)
-    throw "loader.__exec(load) needs to be provided for loader.register. See SystemJS core for an implementation example.";
+  if (typeof __eval == 'undefined')
+    __eval = eval;
+
+  // define exec for easy evaluation of a load record (load.name, load.source, load.address)
+  // main feature is source maps support handling
+  var curSystem, curModule;
+  function exec(load) {
+    var loader = this;
+    if (load.name == '@traceur') {
+      curSystem = System;
+      curModule = Module;
+    }
+    // support sourceMappingURL (efficiently)
+    var sourceMappingURL;
+    var lastLineIndex = load.source.lastIndexOf('\n');
+    if (lastLineIndex != -1) {
+      if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
+        sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 23));
+    }
+
+    __eval(load.source, loader.global, load.address, sourceMappingURL);
+
+    // traceur overwrites System and Module - write them back
+    if (load.name == '@traceur') {
+      loader.global.traceurSystem = loader.global.System;
+      loader.global.System = curSystem;
+      //loader.global.Module = curModule;
+    }
+  }
+  loader.__exec = exec;
 
   function dedupe(deps) {
     var newDeps = [];
@@ -559,6 +385,8 @@ function register(loader) {
   loader.translate = function(load) {
     this.register = register;
 
+    this.__exec = exec;
+
     load.metadata.deps = load.metadata.deps || [];
 
     // we run the meta detection here (register is after meta)
@@ -596,6 +424,7 @@ function register(loader) {
     }
     else if (load.metadata.format == 'register') {
       lastRegister = null;
+      
       loader.__exec(load);
 
       // for a bundle, take the last defined module
@@ -653,6 +482,189 @@ function register(loader) {
         }
       };
     });
+  }
+}
+/*
+ * SystemJS Core
+ * Code should be vaguely readable
+ * 
+ */
+function core(loader) {
+
+  /*
+    __useDefault
+    
+    When a module object looks like:
+    Module({
+      __useDefault: true,
+      default: 'some-module'
+    })
+
+    Then importing that module provides the 'some-module'
+    result directly instead of the full module.
+
+    Useful for eg module.exports = function() {}
+  */
+  var loaderImport = loader['import'];
+  loader['import'] = function(name, options) {
+    return loaderImport.call(this, name, options).then(function(module) {
+      return module.__useDefault ? module['default'] : module;
+    });
+  }
+
+  // support the empty module, as a concept
+  loader.set('@empty', Module({}));
+
+  /*
+    Config
+    Extends config merging one deep only
+
+    loader.config({
+      some: 'random',
+      config: 'here',
+      deep: {
+        config: { too: 'too' }
+      }
+    });
+
+    <=>
+
+    loader.some = 'random';
+    loader.config = 'here'
+    loader.deep = loader.deep || {};
+    loader.deep.config = { too: 'too' };
+  */
+  loader.config = function(cfg) {
+    for (var c in cfg) {
+      var v = cfg[c];
+      if (typeof v == 'object') {
+        this[c] = this[c] || {};
+        for (var p in v)
+          this[c][p] = v[p];
+      }
+      else
+        this[c] = v;
+    }
+  }
+
+  // override locate to allow baseURL to be document-relative
+  var baseURI;
+  if (typeof window == 'undefined') {
+    baseURI = process.cwd() + '/';
+  }
+  else {
+    baseURI = document.baseURI;
+    if (!baseURI) {
+      var bases = document.getElementsByTagName('base');
+      baseURI = bases[0] && bases[0].href || window.location.href;
+    }
+  }
+  var loaderLocate = loader.locate;
+  var normalizedBaseURL;
+  loader.locate = function(load) {
+    if (this.baseURL != normalizedBaseURL) {
+      normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+      if (normalizedBaseURL.substr(normalizedBaseURL.length - 1, 1) != '/')
+        normalizedBaseURL += '/';
+      this.baseURL = normalizedBaseURL;
+    }
+
+    return Promise.resolve(loaderLocate.call(this, load));
+  }
+
+
+  // Traceur conveniences
+  var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
+  var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
+
+  var loaderTranslate = loader.translate;
+  loader.translate = function(load) {
+    var loader = this;
+
+    if (load.name == '@traceur')
+      return loaderTranslate.call(loader, load);
+
+    // support ES6 alias modules ("export * from 'module';") without needing Traceur
+    var match;
+    if (!loader.global.traceur && (load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
+      var depName = match[1] || match[2];
+      load.metadata.deps = [depName];
+      load.metadata.execute = function(require) {
+        return require(depName);
+      }
+    }
+
+    // detect ES6
+    if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
+      load.metadata.format = 'es6';
+
+      // dynamically load Traceur for ES6 if necessary
+      if (!loader.global.traceur) {
+        return loader['import']('@traceur').then(function() {
+          return loaderTranslate.call(loader, load);
+        });
+      }
+    }
+
+    return loaderTranslate.call(loader, load);
+  }
+
+  // always load Traceur as a global
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
+    var loader = this;
+    if (load.name == '@traceur') {
+      loader.__exec(load);
+      return {
+        deps: [],
+        execute: function() {
+          return Module({});
+        }
+      };
+    }
+    return loaderInstantiate.call(loader, load);
+  }
+
+  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
+  function parseURI(url) {
+    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
+    return (m ? {
+      href     : m[0] || '',
+      protocol : m[1] || '',
+      authority: m[2] || '',
+      host     : m[3] || '',
+      hostname : m[4] || '',
+      port     : m[5] || '',
+      pathname : m[6] || '',
+      search   : m[7] || '',
+      hash     : m[8] || ''
+    } : null);
+  }
+  function toAbsoluteURL(base, href) {
+    function removeDotSegments(input) {
+      var output = [];
+      input.replace(/^(\.\.?(\/|$))+/, '')
+        .replace(/\/(\.(\/|$))+/g, '/')
+        .replace(/\/\.\.$/, '/../')
+        .replace(/\/?[^\/]*/g, function (p) {
+          if (p === '/..')
+            output.pop();
+          else
+            output.push(p);
+      });
+      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
+    }
+
+    href = parseURI(href || '');
+    base = parseURI(base || '');
+
+    return !href || !base ? null : (href.protocol || base.protocol) +
+      (href.protocol || href.authority ? href.authority : base.authority) +
+      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
+      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
+      href.hash;
   }
 }
 /*
@@ -1342,9 +1354,9 @@ function versions(loader) {
     });
   }
 }
-core(System);
 scriptLoader(System);
 register(System);
+core(System);
 cjs(System);
 amd(System);
 map(System);

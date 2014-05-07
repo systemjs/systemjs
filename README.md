@@ -8,11 +8,11 @@ Designed as a collection of small extensions to the ES6 specification System loa
 * Loads any module format, by detecting the format automatically. Modules can also [specify their format with meta syntax](#meta-configuration).
 * Provides comprehensive and exact replications of AMD, CommonJS and ES6 circular reference handling.
 * Loads [ES6 modules compiled into the `System.register` form for production](#es6-systemregister-compilation), maintaining full circular references support.
-* Supports RequireJS-style [map](#es6-systemregister-compilation), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](#bundles), [shim](#global-module-format-support) and [plugins](#plugins).
+* Supports RequireJS-style [map](#map-configuration), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](#bundles), [shim](#global-module-format-support) and [plugins](#plugins).
 * Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7KB) for a combined total footprint of 13.2KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7KB) for a combined total footprint of 13.3KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
 Runs in IE8+ and NodeJS. ES6 modules are only supported in IE9+.
 
@@ -23,7 +23,7 @@ Basic Configuration
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.5.4/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/google/traceur-compiler/blob/0.0.32/bin/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.6.0/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/google/traceur-compiler/blob/0.0.41/bin/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 
@@ -114,10 +114,10 @@ Features
 Typically we would have configuration shared between pages, so we can create a shared `config.json` file:
 
 config.json:
-```json
+```js
 {
-  paths: {
-    'app/*': '/app/*.js'
+  "paths": {
+    "app/*": "/app/*.js"
   }
 }
 ```

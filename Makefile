@@ -3,8 +3,8 @@ START = cat lib/banner.js lib/polyfill-wrapper-start.js > dist/$@.js;
 
 END = cat lib/polyfill-wrapper-end.js >> dist/$@.js;
 
-SystemJS = core meta register global cjs amd map plugins bundles versions
-SystemProductionCSP = core scriptLoader register cjs amd map bundles versions
+SystemJS = meta register core global cjs amd map plugins bundles versions
+SystemProductionCSP = scriptLoader register core cjs amd map bundles versions
 
 all: system system-production-csp uglify
 
