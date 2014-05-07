@@ -5,12 +5,12 @@ Spec-compliant universal module loader - loads ES6 modules, AMD, CommonJS and gl
 
 Designed as a collection of small extensions to the ES6 specification System loader, which can also be applied individually.
 
-* Loads any module format, by [detecting the format automatically](). Modules can also [specify their format with meta syntax]().
+* Loads any module format, by detecting the format automatically. Modules can also [specify their format with meta syntax](#meta-configuration).
 * Provides comprehensive and exact replications of AMD, CommonJS and ES6 circular reference handling.
-* Loads [ES6 modules compiled into the `System.register` form for production](), maintaining full circular references support.
-* Supports RequireJS-style [map](), [paths](), [bundles](), [shim]() and [plugins]().
-* Tracks package versions, and resolves semver-compatibile requests through [package version syntax]() - `package@x.y.z`, `package^@x.y.z`.
-* [Loader plugins]() allow loading assets through the module naming system such as [CSS](), [JSON]() and [Images]().
+* Loads [ES6 modules compiled into the `System.register` form for production](#es6-systemregister-compilation), maintaining full circular references support.
+* Supports RequireJS-style [map](#es6-systemregister-compilation), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](#bundles), [shim](#global-module-format-support) and [plugins](#plugins).
+* Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
+* [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
 Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7KB) for a combined total footprint of 13.2KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
@@ -102,7 +102,7 @@ app/es6-file.js:
 
 ES6 modules define named exports, provided as getters on a special immutable `Module` object.
 
-To build for production, see the [System.register build workflow]().
+To build for production, see the [System.register build workflow](#es6-systemregister-compilation).
 
 For further infomation on ES6 module loading, see the [ES6 Module Loader polyfill documentation](https://github.com/ModuleLoader/es6-module-loader).
 
@@ -205,7 +205,7 @@ app/sample-global.js
   });
 ```
 
-Global dependencies can be specified with the `deps` [meta config]():
+Global dependencies can be specified with the `deps` [meta config](#meta-configuration):
 
 app/another-global.js
 ```javascript
