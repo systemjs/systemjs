@@ -1,5 +1,5 @@
-'global';
-'import ./global-dep';
+'format global';
+'deps ./global-dep';
 
 
 (function(window) {

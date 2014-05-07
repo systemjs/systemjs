@@ -1,5 +1,5 @@
-"global";
-"export p.r";
+"format global";
+"exports p.r";
 
 (function(window) {
 

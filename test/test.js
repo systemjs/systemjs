@@ -1,12 +1,11 @@
-"global";
+"format global";
 
 QUnit.config.testTimeout = 2000;
 
 QUnit.module("SystemJS");
 
 if (typeof window == 'undefined') {
-  var path = require('path');
-  System.baseURL = path.resolve(__dirname, 'test');
+  System.baseURL = 'test';
 }
 
 function err(e) {
@@ -17,7 +16,7 @@ function err(e) {
 }
 
 asyncTest('Error handling', function() {
-  System['import']('tests/error').then(err, function() {
+  System['import']('tests/error').then(err, function(e) {
     ok(true);
     start();
   });
@@ -131,6 +130,14 @@ asyncTest('Contextual map with shim', function() {
   }, err);
 });
 
+asyncTest('Package loading shorthand', function() {
+  System.map['tests/package'] = 'tests/some-package';
+  System['import']('tests/package/').then(function(m) {
+    ok(m.isPackage);
+    start();
+  }, err);
+});
+
 asyncTest('Loading an AMD module', function() {
   System['import']('tests/amd-module').then(function(m) {
     ok(m.amd == true, 'Incorrect module');
@@ -222,13 +229,6 @@ asyncTest('Mapping a plugin argument', function() {
   }, err);
 });
 
-asyncTest('Legacy plugin', function() {
-  System['import']('tests/global.js!tests/legacy-plugin').then(function(m) {
-    expect(0);
-    start();
-  }, err);
-});
-
 asyncTest('Advanced compiler plugin', function() {
   System['import']('tests/compiler-test!tests/advanced-plugin').then(function(m) {
     ok(m == 'custom fetch:tests/compiler-test!tests/advanced-plugin', m);
@@ -236,13 +236,37 @@ asyncTest('Advanced compiler plugin', function() {
   }, err);
 });
 
-/* asyncTest('Loading from jspm', function() {
-  System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
-  System['import']('npm:underscore').then(function(m) {
-    ok(m && typeof m.chain == 'function', 'Not loaded');
+asyncTest('AMD Circular', function() {
+  System['import']('tests/amd-circular1').then(function(m) {
+    ok(m.outFunc() == 5, 'Expected execution');
+    start();
+  })['catch'](err);
+});
+
+asyncTest('CJS Circular', function() {
+  System['import']('tests/cjs-circular1').then(function(m) {
+    ok(m.first == 'second value');
+    ok(m.firstWas == 'first value', 'Original value');
     start();
   }, err);
-}); */
+});
+
+asyncTest('System.register Circular', function() {
+  System['import']('tests/register-circular1').then(function(m) {
+    ok(m.q == 3, 'Binding not allocated');
+    ok(m.r == 5, 'Binding not updated');
+    start();
+  }, err);
+});
+
+//asyncTest('Loading from jspm', function() {
+//  System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
+//  System['import']('npm:underscore').then(function(m) {
+//    ok(m && typeof m.chain == 'function', 'Not loaded');
+//    start();
+//  }, err);
+//});
+
 
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
@@ -327,3 +351,27 @@ asyncTest('Relative dyanamic loading', function() {
     }, err);
   }, err);
 });
+
+asyncTest('ES6 Circular', function() {
+  System['import']('tests/es6-circular1').then(function(m) {
+    ok(m.q == 3, 'Binding not allocated');
+    ok(m.r == 5, 'Binding not updated');
+    start();
+  }, err);
+});
+
+asyncTest('AMD & CJS circular, ES6 Circular', function() {
+  System['import']('tests/all-circular1').then(function(m) {
+    ok(m.q == 4);
+    ok(m.o.checkObj() == 'changed');
+    start();
+  }, err);
+});
+
+asyncTest('AMD -> System.register circular -> ES6', function() {
+  System['import']('tests/all-layers1').then(function(m) {
+    ok(m == true)
+    start();
+  }, err);
+});
+

@@ -232,99 +232,34 @@ function core(loader) {
   }
 }
 /*
- * Meta Extension
- *
- * Sets default metadata on a load record (load.metadata) from
- * loader.meta[moduleName].
- * Also provides an inline meta syntax for module meta in source.
- *
- * Eg:
- *
- * loader.meta['my/module'] = { some: 'meta' };
- *
- * load.metadata.some = 'meta' will now be set on the load record.
- *
- * The same meta could be set with a my/module.js file containing:
- * 
- * my/module.js
- *   "some meta"; 
- *   "another meta";
- *   console.log('this is my/module');
- *
- * The benefit of inline meta is that coniguration doesn't need
- * to be known in advanced, which is useful for modularising
- * configuration and avoiding the need for configuration injection.
- *
- *
- * Example
- * -------
- *
- * The simplest meta example is setting the module format:
- *
- * System.meta['my/module'] = { format: 'amd' };
- *
- * or inside 'my/module.js':
- *
- * "format amd";
- * define(...);
- * 
+ * Script tag fetch
  */
 
-function meta(loader) {
-  var metaRegEx = /^(\s*\/\*.*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
-  var metaPartRegEx = /\/\*.*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
+function scriptLoader(loader) {
+  if (typeof indexOf == 'undefined')
+    indexOf = Array.prototype.indexOf;
 
-  loader.meta = {};
+  var head = document.getElementsByTagName('head')[0];
 
-  function setConfigMeta(loader, load) {
-    var meta = loader.meta && loader.meta[load.name];
-    if (meta) {
-      for (var p in meta)
-        load.metadata[p] = load.metadata[p] || meta[p];
-    }
+  // override fetch to use script injection
+  loader.fetch = function(load) {
+    return new Promise(function(resolve, reject) {
+      var s = document.createElement('script');
+      s.async = true;
+      s.addEventListener('load', function(evt) {
+        resolve('');
+      }, false);
+      s.addEventListener('error', function(err) {
+        reject(err);
+      }, false);
+      s.src = load.address;
+      head.appendChild(s);
+    });
   }
 
-  var loaderLocate = loader.locate;
-  loader.locate = function(load) {
-    setConfigMeta(this, load);
-    return loaderLocate.call(this, load);
-  }
-
-  var loaderTranslate = loader.translate;
-  loader.translate = function(load) {
-    // detect any meta header syntax
-    var meta = load.source.match(metaRegEx);
-    if (meta) {
-      var metaParts = meta[0].match(metaPartRegEx);
-      for (var i = 0; i < metaParts.length; i++) {
-        var len = metaParts[i].length;
-
-        var firstChar = metaParts[i].substr(0, 1);
-        if (metaParts[i].substr(len - 1, 1) == ';')
-          len--;
-      
-        if (firstChar != '"' && firstChar != "'")
-          continue;
-
-        var metaString = metaParts[i].substr(1, metaParts[i].length - 3);
-
-        var metaName = metaString.substr(0, metaString.indexOf(' '));
-        if (metaName) {
-          var metaValue = metaString.substr(metaName.length + 1, metaString.length - metaName.length - 1);
-
-          if (load.metadata[metaName] instanceof Array)
-            load.metadata[metaName].push(metaValue);
-          else
-            load.metadata[metaName] = metaValue;
-        }
-      }
-    }
-    // config meta overrides
-    setConfigMeta(this, load);
-    
-    return loaderTranslate.call(this, load);
-  }
-}/*
+  loader.scriptLoader = true;
+}
+/*
  * Instantiate registry extension
  *
  * Supports Traceur System.register 'instantiate' output for loading ES6 as ES5.
@@ -721,98 +656,6 @@ function register(loader) {
   }
 }
 /*
-  SystemJS Global Format
-
-  Supports
-    metadata.deps
-    metadata.init
-    metadata.exports
-
-  Also detects writes to the global object avoiding global collisions.
-  See the SystemJS readme global support section for further information.
-*/
-function global(loader) {
-
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    var loader = this;
-
-    // global is a fallback module format
-    if (load.metadata.format == 'global' || !load.metadata.format) {
-      load.metadata.deps = load.metadata.deps || [];
-      var deps = load.metadata.deps;
-
-      var moduleGlobals = loader.moduleGlobals = loader.moduleGlobals || {};
-      var globalExport = load.metadata.exports;
-      var init = load.metadata.init;
-
-      load.metadata.execute = function(require, exports, moduleName) {
-        var hasOwnProperty = loader.global.hasOwnProperty;
-
-        // first, we add all the dependency modules to the global
-        for (var i = 0; i < deps.length; i++) {
-          var moduleGlobal = moduleGlobals[deps[i]];
-          if (moduleGlobal)
-            for (var m in moduleGlobal)
-              loader.global[m] = moduleGlobal[m];
-        }
-
-        // now store a complete copy of the global object
-        // in order to detect changes
-        var globalObj = {};
-        for (var g in loader.global)
-          if (!hasOwnProperty || loader.global.hasOwnProperty(g))
-            globalObj[g] = loader.global[g];
-
-        if (globalExport)
-          load.source += '\nthis["' + globalExport + '"] = ' + globalExport;
-
-        loader.__exec(load);
-
-        var singleGlobal;
-
-        // run init
-        if (init) {
-          var depModules = [];
-          for (var i = 0; i < deps.length; i++)
-            depModules.push(require(deps[i]));
-          singleGlobal = init.apply(loader.global, depModules);
-        }
-
-        // check for global changes, creating the globalObject for the module
-        // if many globals, then a module object for those is created
-        // if one global, then that is the module directly
-        if (globalExport && !singleGlobal) {
-          var firstPart = globalExport.split('.')[0];
-          singleGlobal = eval.call(loader.global, globalExport);
-          exports[firstPart] = loader.global[firstPart];
-        }
-
-        else {
-          for (var g in loader.global) {
-            if (!hasOwnProperty && (g == 'sessionStorage' || g == 'localStorage' || g == 'clipboardData' || g == 'frames'))
-              continue;
-            if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && globalObj[g] != loader.global[g]) {
-              exports[g] = loader.global[g];
-              if (singleGlobal) {
-                if (singleGlobal !== loader.global[g])
-                  singleGlobal = false;
-              }
-              else if (singleGlobal !== false)
-                singleGlobal = loader.global[g];
-            }
-          }
-        }
-        moduleGlobals[load.name] = exports;
-
-        var module = singleGlobal ? singleGlobal : exports;
-
-        return { __useDefault: true, 'default': module };
-      }
-    }
-    return loaderInstantiate.call(loader, load);
-  }
-}/*
   SystemJS CommonJS Format
 */
 function cjs(loader) {
@@ -1231,127 +1074,6 @@ function map(loader) {
   }
 }
 /*
-  SystemJS Plugin Support
-
-  Supports plugin syntax with "!"
-
-  The plugin name is loaded as a module itself, and can override standard loader hooks
-  for the plugin resource. See the plugin section of the systemjs readme.
-*/
-function plugins(loader) {
-  if (typeof indexOf == 'undefined')
-    indexOf = Array.prototype.indexOf;
-
-  var loaderNormalize = loader.normalize;
-  loader.normalize = function(name, parentName, parentAddress) {
-    var loader = this;
-    // if parent is a plugin, normalize against the parent plugin argument only
-    var parentPluginIndex;
-    if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
-      parentName = parentName.substr(0, parentPluginIndex);
-
-    return Promise.resolve(loaderNormalize.call(loader, name, parentName, parentAddress))
-    .then(function(name) {
-      // if this is a plugin, normalize the plugin name and the argument
-      var pluginIndex = name.lastIndexOf('!');
-      if (pluginIndex != -1) {
-        var argumentName = name.substr(0, pluginIndex);
-
-        // plugin name is part after "!" or the extension itself
-        var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
-
-        // normalize the plugin name relative to the same parent
-        return new Promise(function(resolve) {
-          resolve(loader.normalize(pluginName, parentName, parentAddress)); 
-        })
-        // normalize the plugin argument
-        .then(function(_pluginName) {
-          pluginName = _pluginName;
-          return loader.normalize(argumentName, parentName, parentAddress);
-        })
-        .then(function(argumentName) {
-          return argumentName + '!' + pluginName;
-        });
-      }
-
-      // standard normalization
-      return name;
-    });
-  }
-
-  var loaderLocate = loader.locate;
-  loader.locate = function(load) {
-    var loader = this;
-
-    var name = load.name;
-
-    // plugin
-    var pluginIndex = name.lastIndexOf('!');
-    if (pluginIndex != -1) {
-      var pluginName = name.substr(pluginIndex + 1);
-
-      // the name to locate is the plugin argument only
-      load.name = name.substr(0, pluginIndex);
-
-      var pluginLoader = loader.pluginLoader || loader;
-
-      // load the plugin module
-      return pluginLoader['import'](pluginName)
-      .then(function() {
-        var plugin = pluginLoader.get(pluginName);
-        plugin = plugin['default'] || plugin;
-
-        // store the plugin module itself on the metadata
-        load.metadata.plugin = plugin;
-        load.metadata.pluginName = pluginName;
-        load.metadata.pluginArgument = load.name;
-
-        // run plugin locate if given
-        if (plugin.locate)
-          return plugin.locate.call(loader, load);
-
-        // otherwise use standard locate without '.js' extension adding
-        else
-          return new Promise(function(resolve) {
-            resolve(loader.locate(load));
-          })
-          .then(function(address) {
-            return address.substr(0, address.length - 3);
-          });
-      });
-    }
-
-    return loaderLocate.call(this, load);
-  }
-
-  var loaderFetch = loader.fetch;
-  loader.fetch = function(load) {
-    var loader = this;
-    if (load.metadata.plugin && load.metadata.plugin.fetch)
-      return load.metadata.plugin.fetch.call(loader, load);
-    else
-      return loaderFetch.call(loader, load);
-  }
-
-  var loaderTranslate = loader.translate;
-  loader.translate = function(load) {
-    var loader = this;
-    if (load.metadata.plugin && load.metadata.plugin.translate)
-      return load.metadata.plugin.translate.call(loader, load, loaderTranslate);
-    else
-      return loaderTranslate.call(loader, load);
-  }
-
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    var loader = this;
-    if (load.metadata.plugin && load.metadata.plugin.instantiate)
-      return load.metadata.plugin.instantiate.call(loader, load, loaderInstantiate);
-    else
-      return loaderInstantiate.call(this, load);
-  }
-
-}/*
   System bundles
 
   Allows a bundle module to be specified which will be dynamically 
@@ -1621,13 +1343,11 @@ function versions(loader) {
   }
 }
 core(System);
-meta(System);
+scriptLoader(System);
 register(System);
-global(System);
 cjs(System);
 amd(System);
 map(System);
-plugins(System);
 bundles(System);
 versions(System);
   
