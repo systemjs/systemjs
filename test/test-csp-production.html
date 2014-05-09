@@ -48,6 +48,14 @@
         }, err);
       });
 
+      asyncTest('System.register Circular', function() {
+        System['import']('tests/register-circular1').then(function(m) {
+          ok(m.q == 3, 'Binding not allocated');
+          ok(m.r == 5, 'Binding not updated');
+          start();
+        }, err);
+      });
+
       asyncTest('Loading a UMD module', function() {
         System['import']('tests/umd').then(function(m) {
           ok(m.d == 'hi');
