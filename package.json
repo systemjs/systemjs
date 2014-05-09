@@ -13,7 +13,8 @@
     "es6-module-loader": "~0.6.0"
   },
   "devDependencies": {
-    "qunit": "^0.6.2"
+    "qunit": "^0.6.2",
+    "uglify-js": "~2.4.13"
   },
   "scripts": {
     "test": "qunit -c s:./dist/system.js -t ./test/test.js"
