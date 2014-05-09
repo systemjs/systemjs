@@ -1674,7 +1674,7 @@ versions(System);
 
 function __eval(__source, __global, __address, __sourceMap) {
   try {
-    __source = 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }'
+    __source = (__global != __$global ? 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }' : __source)
       + '\n//# sourceURL=' + __address
       + (__sourceMap ? '\n//# sourceMappingURL=' + __sourceMap : '');
     eval(__source);
