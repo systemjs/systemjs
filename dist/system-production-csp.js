@@ -378,7 +378,12 @@ function register(loader) {
       load.metadata.format = 'defined';
       return '';
     }
-    return loaderFetch(load);
+    lastRegister = null;
+    return Promise.resolve(loaderFetch.call(loader, load)).then(function(source) {
+      if (lastRegister)
+        load.metadata.format = 'defined';
+      return source;
+    });
   }
 
   var loaderTranslate = loader.translate;
@@ -413,7 +418,7 @@ function register(loader) {
     var entry;
     
     if (loader.defined[load.name])
-      loader.defined[load.name] = entry = loader.defined[load.name];
+      entry = loader.defined[load.name];
 
     else if (load.metadata.execute) {
       loader.defined[load.name] = entry = {
@@ -432,6 +437,8 @@ function register(loader) {
       if (lastRegister)
         loader.defined[load.name] = entry = lastRegister;
     }
+    else if (load.metadata.format == 'defined') 
+      loader.defined[load.name] = entry = lastRegister;
 
     if (!entry)
       return loaderInstantiate.call(this, load);
