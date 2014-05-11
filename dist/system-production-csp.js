@@ -99,8 +99,12 @@ function scriptLoader(loader) {
  * - Also supports metadata.deps, metadata.execute and metadata.executingRequire
  *     for handling dynamic modules alongside register-transformed ES6 modules
  *
- * Works as a standalone extension provided there is a
- * loader.__exec(load) like the one set in SystemJS core
+ * Works as a standalone extension, but benefits from having a more 
+ * advanced __eval defined like in SystemJS polyfill-wrapper-end.js
+ *
+ * The code here replicates the ES6 linking groups algorithm to ensure that
+ * circular ES6 compiled into System.register can work alongside circular AMD 
+ * and CommonJS, identically to the actual ES6 loader.
  *
  */
 function register(loader) {
@@ -145,19 +149,28 @@ function register(loader) {
     return newDeps;
   }
 
-  // Registry side table
+  // Registry side table - loader.defined
   // Registry Entry Contains:
   //    - deps 
   //    - declare for register modules
-  //    - execute for dynamic modules, also after declare for register modules
-  //    - declarative boolean indicating which of the above
+  //    - execute for dynamic modules, also after declare for declarative modules
+  //    - executingRequire indicates require drives execution for circularity of dynamic modules
+  //    - declarative optional boolean indicating which of the above
+  //
+  // Can preload modules directly on System.defined['my/module'] = { deps, execute, executingRequire }
+  //
+  // Then the entry gets populated with derived information during processing:
   //    - normalizedDeps derived from deps, created in instantiate
   //    - depMap array derived from deps, populated gradually in link
   //    - groupIndex used by group linking algorithm
   //    - module a raw module exports object with no wrapper
   //    - evaluated indiciating whether evaluation has happend for declarative modules
   // After linked and evaluated, entries are removed
+  
+
+  // loader.register sets loader.defined for declarative modules
   var lastRegister;
+  var lastRegisterName;
   function register(name, deps, declare) {
     if (typeof name != 'string') {
       declare = deps;
@@ -167,10 +180,11 @@ function register(loader) {
     if (declare.length == 0)
       throw 'Invalid System.register form. Ensure setting --modules=instantiate if using Traceur.';
 
+    lastRegisterName = name;
     lastRegister = {
       deps: deps,
       declare: declare,
-      declarative: true,
+      declarative: true
     };
 
     if (name)
@@ -190,9 +204,17 @@ function register(loader) {
     var onScriptLoad = loader.onScriptLoad;
     loader.onScriptLoad = function(load) {
       onScriptLoad(load);
+      load.metadata.format = 'defined';
       if (lastRegister) {
-        load.metadata.format = 'defined';
-        load.metadata.entry = lastRegister;
+        // named define is a separate pipeline
+        if (lastRegisterName) {
+          load.metadata.definedName = lastRegisterName;
+          loader.defined[lastRegisterName] = lastRegister;
+        }
+        // anonymous define is this pipeline
+        else {
+          load.metadata.entry = lastRegister;
+        }
       }
     }
   }
@@ -368,7 +390,7 @@ function register(loader) {
     // now execute
     try {
       entry.evaluated = true;
-      var output = entry.execute(function(name) {
+      var output = entry.execute.call(loader.global, function(name) {
         for (var i = 0; i < entry.deps.length; i++) {
           if (entry.deps[i] != name)
             continue;
@@ -416,7 +438,6 @@ function register(loader) {
 
     entry.evaluated = true;
     entry.execute.call(loader.global);
-    delete entry.execute;
   }
 
   var registerRegEx = /System\.register/;
@@ -430,6 +451,7 @@ function register(loader) {
       return '';
     }
     lastRegister = null;
+    lastRegisterName = null;
     return loaderFetch.call(loader, load);
   }
 
@@ -463,10 +485,12 @@ function register(loader) {
     var loader = this;
 
     var entry;
-    
+
+    // first we check if this module has already been defined in the registry
     if (loader.defined[load.name])
       entry = loader.defined[load.name];
 
+    // otherwise check if it is dynamic
     else if (load.metadata.execute) {
       loader.defined[load.name] = entry = {
         deps: load.metadata.deps || [],
@@ -474,21 +498,56 @@ function register(loader) {
         executingRequire: load.metadata.executingRequire // NodeJS-style requires or not
       };
     }
+
+    // Contains System.register calls
     else if (load.metadata.format == 'register') {
       lastRegister = null;
+      lastRegisterName = null;
       
       loader.__exec(load);
 
       // for a bundle, take the last defined module
       // in the bundle to be the bundle itself
-      if (lastRegister)
-        loader.defined[load.name] = entry = lastRegister;
+      // the name can either be the define name or this module (anonymous register)
+      if (lastRegister) {
+        loader.defined[lastRegisterName || load.name] = lastRegister;
+
+        // only use the entry for this module pipeline if it is anonymous
+        if (!lastRegisterName)
+          entry = lastRegister;
+        else
+          load.metadata.bundle = true;
+      }
     }
-    else if (load.metadata.entry) 
+
+    // picked up already by a script injection
+    else if (load.metadata.entry)
       loader.defined[load.name] = entry = load.metadata.entry;
 
-    if (!entry)
+    // if many named defines, and the value of the module not otherwise given, take it to
+    // be the last named define.
+    // All this work just allows define('jquery', ...) to be loaded as a module, without conflict!
+    // bundles can't define into their last named define, because that 
+    // creates an import loop between the module, the bundle and the module
+    if (!entry) {
+      if (load.metadata.bundle)
+        return {
+          deps: [],
+          execute: function() {
+            return Module({});
+          }
+        };
+      if (load.metadata.definedName)
+        return System['import'](load.metadata.definedName).then(function() {
+          return {
+            deps: [],
+            execute: function() {
+              return loader.get(load.metadata.definedName);
+            }
+          };
+        });
       return loaderInstantiate.call(this, load);
+    }
 
     entry.deps = dedupe(entry.deps);
 
@@ -496,7 +555,7 @@ function register(loader) {
     var normalizePromises = [];
     for (var i = 0; i < entry.deps.length; i++)
       normalizePromises.push(Promise.resolve(loader.normalize(entry.deps[i], load.name)));
-   
+
     return Promise.all(normalizePromises).then(function(normalizedDeps) {
 
       entry.normalizedDeps = normalizedDeps;
@@ -527,7 +586,9 @@ function register(loader) {
 
           // if the entry is an alias, set the alias too
           for (var name in loader.defined) {
-            if (loader.defined[name].execute != entry.execute)
+            if (entry.declarative && loader.defined[name].execute != entry.execute)
+              continue;
+            if (!entry.declarative && loader.defined[name].declare != entry.declare);
               continue;
             loader.defined[name].esmodule = module;
           }
@@ -637,9 +698,6 @@ function core(loader) {
   loader.translate = function(load) {
     var loader = this;
 
-    // simple prefetching meta system
-    load.metadata.prefetch = [];
-
     if (load.name == '@traceur')
       return loaderTranslate.call(loader, load);
 
@@ -672,10 +730,6 @@ function core(loader) {
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
-    if (load.metadata.prefetch) {
-      for (var i = 0; i < load.metadata.prefetch.length; i++)
-        loader.fetch({ address: load.metadata.prefetch[i], metadata: {} });
-    }
     if (load.name == '@traceur') {
       loader.__exec(load);
       return {
@@ -821,9 +875,12 @@ function cjs(loader) {
         load.source = glString + load.source;
 
         // disable AMD detection
+        var define = loader.global.define;
         loader.global.define = undefined;
 
         loader.__exec(load);
+
+        loader.global.define = define;
 
         loader.global._g = undefined;
 
@@ -885,8 +942,10 @@ function amd(loader) {
   }
 
   var lastDefine;
+  var lastDefineName;
   function createDefine(loader) {
     lastDefine = null;
+    lastDefineName = null;
 
     // ensure no NodeJS environment detection
     loader.global.module = undefined;
@@ -902,8 +961,16 @@ function amd(loader) {
       onScriptLoad(load);
       if (lastDefine) {
         load.metadata.format = 'defined';
-        load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
-        load.metadata.execute = lastDefine.execute;
+        // named define is a separate pipeline
+        if (lastDefineName) {
+          load.metadata.definedName = lastDefineName;
+          loader.defined[lastDefineName] = lastDefine;
+        }
+        // anonymous define is this pipeline
+        else {
+          load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
+          load.metadata.execute = lastDefine.execute;
+        }
       }
     }
 
@@ -941,6 +1008,7 @@ function amd(loader) {
       if ((moduleIndex = indexOf.call(deps, 'module')) != -1)
         deps.splice(moduleIndex, 1);
 
+      lastDefineName = name;
       lastDefine = {
         deps: deps,
         execute: function(require, exports, moduleName) {
@@ -963,8 +1031,8 @@ function amd(loader) {
 
           var output = factory.apply(loader.global, depValues);
 
-          if (typeof output == 'undefined')
-            output = module && module.exports;
+          if (typeof output == 'undefined' && module)
+            output = module.exports;
 
           if (typeof output != 'undefined')
             return output;
@@ -1005,8 +1073,13 @@ function amd(loader) {
       if (!lastDefine)
         throw "AMD module " + load.name + " did not define";
 
-      load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
-      load.metadata.execute = lastDefine.execute;
+      if (lastDefineName) {
+        load.metadata.definedName = lastDefineName;
+      }
+      else {
+        load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
+        load.metadata.execute = lastDefine.execute;
+      }
     }
 
     return loaderInstantiate.call(loader, load);
@@ -1173,6 +1246,7 @@ function bundles(loader) {
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
+    var loader = this;
     if (!loader.bundles)
       loader.bundles = {};
 
@@ -1185,6 +1259,12 @@ function bundles(loader) {
       return Promise.resolve(loader.normalize(b))
       .then(function(normalized) {
         loader.bundles[normalized] = loader.bundles[normalized] || loader.bundles[b];
+
+        // note this module is a bundle in the meta
+        loader.meta = loader.meta || {};
+        loader.meta[normalized] = loader.meta[normalized] || {};
+        loader.meta[normalized].bundle = true;
+
         return loader.load(normalized);
       })
       .then(function() {
@@ -1422,7 +1502,7 @@ amd(System);
 map(System);
 bundles(System);
 versions(System);
-  
+
   if (__$curScript) {
     System.baseURL = __$curScript.getAttribute('data-baseurl') || __$curScript.getAttribute('baseurl') || System.baseURL;
 
@@ -1433,7 +1513,8 @@ versions(System);
     var main = __$curScript.getAttribute('data-main') || __$curScript.getAttribute('main');
 
     if (!System.paths['@traceur'])
-      System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');
+      System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src') 
+        || System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/') + 'traceur.js';
 
     (!configPath ? Promise.resolve() :
       Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))
@@ -1490,8 +1571,8 @@ var __$curScript;
     global.System = es6ModuleLoader.System;
     global.Loader = es6ModuleLoader.Loader;
     global.Module = es6ModuleLoader.Module;
-    module.exports = global.System;
     global.upgradeSystemLoader();
+    module.exports = global.System;
   }
 })(__$global);
 

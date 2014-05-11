@@ -84,14 +84,47 @@
 
       asyncTest('Loading a bundle on demand', function() {
 
-        System.bundles = {
-          'tests/main-bundle': ['jquery']
-        };
-
+        System.bundles['tests/main-bundle'] = ['jquery'];
         System['import']('jquery').then(function(m) {
           ok(m.name == 'jquery-bundled');
           start();
         }, err);
+      });
+
+      System.bundles['tests/mixed-bundle'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
+      asyncTest('Loading AMD from a bundle', function() {
+        System['import']('tree/amd').then(function(m) {
+          ok(m.is == 'amd');
+          start();
+        }, err);
+      });
+
+      asyncTest('Loading CommonJS from a bundle', function() {
+        System['import']('tree/cjs').then(function(m) {
+          ok(m.cjs === true);
+          start();
+        }, err);
+      });
+
+      asyncTest('Loading a Global from a bundle', function() {
+        System['import']('tree/global').then(function(m) {
+          ok(m === 'output');
+          start();
+        }, err);
+      });
+
+      asyncTest('Loading named System.register', function() {
+        System['import']('tree/third').then(function(m) {
+          ok(m.some == 'exports');
+          start();
+        }, err);
+      });
+
+      asyncTest('Loading System.register from ES6', function() {
+        System['import']('tree/first').then(function(m) {
+          ok(m.p == 5);
+          start();
+        });
       });
     </script>
   </body>
