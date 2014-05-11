@@ -1086,6 +1086,8 @@ function amd(loader) {
     loader.global.define.loader = loader;
   }
 
+  createDefine(loader);
+
   if (loader.scriptLoader) {
     var loaderFetch = loader.fetch;
     var scriptLoader = true;
