@@ -1,0 +1,1 @@
+"prefetch /test.js";

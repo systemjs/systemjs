@@ -566,6 +566,7 @@ function core(loader) {
       baseURI = bases[0] && bases[0].href || window.location.href;
     }
   }
+
   var loaderLocate = loader.locate;
   var normalizedBaseURL;
   loader.locate = function(load) {
@@ -588,6 +589,9 @@ function core(loader) {
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
     var loader = this;
+
+    // simple prefetching meta system
+    load.metadata.prefetch = [];
 
     if (load.name == '@traceur')
       return loaderTranslate.call(loader, load);
@@ -621,6 +625,10 @@ function core(loader) {
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
+    if (load.metadata.prefetch) {
+      for (var i = 0; i < load.metadata.prefetch.length; i++)
+        loader.fetch({ address: load.metadata.prefetch[i], metadata: {} });
+    }
     if (load.name == '@traceur') {
       loader.__exec(load);
       return {
@@ -1371,13 +1379,13 @@ bundles(System);
 versions(System);
   
   if (__$curScript) {
-    System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
+    System.baseURL = __$curScript.getAttribute('data-baseurl') || __$curScript.getAttribute('baseurl') || System.baseURL;
 
-    var configPath = __$curScript.getAttribute('data-config');
+    var configPath = __$curScript.getAttribute('data-config') || __$curScript.getAttribute('config');
     if (configPath && configPath.substr(configPath.length - 1) === '/')
       configPath += 'config.json';
 
-    var main = __$curScript.getAttribute('data-main');
+    var main = __$curScript.getAttribute('data-main') || __$curScript.getAttribute('main');
 
     if (!System.paths['@traceur'])
       System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');

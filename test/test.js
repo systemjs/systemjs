@@ -130,6 +130,11 @@ asyncTest('Contextual map with shim', function() {
   }, err);
 });
 
+asyncTest('Prefetching', function() {
+  throws(System['import']('tests/prefetch'));
+  start();
+});
+
 asyncTest('Package loading shorthand', function() {
   System.map['tests/package'] = 'tests/some-package';
   System['import']('tests/package/').then(function(m) {

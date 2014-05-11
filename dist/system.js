@@ -631,6 +631,7 @@ function core(loader) {
       baseURI = bases[0] && bases[0].href || window.location.href;
     }
   }
+
   var loaderLocate = loader.locate;
   var normalizedBaseURL;
   loader.locate = function(load) {
@@ -653,6 +654,9 @@ function core(loader) {
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
     var loader = this;
+
+    // simple prefetching meta system
+    load.metadata.prefetch = [];
 
     if (load.name == '@traceur')
       return loaderTranslate.call(loader, load);
@@ -686,6 +690,10 @@ function core(loader) {
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
+    if (load.metadata.prefetch) {
+      for (var i = 0; i < load.metadata.prefetch.length; i++)
+        loader.fetch({ address: load.metadata.prefetch[i], metadata: {} });
+    }
     if (load.name == '@traceur') {
       loader.__exec(load);
       return {
@@ -1331,9 +1339,7 @@ function plugins(loader) {
 
         // otherwise use standard locate without '.js' extension adding
         else
-          return new Promise(function(resolve) {
-            resolve(loader.locate(load));
-          })
+          return Promise.resolve(loader.locate(load))
           .then(function(address) {
             return address.substr(0, address.length - 3);
           });
@@ -1346,8 +1352,10 @@ function plugins(loader) {
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
-    if (load.metadata.plugin && load.metadata.plugin.fetch)
-      return load.metadata.plugin.fetch.call(loader, load);
+    if (load.metadata.plugin && load.metadata.plugin.fetch && !load.metadata.pluginFetchCalled) {
+      load.metadata.pluginFetchCalled = true;
+      return load.metadata.plugin.fetch.call(loader, load, loaderFetch);
+    }
     else
       return loaderFetch.call(loader, load);
   }
@@ -1356,7 +1364,12 @@ function plugins(loader) {
   loader.translate = function(load) {
     var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.translate)
-      return load.metadata.plugin.translate.call(loader, load, loaderTranslate);
+      return Promise.resolve(load.metadata.plugin.translate.call(loader, load)).then(function(result) {
+        if (result)
+          return result;
+        else
+          return loaderTranslate.call(loader, load);
+      });
     else
       return loaderTranslate.call(loader, load);
   }
@@ -1365,7 +1378,17 @@ function plugins(loader) {
   loader.instantiate = function(load) {
     var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.instantiate)
-      return load.metadata.plugin.instantiate.call(loader, load, loaderInstantiate);
+      return Promise.resolve(load.metadata.plugin.instantiate.call(loader, load)).then(function(result) {
+        if (result)
+          return {
+            deps: [],
+            execute: function() {
+              return Module({ default: result, __useDefault: true });
+            }
+          };
+        else
+          return loaderInstantiate.call(loader, load);
+      });
     else
       return loaderInstantiate.call(this, load);
   }
@@ -1651,13 +1674,13 @@ bundles(System);
 versions(System);
   
   if (__$curScript) {
-    System.baseURL = __$curScript.getAttribute('data-baseurl') || System.baseURL;
+    System.baseURL = __$curScript.getAttribute('data-baseurl') || __$curScript.getAttribute('baseurl') || System.baseURL;
 
-    var configPath = __$curScript.getAttribute('data-config');
+    var configPath = __$curScript.getAttribute('data-config') || __$curScript.getAttribute('config');
     if (configPath && configPath.substr(configPath.length - 1) === '/')
       configPath += 'config.json';
 
-    var main = __$curScript.getAttribute('data-main');
+    var main = __$curScript.getAttribute('data-main') || __$curScript.getAttribute('main');
 
     if (!System.paths['@traceur'])
       System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src');
