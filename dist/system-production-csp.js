@@ -40,19 +40,50 @@ function scriptLoader(loader) {
 
   var head = document.getElementsByTagName('head')[0];
 
+  // call this functione everytime a wrapper executes
+  loader.onScriptLoad = function() {};
+
   // override fetch to use script injection
   loader.fetch = function(load) {
     return new Promise(function(resolve, reject) {
       var s = document.createElement('script');
       s.async = true;
-      s.addEventListener('load', function(evt) {
+
+      function complete(evt) {
+        if (s.readyState && s.readyState != 'loaded' && s.readyState != 'complete')
+          return;
+        cleanup();
+
+        // this runs synchronously after execution
+        // we now need to tell the wrapper handlers that
+        // this load record has just executed
+        loader.onScriptLoad(load);
+
         resolve('');
-      }, false);
-      s.addEventListener('error', function(err) {
-        reject(err);
-      }, false);
+      }
+
+      function error(evt) {
+        cleanup();
+        reject(evt);
+      }
+
+      if (s.attachEvent)
+        s.attachEvent('onreadystatechange', complete);
+      s.addEventListener('load', complete, false);
+      s.addEventListener('error', err, false);
+
       s.src = load.address;
       head.appendChild(s);
+
+      function cleanup() {
+        if (s.detachEvent)
+          s.detachEvent('onreadystatechange', complete);
+        else {
+          s.removeEventListener('load', complete, false);
+          s.removeEventListener('error', err, false);
+        }
+        head.removeChild(s);
+      }
     });
   }
 
@@ -136,9 +167,6 @@ function register(loader) {
     if (declare.length == 0)
       throw 'Invalid System.register form. Ensure setting --modules=instantiate if using Traceur.';
 
-    if (!loader.defined)
-      loader.defined = {};
-
     lastRegister = {
       deps: deps,
       declare: declare,
@@ -148,8 +176,28 @@ function register(loader) {
     if (name)
       loader.defined[name] = lastRegister;
   }
-  loader.defined = loader.defined || {};
-  loader.register = register;
+
+  function defineRegister(loader) {
+    if (loader.register)
+      return;
+
+    loader.register = register;
+
+    if (!loader.defined)
+      loader.defined = {};
+    
+    // script injection mode calls this function synchronously on load
+    var onScriptLoad = loader.onScriptLoad;
+    loader.onScriptLoad = function(load) {
+      onScriptLoad(load);
+      if (lastRegister) {
+        load.metadata.format = 'defined';
+        load.metadata.entry = lastRegister;
+      }
+    }
+  }
+
+  defineRegister(loader);
 
   function buildGroups(entry, loader, groups) {
     groups[entry.groupIndex] = groups[entry.groupIndex] || [];
@@ -376,16 +424,13 @@ function register(loader) {
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
-    if (loader.defined && loader.defined[load.name]) {
+    defineRegister(loader);
+    if (loader.defined[load.name]) {
       load.metadata.format = 'defined';
       return '';
     }
     lastRegister = null;
-    return Promise.resolve(loaderFetch.call(loader, load)).then(function(source) {
-      if (lastRegister)
-        load.metadata.format = 'defined';
-      return source;
-    });
+    return loaderFetch.call(loader, load);
   }
 
   var loaderTranslate = loader.translate;
@@ -439,8 +484,8 @@ function register(loader) {
       if (lastRegister)
         loader.defined[load.name] = entry = lastRegister;
     }
-    else if (load.metadata.format == 'defined') 
-      loader.defined[load.name] = entry = lastRegister;
+    else if (load.metadata.entry) 
+      loader.defined[load.name] = entry = load.metadata.entry;
 
     if (!entry)
       return loaderInstantiate.call(this, load);
@@ -841,7 +886,6 @@ function amd(loader) {
 
   var lastDefine;
   function createDefine(loader) {
-
     lastDefine = null;
 
     // ensure no NodeJS environment detection
@@ -851,6 +895,17 @@ function amd(loader) {
 
     if (loader.global.define && loader.global.define.loader == loader)
       return;
+
+    // script injection mode calls this function synchronously on load
+    var onScriptLoad = loader.onScriptLoad;
+    loader.onScriptLoad = function(load) {
+      onScriptLoad(load);
+      if (lastDefine) {
+        load.metadata.format = 'defined';
+        load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
+        load.metadata.execute = lastDefine.execute;
+      }
+    }
 
     loader.global.define = function(name, deps, factory) {
       if (typeof name != 'string') {
@@ -929,17 +984,9 @@ function amd(loader) {
 
   if (loader.scriptLoader) {
     var loaderFetch = loader.fetch;
-    var scriptLoader = true;
     loader.fetch = function(load) {
       createDefine(this);
-      return Promise.resolve(loaderFetch.call(this, load)).then(function(source) {
-        if (lastDefine) {
-          load.metadata.format = 'defined';
-          load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
-          load.metadata.execute = lastDefine.execute;
-        }
-        return source;
-      });
+      return loaderFetch.call(this, load);
     }
   }
   
