@@ -361,7 +361,7 @@ function register(loader) {
     if (entry.module)
       return;
 
-    entry.module = {};
+    entry.module = { 'default': {}, __useDefault: true };
 
     // AMD requires execute the tree first
     if (!entry.executingRequire) {
@@ -391,14 +391,16 @@ function register(loader) {
             continue;
           return getModule(entry.normalizedDeps[i], loader);
         }
-      }, entry.module, moduleName);
+      }, entry.module['default'], moduleName);
     }
     catch(e) {
       throw e;
     }
     
-    if (output)
+    if (output && output.__esModule)
       entry.module = output;
+    else if (output)
+      entry.module['default'] = output;
   }
 
   // given a module, and the list of modules for this current branch,
@@ -825,16 +827,16 @@ function global(loader) {
                 if (singleGlobal !== loader.global[g])
                   singleGlobal = false;
               }
-              else if (singleGlobal !== false)
+              else if (singleGlobal !== false) {
                 singleGlobal = loader.global[g];
+              }
             }
           }
         }
+
         moduleGlobals[load.name] = exports;
 
-        var module = singleGlobal ? singleGlobal : exports;
-
-        return { __useDefault: true, 'default': module };
+        return typeof singleGlobal != 'undefined' ? singleGlobal : exports;
       }
     }
     return loaderInstantiate.call(loader, load);
@@ -937,12 +939,7 @@ function cjs(loader) {
 
         loader.global._g = undefined;
 
-        var output = globals.module.exports;
-
-        if (output && output.__esModule)
-          return output;
-        else if (output !== undefined)
-          return { __useDefault: true, 'default': output };
+        return globals.module.exports;
       }
     }
 
@@ -1068,12 +1065,11 @@ function amd(loader) {
 
           var output = factory.apply(loader.global, depValues);
 
-          output = output || module && module.exports;
+          if (typeof output == 'undefined')
+            output = module && module.exports;
 
-          if (output && output.__esModule)
+          if (typeof output != 'undefined')
             return output;
-          else if (output !== undefined)
-            return { __useDefault: true, 'default': output };
         }
       };
 
