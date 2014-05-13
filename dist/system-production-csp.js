@@ -90,6 +90,99 @@ function scriptLoader(loader) {
   loader.scriptLoader = true;
 }
 /*
+ * Meta Extension
+ *
+ * Sets default metadata on a load record (load.metadata) from
+ * loader.meta[moduleName].
+ * Also provides an inline meta syntax for module meta in source.
+ *
+ * Eg:
+ *
+ * loader.meta['my/module'] = { some: 'meta' };
+ *
+ * load.metadata.some = 'meta' will now be set on the load record.
+ *
+ * The same meta could be set with a my/module.js file containing:
+ * 
+ * my/module.js
+ *   "some meta"; 
+ *   "another meta";
+ *   console.log('this is my/module');
+ *
+ * The benefit of inline meta is that coniguration doesn't need
+ * to be known in advanced, which is useful for modularising
+ * configuration and avoiding the need for configuration injection.
+ *
+ *
+ * Example
+ * -------
+ *
+ * The simplest meta example is setting the module format:
+ *
+ * System.meta['my/module'] = { format: 'amd' };
+ *
+ * or inside 'my/module.js':
+ *
+ * "format amd";
+ * define(...);
+ * 
+ */
+
+function meta(loader) {
+  var metaRegEx = /^(\s*\/\*.*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
+  var metaPartRegEx = /\/\*.*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
+
+  loader.meta = {};
+
+  function setConfigMeta(loader, load) {
+    var meta = loader.meta && loader.meta[load.name];
+    if (meta) {
+      for (var p in meta)
+        load.metadata[p] = load.metadata[p] || meta[p];
+    }
+  }
+
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    setConfigMeta(this, load);
+    return loaderLocate.call(this, load);
+  }
+
+  var loaderTranslate = loader.translate;
+  loader.translate = function(load) {
+    // detect any meta header syntax
+    var meta = load.source.match(metaRegEx);
+    if (meta) {
+      var metaParts = meta[0].match(metaPartRegEx);
+      for (var i = 0; i < metaParts.length; i++) {
+        var len = metaParts[i].length;
+
+        var firstChar = metaParts[i].substr(0, 1);
+        if (metaParts[i].substr(len - 1, 1) == ';')
+          len--;
+      
+        if (firstChar != '"' && firstChar != "'")
+          continue;
+
+        var metaString = metaParts[i].substr(1, metaParts[i].length - 3);
+
+        var metaName = metaString.substr(0, metaString.indexOf(' '));
+        if (metaName) {
+          var metaValue = metaString.substr(metaName.length + 1, metaString.length - metaName.length - 1);
+
+          if (load.metadata[metaName] instanceof Array)
+            load.metadata[metaName].push(metaValue);
+          else
+            load.metadata[metaName] = metaValue;
+        }
+      }
+    }
+    // config meta overrides
+    setConfigMeta(this, load);
+    
+    return loaderTranslate.call(this, load);
+  }
+}/*
  * Instantiate registry extension
  *
  * Supports Traceur System.register 'instantiate' output for loading ES6 as ES5.
@@ -784,6 +877,118 @@ function core(loader) {
   }
 }
 /*
+  SystemJS Global Format
+
+  Supports
+    metadata.deps
+    metadata.init
+    metadata.exports
+
+  Also detects writes to the global object avoiding global collisions.
+  See the SystemJS readme global support section for further information.
+*/
+function global(loader) {
+  function createHelpers(loader) {
+    if (loader.has('@@global-helpers'))
+      return;
+
+    var hasOwnProperty = loader.global.hasOwnProperty;
+    var moduleGlobals = {};
+
+    var curGlobalObj;
+
+    loader.set('@@global-helpers', Module({
+      prepareGlobal: function(moduleName, deps) {
+        // first, we add all the dependency modules to the global
+        for (var i = 0; i < deps.length; i++) {
+          var moduleGlobal = moduleGlobals[deps[i]];
+          if (moduleGlobal)
+            for (var m in moduleGlobal)
+              loader.global[m] = moduleGlobal[m];
+        }
+
+        // now store a complete copy of the global object
+        // in order to detect changes
+        curGlobalObj = {};
+        for (var g in loader.global)
+          if (!hasOwnProperty || loader.global.hasOwnProperty(g))
+            curGlobalObj[g] = loader.global[g];
+      },
+      retrieveGlobal: function(moduleName, exportName, init) {
+        var singleGlobal;
+        var exports = {};
+
+        // run init
+        if (init) {
+          var depModules = [];
+          for (var i = 0; i < deps.length; i++)
+            depModules.push(require(deps[i]));
+          singleGlobal = init.apply(loader.global, depModules);
+        }
+
+        // check for global changes, creating the globalObject for the module
+        // if many globals, then a module object for those is created
+        // if one global, then that is the module directly
+        if (exportName && !singleGlobal) {
+          var firstPart = exportName.split('.')[0];
+          singleGlobal = eval.call(loader.global, exportName);
+          exports[firstPart] = loader.global[firstPart];
+        }
+
+        else {
+          for (var g in loader.global) {
+            if (!hasOwnProperty && (g == 'sessionStorage' || g == 'localStorage' || g == 'clipboardData' || g == 'frames'))
+              continue;
+            if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && curGlobalObj[g] != loader.global[g]) {
+              exports[g] = loader.global[g];
+              if (singleGlobal) {
+                if (singleGlobal !== loader.global[g])
+                  singleGlobal = undefined;
+              }
+              else if (singleGlobal !== false) {
+                singleGlobal = loader.global[g];
+              }
+            }
+          }
+        }
+
+        moduleGlobals[moduleName] = exports;
+
+        return typeof singleGlobal != 'undefined' ? singleGlobal : exports;
+      }
+    }));
+  }
+
+  createHelpers(loader);
+
+  var loaderInstantiate = loader.instantiate;
+  loader.instantiate = function(load) {
+    var loader = this;
+
+    createHelpers(loader);
+
+    var exportName = load.metadata.exports;
+
+    if (!load.metadata.format)
+      load.metadata.format = 'global';
+
+    // global is a fallback module format
+    if (load.metadata.format == 'global') {
+      load.metadata.execute = function(require, exports, moduleName) {
+
+        loader.get('@@global-helpers').prepareGlobal(moduleName, load.metadata.deps);
+
+        if (exportName)
+          load.source += '\nthis["' + exportName + '"] = ' + exportName + ';';
+
+        loader.__exec(load);
+
+        return loader.get('@@global-helpers').retrieveGlobal(moduleName, exportName, load.metadata.init);
+      }
+    }
+    return loaderInstantiate.call(loader, load);
+  }
+}/*
   SystemJS CommonJS Format
 */
 function cjs(loader) {
@@ -1494,14 +1699,58 @@ function versions(loader) {
     });
   }
 }
+/*
+ * Dependency Tree Cache
+ * 
+ * Allows a build to pre-populate a dependency trace tree on the loader of 
+ * the expected dependency tree, to be loaded upfront when requesting the
+ * module, avoinding the n round trips latency of module loading, where 
+ * n is the dependency tree depth.
+ *
+ * eg:
+ * System.depCache = {
+ *  'app': ['normalized', 'deps'],
+ *  'normalized': ['another'],
+ *  'deps': ['tree']
+ * };
+ * 
+ * System.import('app') 
+ * // simultaneously starts loading all of:
+ * // 'normalized', 'deps', 'another', 'tree'
+ * // before "app" source is even loaded
+ */
+
+function depCache(loader) {
+  loader.depCache = loader.depCache || {};
+
+  loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    var loader = this;
+
+    if (!loader.depCache)
+      loader.depCache = {};
+
+    // load direct deps, in turn will pick up their trace trees
+    var deps = loader.depCache[load.name];
+    if (deps)
+      for (var i = 0; i < deps.length; i++)
+        loader.load(deps[i]);
+
+    return loaderLocate.call(loader, load);
+  }
+}
+  
 scriptLoader(System);
+meta(System);
 register(System);
 core(System);
+global(System);
 cjs(System);
 amd(System);
 map(System);
 bundles(System);
 versions(System);
+depCache(System);
 
   if (__$curScript) {
     System.baseURL = __$curScript.getAttribute('data-baseurl') || __$curScript.getAttribute('baseurl') || System.baseURL;
