@@ -264,6 +264,43 @@ asyncTest('System.register Circular', function() {
   }, err);
 });
 
+System.bundles['tests/mixed-bundle'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
+
+asyncTest('Loading AMD from a bundle', function() {
+  System['import']('tree/amd').then(function(m) {
+    ok(m.is == 'amd');
+    start();
+  }, err);
+});
+
+asyncTest('Loading CommonJS from a bundle', function() {
+  System['import']('tree/cjs').then(function(m) {
+    ok(m.cjs === true);
+    start();
+  }, err);
+});
+
+asyncTest('Loading a Global from a bundle', function() {
+  System['import']('tree/global').then(function(m) {
+    ok(m === 'output');
+    start();
+  }, err);
+});
+
+asyncTest('Loading named System.register', function() {
+  System['import']('tree/third').then(function(m) {
+    ok(m.some == 'exports');
+    start();
+  }, err);
+});
+
+asyncTest('Loading System.register from ES6', function() {
+  System['import']('tree/first').then(function(m) {
+    ok(m.p == 5);
+    start();
+  });
+});
+
 //asyncTest('Loading from jspm', function() {
 //  System.paths['npm:*'] = 'https://npm.jspm.io/*.js';
 //  System['import']('npm:underscore').then(function(m) {
