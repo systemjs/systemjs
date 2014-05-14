@@ -95,7 +95,7 @@ global.upgradeSystemLoader = function() {
   var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
   // module format hint regex
-  var formatHintRegEx = /^(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["']([^'"]+)["'][;\n]/;
+  var formatHintRegEx = /^(\s*(\/\*.*\*\/)|(\/\/[^\n]*))*(["']use strict["'];?)?["'](format )?([^'"]+)["'][;\n]/;
 
   var systemInstantiate = System.instantiate;
   System.instantiate = function(load) {
@@ -109,7 +109,7 @@ global.upgradeSystemLoader = function() {
     if (!format) {
       var formatMatch = load.source.match(formatHintRegEx);
       if (formatMatch)
-        format = load.metadata.format = formatMatch[5];
+        format = load.metadata.format = formatMatch[6];
     }
 
     // es6 handled by core
@@ -452,8 +452,8 @@ global.upgradeSystemLoader = function() {
   System.formats.push('global');
 
   // Global
-  var globalShimRegEx = /(["']global["'];\s*)((['"]import [^'"]+['"];\s*)*)(['"]export ([^'"]+)["'])?/;
-  var globalImportRegEx = /(["']import [^'"]+)+/g;
+  var globalShimRegEx = /(["'](format )?global["'];\s*)((['"](import|deps) [^'"]+['"];\s*)*)(['"]exports? ([^'"]+)["'])?/;
+  var globalImportRegEx = /(["'](import|deps) [^'"]+)+/g;
 
   // given a module's global dependencies, prepare the global object
   // to contain the union of the defined properties of its dependent modules
@@ -469,11 +469,11 @@ global.upgradeSystemLoader = function() {
     deps: function(load, global, exec) {
       var match, deps;
       if (match = load.source.match(globalShimRegEx)) {
-        deps = match[2].match(globalImportRegEx);
+        deps = match[3].match(globalImportRegEx);
         if (deps)
           for (var i = 0; i < deps.length; i++)
-            deps[i] = deps[i].substr(8);
-        load.metadata.globalExport = match[5];
+            deps[i] = deps[i].substr(1, 1) == 'i' ? deps[i].substr(8) : deps[i].substr(6);
+        load.metadata.globalExport = match[7];
       }
       deps = deps || [];
       var shim;
@@ -661,12 +661,15 @@ global.upgradeSystemLoader = function() {
 (function() {
   var systemNormalize = System.normalize;
   System.normalize = function(name, parentName, parentAddress) {
+
     // if parent is a plugin, normalize against the parent plugin argument only
     var parentPluginIndex;
     if (parentName && (parentPluginIndex = parentName.indexOf('!')) != -1)
       parentName = parentName.substr(0, parentPluginIndex);
 
-    return Promise.resolve(systemNormalize(name, parentName, parentAddress))
+    // it is useful for some plugin modules to not be normalized
+    // we use "#" syntax for this - "# blah blah !plugin"
+    return Promise.resolve(name.substr(0, 1) == '#' ? name : systemNormalize(name, parentName, parentAddress))
     .then(function(name) {
       name = name.trim();
 
@@ -759,6 +762,24 @@ global.upgradeSystemLoader = function() {
       return plugin.translate.call(this, load);
 
     return systemTranslate.call(this, load);
+  }
+
+  var systemInstantiate = System.instantiate;
+  System.instantiate = function(load) {
+    if (load.metadata.plugin && load.metadata.plugin.instantiate)
+      return Promise.resolve(load.metadata.plugin.instantiate.call(System, load)).then(function(result) {
+        if (result)
+          return {
+            deps: [],
+            execute: function() {
+              return Module({ 'default': result, __useDefault: true });
+            }
+          };
+        else
+          return systemInstantiate.call(System, load);
+      });
+    else
+      return systemInstantiate.call(this, load);
   }
 
 })();(function() {
