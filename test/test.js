@@ -272,7 +272,7 @@ asyncTest('Loading AMD from a bundle', function() {
     start();
   }, err);
 });
-
+System.bundles['tests/mixed-bundle'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
 asyncTest('Loading CommonJS from a bundle', function() {
   System['import']('tree/cjs').then(function(m) {
     ok(m.cjs === true);
@@ -293,12 +293,11 @@ asyncTest('Loading named System.register', function() {
     start();
   }, err);
 });
-
 asyncTest('Loading System.register from ES6', function() {
   System['import']('tree/first').then(function(m) {
     ok(m.p == 5);
     start();
-  });
+  }, err);
 });
 
 //asyncTest('Loading from jspm', function() {

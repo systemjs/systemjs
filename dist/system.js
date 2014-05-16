@@ -202,7 +202,7 @@ function register(loader) {
     var lastLineIndex = load.source.lastIndexOf('\n');
     if (lastLineIndex != -1) {
       if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=') {
-        sourceMappingURL = load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 23);
+        sourceMappingURL = load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 22);
         if (typeof toAbsoluteURL != 'undefined')
           sourceMappingURL = toAbsoluteURL(load.address, sourceMappingURL);
       }
@@ -227,6 +227,65 @@ function register(loader) {
     return newDeps;
   }
 
+  // There are two variations of System.register:
+  // 1. System.register for ES6 conversion (2-3 params) - System.register([name, ]deps, declare)
+  //    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
+  //
+  // 2. System.register for dynamic modules (3-4 params) - System.register([name, ]deps, executingRequire, execute)
+  // the true or false statement 
+
+  // this extension implements the linking algorithm for the two variations identical to the spec
+  // allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
+
+  // loader.register sets loader.defined for declarative modules
+  var anonRegister;
+  var calledRegister;
+  function register(name, deps, declare, execute) {
+    if (typeof name != 'string') {
+      execute = declare;
+      declare = deps;
+      deps = name;
+      name = null;
+    }
+
+    calledRegister = true;
+    
+    var register;
+
+    // dynamic
+    if (typeof declare == 'boolean') {
+      register = {
+        declarative: false,
+        deps: deps,
+        execute: execute,
+        executingRequire: declare
+      };
+    }
+    else {
+      // ES6 declarative
+      if (declare.length != 1)
+        throw 'Invalid System.register form for ' + name + '. Declare function must take one argument.';
+      register = {
+        declarative: true,
+        deps: deps,
+        declare: declare
+      };
+    }
+    
+    // named register
+    if (name) {
+      // we never overwrite an existing define
+      if (!loader.defined[name])
+        loader.defined[name] = register; 
+    }
+    // anonymous register
+    else if (register.declarative) {
+      if (anonRegister)
+        throw 'Multiple anonymous System.register calls in the same module file.';
+      anonRegister = register;
+    }
+  }
+
   // Registry side table - loader.defined
   // Registry Entry Contains:
   //    - deps 
@@ -244,39 +303,6 @@ function register(loader) {
   //    - module a raw module exports object with no wrapper
   //    - evaluated indiciating whether evaluation has happend for declarative modules
   // After linked and evaluated, entries are removed
-  
-
-  // loader.register sets loader.defined for declarative modules
-  var anonRegister;
-  var calledRegister;
-  function register(name, deps, declare) {
-    if (typeof name != 'string') {
-      declare = deps;
-      deps = name;
-      name = null;
-    }
-    if (declare.length == 0)
-      throw 'Invalid System.register form. Ensure setting --modules=instantiate if using Traceur.';
-
-    calledRegister = true;
-
-    var register = {
-      deps: deps,
-      declare: declare,
-      declarative: true
-    };
-    
-    // named register
-    if (name) {
-      loader.defined[name] = register; 
-    }
-    // anonymous register
-    else {
-      if (anonRegister)
-        throw 'Multiple anonymous System.register calls in the same module file.';
-      anonRegister = register;
-    }
-  }
 
   function defineRegister(loader) {
     if (loader.register)
@@ -586,6 +612,7 @@ function register(loader) {
     // otherwise check if it is dynamic
     else if (load.metadata.execute) {
       entry = {
+        declarative: false,
         deps: load.metadata.deps || [],
         execute: load.metadata.execute,
         executingRequire: load.metadata.executingRequire // NodeJS-style requires or not
@@ -1202,7 +1229,7 @@ function amd(loader) {
         defineBundle = true;
 
         // define the module through the register registry
-        loader.defined[name] = define;
+        loader.register(name, define.deps, false, define.execute);
       }
     };
     
