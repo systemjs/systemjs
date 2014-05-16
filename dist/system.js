@@ -772,7 +772,7 @@ global.upgradeSystemLoader = function() {
           return {
             deps: [],
             execute: function() {
-              return Module({ 'default': result, __useDefault: true });
+              return Module({ 'default': result, __defaultOnly: true });
             }
           };
         else
