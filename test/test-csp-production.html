@@ -65,8 +65,6 @@
 
       asyncTest('Loading a bundle', function() {
         System['import']('tests/bundle').then(function(m) {
-          ok(m.name == 'bundle2');
-
           return System['import']('bundle-define1');
         })
         .then(function(m) {

@@ -18,6 +18,47 @@ __$global.upgradeSystemLoader = function() {
     return -1;
   }
 
+  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
+  function parseURI(url) {
+    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
+    return (m ? {
+      href     : m[0] || '',
+      protocol : m[1] || '',
+      authority: m[2] || '',
+      host     : m[3] || '',
+      hostname : m[4] || '',
+      port     : m[5] || '',
+      pathname : m[6] || '',
+      search   : m[7] || '',
+      hash     : m[8] || ''
+    } : null);
+  }
+  function toAbsoluteURL(base, href) {
+    function removeDotSegments(input) {
+      var output = [];
+      input.replace(/^(\.\.?(\/|$))+/, '')
+        .replace(/\/(\.(\/|$))+/g, '/')
+        .replace(/\/\.\.$/, '/../')
+        .replace(/\/?[^\/]*/g, function (p) {
+          if (p === '/..')
+            output.pop();
+          else
+            output.push(p);
+      });
+      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
+    }
+
+    href = parseURI(href || '');
+    base = parseURI(base || '');
+
+    return !href || !base ? null : (href.protocol || base.protocol) +
+      (href.protocol || href.authority ? href.authority : base.authority) +
+      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
+      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
+      href.hash;
+  }
+
   // clone the original System loader
   var originalSystem = __$global.System;
   var System = __$global.System = new LoaderPolyfill(originalSystem);
@@ -204,7 +245,7 @@ function register(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
   if (typeof __eval == 'undefined')
-    __eval = eval;
+    __eval = 0 || eval; // uglify breaks without the 0 ||
 
   // define exec for easy evaluation of a load record (load.name, load.source, load.address)
   // main feature is source maps support handling
@@ -219,8 +260,11 @@ function register(loader) {
     var sourceMappingURL;
     var lastLineIndex = load.source.lastIndexOf('\n');
     if (lastLineIndex != -1) {
-      if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=')
-        sourceMappingURL = toAbsoluteURL(load.address, load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 23));
+      if (load.source.substr(lastLineIndex + 1, 21) == '//# sourceMappingURL=') {
+        sourceMappingURL = load.source.substr(lastLineIndex + 22, load.source.length - lastLineIndex - 23);
+        if (typeof toAbsoluteURL != 'undefined')
+          sourceMappingURL = toAbsoluteURL(load.address, sourceMappingURL);
+      }
     }
 
     __eval(load.source, loader.global, load.address, sourceMappingURL);
@@ -262,8 +306,8 @@ function register(loader) {
   
 
   // loader.register sets loader.defined for declarative modules
-  var lastRegister;
-  var lastRegisterName;
+  var anonRegister;
+  var calledRegister;
   function register(name, deps, declare) {
     if (typeof name != 'string') {
       declare = deps;
@@ -273,15 +317,24 @@ function register(loader) {
     if (declare.length == 0)
       throw 'Invalid System.register form. Ensure setting --modules=instantiate if using Traceur.';
 
-    lastRegisterName = name;
-    lastRegister = {
+    calledRegister = true;
+
+    var register = {
       deps: deps,
       declare: declare,
       declarative: true
     };
-
-    if (name)
-      loader.defined[name] = lastRegister;
+    
+    // named register
+    if (name) {
+      loader.defined[name] = register; 
+    }
+    // anonymous register
+    else {
+      if (anonRegister)
+        throw 'Multiple anonymous System.register calls in the same module file.';
+      anonRegister = register;
+    }
   }
 
   function defineRegister(loader) {
@@ -297,18 +350,12 @@ function register(loader) {
     var onScriptLoad = loader.onScriptLoad;
     loader.onScriptLoad = function(load) {
       onScriptLoad(load);
-      load.metadata.format = 'defined';
-      if (lastRegister) {
-        // named define is a separate pipeline
-        if (lastRegisterName) {
-          load.metadata.definedName = lastRegisterName;
-          loader.defined[lastRegisterName] = lastRegister;
-        }
-        // anonymous define is this pipeline
-        else {
-          load.metadata.entry = lastRegister;
-        }
-      }
+      // anonymous define
+      if (anonRegister)
+        load.metadata.entry = anonRegister;
+      
+      if (anonRegister || calledRegister)
+        load.metadata.format = load.metadata.format || 'register';
     }
   }
 
@@ -440,8 +487,11 @@ function register(loader) {
     var module;
     var entry = loader.defined[name];
 
-    if (!entry)
+    if (!entry) {
       module = loader.get(name);
+      if (!module)
+        throw "System Register: The module requested " + name + " but this was not declared as a dependency";
+    }
 
     else {
       if (entry.declarative)
@@ -449,8 +499,12 @@ function register(loader) {
     
       else if (!entry.evaluated)
         linkDynamicModule(entry, loader);
+
       module = entry.module;
     }
+
+    if (!module)
+      return '';
 
     return module.__useDefault ? module['default'] : module;
   }
@@ -543,8 +597,9 @@ function register(loader) {
       load.metadata.format = 'defined';
       return '';
     }
-    lastRegister = null;
-    lastRegisterName = null;
+    anonRegister = null;
+    calledRegister = false;
+    // the above get picked up by onScriptLoad
     return loaderFetch.call(loader, load);
   }
 
@@ -583,9 +638,13 @@ function register(loader) {
     if (loader.defined[load.name])
       entry = loader.defined[load.name];
 
+    // picked up already by a script injection
+    else if (load.metadata.entry)
+      entry = load.metadata.entry;
+
     // otherwise check if it is dynamic
     else if (load.metadata.execute) {
-      loader.defined[load.name] = entry = {
+      entry = {
         deps: load.metadata.deps || [],
         execute: load.metadata.execute,
         executingRequire: load.metadata.executingRequire // NodeJS-style requires or not
@@ -594,53 +653,34 @@ function register(loader) {
 
     // Contains System.register calls
     else if (load.metadata.format == 'register') {
-      lastRegister = null;
-      lastRegisterName = null;
-      
+      anonRegister = null;
+      calledRegister = false;
+
       loader.__exec(load);
 
-      // for a bundle, take the last defined module
-      // in the bundle to be the bundle itself
-      // the name can either be the define name or this module (anonymous register)
-      if (lastRegister) {
-        loader.defined[lastRegisterName || load.name] = lastRegister;
+      if (anonRegister)
+        entry = anonRegister;
 
-        // only use the entry for this module pipeline if it is anonymous
-        if (!lastRegisterName)
-          entry = lastRegister;
-        else
-          load.metadata.bundle = true;
-      }
+      if (!calledRegister)
+        throw load.name + " detected as System.register but didn't execute.";
     }
 
-    // picked up already by a script injection
-    else if (load.metadata.entry)
-      loader.defined[load.name] = entry = load.metadata.entry;
+    // named bundles are just an empty module
+    if (!entry && load.metadata.format != 'es6')
+      return {
+        deps: [],
+        execute: function() {
+          return Module({});
+        }
+      };
 
-    // if many named defines, and the value of the module not otherwise given, take it to
-    // be the last named define.
-    // All this work just allows define('jquery', ...) to be loaded as a module, without conflict!
-    // bundles can't define into their last named define, because that 
-    // creates an import loop between the module, the bundle and the module
-    if (!entry) {
-      if (load.metadata.bundle)
-        return {
-          deps: [],
-          execute: function() {
-            return Module({});
-          }
-        };
-      if (load.metadata.definedName)
-        return System['import'](load.metadata.definedName).then(function() {
-          return {
-            deps: [],
-            execute: function() {
-              return loader.get(load.metadata.definedName);
-            }
-          };
-        });
+    // place this module onto defined for circular references
+    if (entry)
+      loader.defined[load.name] = entry;
+
+    // no entry -> treat as ES6
+    else
       return loaderInstantiate.call(this, load);
-    }
 
     entry.deps = dedupe(entry.deps);
 
@@ -834,47 +874,6 @@ function core(loader) {
       };
     }
     return loaderInstantiate.call(loader, load);
-  }
-
-  // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
-  function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-    // authority = '//' + user + ':' + pass '@' + hostname + ':' port
-    return (m ? {
-      href     : m[0] || '',
-      protocol : m[1] || '',
-      authority: m[2] || '',
-      host     : m[3] || '',
-      hostname : m[4] || '',
-      port     : m[5] || '',
-      pathname : m[6] || '',
-      search   : m[7] || '',
-      hash     : m[8] || ''
-    } : null);
-  }
-  function toAbsoluteURL(base, href) {
-    function removeDotSegments(input) {
-      var output = [];
-      input.replace(/^(\.\.?(\/|$))+/, '')
-        .replace(/\/(\.(\/|$))+/g, '/')
-        .replace(/\/\.\.$/, '/../')
-        .replace(/\/?[^\/]*/g, function (p) {
-          if (p === '/..')
-            output.pop();
-          else
-            output.push(p);
-      });
-      return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
-    }
-
-    href = parseURI(href || '');
-    base = parseURI(base || '');
-
-    return !href || !base ? null : (href.protocol || base.protocol) +
-      (href.protocol || href.authority ? href.authority : base.authority) +
-      removeDotSegments(href.protocol || href.authority || href.pathname.charAt(0) === '/' ? href.pathname : (href.pathname ? ((base.authority && !base.pathname ? '/' : '') + base.pathname.slice(0, base.pathname.lastIndexOf('/') + 1) + href.pathname) : base.pathname)) +
-      (href.protocol || href.authority || href.pathname ? href.search : (href.search || base.search)) +
-      href.hash;
   }
 }
 /*
@@ -1147,11 +1146,12 @@ function amd(loader) {
     }
   }
 
-  var lastDefine;
-  var lastDefineName;
+  var anonDefine;
+  // set to true of the current module turns out to be a named define bundle
+  var defineBundle;
   function createDefine(loader) {
-    lastDefine = null;
-    lastDefineName = null;
+    anonDefine = null;
+    defineBundle = null;
 
     // ensure no NodeJS environment detection
     loader.global.module = undefined;
@@ -1165,18 +1165,12 @@ function amd(loader) {
     var onScriptLoad = loader.onScriptLoad;
     loader.onScriptLoad = function(load) {
       onScriptLoad(load);
-      if (lastDefine) {
+      if (anonDefine || defineBundle)
         load.metadata.format = 'defined';
-        // named define is a separate pipeline
-        if (lastDefineName) {
-          load.metadata.definedName = lastDefineName;
-          loader.defined[lastDefineName] = lastDefine;
-        }
-        // anonymous define is this pipeline
-        else {
-          load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
-          load.metadata.execute = lastDefine.execute;
-        }
+      
+      if (anonDefine) {
+        load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(anonDefine.deps) : anonDefine.deps;
+        load.metadata.execute = anonDefine.execute;
       }
     }
 
@@ -1199,10 +1193,6 @@ function amd(loader) {
           return function() { return factory; }
         })(factory);
 
-      // a module file can only define one anonymous module
-      if (!name && lastDefine)
-        throw "Multiple defines for anonymous module";
-
       // remove system dependencies
       var requireIndex, exportsIndex, moduleIndex
       if ((requireIndex = indexOf.call(deps, 'require')) != -1)
@@ -1214,8 +1204,7 @@ function amd(loader) {
       if ((moduleIndex = indexOf.call(deps, 'module')) != -1)
         deps.splice(moduleIndex, 1);
 
-      lastDefineName = name;
-      lastDefine = {
+      var define = {
         deps: deps,
         execute: function(require, exports, moduleName) {
 
@@ -1245,9 +1234,35 @@ function amd(loader) {
         }
       };
 
-      // attaches to loader.defined as dynamic
-      if (name)
-        loader.defined[name] = lastDefine;
+      // anonymous define
+      if (!name) {
+        // already defined anonymously -> throw
+        if (anonDefine)
+          throw "Multiple defines for anonymous module";
+        anonDefine = define;
+      }
+      // named define
+      else {
+        // if it has no dependencies and we don't have any other
+        // defines, then let this be an anonymous define
+        if (deps.length == 0 && !anonDefine && !defineBundle)
+          anonDefine = define;
+
+        // otherwise its a bundle only
+        else
+          anonDefine = null;
+
+        // the above is just to support single modules of the form:
+        // define('jquery')
+        // still loading anonymously
+        // because it is done widely enough to be useful
+
+        // note this is now a bundle
+        defineBundle = true;
+
+        // define the module through the register registry
+        loader.defined[name] = define;
+      }
     };
     
     loader.global.define.amd = {};
@@ -1276,15 +1291,12 @@ function amd(loader) {
 
       loader.__exec(load);
 
-      if (!lastDefine)
+      if (!anonDefine && !defineBundle)
         throw "AMD module " + load.name + " did not define";
 
-      if (lastDefineName) {
-        load.metadata.definedName = lastDefineName;
-      }
-      else {
-        load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastDefine.deps) : lastDefine.deps;
-        load.metadata.execute = lastDefine.execute;
+      if (anonDefine) {
+        load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(anonDefine.deps) : anonDefine.deps;
+        load.metadata.execute = anonDefine.execute;
       }
     }
 
