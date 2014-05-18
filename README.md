@@ -356,7 +356,22 @@ Note that the ES6 live bindings and circular references don't work in AMD, altho
 
 ### Bundles
 
-We can create a custom bundle with Traceur by comining together a module with all its dependencies into a single file:
+Bundles configuration allows a single bundle file to be loaded in place of separate module files.
+
+```javascript
+  System.bundles['build/core'] = ['jquery', 'app/app', 'app/dep', 'lib/third-party'];
+  
+  // loads "app/app" from the module "build/core".
+  System.import('app/app'));
+  
+  // a request to any one of 'jquery', 'app/app', 'app/dep', 'lib/third-party'
+  // would delegate to the "build/core" module
+```
+
+A built file must contain the exact named defines or named `System.register` statements for the modules
+it contains. Mismatched names will result in separate requests still being made.
+
+We can create a custom bundle with Traceur by combining together a module with all its dependencies into a single file:
 
 ```
   traceur --out build.js app/main.js app/core.js app/another.js
@@ -364,8 +379,7 @@ We can create a custom bundle with Traceur by comining together a module with al
 
 Each file will be traced and all its dependencies included in the final build file.
 
-We can then include this bundle with a `<script>` tag in the page, or we can use the `bundles` config to dynamically load it when a module
-is dynamically requested from that bundle.
+We can also just include this bundle with a `<script>` tag in the page.
 
 ### CSP-Compatible Production
 
