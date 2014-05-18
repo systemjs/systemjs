@@ -347,7 +347,12 @@ Then include `traceur-runtime.js` (this is found inside traceur's `bin` folder w
 ```html
   <script src="traceur-runtime.js"></script>
   <script src="system.js"></script>
+  <script>
+    System.paths['app/*'] = 'app-built/*';
+  </script>
 ```
+
+We can then use map or paths config to ensure that `app/main` gets directed to the new folder. Alternatively rename `app-built` to replace `app`.
 
 Now the application will continue to behave identically without needing to compile ES6 in the browser.
 
