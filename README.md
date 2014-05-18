@@ -23,7 +23,7 @@ Basic Configuration
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.6.0/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/google/traceur-compiler/blob/0.0.41/bin/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.6.1/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/google/traceur-compiler/blob/0.0.42/bin/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 

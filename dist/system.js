@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.6.0
+ * SystemJS v0.6.1
  * 
  * Copyright (c) 2014 Guy Bedford
  * MIT License
@@ -1884,10 +1884,13 @@ bundles(System);
 versions(System);
 depCache(System);
 
-  if (__$curScript && !System.paths['@traceur'])
-    System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src') 
-      || System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/') + 'traceur.js';
-
+  
+  if (!System.paths['@traceur'])
+    System.paths['@traceur'] = __$curScript && __$curScript.getAttribute('data-traceur-src')
+      || (__$curScript && __$curScript.src 
+        ? __$curScript.src.substr(0, __$curScript.src.lastIndexOf('/') + 1) 
+        : System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/')
+        ) + 'traceur.js';
 };
 
 function __eval(__source, __global, __address, __sourceMap) {

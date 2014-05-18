@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "System loader extension for flexible AMD & CommonJS support",
   "main": "dist/system.js",
   "repository": {
@@ -10,7 +10,7 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "es6-module-loader": "~0.6.0"
+    "es6-module-loader": "~0.6.1"
   },
   "devDependencies": {
     "qunit": "^0.6.2",
