@@ -60,7 +60,7 @@ System.register("tree/global", ['./jquery'], false, function(__require, __export
   return System.get("@@global-helpers").retrieveGlobal(__moduleName, "jquery.test");
 });
 
-define("tree/amd", ['./global'], function() {
+System.register("tree/amd", ['./global'], false, function() {
   console.log('amd');
   return { is: 'amd' };
 });

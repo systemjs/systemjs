@@ -10,7 +10,10 @@ if (typeof window == 'undefined') {
 
 function err(e) {
   setTimeout(function() {
-    throw e;
+    if (typeof window == 'undefined')
+      console.log(e.stack);
+    else
+      throw e;
     start();
   });  
 }
@@ -272,6 +275,8 @@ asyncTest('Loading AMD from a bundle', function() {
     start();
   }, err);
 });
+
+
 System.bundles['tests/mixed-bundle'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
 asyncTest('Loading CommonJS from a bundle', function() {
   System['import']('tree/cjs').then(function(m) {

@@ -12,7 +12,7 @@ Designed as a collection of small extensions to the ES6 specification System loa
 * Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7KB) for a combined total footprint of 13.3KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7KB) for a combined total footprint of 14KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
 Runs in IE8+ and NodeJS. ES6 modules are only supported in IE9+.
 
@@ -96,6 +96,10 @@ app/es6-file.js:
   <script>
     System.import('app/es6-file').then(function(m) {
       console.log(new m.q().es6); // yay
+    }, function() {
+      setTimeout(function() {
+        throw e;
+      });
     });
   </script>
 ```
@@ -108,29 +112,6 @@ For further infomation on ES6 module loading, see the [ES6 Module Loader polyfil
 
 Features
 ---
-
-### Convenience Form
-
-Typically we would have configuration shared between pages, so we can create a shared `config.json` file:
-
-config.json:
-```js
-{
-  "paths": {
-    "app/*": "/app/*.js"
-  }
-}
-```
-
-Then with script attributes, the above example can be rewritten as:
-
-```html
-  <script src="system.js" baseurl="/lib" config="/" main="app/"></script>
-```
-
-This will load `/config.json` before loading the main from `app/app` (`app/` being a shorthand for this). Any loading errors will be caught and thrown.
-
-> Data Attributes like `data-baseurl` can be used instead of the above for valid XHTML.
 
 ### Map Configuration
 
@@ -202,6 +183,10 @@ app/sample-global.js
 ```javascript
   System.import('app/sample-global').then(function(m) {
     m == 'world';
+  }, function(e) {
+    setTimeout(function() { 
+      throw e;
+    });
   });
 ```
 
@@ -257,7 +242,12 @@ For example, consider an app which wants to specify the jQuery version through c
 Now an import of the form:
 
 ```javascript
-  System.import('jquery');
+  System.import('jquery')
+  .catch(function(e) {
+    setTimeout(function() {
+      throw e;
+    });
+  });
 ```
 
 will load a load will be made to the file `/lib/jquery@2.0.3.js`.
@@ -393,11 +383,17 @@ If we have compiled all our modules into a `System.register` bundle, we can do:
     System.bundles['app-built'] = ['app/main'];
     System.import('app/main').then(function(m) { 
       // loads app/main from the app-built bundle
+    }, function(e) {
+      setTimeout(function() {
+        throw e;
+      });
     });
   </script>
 ```
 
-_Note that this CSP-compatibility mode doesn't fully support plugins, CommonJS or global script loading._
+To make all module formats work with CSP, we need to ensure everything is built with a suitable wrapper.
+
+See [SystemJS Builder](https://github.com/systemjs/builder) for a single-file build workflow that can wrap up all module formats.
 
 ### NodeJS Usage
 

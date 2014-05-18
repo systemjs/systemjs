@@ -382,6 +382,8 @@ function register(loader) {
       
       if (anonRegister || calledRegister)
         load.metadata.format = load.metadata.format || 'register';
+      if (calledRegister)
+        load.metadata.registered = true;
     }
   }
 
@@ -688,7 +690,7 @@ function register(loader) {
       if (anonRegister)
         entry = anonRegister;
 
-      if (!calledRegister)
+      if (!calledRegister && !load.metadata.registered)
         throw load.name + " detected as System.register but didn't execute.";
     }
 
@@ -863,13 +865,9 @@ function core(loader) {
 
     // support ES6 alias modules ("export * from 'module';") without needing Traceur
     var match;
-    if (!loader.global.traceur && (load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
-      load.metadata.format = 'defined';
-      var depName = match[1] || match[2];
-      load.metadata.deps = [depName];
-      load.metadata.execute = function(require) {
-        return require(depName);
-      }
+    if ((load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
+      load.metadata.format = 'cjs';
+      load.source = 'module.exports = require("' + (match[1] || match[2]) + '");\n';
     }
 
     // detect ES6
@@ -1053,17 +1051,6 @@ function cjs(loader) {
     return deps;
   }
 
-  loader._getCJSDeps = getCJSDeps;
-
-  var loaderTranslate = loader.translate;
-  loader.translate = function(load) {
-    var loader = this;
-    if (!loader._getCJSDeps)
-      loader._getCJSDeps = getCJSDeps;
-    return loaderTranslate.call(loader, load);
-  }
-
-
   var noop = function() {}
   var nodeProcess = {
     nextTick: function(f) {
@@ -1078,7 +1065,21 @@ function cjs(loader) {
     emit: noop,
     cwd: function() { return '/' }
   };
-  loader.set('@@nodeProcess', Module(nodeProcess));
+
+  loader._getCJSDeps = getCJSDeps;
+
+  if (!loader.has('@@nodeProcess'))
+    loader.set('@@nodeProcess', Module({ 'default': nodeProcess, __useDefault: true }));
+
+  var loaderTranslate = loader.translate;
+  loader.translate = function(load) {
+    var loader = this;
+    if (!loader.has('@@nodeProcess'))
+      loader.set('@@nodeProcess', Module({ 'default': nodeProcess, __useDefault: true }));
+    if (!loader._getCJSDeps)
+      loader._getCJSDeps = getCJSDeps;
+    return loaderTranslate.call(loader, load);
+  }
 
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
@@ -1139,10 +1140,12 @@ function cjs(loader) {
 */
 function amd(loader) {
 
+  var isNode = typeof module != 'undefined' && module.exports;
+
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
-  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*)?\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
 
   /*
     AMD-compatible require
@@ -1193,7 +1196,6 @@ function amd(loader) {
     // ensure no NodeJS environment detection
     loader.global.module = undefined;
     loader.global.exports = undefined;
-
 
     if (loader.global.define && loader.global.define.loader == loader)
       return;
@@ -1306,12 +1308,14 @@ function amd(loader) {
     loader.global.define.loader = loader;
   }
 
-  createDefine(loader);
+  if (!isNode && loader.amdDefine !== false)
+    createDefine(loader);
 
   if (loader.scriptLoader) {
     var loaderFetch = loader.fetch;
     loader.fetch = function(load) {
-      createDefine(this);
+      if (loader.amdDefine !== false)
+        createDefine(this);
       return loaderFetch.call(this, load);
     }
   }
@@ -1323,10 +1327,13 @@ function amd(loader) {
 
     if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
       load.metadata.format = 'amd';
-        
+
       createDefine(loader);
 
       loader.__exec(load);
+
+      if (isNode)
+        loader.global.define = undefined;
 
       if (!anonDefine && !defineBundle)
         throw "AMD module " + load.name + " did not define";
@@ -1802,33 +1809,9 @@ bundles(System);
 versions(System);
 depCache(System);
 
-  if (__$curScript) {
-    System.baseURL = __$curScript.getAttribute('data-baseurl') || __$curScript.getAttribute('baseurl') || System.baseURL;
-
-    var configPath = __$curScript.getAttribute('data-config') || __$curScript.getAttribute('config');
-    if (configPath && configPath.substr(configPath.length - 1) === '/')
-      configPath += 'config.json';
-
-    var main = __$curScript.getAttribute('data-main') || __$curScript.getAttribute('main');
-
-    if (!System.paths['@traceur'])
-      System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src') 
-        || System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/') + 'traceur.js';
-
-    (!configPath ? Promise.resolve() :
-      Promise.resolve(System.fetch.call(System, { address: configPath, metadata: {} }))
-      .then(JSON.parse)
-      .then(System.config)
-    ).then(function() {
-      if (main)
-        return System['import'](main);
-    })
-    ['catch'](function(e) {
-      setTimeout(function() {
-        throw e;
-      })
-    });
-  }
+  if (__$curScript && !System.paths['@traceur'])
+    System.paths['@traceur'] = typeof __$curScript != 'undefined' && __$curScript.getAttribute('data-traceur-src') 
+      || System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/') + 'traceur.js';
 
 };
 
