@@ -338,7 +338,7 @@ If writing an application in ES6, we can compile into ES5 with Traceur:
   traceur --dir app app-built --modules=instantiate
 ```
 
-This will compile all ES6 files in the directory `app` into corresponding AMD files in `app-built`.
+This will compile all ES6 files in the directory `app` into corresponding ES5 `System.register` files in `app-built`.
 
 The `instantiate` modules option writes the modules out using a `System.register` call, which is supported by SystemJS.
 
