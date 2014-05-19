@@ -338,7 +338,7 @@ Then include `traceur-runtime.js` (this is found inside traceur's `bin` folder w
   <script src="traceur-runtime.js"></script>
   <script src="system.js"></script>
   <script>
-    System.paths['app/*'] = 'app-built/*';
+    System.paths['app/*'] = 'app-built/*.js';
   </script>
 ```
 
