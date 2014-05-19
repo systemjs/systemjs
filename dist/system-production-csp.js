@@ -1335,7 +1335,7 @@ function amd(loader) {
       if (isNode)
         loader.global.define = undefined;
 
-      if (!anonDefine && !defineBundle)
+      if (!anonDefine && !defineBundle && !isNode)
         throw "AMD module " + load.name + " did not define";
 
       if (anonDefine) {
@@ -1828,6 +1828,8 @@ function __eval(__source, __global, __address, __sourceMap) {
   catch(e) {
     if (e.name == 'SyntaxError')
       e.message = 'Evaluating ' + __address + '\n\t' + e.message;
+    if (isNode && loader.execute == false && loader.trace = true)
+      return;
     throw e;
   }
 }
