@@ -69,7 +69,6 @@ asyncTest('Global script with inaccessible properties', function() {
   });
 
   System['import']('tests/global-inaccessible-props').then(function(m) {
-    console.log(JSON.stringify(m), m == 'global');
     ok(m == 'result of global-inaccessible-props', 'Failed due to a inaccessible property');
 
     delete System.global.errorOnAccess;
