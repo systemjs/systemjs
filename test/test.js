@@ -61,6 +61,21 @@ asyncTest('Global script with shim config', function() {
   }, err);
 });
 
+asyncTest('Global script with inaccessible properties', function() {
+  Object.defineProperty(System.global, 'errorOnAccess', {
+    configurable: true,
+    enumerable: true,
+    get: function() { throw Error('This property is inaccessible'); },
+  });
+
+  System['import']('tests/global-inaccessible-props').then(function(m) {
+    ok(m == 'result of global-inaccessible-props', 'Failed due to a inaccessible property');
+
+    delete System.global.errorOnAccess;
+    start();
+  }, err);
+});
+
 asyncTest('Global script loading that detects as AMD with shim config', function() {
   System.meta['tests/global-shim-amd'] = { format: 'global' };
   System['import']('tests/global-shim-amd').then(function(m) {
