@@ -224,6 +224,17 @@ asyncTest('Versions support', function() {
   }, err);
 });
 
+asyncTest('Version with map', function() {
+  System.versions['tests/mvd'] = '2.0.0';
+  System.map['tests/map-version'] = {
+    'tests/mvd': 'tests/mvd@^2.0.0'
+  };
+  System['import']('tests/map-version').then(function(m) {
+    ok(m == 'overridden map version');
+    start();
+  }, err);
+});
+
 asyncTest('Simple compiler Plugin', function() {
   System.map['coffee'] = 'tests/compiler-plugin';
   System['import']('tests/compiler-test.coffee!').then(function(m) {

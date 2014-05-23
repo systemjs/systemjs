@@ -343,7 +343,7 @@ function register(loader) {
       var depEntry = loader.defined[depName];
       
       // not in the registry means already linked / ES6
-      if (!depEntry)
+      if (!depEntry || depEntry.evaluated)
         continue;
       
       // now we know the entry is in our unlinked linkage group
@@ -862,6 +862,7 @@ function global(loader) {
     var moduleGlobals = {};
 
     var curGlobalObj;
+    var ignoredGlobalProps;
 
     loader.set('@@global-helpers', Module({
       prepareGlobal: function(moduleName, deps) {
@@ -876,9 +877,15 @@ function global(loader) {
         // now store a complete copy of the global object
         // in order to detect changes
         curGlobalObj = {};
+        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage', 'clipboardData', 'frames'];
         for (var g in loader.global)
-          if (!hasOwnProperty || loader.global.hasOwnProperty(g))
-            curGlobalObj[g] = loader.global[g];
+          if (!hasOwnProperty || loader.global.hasOwnProperty(g)) {
+            try {
+              curGlobalObj[g] = loader.global[g];
+            } catch (e) {
+              ignoredGlobalProps.push(g);
+            }
+          }
       },
       retrieveGlobal: function(moduleName, exportName, init) {
         var singleGlobal;
@@ -903,7 +910,7 @@ function global(loader) {
 
         else {
           for (var g in loader.global) {
-            if (!hasOwnProperty && (g == 'sessionStorage' || g == 'localStorage' || g == 'clipboardData' || g == 'frames'))
+            if (~ignoredGlobalProps.indexOf(g))
               continue;
             if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && curGlobalObj[g] != loader.global[g]) {
               exports[g] = loader.global[g];
@@ -964,7 +971,8 @@ function global(loader) {
     }
     return loaderInstantiate.call(loader, load);
   }
-}/*
+}
+/*
   SystemJS CommonJS Format
 */
 function cjs(loader) {
@@ -1487,10 +1495,14 @@ function plugins(loader) {
       var pluginLoader = loader.pluginLoader || loader;
 
       // load the plugin module
-      return pluginLoader['import'](pluginName)
+      return pluginLoader.load(pluginName)
       .then(function() {
         var plugin = pluginLoader.get(pluginName);
         plugin = plugin['default'] || plugin;
+
+        // allow plugins to opt-out of build
+        if (plugin.build === false && loader.pluginLoader)
+          load.metadata.build = false;
 
         // store the plugin module itself on the metadata
         load.metadata.plugin = plugin;
@@ -1551,6 +1563,14 @@ function plugins(loader) {
         }
         return loaderInstantiate.call(loader, load);
       });
+    else if (load.metadata.plugin && load.metadata.plugin.build === false) {
+      return {
+        deps: [load.metadata.pluginName],
+        execute: function() {
+          return Module({});
+        }
+      };
+    }
     else
       return loaderInstantiate.call(loader, load);
   }
@@ -1584,6 +1604,8 @@ function bundles(loader) {
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
+    if (loader.trace)
+      return loaderFetch.call(this, load);
     if (!loader.bundles)
       loader.bundles = {};
 
@@ -1608,7 +1630,7 @@ function bundles(loader) {
         return '';
       });
     }
-    return loaderFetch.apply(this, arguments);
+    return loaderFetch.call(this, load);
   }
 }/*
   SystemJS Semver Version Addon
@@ -1701,11 +1723,30 @@ function versions(loader) {
     if (!loader.versions)
       loader.versions = {};
     var packageVersions = this.versions;
+
+    // strip the version before applying map config
+    var stripVersion, stripSubPathLength;
+    if (name.indexOf('@') > 0) {
+      var versionIndex = name.lastIndexOf('@');
+      var parts = name.substr(versionIndex + 1, name.length - versionIndex - 1).split('/');
+      stripVersion = parts[0];
+      stripSubPathLength = parts.length;
+      name = name.substr(0, versionIndex) + name.substr(versionIndex + stripVersion.length + 1, name.length - versionIndex - stripVersion.length - 1);
+    }
+
     // run all other normalizers first
     return Promise.resolve(loaderNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
       var version, semverMatch, nextChar, versions;
       var index = normalized.indexOf('@');
+
+      // if we stripped a version, and it still has no version, add it back
+      if (stripVersion && (index == -1 || index == 0)) {
+        var parts = normalized.split('/');
+        parts[parts.length - stripSubPathLength] += '@' + stripVersion;
+        normalized = parts.join('/');
+        index = normalized.indexOf('@');
+      }
 
       // see if this module corresponds to a package already in our versioned packages list
       
@@ -1903,8 +1944,8 @@ function __eval(__source, __global, __address, __sourceMap) {
   catch(e) {
     if (e.name == 'SyntaxError')
       e.message = 'Evaluating ' + __address + '\n\t' + e.message;
-    if (loader.trace && loader.execute == false)
-      console.log('Execution error: ' + e.stack || e);
+    if (System.trace && System.execute == false)
+      console.log('Execution error for ' + __address + ': ' + e.stack || e);
     throw e;
   }
 }
