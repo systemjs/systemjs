@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "System loader extension for flexible AMD & CommonJS support",
   "main": "dist/system.js",
   "repository": {
