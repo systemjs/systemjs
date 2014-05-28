@@ -1155,14 +1155,14 @@ function amd(loader) {
       onScriptLoad(load);
       if (anonDefine || defineBundle)
         load.metadata.format = 'defined';
-      
+
       if (anonDefine) {
         load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(anonDefine.deps) : anonDefine.deps;
         load.metadata.execute = anonDefine.execute;
       }
     }
 
-    loader.global.define = function(name, deps, factory) {
+    function define(name, deps, factory) {
       if (typeof name != 'string') {
         factory = deps;
         deps = name;
@@ -1252,7 +1252,9 @@ function amd(loader) {
         loader.register(name, define.deps, false, define.execute);
       }
     };
-    
+
+    loader.amdDefine = define;
+    loader.global.define = define;
     loader.global.define.amd = {};
     loader.global.define.loader = loader;
   }

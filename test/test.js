@@ -183,6 +183,20 @@ asyncTest('Loading an AMD bundle', function() {
   }, err);
 });
 
+System.bundles['tests/amd-namespaced-bundle'] = ['bundle-ns-1', 'bundle-ns-2'];
+asyncTest('Loading a namespaced AMD bundle', function() {
+  System['import']('bundle-ns-1').then(function(m) {
+    ok(m.defined == true);
+    start();
+  }, err);
+
+  stop();
+  System['import']('bundle-ns-2').then(function(m) {
+    ok(m.defined == true);
+    start();
+  }, err);
+});
+
 asyncTest('Loading an AMD named define', function() {
   System['import']('tests/nameddefine').then(function(m1){
     ok(m1.converter, 'Showdown not loaded');
