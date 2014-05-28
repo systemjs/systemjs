@@ -169,6 +169,20 @@ asyncTest('Loading an AMD module', function() {
   }, err);
 });
 
+System.bundles['tests/amd-bundle'] = ['bundle-1', 'bundle-2'];
+asyncTest('Loading an AMD bundle', function() {
+  System['import']('bundle-1').then(function(m) {
+    ok(m.defined == true);
+    start();
+  }, err);
+
+  stop();
+  System['import']('bundle-2').then(function(m) {
+    ok(m.defined == true);
+    start();
+  }, err);
+});
+
 asyncTest('Loading an AMD named define', function() {
   System['import']('tests/nameddefine').then(function(m1){
     ok(m1.converter, 'Showdown not loaded');
