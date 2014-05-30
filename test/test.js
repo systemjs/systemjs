@@ -195,6 +195,13 @@ asyncTest('Loading a CommonJS module', function() {
   }, err);
 });
 
+asyncTest('Loading a CommonJS module with this', function() {
+  System['import']('tests/cjs-this').then(function(m) {
+    ok(m.asdf == 'module value');
+    start();
+  }, err);
+});
+
 asyncTest('Loading a UMD module', function() {
   System['import']('tests/umd').then(function(m) {
     ok(m.d == 'hi', 'module value not defined');
