@@ -29,6 +29,8 @@ We then include `dist/system.js` with a script tag in the page.
 
 `es6-module-loader.js` will then be included from the same folder automatically and [Traceur](https://github.com/google/traceur-compiler) is dynamically included from `traceur.js` when loading an ES6 module only.
 
+Alternatively, `es6-module-loader.js` or `traceur.js` can be included before `system.js` with a script tag in the page.
+
 ### Simple Application Structure
 
 The standard application structure would be something like the following:
