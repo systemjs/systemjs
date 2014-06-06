@@ -5,7 +5,7 @@
   "main": "dist/system.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/guybedford/systemjs"
+    "url": "git://github.com/systemjs/systemjs"
   },
   "author": "Guy Bedford",
   "license": "MIT",
