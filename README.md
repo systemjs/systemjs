@@ -52,7 +52,7 @@ index.html:
   });
 
   System.import('app/app')
-  .catch(function() {
+  .catch(function(e) {
     // we add this since promises suppress all errors
     setTimeout(function() {
       throw e;
@@ -98,7 +98,7 @@ app/es6-file.js:
   <script>
     System.import('app/es6-file').then(function(m) {
       console.log(new m.q().es6); // yay
-    }, function() {
+    }, function(e) {
       setTimeout(function() {
         throw e;
       });
