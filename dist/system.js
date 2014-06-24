@@ -190,12 +190,11 @@ function register(loader) {
 
   // define exec for easy evaluation of a load record (load.name, load.source, load.address)
   // main feature is source maps support handling
-  var curSystem, curModule;
+  var curSystem;
   function exec(load) {
     var loader = this;
     if (load.name == '@traceur') {
       curSystem = System;
-      curModule = Module;
     }
     // support sourceMappingURL (efficiently)
     var sourceMappingURL;
@@ -214,7 +213,6 @@ function register(loader) {
     if (load.name == '@traceur') {
       loader.global.traceurSystem = loader.global.System;
       loader.global.System = curSystem;
-      //loader.global.Module = curModule;
     }
   }
   loader.__exec = exec;
@@ -640,7 +638,7 @@ function register(loader) {
       return {
         deps: [],
         execute: function() {
-          return Module({});
+          return loader.newModule({});
         }
       };
 
@@ -685,7 +683,7 @@ function register(loader) {
           // remove from the registry
           delete loader.defined[load.name];
 
-          var module = Module(entry.module);
+          var module = loader.newModule(entry.module);
 
           // if the entry is an alias, set the alias too
           for (var name in loader.defined) {
@@ -713,7 +711,7 @@ function core(loader) {
     __useDefault
     
     When a module object looks like:
-    Module({
+    newModule({
       __useDefault: true,
       default: 'some-module'
     })
@@ -731,7 +729,7 @@ function core(loader) {
   }
 
   // support the empty module, as a concept
-  loader.set('@empty', Module({}));
+  loader.set('@empty', loader.newModule({}));
 
   /*
     Config
@@ -835,7 +833,7 @@ function core(loader) {
       return {
         deps: [],
         execute: function() {
-          return Module({});
+          return loader.newModule({});
         }
       };
     }
@@ -864,7 +862,7 @@ function global(loader) {
     var curGlobalObj;
     var ignoredGlobalProps;
 
-    loader.set('@@global-helpers', Module({
+    loader.set('@@global-helpers', loader.newModule({
       prepareGlobal: function(moduleName, deps) {
         // first, we add all the dependency modules to the global
         for (var i = 0; i < deps.length; i++) {
@@ -1018,13 +1016,13 @@ function cjs(loader) {
   loader._getCJSDeps = getCJSDeps;
 
   if (!loader.has('@@nodeProcess'))
-    loader.set('@@nodeProcess', Module({ 'default': nodeProcess, __useDefault: true }));
+    loader.set('@@nodeProcess', loader.newModule({ 'default': nodeProcess, __useDefault: true }));
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
     var loader = this;
     if (!loader.has('@@nodeProcess'))
-      loader.set('@@nodeProcess', Module({ 'default': nodeProcess, __useDefault: true }));
+      loader.set('@@nodeProcess', loader.newModule({ 'default': nodeProcess, __useDefault: true }));
     if (!loader._getCJSDeps)
       loader._getCJSDeps = getCJSDeps;
     return loaderTranslate.call(loader, load);
@@ -1592,7 +1590,7 @@ function plugins(loader) {
       load.metadata.format = 'defined';
       load.metadata.deps.push(load.metadata.pluginName);
       load.metadata.execute = function() {
-        return Module({});
+        return loader.newModule({});
       };
       return loaderInstantiate.call(loader, load);
     }
