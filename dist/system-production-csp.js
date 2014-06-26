@@ -561,23 +561,16 @@ function register(loader) {
     }
 
     // now execute
-    try {
-      entry.evaluated = true;
-      var output = entry.execute.call(loader.global, function(name) {
-        for (var i = 0; i < entry.deps.length; i++) {
-          if (entry.deps[i] != name)
-            continue;
-          return getModule(entry.normalizedDeps[i], loader);
-        }
-      }, entry.module['default'], moduleName);
-    }
-    catch(e) {
-      throw e;
-    }
+    entry.evaluated = true;
+    var output = entry.execute.call(loader.global, function(name) {
+      for (var i = 0; i < entry.deps.length; i++) {
+        if (entry.deps[i] != name)
+          continue;
+        return getModule(entry.normalizedDeps[i], loader);
+      }
+    }, entry.module['default'], moduleName);
     
-    if (output && output.__esModule)
-      entry.module = output;
-    else if (output)
+    if (output)
       entry.module['default'] = output;
   }
 
@@ -728,7 +721,7 @@ function register(loader) {
         execute: function() {
           // this avoids double duplication allowing a bundle to equal its last defined module
           if (entry.esmodule) {
-            delete loader.defined[load.name];
+            loader.defined[load.name] = undefined;
             return entry.esmodule;
           }
 
@@ -740,12 +733,14 @@ function register(loader) {
           ensureEvaluated(load.name, [], loader);
 
           // remove from the registry
-          delete loader.defined[load.name];
+          loader.defined[load.name] = undefined;
 
           var module = loader.newModule(entry.module);
 
           // if the entry is an alias, set the alias too
           for (var name in loader.defined) {
+            if (!loader.defined[name])
+              continue;
             if (entry.declarative && loader.defined[name].execute != entry.execute)
               continue;
             if (!entry.declarative && loader.defined[name].declare != entry.declare);
@@ -1399,26 +1394,39 @@ function amd(loader) {
 function map(loader) {
   loader.map = loader.map || {};
 
-  // return the number of prefix parts (separated by '/') matching the name
-  // eg prefixMatchLength('jquery/some/thing', 'jquery') -> 1
-  function prefixMatchLength(name, prefix) {
-    var prefixParts = prefix.split('/');
-    var nameParts = name.split('/');
-    if (prefixParts.length > nameParts.length)
-      return 0;
-    for (var i = 0; i < prefixParts.length; i++)
-      if (nameParts[i] != prefixParts[i])
-        return 0;
-    return prefixParts.length;
+  // return if prefix parts (separated by '/') match the name
+  // eg prefixMatch('jquery/some/thing', 'jquery') -> true
+  //    prefixMatch('jqueryhere/', 'jquery') -> false
+  function prefixMatch(name, prefix) {
+    if (name.length < prefix.length)
+      return false;
+    if (name.substr(0, prefix.length) != prefix)
+      return false;
+    if (name[prefix.length] && name[prefix.length] != '/')
+      return false;
+    return true;
   }
 
+  // get the depth of a given path
+  // eg pathLen('some/name') -> 2
+  function pathLen(name) {
+    var len = 1;
+    for (var i = 0, l = name.length; i < l; i++)
+      if (name[i] === '/')
+        len++;
+    return len;
+  }
+
+  function doMap(name, matchLen, map) {
+    return map + name.substr(matchLen);
+  }
 
   // given a relative-resolved module name and normalized parent name,
   // apply the map configuration
   function applyMap(name, parentName, loader) {
-
     var curMatch, curMatchLength = 0;
     var curParent, curParentMatchLength = 0;
+    var tmpParentLength, tmpPrefixLength;
     var subPath;
     var nameParts;
     
@@ -1430,29 +1438,32 @@ function map(loader) {
           continue;
 
         // most specific parent match wins first
-        if (prefixMatchLength(parentName, p) <= curParentMatchLength)
+        if (!prefixMatch(parentName, p))
+          continue;
+
+        tmpParentLength = pathLen(p);
+        if (tmpParentLength <= curParentMatchLength)
           continue;
 
         for (var q in curMap) {
           // most specific name match wins
-          if (prefixMatchLength(name, q) <= curMatchLength)
+          if (!prefixMatch(name, q))
+            continue;
+          tmpPrefixLength = pathLen(q);
+          if (tmpPrefixLength <= curMatchLength)
             continue;
 
           curMatch = q;
-          curMatchLength = q.split('/').length;
+          curMatchLength = tmpPrefixLength;
           curParent = p;
-          curParentMatchLength = p.split('/').length;
+          curParentMatchLength = tmpParentLength;
         }
       }
     }
 
     // if we found a contextual match, apply it now
-    if (curMatch) {
-      nameParts = name.split('/');
-      subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-      name = loader.map[curParent][curMatch] + (subPath ? '/' + subPath : '');
-      curMatchLength = 0;
-    }
+    if (curMatch)
+      return doMap(name, curMatch.length, loader.map[curParent][curMatch]);
 
     // now do the global map
     for (var p in loader.map) {
@@ -1460,20 +1471,22 @@ function map(loader) {
       if (typeof curMap != 'string')
         continue;
 
-      if (prefixMatchLength(name, p) <= curMatchLength)
+      if (!prefixMatch(name, p))
+        continue;
+
+      var tmpPrefixLength = pathLen(p);
+
+      if (tmpPrefixLength <= curMatchLength)
         continue;
 
       curMatch = p;
-      curMatchLength = p.split('/').length;
+      curMatchLength = tmpPrefixLength;
     }
-    
-    // return a match if any
-    if (!curMatchLength)
-      return name;
-    
-    nameParts = name.split('/');
-    subPath = nameParts.splice(curMatchLength, nameParts.length - curMatchLength).join('/');
-    return loader.map[curMatch] + (subPath ? '/' + subPath : '');
+
+    if (curMatch)
+      return doMap(name, curMatch.length, loader.map[curMatch]);
+
+    return name;
   }
 
   var loaderNormalize = loader.normalize;
@@ -1905,7 +1918,6 @@ var __$curScript;
     var es6ModuleLoader = require('es6-module-loader');
     global.System = es6ModuleLoader.System;
     global.Loader = es6ModuleLoader.Loader;
-    global.Module = es6ModuleLoader.Module;
     global.upgradeSystemLoader();
     module.exports = global.System;
   }
