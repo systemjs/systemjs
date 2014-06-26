@@ -312,6 +312,14 @@ asyncTest('Advanced compiler plugin', function() {
   }, err);
 });
 
+asyncTest('Plugin as a dependency', function() {
+  System.map['css'] = 'tests/css';
+  System['import']('tests/cjs-loading-plugin').then(function(m) {
+    ok(m.pluginSource == 'this is css');
+    start();
+  }, err);
+});
+
 asyncTest('AMD Circular', function() {
   System['import']('tests/amd-circular1').then(function(m) {
     ok(m.outFunc() == 5, 'Expected execution');
