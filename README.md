@@ -12,7 +12,7 @@ Designed as a collection of small extensions to the ES6 specification System loa
 * Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (7KB) for a combined total footprint of 14KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
 Runs in IE8+ and NodeJS. ES6 modules are only supported in IE9+.
 
@@ -23,7 +23,7 @@ Basic Configuration
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.6.1/dist/es6-module-loader.js) and [`traceur.js`](https://github.com/google/traceur-compiler/blob/0.0.42/bin/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.7.1/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.49/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 
@@ -334,7 +334,7 @@ This will compile all ES6 files in the directory `app` into corresponding ES5 `S
 
 The `instantiate` modules option writes the modules out using a `System.register` call, which is supported by SystemJS.
 
-Then include `traceur-runtime.js` (this is found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
+Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.49/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
 
 ```html
   <script src="traceur-runtime.js"></script>

@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.6.2
+ * SystemJS v0.6.7
  * 
  * Copyright (c) 2014 Guy Bedford
  * MIT License
@@ -676,7 +676,14 @@ function register(loader) {
       anonRegister = null;
       calledRegister = false;
 
+      var System = loader.global.System = loader.global.System || loader;
+
+      var curRegister = System.register;
+      System.register = register;
+
       loader.__exec(load);
+
+      System.register = curRegister;
 
       if (anonRegister)
         entry = anonRegister;

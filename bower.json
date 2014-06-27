@@ -1,8 +1,8 @@
 {
   "name": "system.js",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "dependencies": {
-    "es6-module-loader": "~0.6.1"
+    "es6-module-loader": "~0.7.1"
   },
   "devDependencies": {
     "qunit": "~1.12.0"
