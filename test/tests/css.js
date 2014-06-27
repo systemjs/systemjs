@@ -1,3 +1,3 @@
-exports.execute = function(load) {
+exports.instantiate = function(load) {
   return { pluginSource: load.source };
 }
