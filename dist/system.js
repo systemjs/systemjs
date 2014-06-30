@@ -980,13 +980,19 @@ function cjs(loader) {
   // CJS Module Format
   // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
   var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
-  var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+  var cjsRequirePre = "(?:^\\s*|[}{\\(\\);,\\n=:\\?\\&]\\s*)";
+  var cjsRequirePost = "\\s*\\(\\s*(\"([^\"]+)\"|'([^']+)')\\s*\\)";
+  var cjsRequireRegEx = new RegExp(cjsRequirePre+"require"+cjsRequirePost,"g");
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
-  function getCJSDeps(source) {
+  function getCJSDeps(source, requireAlias) {
     cjsExportsRegEx.lastIndex = 0;
-    cjsRequireRegEx.lastIndex = 0;
-
+    
+    // If a requireAlias is given, generate the regexp; otherwise, use the cached version.
+    var requireRegEx =  requireAlias ?
+        new RegExp(cjsRequirePre+(requireAlias)+cjsRequirePost,"g") :
+        cjsRequireRegEx;
+    requireRegEx.lastIndex = 0;
     var deps = [];
 
     // remove comments from the source first
@@ -994,7 +1000,7 @@ function cjs(loader) {
 
     var match;
 
-    while (match = cjsRequireRegEx.exec(source))
+    while (match = requireRegEx.exec(source))
       deps.push(match[2] || match[3]);
 
     return deps;
@@ -1091,11 +1097,26 @@ function amd(loader) {
 
   var isNode = typeof module != 'undefined' && module.exports;
 
+  // Matches parenthesis
+  var parensRegExp = /\(([^)]+)/;
+  var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+  var argRegEx = /[\w\d]+/g;
+  function getRequireAlias(source, index){
+    var match = source.match(parensRegExp);
+    if(match){
+      var args = [];
+      match[1].replace(commentRegEx,"").replace(argRegEx, function(arg){
+        args.push(arg);
+      });
+      return args[index||0];
+    }
+  };
+  
+
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
   var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*,?\s*)?\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
-
   /*
     AMD-compatible require
     To copy RequireJS, set window.require = window.requirejs = loader.require
@@ -1170,10 +1191,7 @@ function amd(loader) {
       }
       if (!(deps instanceof Array)) {
         factory = deps;
-        // CommonJS AMD form
-        if (!loader._getCJSDeps)
-          throw "AMD extension needs CJS extension for AMD CJS support";
-        deps = ['require', 'exports', 'module'].concat(loader._getCJSDeps(factory.toString()));
+        deps = ['require','exports','module']
       }
 
       if (typeof factory != 'function')
@@ -1183,8 +1201,17 @@ function amd(loader) {
 
       // remove system dependencies
       var requireIndex, exportsIndex, moduleIndex
-      if ((requireIndex = indexOf.call(deps, 'require')) != -1)
-        deps.splice(requireIndex, 1);
+      
+      if ((requireIndex = indexOf.call(deps, 'require')) != -1) {
+      	
+      	deps.splice(requireIndex, 1);
+        // CommonJS AMD form
+        if (!loader._getCJSDeps)
+          throw "AMD extension needs CJS extension for AMD CJS support";
+        var factoryText = factory.toString();
+        deps = deps.concat(loader._getCJSDeps(factoryText, getRequireAlias(factoryText, requireIndex)));
+      }
+        
 
       if ((exportsIndex = indexOf.call(deps, 'exports')) != -1)
         deps.splice(exportsIndex, 1);
