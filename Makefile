@@ -5,8 +5,9 @@ END = cat lib/polyfill-wrapper-end.js >> dist/$@.js;
 
 SystemJS = meta register core global cjs amd map plugins bundles versions depCache
 SystemProductionCSP = scriptLoader meta register core global cjs amd map bundles versions depCache
+SystemJSTraceur = register core global depCache
 
-all: system system-production-csp uglify
+all: system system-production-csp system-traceur uglify
 
 uglify:
 	cat lib/banner.js > dist/system.min.js;
@@ -14,6 +15,9 @@ uglify:
 
 	cat lib/banner.js > dist/system-production-csp.min.js;
 	./node_modules/.bin/uglifyjs dist/system-production-csp.js -cm >> dist/system-production-csp.min.js
+
+	cat lib/banner.js > dist/system-traceur.min.js;
+	./node_modules/.bin/uglifyjs dist/system-traceur.js -cm >> dist/system-traceur.min.js
 
 
 system:
@@ -32,6 +36,17 @@ system-production-csp:
 		cat lib/extension-$$extension.js >> dist/$@.js; \
 	done
 	for extension in $(SystemProductionCSP); do \
+		echo $$extension"(System);" >> dist/$@.js; \
+	done
+	$(END)
+
+
+system-traceur:
+	$(START)
+	for extension in $(SystemJSTraceur); do \
+		cat lib/extension-$$extension.js >> dist/$@.js; \
+	done
+	for extension in $(SystemJSTraceur); do \
 		echo $$extension"(System);" >> dist/$@.js; \
 	done
 	$(END)
