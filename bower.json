@@ -1,6 +1,6 @@
 {
   "name": "system.js",
-  "version": "0.6.8",
+  "version": "0.6.7",
   "dependencies": {
     "es6-module-loader": "~0.7.1"
   },
