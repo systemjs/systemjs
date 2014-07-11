@@ -1761,8 +1761,9 @@ function versions(loader) {
 
   var loaderNormalize = loader.normalize;
   loader.normalize = function(name, parentName, parentAddress) {
-    if (!loader.versions)
-      loader.versions = {};
+    if (!this.versions) { 
+      this.versions = {};
+    }
     var packageVersions = this.versions;
 
     // strip the version before applying map config
