@@ -176,6 +176,13 @@ asyncTest('AMD detection test', function() {
   }, err);
 });
 
+asyncTest('AMD detection test with comments', function() {
+  System['import']('tests/amd-module-3').then(function(m) {
+    ok(m.amd);
+    start();
+  }, err);
+});
+
 System.bundles['tests/amd-bundle'] = ['bundle-1', 'bundle-2'];
 asyncTest('Loading an AMD bundle', function() {
   System['import']('bundle-1').then(function(m) {
