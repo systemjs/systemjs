@@ -1410,8 +1410,18 @@ function map(loader) {
     }
 
     // if we found a contextual match, apply it now
-    if (curMatch)
-      return doMap(name, curMatch.length, loader.map[curParent][curMatch]);
+    if (curMatch) {
+      var parentDir = loader.map[curParent][curMatch];
+      if (parentDir) {
+        //if a module entry point is defined, resolve submodules using the closest parent directory
+        var hasParent = name.indexOf("/") > -1;
+        var parentHasEntry = parentDir.indexOf("/") > -1 && parentDir[parentDir.length - 1] !== "/";
+        if (hasParent && parentHasEntry) {
+          parentDir = parentDir.substr(0, parentDir.lastIndexOf("/"));
+        }
+      }
+      return doMap(name, curMatch.length, parentDir);
+    }
 
     // now do the global map
     for (var p in loader.map) {
