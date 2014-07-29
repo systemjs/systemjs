@@ -219,22 +219,24 @@ function register(loader) {
 
   function dedupe(deps) {
     var newDeps = [];
-    for (var i = 0; i < deps.length; i++)
+    for (var i = 0, l = deps.length; i < l; i++)
       if (indexOf.call(newDeps, deps[i]) == -1)
         newDeps.push(deps[i])
     return newDeps;
   }
 
-  // There are two variations of System.register:
-  // 1. System.register for ES6 conversion (2-3 params) - System.register([name, ]deps, declare)
-  //    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
-  //
-  // 2. System.register for dynamic modules (3-4 params) - System.register([name, ]deps, executingRequire, execute)
-  // the true or false statement 
-
-  // this extension implements the linking algorithm for the two variations identical to the spec
-  // allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
-
+  /*
+   * There are two variations of System.register:
+   * 1. System.register for ES6 conversion (2-3 params) - System.register([name, ]deps, declare)
+   *    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
+   *
+   * 2. System.register for dynamic modules (3-4 params) - System.register([name, ]deps, executingRequire, execute)
+   * the true or false statement 
+   *
+   * this extension implements the linking algorithm for the two variations identical to the spec
+   * allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
+   *
+   */
   // loader.register sets loader.defined for declarative modules
   var anonRegister;
   var calledRegister;
@@ -272,6 +274,7 @@ function register(loader) {
     
     // named register
     if (name) {
+      register.name = name;
       // we never overwrite an existing define
       if (!loader.defined[name])
         loader.defined[name] = register; 
@@ -283,24 +286,35 @@ function register(loader) {
       anonRegister = register;
     }
   }
-
-  // Registry side table - loader.defined
-  // Registry Entry Contains:
-  //    - deps 
-  //    - declare for register modules
-  //    - execute for dynamic modules, also after declare for declarative modules
-  //    - executingRequire indicates require drives execution for circularity of dynamic modules
-  //    - declarative optional boolean indicating which of the above
-  //
-  // Can preload modules directly on System.defined['my/module'] = { deps, execute, executingRequire }
-  //
-  // Then the entry gets populated with derived information during processing:
-  //    - normalizedDeps derived from deps, created in instantiate
-  //    - depMap array derived from deps, populated gradually in link
-  //    - groupIndex used by group linking algorithm
-  //    - module a raw module exports object with no wrapper
-  //    - evaluated indiciating whether evaluation has happend for declarative modules
-  // After linked and evaluated, entries are removed
+  /*
+   * Registry side table - loader.defined
+   * Registry Entry Contains:
+   *    - deps 
+   *    - declare for declarative modules
+   *    - execute for dynamic modules, different to declarative execute on module
+   *    - executingRequire indicates require drives execution for circularity of dynamic modules
+   *    - declarative optional boolean indicating which of the above
+   *
+   * Can preload modules directly on System.defined['my/module'] = { deps, execute, executingRequire }
+   *
+   * Then the entry gets populated with derived information during processing:
+   *    - normalizedDeps derived from deps, created in instantiate
+   *    - groupIndex used by group linking algorithm
+   *    - evaluated indicating whether evaluation has happend
+   *    - module the module record object, containing:
+   *      - exports actual module exports
+   *      
+   *    Then for declarative only we track dynamic bindings with the records:
+   *      - name
+   *      - setters declarative setter functions
+   *      - exports actual module values
+   *      - dependencies, module records of dependencies
+   *      - importers, module records of dependents
+   *
+   * After linked and evaluated, entries are removed, declarative module records remain in separate
+   * module binding table
+   *
+   */
 
   function defineRegister(loader) {
     if (loader.register)
@@ -336,7 +350,7 @@ function register(loader) {
 
     groups[entry.groupIndex].push(entry);
 
-    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+    for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       var depEntry = loader.defined[depName];
       
@@ -391,72 +405,91 @@ function register(loader) {
     }
   }
 
+  // module binding records
+  var moduleRecords = {};
+  function getOrCreateModuleRecord(name) {
+    return moduleRecords[name] || (moduleRecords[name] = {
+      name: name,
+      dependencies: [],
+      exports: {}, // start from an empty module and extend
+      importers: []
+    })
+  }
+
   function linkDeclarativeModule(entry, loader) {
     // only link if already not already started linking (stops at circular)
     if (entry.module)
       return;
 
-    // declare the module with an empty depMap
-    var depMap = [];
+    var module = entry.module = getOrCreateModuleRecord(entry.name);
+    var exports = entry.module.exports;
 
-    var declaration = entry.declare.call(loader.global, depMap);
+    var declaration = entry.declare.call(global, function(name, value) {
+      module.locked = true;
+      exports[name] = value;
+
+      for (var i = 0, l = module.importers.length; i < l; i++) {
+        var importerModule = module.importers[i];
+        if (!importerModule.locked) {
+          var importerIndex = importerModule.dependencies.indexOf(module);
+          importerModule.setters[importerIndex](exports);
+        }
+      }
+
+      module.locked = false;
+      return value;
+    });
     
-    entry.module = declaration.exports;
-    entry.exportStar = declaration.exportStar;
-    entry.execute = declaration.execute;
+    module.setters = declaration.setters;
+    module.execute = declaration.execute;
 
-    var module = entry.module;
+    if (!module.setters || !module.execute) {
+      throw "Invalid System.register form for " + entry.name;
+    }
 
     // now link all the module dependencies
-    // amending the depMap as we go
-    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+    for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       var depEntry = loader.defined[depName];
-      
-      // part of another linking group - use loader.get
-      if (!depEntry) {
-        depModule = loader.get(depName);
+      var depModule = moduleRecords[depName];
+
+      // work out how to set depExports based on scenarios...
+      var depExports;
+
+      if (depModule) {
+        depExports = depModule.exports;
       }
-      // if dependency already linked, use that
-      else if (depEntry.module) {
-        depModule = depEntry.module;
+      // in the loader registry
+      else if (!depEntry) {
+        depExports = loader.get(depName);
       }
-      // otherwise we need to link the dependency
+      // we have an entry -> link
       else {
         linkDeclarativeModule(depEntry, loader);
         depModule = depEntry.module;
+        depExports = depModule.exports;
       }
 
-      if (entry.exportStar && indexOf.call(entry.exportStar, entry.normalizedDeps[i]) != -1) {
-        // we are exporting * from this dependency
-        (function(depModule) {
-          for (var p in depModule) (function(p) {
-            // if the property is already defined throw?
-            Object.defineProperty(module, p, {
-              enumerable: true,
-              get: function() {
-                return depModule[p];
-              },
-              set: function(value) {
-                depModule[p] = value;
-              }
-            });
-          })(p);
-        })(depModule);
+      // only declarative modules have dynamic bindings
+      if (depModule && depModule.importers) {
+        depModule.importers.push(module);
+        module.dependencies.push(depModule);
       }
 
-      depMap[i] = depModule;
+      // run the setter for this dependency
+      if (module.setters[i])
+        module.setters[i](depExports);
     }
   }
 
   // An analog to loader.get covering execution of all three layers (real declarative, simulated declarative, simulated dynamic)
   function getModule(name, loader) {
-    var module;
+    var exports;
     var entry = loader.defined[name];
 
     if (!entry) {
-      module = loader.get(name);
-      if (!module)
+      exports = loader.get(name);
+      if (!exports)
         throw "System Register: The module requested " + name + " but this was not declared as a dependency";
     }
 
@@ -467,24 +500,24 @@ function register(loader) {
       else if (!entry.evaluated)
         linkDynamicModule(entry, loader);
 
-      module = entry.module;
+      exports = entry.module.exports;
     }
 
-    if (!module)
-      return '';
-
-    return module.__useDefault ? module['default'] : module;
+    return exports.__useDefault ? exports['default'] : exports;
   }
 
   function linkDynamicModule(entry, loader) {
     if (entry.module)
       return;
 
-    entry.module = { 'default': {}, __useDefault: true };
+    var exports = {};
+    var module = { 'default': exports, __useDefault: true };
+
+    entry.module = { exports: module };
 
     // AMD requires execute the tree first
     if (!entry.executingRequire) {
-      for (var i = 0; i < entry.normalizedDeps.length; i++) {
+      for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
         var depName = entry.normalizedDeps[i];
         var depEntry = loader.defined[depName];
         if (depEntry)
@@ -493,34 +526,31 @@ function register(loader) {
     }
 
     // lookup the module name if it is in the registry
-    var moduleName;
-    for (var d in loader.defined) {
-      if (loader.defined[d] != entry)
-        continue;
-      moduleName = d;
-      break;
-    }
+    var moduleName = entry.name;
 
     // now execute
     entry.evaluated = true;
     var output = entry.execute.call(loader.global, function(name) {
-      for (var i = 0; i < entry.deps.length; i++) {
+      for (var i = 0, l = entry.deps.length; i < l; i++) {
         if (entry.deps[i] != name)
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-    }, entry.module['default'], moduleName);
+    }, exports, moduleName);
     
     if (output)
-      entry.module['default'] = output;
+      module['default'] = output;
   }
 
-  // given a module, and the list of modules for this current branch,
-  // ensure that each of the dependencies of this module is evaluated
-  //  (unless one is a circular dependency already in the list of seen
-  //   modules, in which case we execute it)
-  // then evaluate the module itself
-  // depth-first left to right execution to match ES6 modules
+  /*
+   * Given a module, and the list of modules for this current branch,
+   *  ensure that each of the dependencies of this module is evaluated
+   *  (unless one is a circular dependency already in the list of seen
+   *  modules, in which case we execute it)
+   *
+   * Then we evaluate the module itself depth-first left to right 
+   * execution to match ES6 modules
+   */
   function ensureEvaluated(moduleName, seen, loader) {
     var entry = loader.defined[moduleName];
 
@@ -528,9 +558,11 @@ function register(loader) {
     if (entry.evaluated || !entry.declarative)
       return;
 
+    // this only applies to declarative modules which late-execute
+
     seen.push(moduleName);
 
-    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+    for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       if (indexOf.call(seen, depName) == -1) {
         if (!loader.defined[depName])
@@ -544,7 +576,7 @@ function register(loader) {
       return;
 
     entry.evaluated = true;
-    entry.execute.call(loader.global);
+    entry.module.execute.call(loader.global);
   }
 
   var registerRegEx = /System\.register/;
@@ -651,18 +683,16 @@ function register(loader) {
       return loaderInstantiate.call(this, load);
 
     entry.deps = dedupe(entry.deps);
+    entry.name = load.name;
 
     // first, normalize all dependencies
     var normalizePromises = [];
-    for (var i = 0; i < entry.deps.length; i++)
+    for (var i = 0, l = entry.deps.length; i < l; i++)
       normalizePromises.push(Promise.resolve(loader.normalize(entry.deps[i], load.name)));
 
     return Promise.all(normalizePromises).then(function(normalizedDeps) {
 
       entry.normalizedDeps = normalizedDeps;
-
-      // create the empty dep map - this is our key deferred dependency binding object passed into declare
-      entry.depMap = [];
 
       return {
         deps: entry.deps,
@@ -683,7 +713,8 @@ function register(loader) {
           // remove from the registry
           loader.defined[load.name] = undefined;
 
-          var module = loader.newModule(entry.module);
+          var module = loader.newModule(entry.module.exports);
+          entry.module.module = module;
 
           // if the entry is an alias, set the alias too
           for (var name in loader.defined) {
@@ -877,8 +908,9 @@ function global(loader) {
         // now store a complete copy of the global object
         // in order to detect changes
         curGlobalObj = {};
-        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage', 'clipboardData', 'frames'];
-        for (var g in loader.global)
+        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'webkitStorageInfo'];
+        for (var g in loader.global) {
+          if (~ignoredGlobalProps.indexOf(g)) { continue; }
           if (!hasOwnProperty || loader.global.hasOwnProperty(g)) {
             try {
               curGlobalObj[g] = loader.global[g];
@@ -886,6 +918,7 @@ function global(loader) {
               ignoredGlobalProps.push(g);
             }
           }
+        }
       },
       retrieveGlobal: function(moduleName, exportName, init) {
         var singleGlobal;
@@ -1046,7 +1079,7 @@ function cjs(loader) {
       load.metadata.executingRequire = true;
 
       load.metadata.execute = function(require, exports, moduleName) {
-        var dirname = load.address.split('/');
+        var dirname = (load.address || '').split('/');
         dirname.pop();
         dirname = dirname.join('/');
 
@@ -1204,7 +1237,7 @@ function amd(loader) {
 
           // add back in system dependencies
           if (moduleIndex != -1)
-            depValues.splice(moduleIndex, 0, exports, module = { id: moduleName, uri: loader.baseURL + moduleName, config: function() { return {}; }, exports: exports });
+            depValues.splice(moduleIndex, 0, module = { id: moduleName, uri: loader.baseURL + moduleName, config: function() { return {}; }, exports: exports });
           
           if (exportsIndex != -1)
             depValues.splice(exportsIndex, 0, exports);
@@ -1316,7 +1349,8 @@ function amd(loader) {
 
     return loaderInstantiate.call(loader, load);
   }
-}/*
+}
+/*
   SystemJS map support
   
   Provides map configuration through
@@ -1761,9 +1795,8 @@ function versions(loader) {
 
   var loaderNormalize = loader.normalize;
   loader.normalize = function(name, parentName, parentAddress) {
-    if (!this.versions) { 
-      this.versions = {};
-    }
+    if (!loader.versions)
+      loader.versions = {};
     var packageVersions = this.versions;
 
     // strip the version before applying map config
