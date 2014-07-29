@@ -53,7 +53,6 @@ System.register("tree/global", ['./jquery'], false, function(__require, __export
 });
 
 System.register("tree/amd", ['./global'], false, function() {
-  console.log('amd');
   return { is: 'amd' };
 });
 

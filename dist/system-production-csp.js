@@ -1156,7 +1156,7 @@ function cjs(loader) {
         for (var _g in globals)
           glString += 'var ' + _g + ' = _g.' + _g + ';';
 
-        load.source = glString + '(function() { ' + load.source + '\n}).call(exports)';
+        load.source = '(function() { ' + glString + '(function() { ' + load.source + '\n}).call(exports); })();';
 
         // disable AMD detection
         var define = loader.global.define;
@@ -1920,6 +1920,8 @@ depCache(System);
         ) + 'traceur.js';
 };
 
+var __head;
+
 function __eval(__source, __global, __address, __sourceMap) {
   try {
     __source = (__global != __$global ? 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }' : __source)
@@ -1927,12 +1929,20 @@ function __eval(__source, __global, __address, __sourceMap) {
       + (__sourceMap ? '\n//# sourceMappingURL=' + __sourceMap : '');
     
     // we need to ensure eval runs in a global scope
-    if (__global == __$global) {
-      __global.__source = __source;
-      var script = document.createElement('script');
-      script.innerHTML = 'eval(__source)';
-      document.head.appendChild(script);
-      delete __global.__source;
+    if (__global == __$global && __head) {
+      var __script = document.createElement('script');
+      __script.textContent = __source;
+      var __onerror = window.onerror;
+      var __e;
+      window.onerror = function(e) {
+        __e = e;
+        return true;
+      }
+      __head.appendChild(__script);
+      __head.removeChild(__script);
+      window.onerror = __onerror;
+      if (__e)
+        throw __e;
     }
     else
       eval(__source);
@@ -1950,6 +1960,8 @@ var __$curScript;
 
 (function(global) {
   if (typeof window != 'undefined') {
+    __head = document.head || document.body || document.documentElement;
+
     var scripts = document.getElementsByTagName('script');
     __$curScript = scripts[scripts.length - 1];
 
