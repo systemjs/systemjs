@@ -467,11 +467,13 @@ asyncTest('Module Name meta', function() {
 
 asyncTest('Relative dyanamic loading', function() {
   System['import']('tests/reldynamic').then(function(m) {
-    m.dynamicLoad().then(function(m) {
-      ok(m.dynamic == 'module', 'Dynamic load failed');
-      start();
-    }, err);
-  }, err);
+    return m.dynamicLoad();
+  })
+  .then(function(m) {
+    ok(m.dynamic == 'module', 'Dynamic load failed');
+    start();
+  })
+  ['catch'](err);
 });
 
 asyncTest('ES6 Circular', function() {
