@@ -46,6 +46,15 @@ asyncTest('Global script with multiple objects the same', function() {
   }, err);
 });
 
+asyncTest('Global script multiple objects different', function() {
+  System['import']('tests/global-multi-diff').then(function(m) {
+    ok(m.foo == 'barz');
+    ok(m.baz == 'chaz');
+    ok(m.zed == 'ted');
+    start();
+  }, err);
+});
+
 asyncTest('Global script loading with inline shim', function() {
   System['import']('tests/global-inline-dep').then(function(m) {
     ok(m == '1.8.3', 'Global dependency not defined');
