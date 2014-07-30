@@ -252,6 +252,13 @@ asyncTest('Loading a CommonJS module with this', function() {
   }, err);
 });
 
+asyncTest('CommonJS setting module.exports', function() {
+  System['import']('tests/cjs-exports').then(function(m) {
+    ok(m.e = 'export');
+    start();
+  }, err);
+});
+
 asyncTest('Loading a UMD module', function() {
   System['import']('tests/umd').then(function(m) {
     ok(m.d == 'hi', 'module value not defined');
