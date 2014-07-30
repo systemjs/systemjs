@@ -32,6 +32,13 @@ asyncTest('Global script loading', function() {
   }, err);
 });
 
+asyncTest('Global script with var syntax', function() {
+  System['import']('tests/global-single').then(function(m) {
+    ok(m == 'bar', 'Wrong global value');
+    start();
+  }, err);
+});
+
 asyncTest('Global script with multiple objects the same', function() {
   System['import']('tests/global-multi').then(function(m) {
     ok(m.jquery == 'here', 'Multi globals not detected');
