@@ -5,10 +5,10 @@
  * MIT License
  */
 
-(function(__$global) {
+(function($__global) {
 
-__$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;
+$__global.upgradeSystemLoader = function() {
+  $__global.upgradeSystemLoader = undefined;
 
   // indexOf polyfill for IE
   var indexOf = Array.prototype.indexOf || function(item) {
@@ -60,15 +60,18 @@ __$global.upgradeSystemLoader = function() {
   }
 
   // clone the original System loader
-  var originalSystem = __$global.System;
-  var System = __$global.System = new LoaderPolyfill(originalSystem);
-  System.baseURL = originalSystem.baseURL;
-  System.paths = { '*': '*.js' };
-  System.originalSystem = originalSystem;
+  var System;
+  (function() {
+    var originalSystem = $__global.System;
+    System = $__global.System = new LoaderPolyfill(originalSystem);
+    System.baseURL = originalSystem.baseURL;
+    System.paths = { '*': '*.js' };
+    System.originalSystem = originalSystem;
+  })();
 
   System.noConflict = function() {
-    __$global.SystemJS = System;
-    __$global.System = System.originalSystem;
+    $__global.SystemJS = System;
+    $__global.System = System.originalSystem;
   }
 
   /*
@@ -154,7 +157,7 @@ function meta(loader) {
 
           if (load.metadata[metaName] instanceof Array)
             load.metadata[metaName].push(metaValue);
-          else
+          else if (!load.metadata[metaName])
             load.metadata[metaName] = metaValue;
         }
       }
@@ -207,7 +210,7 @@ function register(loader) {
       }
     }
 
-    __eval(load.source, loader.global, load.address, sourceMappingURL);
+    __eval(load.source, load.address, sourceMappingURL);
 
     // traceur overwrites System and Module - write them back
     if (load.name == '@traceur') {
@@ -786,7 +789,7 @@ function core(loader) {
   loader.config = function(cfg) {
     for (var c in cfg) {
       var v = cfg[c];
-      if (typeof v == 'object') {
+      if (typeof v == 'object' && !(v instanceof Array)) {
         this[c] = this[c] || {};
         for (var p in v)
           this[c][p] = v[p];
@@ -1127,7 +1130,7 @@ function amd(loader) {
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
-  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*("[^"]+"|'[^']+')\s*,)*(\s*("[^"]+"|'[^']+')\s*,?\s*)?\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?\s*)?(\s*(\/\/.*\n|\/\*(.|\s)*?\*\/)\s*)*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
 
   /*
     AMD-compatible require
@@ -1999,80 +2002,85 @@ plugins(System);
 bundles(System);
 versions(System);
 depCache(System);
-
-  
   if (!System.paths['@traceur'])
-    System.paths['@traceur'] = __$curScript && __$curScript.getAttribute('data-traceur-src')
-      || (__$curScript && __$curScript.src 
-        ? __$curScript.src.substr(0, __$curScript.src.lastIndexOf('/') + 1) 
+    System.paths['@traceur'] = $__curScript && $__curScript.getAttribute('data-traceur-src')
+      || ($__curScript && $__curScript.src 
+        ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1) 
         : System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/')
         ) + 'traceur.js';
 };
 
-var __head;
+var $__curScript, __eval;
 
-function __eval(__source, __global, __address, __sourceMap) {
-  try {
-    __source = (__global != __$global ? 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }' : __source)
-      + '\n//# sourceURL=' + __address
-      + (__sourceMap ? '\n//# sourceMappingURL=' + __sourceMap : '');
-    
-    // we need to ensure eval runs in a global scope
-    if (__global == __$global && __head) {
-      var __script = document.createElement('script');
-      __script.textContent = __source;
-      var __onerror = window.onerror;
-      var __e;
-      window.onerror = function(e) {
-        __e = e;
-        return true;
-      }
-      __head.appendChild(__script);
-      __head.removeChild(__script);
-      window.onerror = __onerror;
-      if (__e)
-        throw __e;
+(function() {
+
+  var doEval;
+
+  __eval = function(source, address, sourceMap) {
+    source += '\n//# sourceURL=' + address + (sourceMap ? '\n//# sourceMappingURL=' + sourceMap : '');
+
+    try {
+      doEval(source);
     }
-    else
-      eval(__source);
-  }
-  catch(e) {
-    if (e.name == 'SyntaxError')
-      e.message = 'Evaluating ' + __address + '\n\t' + e.message;
-    if (System.trace && System.execute == false)
-      e = 'Execution error for ' + __address + ': ' + e.stack || e;
-    throw e;
-  }
-}
+    catch(e) {
+      if (e.name == 'SyntaxError')
+        e.message = 'Evaluating ' + address + '\n\t' + e.message;
+      if (System.trace && System.execute == false)
+        e = 'Execution error for ' + address + ': ' + e.stack || e;
+      throw e;
+    }
+  };
 
-var __$curScript;
-
-(function(global) {
   if (typeof window != 'undefined') {
-    __head = document.head || document.body || document.documentElement;
+    var head = document.head || document.body || document.documentElement;
 
     var scripts = document.getElementsByTagName('script');
-    __$curScript = scripts[scripts.length - 1];
+    $__curScript = scripts[scripts.length - 1];
 
-    if (!global.System || !global.LoaderPolyfill) {
+    // globally scoped eval for the browser
+    doEval = function(source) {
+      var script = document.createElement('script');
+      script.textContent = source;
+      var onerror = window.onerror;
+      var e;
+      window.onerror = function(_e) {
+        e = _e;
+        return true;
+      }
+      head.appendChild(script);
+      head.removeChild(script);
+      window.onerror = onerror;
+      if (e)
+        throw e;
+    }
+
+    if (!$__global.System || !$__global.LoaderPolyfill) {
       // determine the current script path as the base path
-      var curPath = __$curScript.src;
+      var curPath = $__curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
     }
     else {
-      global.upgradeSystemLoader();
+      $__global.upgradeSystemLoader();
     }
   }
   else {
     var es6ModuleLoader = require('es6-module-loader');
-    global.System = es6ModuleLoader.System;
-    global.Loader = es6ModuleLoader.Loader;
-    global.upgradeSystemLoader();
-    module.exports = global.System;
+    $__global.System = es6ModuleLoader.System;
+    $__global.Loader = es6ModuleLoader.Loader;
+    $__global.upgradeSystemLoader();
+    module.exports = $__global.System;
+
+    // global scoped eval for node
+    var vm = require('vm');
+    doEval = function(source, address, sourceMap) {
+      vm.runInThisContext(source);
+    }
   }
-})(__$global);
+})();
 
 })(typeof window != 'undefined' ? window : global);
+      
+      
