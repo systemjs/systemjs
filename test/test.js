@@ -84,6 +84,14 @@ asyncTest('Global script loading that detects as AMD with shim config', function
   }, err);
 });
 
+asyncTest('Meta should override meta syntax', function() {
+  System.meta['tests/meta-override'] = { format: 'es6' };
+  System['import']('tests/meta-override').then(function(m) {
+    ok(m.p == 'value', 'Not ES6');
+    start();
+  }, err);
+});
+
 asyncTest('Support the empty module', function() {
   System['import']('@empty').then(function(m) {
     ok(m, 'No empty module');
