@@ -925,6 +925,7 @@ function global(loader) {
       },
       retrieveGlobal: function(moduleName, exportName, init) {
         var singleGlobal;
+        var multipleExports;
         var exports = {};
 
         // run init
@@ -938,7 +939,7 @@ function global(loader) {
         // check for global changes, creating the globalObject for the module
         // if many globals, then a module object for those is created
         // if one global, then that is the module directly
-        if (exportName && !singleGlobal) {
+        else if (exportName) {
           var firstPart = exportName.split('.')[0];
           singleGlobal = eval.call(loader.global, exportName);
           exports[firstPart] = loader.global[firstPart];
@@ -946,13 +947,13 @@ function global(loader) {
 
         else {
           for (var g in loader.global) {
-            if (~ignoredGlobalProps.indexOf(g))
+            if (ignoredGlobalProps.indexOf(g) != -1)
               continue;
             if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && curGlobalObj[g] != loader.global[g]) {
               exports[g] = loader.global[g];
               if (singleGlobal) {
                 if (singleGlobal !== loader.global[g])
-                  singleGlobal = undefined;
+                  multipleExports = true;
               }
               else if (singleGlobal !== false) {
                 singleGlobal = loader.global[g];
@@ -963,7 +964,7 @@ function global(loader) {
 
         moduleGlobals[moduleName] = exports;
 
-        return typeof singleGlobal != 'undefined' ? singleGlobal : exports;
+        return multipleExports ? exports : singleGlobal;
       }
     }));
   }
@@ -1051,8 +1052,6 @@ function cjs(loader) {
     cwd: function() { return '/' }
   };
 
-  loader._getCJSDeps = getCJSDeps;
-
   if (!loader.has('@@nodeProcess'))
     loader.set('@@nodeProcess', loader.newModule({ 'default': nodeProcess, __useDefault: true }));
 
@@ -1061,8 +1060,6 @@ function cjs(loader) {
     var loader = this;
     if (!loader.has('@@nodeProcess'))
       loader.set('@@nodeProcess', loader.newModule({ 'default': nodeProcess, __useDefault: true }));
-    if (!loader._getCJSDeps)
-      loader._getCJSDeps = getCJSDeps;
     return loaderTranslate.call(loader, load);
   }
 
@@ -1131,6 +1128,37 @@ function amd(loader) {
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
   var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?\s*)?(\s*(\/\/.*\n|\/\*(.|\s)*?\*\/)\s*)*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+  var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+
+  var cjsRequirePre = "(?:^\\s*|[}{\\(\\);,\\n=:\\?\\&]\\s*)";
+  var cjsRequirePost = "\\s*\\(\\s*(\"([^\"]+)\"|'([^']+)')\\s*\\)";
+
+  var fnBracketRegEx = /\(([^\)]*)\)/;
+
+  var requireRegExs = {};
+
+  function getCJSDeps(source, requireIndex) {
+
+    // remove comments
+    source = source.replace(commentRegEx, '');
+
+    // determine the require alias
+    var params = source.match(fnBracketRegEx);
+    var requireAlias = (params[1].split(',')[requireIndex] || 'require').trim();
+
+    // find or generate the regex for this requireAlias
+    var requireRegEx = requireRegExs[requireAlias] || (requireRegExs[requireAlias] = new RegExp(cjsRequirePre + requireAlias + cjsRequirePost, 'g'));
+
+    requireRegEx.lastIndex = 0;
+
+    var deps = [];
+
+    var match;
+    while (match = requireRegEx.exec(source))
+      deps.push(match[2] || match[3]);
+
+    return deps;
+  }
 
   /*
     AMD-compatible require
@@ -1206,10 +1234,7 @@ function amd(loader) {
       }
       if (!(deps instanceof Array)) {
         factory = deps;
-        // CommonJS AMD form
-        if (!loader._getCJSDeps)
-          throw "AMD extension needs CJS extension for AMD CJS support";
-        deps = ['require', 'exports', 'module'].concat(loader._getCJSDeps(factory.toString()));
+        deps = ['require','exports','module']
       }
 
       if (typeof factory != 'function')
@@ -1219,8 +1244,16 @@ function amd(loader) {
 
       // remove system dependencies
       var requireIndex, exportsIndex, moduleIndex
-      if ((requireIndex = indexOf.call(deps, 'require')) != -1)
-        deps.splice(requireIndex, 1);
+      
+      if ((requireIndex = indexOf.call(deps, 'require')) != -1) {
+      	
+      	deps.splice(requireIndex, 1);
+
+        var factoryText = factory.toString();
+
+        deps = deps.concat(getCJSDeps(factoryText, requireIndex));
+      }
+        
 
       if ((exportsIndex = indexOf.call(deps, 'exports')) != -1)
         deps.splice(exportsIndex, 1);

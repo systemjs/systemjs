@@ -537,3 +537,10 @@ asyncTest('AMD -> System.register circular -> ES6', function() {
   }, err);
 });
 
+asyncTest('AMD simplified CommonJS wrapping with an aliased require', function() {
+  System['import']('tests/amd-simplified-cjs-aliased-require1').then(function(m) {
+    ok(m.require2,"got dependency from aliased require");
+    ok(m.require2.amdCJS,"got dependency from aliased require listed as a dependency");
+    start();
+  }, err);
+});
