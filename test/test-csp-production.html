@@ -76,6 +76,13 @@
         }, err);
       });
 
+      asyncTest('Loading a badly named AMD define', function() {
+        System['import']('tests/jquery-named').then(function(jquery) {
+          ok(jquery.is == 'jquery');
+          start();
+        }, err);
+      });
+
       asyncTest('System.register Circular', function() {
         System['import']('tests/register-circular1').then(function(m) {
           ok(m.q == 3, 'Binding not allocated');
