@@ -87,6 +87,8 @@ function scriptLoader(loader) {
   // call this functione everytime a wrapper executes
   loader.onScriptLoad = function() {};
 
+  loader.amdDefine = true;
+
   // override fetch to use script injection
   loader.fetch = function(load) {
     return new Promise(function(resolve, reject) {
@@ -111,10 +113,13 @@ function scriptLoader(loader) {
         reject(evt);
       }
 
-      if (s.attachEvent)
+      if (s.attachEvent) {
         s.attachEvent('onreadystatechange', complete);
-      s.addEventListener('load', complete, false);
-      s.addEventListener('error', error, false);
+      }
+      else {
+        s.addEventListener('load', complete, false);
+        s.addEventListener('error', error, false);
+      }
 
       s.src = load.address;
       head.appendChild(s);
@@ -351,6 +356,7 @@ function register(loader) {
   /*
    * Registry side table - loader.defined
    * Registry Entry Contains:
+   *    - name
    *    - deps 
    *    - declare for declarative modules
    *    - execute for dynamic modules, different to declarative execute on module
@@ -1161,7 +1167,11 @@ function cjs(loader) {
 */
 function amd(loader) {
 
+  // by default we only enforce AMD noConflict mode in Node
   var isNode = typeof module != 'undefined' && module.exports;
+  
+  if (loader.amdDefine == undefined)
+    loader.amdDefine = false;
 
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
@@ -1243,15 +1253,25 @@ function amd(loader) {
   var anonDefine;
   // set to true of the current module turns out to be a named define bundle
   var defineBundle;
+
+  var oldModule, oldExports, oldDefine;
+
   function createDefine(loader) {
     anonDefine = null;
     defineBundle = null;
 
     // ensure no NodeJS environment detection
-    loader.global.module = undefined;
-    loader.global.exports = undefined;
 
-    if (loader.global.define && loader.global.define.loader == loader)
+    var global = loader.global;
+
+    oldModule = global.module;
+    oldExports = global.exports;
+    oldDefine = global.define;
+
+    global.module = undefined;
+    global.exports = undefined;
+
+    if (global.define && global.define.loader == loader)
       return;
 
     // script injection mode calls this function synchronously on load
@@ -1308,25 +1328,27 @@ function amd(loader) {
 
       var define = {
         deps: deps,
-        execute: function(require, exports, moduleName) {
+        execute: function(require, exports, module) {
 
           var depValues = [];
           for (var i = 0; i < deps.length; i++)
             depValues.push(require(deps[i]));
 
-          var module;
+          module.uri = loader.baseURL + module.id;
+
+          module.config = function() {};
 
           // add back in system dependencies
           if (moduleIndex != -1)
-            depValues.splice(moduleIndex, 0, module = { id: moduleName, uri: loader.baseURL + moduleName, config: function() { return {}; }, exports: exports });
+            depValues.splice(moduleIndex, 0, module);
           
           if (exportsIndex != -1)
             depValues.splice(exportsIndex, 0, exports);
           
           if (requireIndex != -1)
-            depValues.splice(requireIndex, 0, makeRequire(moduleName, require, loader));
+            depValues.splice(requireIndex, 0, makeRequire(module.id, require, loader));
 
-          var output = factory.apply(loader.global, depValues);
+          var output = factory.apply(global, depValues);
 
           if (typeof output == 'undefined' && module)
             output = module.exports;
@@ -1367,13 +1389,19 @@ function amd(loader) {
       }
     };
 
-    loader.amdDefine = define;
-    loader.global.define = define;
-    loader.global.define.amd = {};
-    loader.global.define.loader = loader;
+    global.define = define;
+    global.define.amd = {};
+    global.define.loader = loader;
   }
 
-  if (!isNode && loader.amdDefine !== false)
+  function removeDefine(loader) {
+    var global = loader.global;
+    global.define = oldDefine;
+    global.module = oldModule;
+    global.exports = oldExports;
+  }
+
+  if (loader.amdDefine !== false)
     createDefine(loader);
 
   if (loader.scriptLoader) {
@@ -1384,7 +1412,6 @@ function amd(loader) {
       return loaderFetch.call(this, load);
     }
   }
-  
 
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
@@ -1398,7 +1425,7 @@ function amd(loader) {
       try {
         loader.__exec(load);
       }
-      catch (e) {
+      catch(e) {
         if (loader.execute === false && isNode) {
           // use a regular expression to pull out deps
           var match = load.source.match(amdRegEx);
@@ -1416,8 +1443,8 @@ function amd(loader) {
           throw e;
       }
 
-      if (isNode)
-        loader.global.define = undefined;
+      if (loader.amdDefine === false)
+        removeDefine(loader);
 
       if (!anonDefine && !defineBundle && !isNode)
         throw "AMD module " + load.name + " did not define";
