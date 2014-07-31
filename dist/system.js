@@ -427,7 +427,7 @@ function register(loader) {
     var module = entry.module = getOrCreateModuleRecord(entry.name);
     var exports = entry.module.exports;
 
-    var declaration = entry.declare.call(global, function(name, value) {
+    var declaration = entry.declare.call(loader.global, function(name, value) {
       module.locked = true;
       exports[name] = value;
 
@@ -494,6 +494,8 @@ function register(loader) {
       exports = loader.get(name);
       if (!exports)
         throw "System Register: The module requested " + name + " but this was not declared as a dependency";
+      if (exports.__useDefault)
+        exports = exports['default'];
     }
 
     else {
@@ -506,7 +508,7 @@ function register(loader) {
       exports = entry.module.exports;
     }
 
-    return exports.__useDefault ? exports['default'] : exports;
+    return exports;
   }
 
   function linkDynamicModule(entry, loader) {
@@ -514,9 +516,8 @@ function register(loader) {
       return;
 
     var exports = {};
-    var module = { 'default': exports, __useDefault: true };
 
-    entry.module = { exports: module };
+    var module = entry.module = { exports: exports, id: entry.name };
 
     // AMD requires execute the tree first
     if (!entry.executingRequire) {
@@ -528,9 +529,6 @@ function register(loader) {
       }
     }
 
-    // lookup the module name if it is in the registry
-    var moduleName = entry.name;
-
     // now execute
     entry.evaluated = true;
     var output = entry.execute.call(loader.global, function(name) {
@@ -539,10 +537,10 @@ function register(loader) {
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-    }, exports, moduleName);
+    }, exports, module);
     
     if (output)
-      module['default'] = output;
+      module.exports = output;
   }
 
   /*
@@ -700,12 +698,6 @@ function register(loader) {
       return {
         deps: entry.deps,
         execute: function() {
-          // this avoids double duplication allowing a bundle to equal its last defined module
-          if (entry.esmodule) {
-            loader.defined[load.name] = undefined;
-            return entry.esmodule;
-          }
-
           // recursively ensure that the module and all its 
           // dependencies are linked (with dependency group handling)
           link(load.name, loader);
@@ -716,19 +708,9 @@ function register(loader) {
           // remove from the registry
           loader.defined[load.name] = undefined;
 
-          var module = loader.newModule(entry.module.exports);
+          var module = loader.newModule(entry.declarative ? entry.module.exports : { 'default': entry.module.exports, '__useDefault': true });
           entry.module.module = module;
 
-          // if the entry is an alias, set the alias too
-          for (var name in loader.defined) {
-            if (!loader.defined[name])
-              continue;
-            if (entry.declarative && loader.defined[name].execute != entry.execute)
-              continue;
-            if (!entry.declarative && loader.defined[name].declare != entry.declare);
-              continue;
-            loader.defined[name].esmodule = module;
-          }
           // return the defined module object
           return module;
         }
@@ -1078,7 +1060,7 @@ function cjs(loader) {
 
       load.metadata.executingRequire = true;
 
-      load.metadata.execute = function(require, exports, moduleName) {
+      load.metadata.execute = function(require, exports, module) {
         var dirname = (load.address || '').split('/');
         dirname.pop();
         dirname = dirname.join('/');
@@ -1086,7 +1068,7 @@ function cjs(loader) {
         var globals = loader.global._g = {
           global: loader.global,
           exports: exports,
-          module: { exports: exports },
+          module: module,
           process: nodeProcess,
           require: require,
           __filename: load.address,
@@ -1108,8 +1090,6 @@ function cjs(loader) {
         loader.global.define = define;
 
         loader.global._g = undefined;
-
-        return globals.module.exports;
       }
     }
 
@@ -1127,7 +1107,7 @@ function amd(loader) {
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
-  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?\s*)?(\s*(\/\/.*\n|\/\*(.|\s)*?\*\/)\s*)*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?\s*)?(\s*(\/\/.*\r?\n|\/\*(.|\s)*?\*\/)\s*)*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
   var cjsRequirePre = "(?:^\\s*|[}{\\(\\);,\\n=:\\?\\&]\\s*)";
@@ -2056,29 +2036,27 @@ var $__curScript, __eval;
       doEval(source);
     }
     catch(e) {
-      if (e.name == 'SyntaxError')
-        e.message = 'Evaluating ' + address + '\n\t' + e.message;
-      if (System.trace && System.execute == false)
-        e = 'Execution error for ' + address + ': ' + e.stack || e;
-      throw e;
+      throw 'Error evaluating ' + address;
     }
   };
 
   if (typeof window != 'undefined') {
-    var head = document.head || document.body || document.documentElement;
+    var head;
 
     var scripts = document.getElementsByTagName('script');
     $__curScript = scripts[scripts.length - 1];
 
     // globally scoped eval for the browser
     doEval = function(source) {
+      if (!head)
+        head = document.head || document.body || document.documentElement;
+
       var script = document.createElement('script');
       script.textContent = source;
       var onerror = window.onerror;
       var e;
       window.onerror = function(_e) {
         e = _e;
-        return true;
       }
       head.appendChild(script);
       head.removeChild(script);
