@@ -1,3 +1,3 @@
 foo = "barz";
 baz = "chaz";
-window.zed = "ted";
+this.zed = "ted";
