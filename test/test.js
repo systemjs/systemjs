@@ -18,6 +18,8 @@ function err(e) {
   });  
 }
 
+var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
+
 asyncTest('Error handling', function() {
   System['import']('tests/error').then(err, function(e) {
     ok(true);
@@ -25,6 +27,7 @@ asyncTest('Error handling', function() {
   });
 });
 
+if (!ie8)
 asyncTest('Global script loading', function() {
   System['import']('tests/global').then(function(m) {
     ok(m.jjQuery && m.another, 'Global objects not defined');
@@ -46,6 +49,7 @@ asyncTest('Global script with multiple objects the same', function() {
   }, err);
 });
 
+if (!ie8)
 asyncTest('Global script multiple objects different', function() {
   System['import']('tests/global-multi-diff').then(function(m) {
     ok(m.foo == 'barz');
@@ -77,6 +81,7 @@ asyncTest('Global script with shim config', function() {
   }, err);
 });
 
+if (!ie8)
 asyncTest('Global script with inaccessible properties', function() {
   Object.defineProperty(System.global, 'errorOnAccess', {
     configurable: true,

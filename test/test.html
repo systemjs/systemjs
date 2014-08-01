@@ -17,7 +17,11 @@
 		<script src="../bower_components/es6-module-loader/dist/es6-module-loader.js"></script>
 		<script src="../dist/system.js" data-traceur-src="../bower_components/traceur/traceur.js" type="text/javascript"></script>
 		<script>
-			System.import('test');
+			System['import']('test')['catch'](function(e) {
+				setTimeout(function() {
+					throw e;
+				})
+			});
 		</script>
 
 		<script src="../bower_components/qunit/qunit/qunit.js"></script>

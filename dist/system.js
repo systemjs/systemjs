@@ -369,7 +369,7 @@ function register(loader) {
         
         // if already in a group, remove from the old group
         if (depEntry.groupIndex) {
-          groups[depEntry.groupIndex].splice(groups[depEntry.groupIndex].indexOf(depEntry), 1);
+          groups[depEntry.groupIndex].splice(indexOf.call(groups[depEntry.groupIndex], depEntry), 1);
 
           // if the old group is empty, then we have a mixed depndency cycle
           if (groups[depEntry.groupIndex].length == 0)
@@ -434,7 +434,7 @@ function register(loader) {
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
-          var importerIndex = importerModule.dependencies.indexOf(module);
+          var importerIndex = indexOf.call(importerModule.dependencies, module);
           importerModule.setters[importerIndex](exports);
         }
       }
@@ -895,7 +895,7 @@ function global(loader) {
         curGlobalObj = {};
         ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'webkitStorageInfo'];
         for (var g in loader.global) {
-          if (~ignoredGlobalProps.indexOf(g)) { continue; }
+          if (indexOf.call(ignoredGlobalProps, g) != -1) { continue; }
           if (!hasOwnProperty || loader.global.hasOwnProperty(g)) {
             try {
               curGlobalObj[g] = loader.global[g];
@@ -929,7 +929,7 @@ function global(loader) {
 
         else {
           for (var g in loader.global) {
-            if (ignoredGlobalProps.indexOf(g) != -1)
+            if (indexOf.call(ignoredGlobalProps, g) != -1)
               continue;
             if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && curGlobalObj[g] != loader.global[g]) {
               exports[g] = loader.global[g];
@@ -966,9 +966,9 @@ function global(loader) {
 
     // global is a fallback module format
     if (load.metadata.format == 'global') {
-      load.metadata.execute = function(require, exports, moduleName) {
+      load.metadata.execute = function(require, exports, module) {
 
-        loader.get('@@global-helpers').prepareGlobal(moduleName, load.metadata.deps);
+        loader.get('@@global-helpers').prepareGlobal(module.id, load.metadata.deps);
 
         if (exportName)
           load.source += '\nthis["' + exportName + '"] = ' + exportName + ';';
@@ -985,7 +985,7 @@ function global(loader) {
 
         loader.global.define = define;
 
-        return loader.get('@@global-helpers').retrieveGlobal(moduleName, exportName, load.metadata.init);
+        return loader.get('@@global-helpers').retrieveGlobal(module.io, exportName, load.metadata.init);
       }
     }
     return loaderInstantiate.call(loader, load);
@@ -2052,7 +2052,7 @@ var $__curScript, __eval;
         head = document.head || document.body || document.documentElement;
 
       var script = document.createElement('script');
-      script.textContent = source;
+      script.text = source;
       var onerror = window.onerror;
       var e;
       window.onerror = function(_e) {
