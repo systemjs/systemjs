@@ -985,7 +985,7 @@ function global(loader) {
 
         loader.global.define = define;
 
-        return loader.get('@@global-helpers').retrieveGlobal(module.io, exportName, load.metadata.init);
+        return loader.get('@@global-helpers').retrieveGlobal(module.id, exportName, load.metadata.init);
       }
     }
     return loaderInstantiate.call(loader, load);
@@ -1115,6 +1115,8 @@ function amd(loader) {
 
   var fnBracketRegEx = /\(([^\)]*)\)/;
 
+  var wsRegEx = /^\s+|\s+$/g;
+
   var requireRegExs = {};
 
   function getCJSDeps(source, requireIndex) {
@@ -1124,7 +1126,7 @@ function amd(loader) {
 
     // determine the require alias
     var params = source.match(fnBracketRegEx);
-    var requireAlias = (params[1].split(',')[requireIndex] || 'require').trim();
+    var requireAlias = (params[1].split(',')[requireIndex] || 'require').replace(wsRegEx, '');
 
     // find or generate the regex for this requireAlias
     var requireRegEx = requireRegExs[requireAlias] || (requireRegExs[requireAlias] = new RegExp(cjsRequirePre + requireAlias + cjsRequirePost, 'g'));
@@ -1214,7 +1216,7 @@ function amd(loader) {
       }
       if (!(deps instanceof Array)) {
         factory = deps;
-        deps = ['require','exports','module']
+        deps = ['require', 'exports', 'module'];
       }
 
       if (typeof factory != 'function')
@@ -1222,8 +1224,12 @@ function amd(loader) {
           return function() { return factory; }
         })(factory);
 
+      // in IE8, a trailing comma becomes a trailing undefined entry
+      if (deps[deps.length - 1] === undefined)
+        deps.pop();
+
       // remove system dependencies
-      var requireIndex, exportsIndex, moduleIndex
+      var requireIndex, exportsIndex, moduleIndex;
       
       if ((requireIndex = indexOf.call(deps, 'require')) != -1) {
       	

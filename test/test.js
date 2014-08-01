@@ -1,5 +1,7 @@
 "format global";
 
+(function() {
+
 QUnit.config.testTimeout = 2000;
 
 QUnit.module("SystemJS");
@@ -35,6 +37,7 @@ asyncTest('Global script loading', function() {
   }, err);
 });
 
+if (!ie8)
 asyncTest('Global script with var syntax', function() {
   System['import']('tests/global-single').then(function(m) {
     ok(m == 'bar', 'Wrong global value');
@@ -105,6 +108,7 @@ asyncTest('Global script loading that detects as AMD with shim config', function
   }, err);
 });
 
+if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
   System.meta['tests/meta-override'] = { format: 'es6' };
   System['import']('tests/meta-override').then(function(m) {
@@ -433,6 +437,17 @@ asyncTest('Loading System.register from ES6', function() {
 //});
 
 
+asyncTest('AMD simplified CommonJS wrapping with an aliased require', function() {
+  System['import']('tests/amd-simplified-cjs-aliased-require1').then(function(m) {
+    ok(m.require2,"got dependency from aliased require");
+    ok(m.require2.amdCJS,"got dependency from aliased require listed as a dependency");
+    start();
+  }, err);
+});
+
+if (ie8)
+  return;
+
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
     ok(m['default'] == 'default1', 'Wrapper module not defined.');
@@ -542,10 +557,4 @@ asyncTest('AMD -> System.register circular -> ES6', function() {
   }, err);
 });
 
-asyncTest('AMD simplified CommonJS wrapping with an aliased require', function() {
-  System['import']('tests/amd-simplified-cjs-aliased-require1').then(function(m) {
-    ok(m.require2,"got dependency from aliased require");
-    ok(m.require2.amdCJS,"got dependency from aliased require listed as a dependency");
-    start();
-  }, err);
-});
+})();
