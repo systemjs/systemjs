@@ -5,16 +5,16 @@ Spec-compliant universal module loader - loads ES6 modules, AMD, CommonJS and gl
 
 Designed as a collection of small extensions to the ES6 specification System loader, which can also be applied individually.
 
-* Loads any module format, by detecting the format automatically. Modules can also [specify their format with meta syntax](#meta-configuration).
+* Loads any module format, by detecting the format automatically. Modules can also [specify their format with meta config](#meta-configuration).
 * Provides comprehensive and exact replications of AMD, CommonJS and ES6 circular reference handling.
 * Loads [ES6 modules compiled into the `System.register` form for production](#es6-systemregister-compilation), maintaining full circular references support.
 * Supports RequireJS-style [map](#map-configuration), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](#bundles), [shim](#global-module-format-support) and [plugins](#plugins).
 * Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (8KB) for a combined total footprint of 16KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
-Runs in IE8+ and NodeJS. ES6 modules are only supported in IE9+.
+Runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 
@@ -23,7 +23,7 @@ Basic Configuration
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.7.1/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.49/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.7.2/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.51/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 
@@ -52,12 +52,8 @@ index.html:
   });
 
   System.import('app/app')
-  .catch(function(e) {
-    // we add this since promises suppress all errors
-    setTimeout(function() {
-      throw e;
-    });
-  });
+  // we add this since promises suppress all errors
+  .catch(console.error.bind(console));
 </script>
 ```
 
@@ -231,6 +227,8 @@ In IE8, automatic global detection does not work for globals declared as variabl
   anotherGlobal = 'unless using an explicit shim';
 ```
 
+IF IE8 support is needed, these exports will need to be declared manually with configuration.
+
 ### Versions
 
 An optional syntax for version support can be used: `moduleName@version`.
@@ -317,7 +315,6 @@ Additional Plugins:
 
 Creating custom plugins can be quite simple. See the plugins above, and [read the guide here](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
 
-
 ### ES6 System.register Compilation
 
 If writing an application in ES6, we can compile into ES5 with Traceur:
@@ -334,7 +331,7 @@ This will compile all ES6 files in the directory `app` into corresponding ES5 `S
 
 The `instantiate` modules option writes the modules out using a `System.register` call, which is supported by SystemJS.
 
-Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.49/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
+Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.51/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
 
 ```html
   <script src="traceur-runtime.js"></script>
@@ -410,6 +407,17 @@ If we have compiled all our modules into a `System.register` bundle, we can do:
 To make all module formats work with CSP, we need to ensure everything is built with a suitable wrapper.
 
 See [SystemJS Builder](https://github.com/systemjs/builder) for a single-file build workflow that can wrap up all module formats.
+
+### RequireJS Support
+
+To use SystemJS side-by-side in a RequireJS project, make sure to include RequireJS before SystemJS.
+
+Conversely, to have SystemJS provide a RequireJS-like API in an application set:
+
+```javascript
+window.define = loader.amdDefine;
+window.require = window.requirejs = loader.amdRequire;
+```
 
 ### NodeJS Usage
 
