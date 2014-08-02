@@ -94,11 +94,7 @@ app/es6-file.js:
   <script>
     System.import('app/es6-file').then(function(m) {
       console.log(new m.q().es6); // yay
-    }, function(e) {
-      setTimeout(function() {
-        throw e;
-      });
-    });
+    }, console.error.bind(console));
   </script>
 ```
 
@@ -181,11 +177,22 @@ app/sample-global.js
 ```javascript
   System.import('app/sample-global').then(function(m) {
     m == 'world';
-  }, function(e) {
-    setTimeout(function() { 
-      throw e;
-    });
-  });
+  }, console.error.bind(console));
+```
+
+When multiple global properties are detected, the module object becomes the collection of those objects:
+
+app/multi-global.js
+```javascript
+  first = 'global1';
+  var second = 'global2';
+```
+
+```javascript
+System.import('app/multi-global').then(function(m) {
+  m.first == 'global1';
+  m.second == 'global2';
+}, console.error.bind(console));
 ```
 
 Global dependencies can be specified with the `deps` [meta config](#meta-configuration):
@@ -243,11 +250,7 @@ Now an import of the form:
 
 ```javascript
   System.import('jquery')
-  .catch(function(e) {
-    setTimeout(function() {
-      throw e;
-    });
-  });
+  .catch(console.error.bind(console));
 ```
 
 will load a load will be made to the file `/lib/jquery@2.0.3.js`.
@@ -396,11 +399,7 @@ If we have compiled all our modules into a `System.register` bundle, we can do:
     System.bundles['app-built'] = ['app/main'];
     System.import('app/main').then(function(m) { 
       // loads app/main from the app-built bundle
-    }, function(e) {
-      setTimeout(function() {
-        throw e;
-      });
-    });
+    }, console.error.bind(console));
   </script>
 ```
 
