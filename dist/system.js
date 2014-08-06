@@ -1340,14 +1340,12 @@ function amd(loader) {
     global.exports = oldExports;
   }
 
-  if (loader.amdDefine !== false)
-    createDefine(loader);
+  generateDefine(loader);
 
   if (loader.scriptLoader) {
     var loaderFetch = loader.fetch;
     loader.fetch = function(load) {
-      if (loader.amdDefine !== false)
-        createDefine(this);
+      createDefine(this);
       return loaderFetch.call(this, load);
     }
   }
@@ -1381,6 +1379,8 @@ function amd(loader) {
         else
           throw e;
       }
+
+      removeDefine(loader);
 
       if (!anonDefine && !defineBundle && !isNode)
         throw "AMD module " + load.name + " did not define";
