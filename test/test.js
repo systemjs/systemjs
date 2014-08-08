@@ -502,6 +502,13 @@ asyncTest('Loading ES6 with format hint', function() {
   }, err);
 });
 
+asyncTest('Loading ES6 loading AMD', function() {
+  System['import']('tests/es6-loading-amd').then(function(m) {
+    ok(m.amd == true);
+    start();
+  })
+});
+
 asyncTest('Module Name meta', function() {
   System['import']('tests/reflection').then(function(m) {
     ok(m.myname == 'tests/reflection', 'Module name not returned');
