@@ -509,6 +509,14 @@ asyncTest('Loading ES6 loading AMD', function() {
   })
 });
 
+asyncTest('Loading ES6 and AMD', function() {
+  System['import']('tests/es6-and-amd').then(function(m) {
+    ok(m.amd_module == 'AMD Module');
+    ok(m.es6_module == 'ES6 Module');
+    start();
+  }, err);
+});
+
 asyncTest('Module Name meta', function() {
   System['import']('tests/reflection').then(function(m) {
     ok(m.myname == 'tests/reflection', 'Module name not returned');
