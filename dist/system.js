@@ -463,6 +463,10 @@ function register(loader) {
       if (depModule) {
         depExports = depModule.exports;
       }
+      // dynamic, already linked in our registry
+      else if (depEntry && !depEntry.declarative) {
+        depExports = { 'default': depEntry.module.exports, '__useDefault': true };
+      }
       // in the loader registry
       else if (!depEntry) {
         depExports = loader.get(depName);
@@ -1020,32 +1024,6 @@ function cjs(loader) {
     return deps;
   }
 
-  var noop = function() {}
-  var nodeProcess = {
-    nextTick: function(f) {
-      setTimeout(f, 7);
-    },
-    browser: typeof window != 'undefined',
-    env: {},
-    argv: [],
-    on: noop,
-    once: noop,
-    off: noop,
-    emit: noop,
-    cwd: function() { return '/' }
-  };
-
-  if (!loader.has('@@nodeProcess'))
-    loader.set('@@nodeProcess', loader.newModule({ 'default': nodeProcess, __useDefault: true }));
-
-  var loaderTranslate = loader.translate;
-  loader.translate = function(load) {
-    var loader = this;
-    if (!loader.has('@@nodeProcess'))
-      loader.set('@@nodeProcess', loader.newModule({ 'default': nodeProcess, __useDefault: true }));
-    return loaderTranslate.call(loader, load);
-  }
-
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
 
@@ -1070,17 +1048,13 @@ function cjs(loader) {
           global: loader.global,
           exports: exports,
           module: module,
-          process: nodeProcess,
           require: require,
           __filename: load.address,
           __dirname: dirname
         };
 
-        var glString = '';
-        for (var _g in globals)
-          glString += 'var ' + _g + ' = _g.' + _g + ';';
-
-        load.source = '(function() { ' + glString + '(function() { ' + load.source + '\n}).call(exports); })();';
+        load.source = '(function(global, exports, module, require, __filename, __dirname) { ' + load.source 
+          + '\n}).call(_g.exports, _g.global, _g.exports, _g.module, _g.require, _g.__filename, _g.__dirname);';
 
         // disable AMD detection
         var define = loader.global.define;
