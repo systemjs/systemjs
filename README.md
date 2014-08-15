@@ -207,6 +207,8 @@ app/another-global.js
   System.meta['app/another-global'] = { deps: ['jquery'] };
 ```
 
+Note that the name used in `System.meta` must be the fully normalized name that is returned by `Promise.resolve(System.normalize('module-name')).then(console.log.bind(console))`.
+
 The `exports` meta config can also be set (using inline meta as an example):
 
 app/more-global.js
