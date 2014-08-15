@@ -207,6 +207,8 @@ app/another-global.js
   System.meta['app/another-global'] = { deps: ['jquery'] };
 ```
 
+Please note that you need to specify the full path to your module, e.g. `System.meta['github:components/ember@1.6.1/ember'] = { deps: ['jquery', ...] }`
+
 The `exports` meta config can also be set (using inline meta as an example):
 
 app/more-global.js
