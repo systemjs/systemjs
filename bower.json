@@ -3,7 +3,7 @@
   "version": "0.8.0",
   "main": "dist/system.js",
   "dependencies": {
-    "es6-module-loader": "~0.8.1"
+    "es6-module-loader": "~0.8.2"
   },
   "devDependencies": {
     "qunit": "~1.12.0"

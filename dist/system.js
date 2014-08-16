@@ -74,7 +74,8 @@ $__global.upgradeSystemLoader = function() {
     $__global.System = System.originalSystem;
   }
 
-  /*
+  
+/*
  * Meta Extension
  *
  * Sets default metadata on a load record (load.metadata) from
@@ -788,8 +789,13 @@ function core(loader) {
 
   // override locate to allow baseURL to be document-relative
   var baseURI;
-  if (typeof window == 'undefined') {
+  if (typeof window == 'undefined' &&
+      typeof WorkerGlobalScope == 'undefined') {
     baseURI = process.cwd() + '/';
+  }
+  // Inside of a Web Worker
+  else if(typeof window == 'undefined') {
+    baseURI = loader.global.location.href;
   }
   else {
     baseURI = document.baseURI;
@@ -1076,14 +1082,13 @@ function cjs(loader) {
   as well as a RequireJS-style require on System.require
 */
 function amd(loader) {
-
   // by default we only enforce AMD noConflict mode in Node
   var isNode = typeof module != 'undefined' && module.exports;
 
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
-  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?\s*)?(\s*(\/\/.*\r?\n|\/\*(.|\s)*?\*\/)\s*)*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?)?(\s*(\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*\s*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
   var cjsRequirePre = "(?:^\\s*|[}{\\(\\);,\\n=:\\?\\&]\\s*)";
@@ -2041,7 +2046,11 @@ var $__curScript, __eval;
     }
   };
 
-  if (typeof window != 'undefined') {
+  var isWorker = typeof WorkerGlobalScope !== 'undefined' &&
+    self instanceof WorkerGlobalScope;
+  var isBrowser = typeof window != 'undefined';
+
+  if (isBrowser) {
     var head;
 
     var scripts = document.getElementsByTagName('script');
@@ -2078,6 +2087,29 @@ var $__curScript, __eval;
       $__global.upgradeSystemLoader();
     }
   }
+  else if(isWorker) {
+    doEval = function(source) {
+      try {
+        eval(source);
+      } catch(e) {
+        throw e;
+      }
+    };
+
+    if (!$__global.System || !$__global.LoaderPolyfill) {
+      var basePath = '';
+      try {
+        throw new Error('Getting the path');
+      } catch(err) {
+        var idx = err.stack.indexOf('at ') + 3;
+        var withSystem = err.stack.substr(idx, err.stack.substr(idx).indexOf('\n'));
+        basePath = withSystem.substr(0, withSystem.lastIndexOf('/') + 1);
+      }
+      importScripts(basePath + 'es6-module-loader.js');
+    } else {
+      $__global.upgradeSystemLoader();
+    }
+  }
   else {
     var es6ModuleLoader = require('es6-module-loader');
     $__global.System = es6ModuleLoader.System;
@@ -2093,6 +2125,4 @@ var $__curScript, __eval;
   }
 })();
 
-})(typeof window != 'undefined' ? window : global);
-      
-      
+})(this);
