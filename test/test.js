@@ -374,8 +374,8 @@ asyncTest('System.register non-execution', function() {
     return System['import']('tests/register-test-load');
   })
   .then(function(m) {
-    console.log(m);
-    ok(m.export == 5);
+    ok(m['default'].a == 5);
+    ok(m['default'].b == 'asdf');
     start();
   }, err);
 })

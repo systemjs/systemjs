@@ -1,1 +1,3 @@
-export var el = 'asdf';
+define(function() {
+  return 'asdf' 
+});
