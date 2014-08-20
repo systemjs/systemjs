@@ -2125,4 +2125,5 @@ var $__curScript, __eval;
   }
 })();
 
-})(this);
+})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ?
+                                           self : global));
