@@ -558,4 +558,15 @@ asyncTest('AMD -> System.register circular -> ES6', function() {
   }, err);
 });
 
+if(typeof window !== 'undefined' && window.Worker) {
+  asyncTest('Using SystemJS in a Web Worker', function() {
+    var worker = new Worker('tests/worker.js');
+    worker.onmessage = function(e) {
+      ok(e.data.amd === 'AMD Module');
+      ok(e.data.es6 === 'ES6 Module');
+      start();
+    };
+  });
+}
+
 })();
