@@ -538,10 +538,9 @@ function register(loader) {
       }
 
       // only declarative modules have dynamic bindings
-      if (depModule && depModule.importers) {
+      module.dependencies.push(depModule);
+      if (depModule && depModule.importers)
         depModule.importers.push(module);
-        module.dependencies.push(depModule);
-      }
 
       // run the setter for this dependency
       if (module.setters[i])
