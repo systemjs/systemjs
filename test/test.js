@@ -569,4 +569,22 @@ if(typeof window !== 'undefined' && window.Worker) {
   });
 }
 
+if(typeof window !== 'undefined') {
+  asyncTest('Loading through script injection', function() {
+    var testArea = document.getElementById('qunit-test-area');
+    var iframe = document.createElement('iframe');
+    iframe.src = 'tests/script-injected/test.html';
+
+    testArea.appendChild(iframe);
+
+    iframe.contentWindow.callMe = function() {
+      ok(true);
+      // cleanup
+      testArea.innerHTML = '';
+
+      start();
+    };
+  });
+}
+
 })();

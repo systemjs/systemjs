@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.8.1
+ * SystemJS v0.8.2
  */
 
 (function($__global) {
@@ -2082,10 +2082,38 @@ var $__curScript, __eval;
     if (!$__global.System || !$__global.LoaderPolyfill) {
       // determine the current script path as the base path
       var curPath = $__curScript.src;
-      var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
-      document.write(
-        '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
-      );
+
+      if(curPath.length) {
+        var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+        document.write(
+          '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
+        );
+      }
+      // SystemJS loaded through script injection.
+      else {
+        var systemScript;
+        for(var i = 0, len = scripts.length; i < len; i++) {
+          if(/system.js/.test(scripts[i].src)) {
+            systemScript = scripts[i];
+            curPath = systemScript.src;
+          }
+        }
+        var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
+        var esmlScript = document.createElement('script');
+        esmlScript.src = basePath + 'es6-module-loader.js';
+        esmlScript.setAttribute('data-init', 'upgradeSystemLoader');
+        // If someone is listening for the script to load, provide that once
+        // es6-module-loader is finished.
+        var oldOnload = systemScript.onload;
+        systemScript.onload = function() {
+          esmlScript.onload = function(evt) {
+            if(oldOnload) oldOnload.apply(this, arguments);
+          };
+        };
+
+        var head = document.head || document.getElementsByTagName('head')[0];
+        head.appendChild(esmlScript);
+      }
     }
     else {
       $__global.upgradeSystemLoader();
