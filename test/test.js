@@ -368,6 +368,18 @@ asyncTest('CJS Circular', function() {
   }, err);
 });
 
+asyncTest('System.register non-execution', function() {
+  System['import']('tests/register-test')
+  .then(function() {
+    return System['import']('tests/register-test-load');
+  })
+  .then(function(m) {
+    ok(m['default'].a == 5);
+    ok(m['default'].b == 'asdf');
+    start();
+  }, err);
+})
+
 asyncTest('System.register Circular', function() {
   System['import']('tests/register-circular1').then(function(m) {
     ok(m.q == 3, 'Binding not allocated');
