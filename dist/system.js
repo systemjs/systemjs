@@ -481,6 +481,9 @@ function register(loader) {
         depModule.importers.push(module);
         module.dependencies.push(depModule);
       }
+      else {
+        module.dependencies.push(null);
+      }
 
       // run the setter for this dependency
       if (module.setters[i])
@@ -1056,14 +1059,18 @@ function cjs(loader) {
           __dirname: dirname
         };
 
-        load.source = '(function(global, exports, module, require, __filename, __dirname) { ' + load.source 
+        var source = '(function(global, exports, module, require, __filename, __dirname) { ' + load.source 
           + '\n}).call(_g.exports, _g.global, _g.exports, _g.module, _g.require, _g.__filename, _g.__dirname);';
 
         // disable AMD detection
         var define = loader.global.define;
         loader.global.define = undefined;
 
-        loader.__exec(load);
+        loader.__exec({
+          name: load.name,
+          address: load.address,
+          source: source
+        });
 
         loader.global.define = define;
 
