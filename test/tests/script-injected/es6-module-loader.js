@@ -1,0 +1,1 @@
+../../../bower_components/es6-module-loader/dist/es6-module-loader.js

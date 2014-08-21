@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+  <title>Script injecting System.js</title>
+</head>
+<body>
+
+  <script>
+    var ss = document.createElement('script');
+    ss.src = 'system.js';
+    document.head.appendChild(ss);
+
+    ss.onload = function() {
+      // Try to import something.
+      if(typeof System !== 'undefined') {
+        window.callMe();
+      };
+    };
+  </script>
+</body>
+</html>
