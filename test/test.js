@@ -317,6 +317,49 @@ asyncTest('Version with packages', function() {
   }, err);
 });
 
+asyncTest('Condition loading branch', function() {
+  System.meta['tests/conditional1'] = {
+    condition: './condition-pass',
+    branches: {
+      'branch': './conditional-branch'
+    }
+  };
+  System['import']('tests/conditional1').then(function(m) {
+    ok(m.branch == true);
+    start();
+  }, err);
+});
+
+asyncTest('Condition loading default branch', function() {
+  System.meta['tests/conditional2'] = {
+    condition: './condition-empty',
+    branches: {
+      'branch': './conditional-branch'
+    }
+  };
+  System['import']('tests/conditional2').then(function(m) {
+    ok(m.original == true);
+    start();
+  }, err);
+});
+
+asyncTest('Condition loading of packages', function() {
+  System.packages['tests/package-conditional'] = {
+    meta: {
+      'polyfill': {
+        condition: './needsPolyfill',
+        branches: {
+          false: '@empty'
+        }
+      }
+    }
+  };
+  System['import']('tests/package-conditional/polyfill').then(function(m) {
+    ok(m.polyfill === undefined);
+    start();
+  }, err);
+});
+
 asyncTest('Simple compiler Plugin', function() {
   System.map['coffee'] = 'tests/compiler-plugin';
   System['import']('tests/compiler-test.coffee!').then(function(m) {
