@@ -23,7 +23,7 @@ Basic Configuration
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.8.1/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.56/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.8.1/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.58/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 
@@ -336,7 +336,7 @@ This will compile all ES6 files in the directory `app` into corresponding ES5 `S
 
 The `instantiate` modules option writes the modules out using a `System.register` call, which is supported by SystemJS.
 
-Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.56/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
+Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.58/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
 
 ```html
   <script src="traceur-runtime.js"></script>
