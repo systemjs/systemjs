@@ -108,6 +108,31 @@ asyncTest('Global script loading that detects as AMD with shim config', function
   }, err);
 });
 
+asyncTest('Global with custom global modules', function() {
+  System.meta['tests/global-global-modules'] = {
+    format: 'global',
+    globals: {
+      '$': './global-global-modules-dep'
+    }
+  };
+  System['import']('tests/global-global-modules').then(function(m) {
+    ok(m.dep == 'global-global-dep');
+    if (typeof window != 'undefined')
+      window.$ = 'changed';
+    else
+      global.$ = 'changed';
+    ok(m.laterDep() == 'global-global-dep')
+    start();
+  }, err);
+});
+
+asyncTest('Global with custom global modules meta', function() {
+  System['import']('tests/global-global-modules-meta').then(function(m) {
+    ok(m == 'global-meta-dep');
+    start();
+  }, err);
+});
+
 if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
   System.meta['tests/meta-override'] = { format: 'es6' };
