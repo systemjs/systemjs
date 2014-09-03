@@ -148,48 +148,52 @@ asyncTest('Map configuration subpath', function() {
   }, err);
 });
 
-asyncTest('Contextual map configuration', function() {
-  System.map['tests/contextual-map'] = {
-    maptest: 'tests/contextual-map-dep'
-  };
-  System['import']('tests/contextual-map').then(function(m) {
-    ok(m.mapdep == 'mapdep', 'Contextual map dep not loaded');
-    start();
-  }, err);
-});
-
-asyncTest('Submodule contextual map configuration', function() {
-  System.map['tests/subcontextual-map'] = {
-    dep: 'tests/subcontextual-mapdep'
-  };
-  System['import']('tests/subcontextual-map/submodule').then(function(m) {
-    ok(m == 'submapdep', 'Submodule contextual map not loaded');
-    start();
-  }, err);
-});
-
-asyncTest('Contextual map with shim', function() {
-  System.meta['tests/shim-map-test'] = {
-    deps: ['shim-map-dep']
-  };
-  System.map['tests/shim-map-test'] = {
-    'shim-map-dep': 'tests/shim-map-test-dep'
-  };
-  System['import']('tests/shim-map-test').then(function(m) {
-    ok(m == 'depvalue', 'shim dep not loaded');
-    start();
-  }, err);
-});
-
 asyncTest('Prefetching', function() {
   throws(System['import']('tests/prefetch'));
   start();
 });
 
-asyncTest('Package loading shorthand', function() {
-  System.map['tests/package'] = 'tests/some-package';
-  System['import']('tests/package/').then(function(m) {
+asyncTest('Package auto main', function() {
+  System.packages['tests/package'] = {};
+  System['import']('tests/package').then(function(m) {
     ok(m.isPackage);
+    start();
+  }, err);
+});
+
+asyncTest('Package format', function() {
+  System.packages['tests/package-format'] = {
+    format: 'cjs'
+  };
+  System['import']('tests/package-format/main').then(function(m) {
+    ok(m.isCJS == true);
+    start();
+  }, err);
+});
+
+asyncTest('Package meta', function() {
+  System.packages['tests/package-meta'] = {
+    main: 'file',
+    meta: {
+      file: {
+        exports: 'asdf'
+      }
+    }
+  };
+  System['import']('tests/package-meta').then(function(m) {
+    ok(m == 5);
+    start();
+  }, err);
+});
+
+asyncTest('Package map', function() {
+  System.packages['tests/contextual-map'] = {
+    map: {
+      maptest: 'tests/contextual-map-dep'
+    }
+  };
+  System['import']('tests/contextual-map').then(function(m) {
+    ok(m.mapdep == 'mapdep', 'Contextual map dep not loaded');
     start();
   }, err);
 });
@@ -299,13 +303,59 @@ asyncTest('Versions support', function() {
   }, err);
 });
 
-asyncTest('Version with map', function() {
+asyncTest('Version with packages', function() {
   System.versions['tests/mvd'] = '2.0.0';
-  System.map['tests/map-version'] = {
-    'tests/mvd': 'tests/mvd@^2.0.0'
+  System.packages['tests/pkg-version'] = {
+    main: 'map-version',
+    map: {
+      'tests/mvd@1': 'tests/mvd@^2.0.0'
+    }
   };
-  System['import']('tests/map-version').then(function(m) {
+  System['import']('tests/pkg-version').then(function(m) {
     ok(m == 'overridden map version');
+    start();
+  }, err);
+});
+
+asyncTest('Condition loading branch', function() {
+  System.meta['tests/conditional1'] = {
+    condition: './condition-pass',
+    branches: {
+      'branch': './conditional-branch'
+    }
+  };
+  System['import']('tests/conditional1').then(function(m) {
+    ok(m.branch == true);
+    start();
+  }, err);
+});
+
+asyncTest('Condition loading default branch', function() {
+  System.meta['tests/conditional2'] = {
+    condition: './condition-empty',
+    branches: {
+      'branch': './conditional-branch'
+    }
+  };
+  System['import']('tests/conditional2').then(function(m) {
+    ok(m.original == true);
+    start();
+  }, err);
+});
+
+asyncTest('Condition loading of packages', function() {
+  System.packages['tests/package-conditional'] = {
+    meta: {
+      'polyfill': {
+        condition: './needsPolyfill',
+        branches: {
+          false: '@empty'
+        }
+      }
+    }
+  };
+  System['import']('tests/package-conditional/polyfill').then(function(m) {
+    ok(m.polyfill === undefined);
     start();
   }, err);
 });
