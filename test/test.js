@@ -569,4 +569,11 @@ if(typeof window !== 'undefined' && window.Worker) {
   });
 }
 
+asyncTest('AMD loading es6 with __useDefault', function() {
+  System['import']('tests/amd-amd-usedefault').then(function(val) {
+    ok(val === 'I am es6');
+    start();
+  });
+});
+
 })();
