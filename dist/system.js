@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.8.1
+ * SystemJS v0.8.2
  */
 
 (function($__global) {
@@ -511,7 +511,10 @@ function register(loader) {
       else if (!entry.evaluated)
         linkDynamicModule(entry, loader);
 
-      exports = entry.module.exports;
+      var moduleExports = entry.module.exports;
+      exports = moduleExports ? (moduleExports.__useDefault ?
+                                 moduleExports['default'] : moduleExports) :
+                                undefined;
     }
 
     return exports;
@@ -714,6 +717,7 @@ function register(loader) {
           // remove from the registry
           loader.defined[load.name] = undefined;
 
+          
           var module = loader.newModule(entry.declarative ? entry.module.exports : { 'default': entry.module.exports, '__useDefault': true });
           entry.module.module = module;
 
