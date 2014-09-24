@@ -270,6 +270,13 @@ asyncTest('CommonJS setting module.exports', function() {
   }, err);
 });
 
+asyncTest('CommonJS detection variattion', function() {
+  System['import']('tests/commonjs-variation').then(function(m) {
+    ok(m.e === System.get('@empty'));
+    start();
+  }, err);
+});
+
 asyncTest('Loading a UMD module', function() {
   System['import']('tests/umd').then(function(m) {
     ok(m.d == 'hi', 'module value not defined');
