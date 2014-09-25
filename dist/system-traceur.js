@@ -1,14 +1,11 @@
 /*
- * SystemJS v0.6.7
- * 
- * Copyright (c) 2014 Guy Bedford
- * MIT License
+ * SystemJS v0.8.2
  */
 
-(function(__$global) {
+(function($__global) {
 
-__$global.upgradeSystemLoader = function() {
-  __$global.upgradeSystemLoader = undefined;
+$__global.upgradeSystemLoader = function() {
+  $__global.upgradeSystemLoader = undefined;
 
   // indexOf polyfill for IE
   var indexOf = Array.prototype.indexOf || function(item) {
@@ -60,18 +57,22 @@ __$global.upgradeSystemLoader = function() {
   }
 
   // clone the original System loader
-  var originalSystem = __$global.System;
-  var System = __$global.System = new LoaderPolyfill(originalSystem);
-  System.baseURL = originalSystem.baseURL;
-  System.paths = { '*': '*.js' };
-  System.originalSystem = originalSystem;
+  var System;
+  (function() {
+    var originalSystem = $__global.System;
+    System = $__global.System = new LoaderPolyfill(originalSystem);
+    System.baseURL = originalSystem.baseURL;
+    System.paths = { '*': '*.js' };
+    System.originalSystem = originalSystem;
+  })();
 
   System.noConflict = function() {
-    __$global.SystemJS = System;
-    __$global.System = System.originalSystem;
+    $__global.SystemJS = System;
+    $__global.System = System.originalSystem;
   }
 
-  /*
+  
+/*
  * Instantiate registry extension
  *
  * Supports Traceur System.register 'instantiate' output for loading ES6 as ES5.
@@ -114,7 +115,7 @@ function register(loader) {
       }
     }
 
-    __eval(load.source, loader.global, load.address, sourceMappingURL);
+    __eval(load.source, load.address, sourceMappingURL);
 
     // traceur overwrites System and Module - write them back
     if (load.name == '@traceur') {
@@ -126,22 +127,24 @@ function register(loader) {
 
   function dedupe(deps) {
     var newDeps = [];
-    for (var i = 0; i < deps.length; i++)
+    for (var i = 0, l = deps.length; i < l; i++)
       if (indexOf.call(newDeps, deps[i]) == -1)
         newDeps.push(deps[i])
     return newDeps;
   }
 
-  // There are two variations of System.register:
-  // 1. System.register for ES6 conversion (2-3 params) - System.register([name, ]deps, declare)
-  //    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
-  //
-  // 2. System.register for dynamic modules (3-4 params) - System.register([name, ]deps, executingRequire, execute)
-  // the true or false statement 
-
-  // this extension implements the linking algorithm for the two variations identical to the spec
-  // allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
-
+  /*
+   * There are two variations of System.register:
+   * 1. System.register for ES6 conversion (2-3 params) - System.register([name, ]deps, declare)
+   *    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
+   *
+   * 2. System.register for dynamic modules (3-4 params) - System.register([name, ]deps, executingRequire, execute)
+   * the true or false statement 
+   *
+   * this extension implements the linking algorithm for the two variations identical to the spec
+   * allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
+   *
+   */
   // loader.register sets loader.defined for declarative modules
   var anonRegister;
   var calledRegister;
@@ -179,6 +182,7 @@ function register(loader) {
     
     // named register
     if (name) {
+      register.name = name;
       // we never overwrite an existing define
       if (!loader.defined[name])
         loader.defined[name] = register; 
@@ -190,24 +194,36 @@ function register(loader) {
       anonRegister = register;
     }
   }
-
-  // Registry side table - loader.defined
-  // Registry Entry Contains:
-  //    - deps 
-  //    - declare for register modules
-  //    - execute for dynamic modules, also after declare for declarative modules
-  //    - executingRequire indicates require drives execution for circularity of dynamic modules
-  //    - declarative optional boolean indicating which of the above
-  //
-  // Can preload modules directly on System.defined['my/module'] = { deps, execute, executingRequire }
-  //
-  // Then the entry gets populated with derived information during processing:
-  //    - normalizedDeps derived from deps, created in instantiate
-  //    - depMap array derived from deps, populated gradually in link
-  //    - groupIndex used by group linking algorithm
-  //    - module a raw module exports object with no wrapper
-  //    - evaluated indiciating whether evaluation has happend for declarative modules
-  // After linked and evaluated, entries are removed
+  /*
+   * Registry side table - loader.defined
+   * Registry Entry Contains:
+   *    - name
+   *    - deps 
+   *    - declare for declarative modules
+   *    - execute for dynamic modules, different to declarative execute on module
+   *    - executingRequire indicates require drives execution for circularity of dynamic modules
+   *    - declarative optional boolean indicating which of the above
+   *
+   * Can preload modules directly on System.defined['my/module'] = { deps, execute, executingRequire }
+   *
+   * Then the entry gets populated with derived information during processing:
+   *    - normalizedDeps derived from deps, created in instantiate
+   *    - groupIndex used by group linking algorithm
+   *    - evaluated indicating whether evaluation has happend
+   *    - module the module record object, containing:
+   *      - exports actual module exports
+   *      
+   *    Then for declarative only we track dynamic bindings with the records:
+   *      - name
+   *      - setters declarative setter functions
+   *      - exports actual module values
+   *      - dependencies, module records of dependencies
+   *      - importers, module records of dependents
+   *
+   * After linked and evaluated, entries are removed, declarative module records remain in separate
+   * module binding table
+   *
+   */
 
   function defineRegister(loader) {
     if (loader.register)
@@ -243,7 +259,7 @@ function register(loader) {
 
     groups[entry.groupIndex].push(entry);
 
-    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+    for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       var depEntry = loader.defined[depName];
       
@@ -259,7 +275,7 @@ function register(loader) {
         
         // if already in a group, remove from the old group
         if (depEntry.groupIndex) {
-          groups[depEntry.groupIndex].splice(groups[depEntry.groupIndex].indexOf(depEntry), 1);
+          groups[depEntry.groupIndex].splice(indexOf.call(groups[depEntry.groupIndex], depEntry), 1);
 
           // if the old group is empty, then we have a mixed depndency cycle
           if (groups[depEntry.groupIndex].length == 0)
@@ -298,73 +314,101 @@ function register(loader) {
     }
   }
 
+  // module binding records
+  var moduleRecords = {};
+  function getOrCreateModuleRecord(name) {
+    return moduleRecords[name] || (moduleRecords[name] = {
+      name: name,
+      dependencies: [],
+      exports: {}, // start from an empty module and extend
+      importers: []
+    })
+  }
+
   function linkDeclarativeModule(entry, loader) {
     // only link if already not already started linking (stops at circular)
     if (entry.module)
       return;
 
-    // declare the module with an empty depMap
-    var depMap = [];
+    var module = entry.module = getOrCreateModuleRecord(entry.name);
+    var exports = entry.module.exports;
 
-    var declaration = entry.declare.call(loader.global, depMap);
+    var declaration = entry.declare.call(loader.global, function(name, value) {
+      module.locked = true;
+      exports[name] = value;
+
+      for (var i = 0, l = module.importers.length; i < l; i++) {
+        var importerModule = module.importers[i];
+        if (!importerModule.locked) {
+          var importerIndex = indexOf.call(importerModule.dependencies, module);
+          importerModule.setters[importerIndex](exports);
+        }
+      }
+
+      module.locked = false;
+      return value;
+    });
     
-    entry.module = declaration.exports;
-    entry.exportStar = declaration.exportStar;
-    entry.execute = declaration.execute;
+    module.setters = declaration.setters;
+    module.execute = declaration.execute;
 
-    var module = entry.module;
+    if (!module.setters || !module.execute) {
+      throw "Invalid System.register form for " + entry.name;
+    }
 
     // now link all the module dependencies
-    // amending the depMap as we go
-    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+    for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       var depEntry = loader.defined[depName];
-      
-      // part of another linking group - use loader.get
-      if (!depEntry) {
-        depModule = loader.get(depName);
+      var depModule = moduleRecords[depName];
+
+      // work out how to set depExports based on scenarios...
+      var depExports;
+
+      if (depModule) {
+        depExports = depModule.exports;
       }
-      // if dependency already linked, use that
-      else if (depEntry.module) {
-        depModule = depEntry.module;
+      // dynamic, already linked in our registry
+      else if (depEntry && !depEntry.declarative) {
+        depExports = { 'default': depEntry.module.exports, '__useDefault': true };
       }
-      // otherwise we need to link the dependency
+      // in the loader registry
+      else if (!depEntry) {
+        depExports = loader.get(depName);
+      }
+      // we have an entry -> link
       else {
         linkDeclarativeModule(depEntry, loader);
         depModule = depEntry.module;
+        depExports = depModule.exports;
       }
 
-      if (entry.exportStar && indexOf.call(entry.exportStar, entry.normalizedDeps[i]) != -1) {
-        // we are exporting * from this dependency
-        (function(depModule) {
-          for (var p in depModule) (function(p) {
-            // if the property is already defined throw?
-            Object.defineProperty(module, p, {
-              enumerable: true,
-              get: function() {
-                return depModule[p];
-              },
-              set: function(value) {
-                depModule[p] = value;
-              }
-            });
-          })(p);
-        })(depModule);
+      // only declarative modules have dynamic bindings
+      if (depModule && depModule.importers) {
+        depModule.importers.push(module);
+        module.dependencies.push(depModule);
+      }
+      else {
+        module.dependencies.push(null);
       }
 
-      depMap[i] = depModule;
+      // run the setter for this dependency
+      if (module.setters[i])
+        module.setters[i](depExports);
     }
   }
 
   // An analog to loader.get covering execution of all three layers (real declarative, simulated declarative, simulated dynamic)
   function getModule(name, loader) {
-    var module;
+    var exports;
     var entry = loader.defined[name];
 
     if (!entry) {
-      module = loader.get(name);
-      if (!module)
+      exports = loader.get(name);
+      if (!exports)
         throw "System Register: The module requested " + name + " but this was not declared as a dependency";
+      if (exports.__useDefault)
+        exports = exports['default'];
     }
 
     else {
@@ -374,24 +418,23 @@ function register(loader) {
       else if (!entry.evaluated)
         linkDynamicModule(entry, loader);
 
-      module = entry.module;
+      exports = entry.module.exports;
     }
 
-    if (!module)
-      return '';
-
-    return module.__useDefault ? module['default'] : module;
+    return exports;
   }
 
   function linkDynamicModule(entry, loader) {
     if (entry.module)
       return;
 
-    entry.module = { 'default': {}, __useDefault: true };
+    var exports = {};
+
+    var module = entry.module = { exports: exports, id: entry.name };
 
     // AMD requires execute the tree first
     if (!entry.executingRequire) {
-      for (var i = 0; i < entry.normalizedDeps.length; i++) {
+      for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
         var depName = entry.normalizedDeps[i];
         var depEntry = loader.defined[depName];
         if (depEntry)
@@ -399,35 +442,29 @@ function register(loader) {
       }
     }
 
-    // lookup the module name if it is in the registry
-    var moduleName;
-    for (var d in loader.defined) {
-      if (loader.defined[d] != entry)
-        continue;
-      moduleName = d;
-      break;
-    }
-
     // now execute
     entry.evaluated = true;
     var output = entry.execute.call(loader.global, function(name) {
-      for (var i = 0; i < entry.deps.length; i++) {
+      for (var i = 0, l = entry.deps.length; i < l; i++) {
         if (entry.deps[i] != name)
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-    }, entry.module['default'], moduleName);
+    }, exports, module);
     
     if (output)
-      entry.module['default'] = output;
+      module.exports = output;
   }
 
-  // given a module, and the list of modules for this current branch,
-  // ensure that each of the dependencies of this module is evaluated
-  //  (unless one is a circular dependency already in the list of seen
-  //   modules, in which case we execute it)
-  // then evaluate the module itself
-  // depth-first left to right execution to match ES6 modules
+  /*
+   * Given a module, and the list of modules for this current branch,
+   *  ensure that each of the dependencies of this module is evaluated
+   *  (unless one is a circular dependency already in the list of seen
+   *  modules, in which case we execute it)
+   *
+   * Then we evaluate the module itself depth-first left to right 
+   * execution to match ES6 modules
+   */
   function ensureEvaluated(moduleName, seen, loader) {
     var entry = loader.defined[moduleName];
 
@@ -435,9 +472,11 @@ function register(loader) {
     if (entry.evaluated || !entry.declarative)
       return;
 
+    // this only applies to declarative modules which late-execute
+
     seen.push(moduleName);
 
-    for (var i = 0; i < entry.normalizedDeps.length; i++) {
+    for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       if (indexOf.call(seen, depName) == -1) {
         if (!loader.defined[depName])
@@ -451,7 +490,7 @@ function register(loader) {
       return;
 
     entry.evaluated = true;
-    entry.execute.call(loader.global);
+    entry.module.execute.call(loader.global);
   }
 
   var registerRegEx = /System\.register/;
@@ -558,28 +597,20 @@ function register(loader) {
       return loaderInstantiate.call(this, load);
 
     entry.deps = dedupe(entry.deps);
+    entry.name = load.name;
 
     // first, normalize all dependencies
     var normalizePromises = [];
-    for (var i = 0; i < entry.deps.length; i++)
+    for (var i = 0, l = entry.deps.length; i < l; i++)
       normalizePromises.push(Promise.resolve(loader.normalize(entry.deps[i], load.name)));
 
     return Promise.all(normalizePromises).then(function(normalizedDeps) {
 
       entry.normalizedDeps = normalizedDeps;
 
-      // create the empty dep map - this is our key deferred dependency binding object passed into declare
-      entry.depMap = [];
-
       return {
         deps: entry.deps,
         execute: function() {
-          // this avoids double duplication allowing a bundle to equal its last defined module
-          if (entry.esmodule) {
-            loader.defined[load.name] = undefined;
-            return entry.esmodule;
-          }
-
           // recursively ensure that the module and all its 
           // dependencies are linked (with dependency group handling)
           link(load.name, loader);
@@ -590,18 +621,9 @@ function register(loader) {
           // remove from the registry
           loader.defined[load.name] = undefined;
 
-          var module = loader.newModule(entry.module);
+          var module = loader.newModule(entry.declarative ? entry.module.exports : { 'default': entry.module.exports, '__useDefault': true });
+          entry.module.module = module;
 
-          // if the entry is an alias, set the alias too
-          for (var name in loader.defined) {
-            if (!loader.defined[name])
-              continue;
-            if (entry.declarative && loader.defined[name].execute != entry.execute)
-              continue;
-            if (!entry.declarative && loader.defined[name].declare != entry.declare);
-              continue;
-            loader.defined[name].esmodule = module;
-          }
           // return the defined module object
           return module;
         }
@@ -662,7 +684,7 @@ function core(loader) {
   loader.config = function(cfg) {
     for (var c in cfg) {
       var v = cfg[c];
-      if (typeof v == 'object') {
+      if (typeof v == 'object' && !(v instanceof Array)) {
         this[c] = this[c] || {};
         for (var p in v)
           this[c][p] = v[p];
@@ -674,8 +696,13 @@ function core(loader) {
 
   // override locate to allow baseURL to be document-relative
   var baseURI;
-  if (typeof window == 'undefined') {
+  if (typeof window == 'undefined' &&
+      typeof WorkerGlobalScope == 'undefined') {
     baseURI = process.cwd() + '/';
+  }
+  // Inside of a Web Worker
+  else if(typeof window == 'undefined') {
+    baseURI = loader.global.location.href;
   }
   else {
     baseURI = document.baseURI;
@@ -761,6 +788,14 @@ function core(loader) {
   See the SystemJS readme global support section for further information.
 */
 function global(loader) {
+
+  function readGlobalProperty(p, value) {
+    var pParts = p.split('.');
+    while (pParts.length)
+      value = value[pParts.shift()];
+    return value;
+  }
+
   function createHelpers(loader) {
     if (loader.has('@@global-helpers'))
       return;
@@ -784,8 +819,12 @@ function global(loader) {
         // now store a complete copy of the global object
         // in order to detect changes
         curGlobalObj = {};
-        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage', 'clipboardData', 'frames'];
-        for (var g in loader.global)
+        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage',
+          'clipboardData', 'frames', 'webkitStorageInfo', 'toolbar', 'statusbar',
+          'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB'
+        ];
+        for (var g in loader.global) {
+          if (indexOf.call(ignoredGlobalProps, g) != -1) { continue; }
           if (!hasOwnProperty || loader.global.hasOwnProperty(g)) {
             try {
               curGlobalObj[g] = loader.global[g];
@@ -793,9 +832,11 @@ function global(loader) {
               ignoredGlobalProps.push(g);
             }
           }
+        }
       },
       retrieveGlobal: function(moduleName, exportName, init) {
         var singleGlobal;
+        var multipleExports;
         var exports = {};
 
         // run init
@@ -809,21 +850,21 @@ function global(loader) {
         // check for global changes, creating the globalObject for the module
         // if many globals, then a module object for those is created
         // if one global, then that is the module directly
-        if (exportName && !singleGlobal) {
+        else if (exportName) {
           var firstPart = exportName.split('.')[0];
-          singleGlobal = eval.call(loader.global, exportName);
+          singleGlobal = readGlobalProperty(exportName, loader.global);
           exports[firstPart] = loader.global[firstPart];
         }
 
         else {
           for (var g in loader.global) {
-            if (~ignoredGlobalProps.indexOf(g))
+            if (indexOf.call(ignoredGlobalProps, g) != -1)
               continue;
             if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && curGlobalObj[g] != loader.global[g]) {
               exports[g] = loader.global[g];
               if (singleGlobal) {
                 if (singleGlobal !== loader.global[g])
-                  singleGlobal = undefined;
+                  multipleExports = true;
               }
               else if (singleGlobal !== false) {
                 singleGlobal = loader.global[g];
@@ -834,7 +875,7 @@ function global(loader) {
 
         moduleGlobals[moduleName] = exports;
 
-        return typeof singleGlobal != 'undefined' ? singleGlobal : exports;
+        return multipleExports ? exports : singleGlobal;
       }
     }));
   }
@@ -854,9 +895,9 @@ function global(loader) {
 
     // global is a fallback module format
     if (load.metadata.format == 'global') {
-      load.metadata.execute = function(require, exports, moduleName) {
+      load.metadata.execute = function(require, exports, module) {
 
-        loader.get('@@global-helpers').prepareGlobal(moduleName, load.metadata.deps);
+        loader.get('@@global-helpers').prepareGlobal(module.id, load.metadata.deps);
 
         if (exportName)
           load.source += '\nthis["' + exportName + '"] = ' + exportName + ';';
@@ -873,7 +914,7 @@ function global(loader) {
 
         loader.global.define = define;
 
-        return loader.get('@@global-helpers').retrieveGlobal(moduleName, exportName, load.metadata.init);
+        return loader.get('@@global-helpers').retrieveGlobal(module.id, exportName, load.metadata.init);
       }
     }
     return loaderInstantiate.call(loader, load);
@@ -924,58 +965,109 @@ register(System);
 core(System);
 global(System);
 depCache(System);
-
-  
   if (!System.paths['@traceur'])
-    System.paths['@traceur'] = __$curScript && __$curScript.getAttribute('data-traceur-src')
-      || (__$curScript && __$curScript.src 
-        ? __$curScript.src.substr(0, __$curScript.src.lastIndexOf('/') + 1) 
+    System.paths['@traceur'] = $__curScript && $__curScript.getAttribute('data-traceur-src')
+      || ($__curScript && $__curScript.src 
+        ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1) 
         : System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/')
         ) + 'traceur.js';
 };
 
-function __eval(__source, __global, __address, __sourceMap) {
-  try {
-    __source = (__global != __$global ? 'with(__global) { (function() { ' + __source + ' \n }).call(__global); }' : __source)
-      + '\n//# sourceURL=' + __address
-      + (__sourceMap ? '\n//# sourceMappingURL=' + __sourceMap : '');
-    eval(__source);
-  }
-  catch(e) {
-    if (e.name == 'SyntaxError')
-      e.message = 'Evaluating ' + __address + '\n\t' + e.message;
-    if (System.trace && System.execute == false)
-      e = 'Execution error for ' + __address + ': ' + e.stack || e;
-    throw e;
-  }
-}
+var $__curScript, __eval;
 
-var __$curScript;
+(function() {
 
-(function(global) {
-  if (typeof window != 'undefined') {
+  var doEval;
+
+  __eval = function(source, address, sourceMap) {
+    source += '\n//# sourceURL=' + address + (sourceMap ? '\n//# sourceMappingURL=' + sourceMap : '');
+
+    try {
+      doEval(source);
+    }
+    catch(e) {
+      throw 'Error evaluating ' + address;
+    }
+  };
+
+  var isWorker = typeof WorkerGlobalScope !== 'undefined' &&
+    self instanceof WorkerGlobalScope;
+  var isBrowser = typeof window != 'undefined';
+
+  if (isBrowser) {
+    var head;
+
     var scripts = document.getElementsByTagName('script');
-    __$curScript = scripts[scripts.length - 1];
+    $__curScript = scripts[scripts.length - 1];
 
-    if (!global.System || !global.LoaderPolyfill) {
+    // globally scoped eval for the browser
+    doEval = function(source) {
+      if (!head)
+        head = document.head || document.body || document.documentElement;
+
+      var script = document.createElement('script');
+      script.text = source;
+      var onerror = window.onerror;
+      var e;
+      window.onerror = function(_e) {
+        e = _e;
+      }
+      head.appendChild(script);
+      head.removeChild(script);
+      window.onerror = onerror;
+      if (e)
+        throw e;
+    }
+
+    if (!$__global.System || !$__global.LoaderPolyfill) {
       // determine the current script path as the base path
-      var curPath = __$curScript.src;
+      var curPath = $__curScript.src;
       var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
       document.write(
         '<' + 'script type="text/javascript" src="' + basePath + 'es6-module-loader.js" data-init="upgradeSystemLoader">' + '<' + '/script>'
       );
     }
     else {
-      global.upgradeSystemLoader();
+      $__global.upgradeSystemLoader();
+    }
+  }
+  else if(isWorker) {
+    doEval = function(source) {
+      try {
+        eval(source);
+      } catch(e) {
+        throw e;
+      }
+    };
+
+    if (!$__global.System || !$__global.LoaderPolyfill) {
+      var basePath = '';
+      try {
+        throw new Error('Getting the path');
+      } catch(err) {
+        var idx = err.stack.indexOf('at ') + 3;
+        var withSystem = err.stack.substr(idx, err.stack.substr(idx).indexOf('\n'));
+        basePath = withSystem.substr(0, withSystem.lastIndexOf('/') + 1);
+      }
+      importScripts(basePath + 'es6-module-loader.js');
+    } else {
+      $__global.upgradeSystemLoader();
     }
   }
   else {
     var es6ModuleLoader = require('es6-module-loader');
-    global.System = es6ModuleLoader.System;
-    global.Loader = es6ModuleLoader.Loader;
-    global.upgradeSystemLoader();
-    module.exports = global.System;
-  }
-})(__$global);
+    $__global.System = es6ModuleLoader.System;
+    $__global.Loader = es6ModuleLoader.Loader;
+    $__global.upgradeSystemLoader();
+    module.exports = $__global.System;
 
-})(typeof window != 'undefined' ? window : global);
+    // global scoped eval for node
+    var vm = require('vm');
+    doEval = function(source, address, sourceMap) {
+      vm.runInThisContext(source);
+    }
+  }
+})();
+
+})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ?
+                                           self : global));

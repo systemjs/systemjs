@@ -1,38 +1,19 @@
-System.register(["./all-layers3"], function($__0) {
+System.register(["./all-layers3"], function($__export) {
   "use strict";
-  var q,
-      r;
+  var q, r, c;
   function p() {
     if (q)
-      r = $__0[0]["c"];
+      r = $__export('r', c);
     else
-      q = $__0[0]["c"];
+      q = $__export('q', c);
   }
+  $__export('p', p);
   return {
-    exports: {
-      get q() {
-        return q;
-      },
-      get r() {
-        return r;
-      },
-      get p() {
-        return p;
-      },
-      set q(value) {
-        q = value;
-      },
-      set r(value) {
-        r = value;
-      },
-      set p(value) {
-        p = value;
-      }
-    },
+    setters: [function(m) {
+      c = m.c;
+    }],
     execute: function() {
-      ;
-      $__0[0]["c"] = 5;
-      ;
+      c = 5;
       p();
     }
   };

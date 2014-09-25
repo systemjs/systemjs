@@ -1,19 +1,17 @@
-System.register(["./all-layers2", "./all-layers4"], function($__0) {
+System.register(["./all-layers2", "./all-layers4"], function($__export) {
   "use strict";
-  var c;
+  var c, p;
   return {
-    exports: {
-      get c() {
-        return c;
-      },
-      set c(value) {
-        c = value;
+    setters: [
+      function(m) {
+        p = m.p;
+      }, 
+      function(m) {
+        $__export('c', c = m.c);
       }
-    },
+    ],
     execute: function() {
-      c = $__0[1]["c"];
-      ;
-      $__0[0]["p"]();
+      p();
     }
   };
 });

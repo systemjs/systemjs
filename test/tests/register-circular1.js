@@ -1,38 +1,23 @@
-System.register(["./register-circular2"], function($__0) {
+System.register(["./register-circular2"], function($__export) {
   "use strict";
-  var q,
+  var c,
+      q,
       r;
   function p() {
     if (q)
-      r = $__0[0]["c"];
+      $__export("r", r = c);
     else
-      q = $__0[0]["c"];
+      $__export("q", q = c);
   }
+  $__export("p", p);
   return {
-    exports: {
-      get q() {
-        return q;
-      },
-      get r() {
-        return r;
-      },
-      get p() {
-        return p;
-      },
-      set q(value) {
-        q = value;
-      },
-      set r(value) {
-        r = value;
-      },
-      set p(value) {
-        p = value;
-      }
-    },
+    setters: [function(m) {
+      c = m.c;
+    }],
     execute: function() {
-      ;
-      $__0[0]["c"] = 5;
-      ;
+      c = 5;
+      q = $__export("q", q);
+      r = $__export("r", r);
       p();
     }
   };

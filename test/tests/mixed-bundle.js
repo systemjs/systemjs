@@ -1,11 +1,12 @@
 "format register";
 
-System.register("tree/third", [], function(deps) {
+System.register("tree/third", [], function($__export) {
+  var some;
   return {
-    exports: {
-      some: 'exports'
-    },
-    execute: function() {}
+    setters: [],
+    execute: function() {
+      some = $__export('some', 'exports');
+    }
   };
 });
 
@@ -28,23 +29,14 @@ System.register("tree/jquery", [], false, function(require, exports, __moduleNam
   return System.get("@@global-helpers").retrieveGlobal(__moduleName, false);
 });
 
-System.register("tree/second", ["./third", "./cjs"], function($__0) {
+System.register("tree/second", ["./third", "./cjs"], function($__export) {
   "use strict";
   var __moduleName = "tree/second";
   var q;
   return {
-    exports: {
-      get q() {
-        return q;
-      },
-      set q(value) {
-        q = value;
-      }
-    },
+    setters: [function() {}, function() {}],
     execute: function() {
-      ;
-      ;
-      q = 4;
+      q = $__export('q', 4);
     }
   };
 });
@@ -61,28 +53,18 @@ System.register("tree/global", ['./jquery'], false, function(__require, __export
 });
 
 System.register("tree/amd", ['./global'], false, function() {
-  console.log('amd');
   return { is: 'amd' };
 });
 
 
-System.register("tree/first", ["./second", "./amd"], function($__0) {
+System.register("tree/first", ["./second", "./amd"], function($__export) {
   "use strict";
   var __moduleName = "tree/first";
   var p;
   return {
-    exports: {
-      get p() {
-        return p;
-      },
-      set p(value) {
-        p = value;
-      }
-    },
+    setters: [function() {}, function() {}],
     execute: function() {
-      ;
-      ;
-      p = 5;
+      p = $__export('p', 5);
     }
   };
 });

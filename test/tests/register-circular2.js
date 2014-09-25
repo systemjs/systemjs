@@ -1,19 +1,14 @@
-System.register(["./register-circular1"], function($__0) {
+System.register(["./register-circular1"], function($__export) {
   "use strict";
-  var c;
+  var c,
+      p;
   return {
-    exports: {
-      get c() {
-        return c;
-      },
-      set c(value) {
-        c = value;
-      }
-    },
+    setters: [function(m) {
+      p = m.p;
+    }],
     execute: function() {
-      c = 3;
-      ;
-      $__0[0]["p"]();
+      c = $__export("c", 3);
+      p();
     }
   };
 });

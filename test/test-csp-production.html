@@ -53,26 +53,19 @@
         }, err);
       });
 
-      System.bundles['tests/amd-namespaced-bundle'] = ['bundle-ns-1', 'bundle-ns-2'];
-      asyncTest('Loading a namespaced AMD bundle', function() {
-        System['import']('bundle-ns-1').then(function(m) {
-          ok(m.defined == true);
-          start();
-        }, err);
-
-        stop();
-        System['import']('bundle-ns-2').then(function(m) {
-          ok(m.defined == true);
-          start();
-        }, err);
-      });
-
       asyncTest('Loading an AMD named define', function() {
         System['import']('tests/nameddefine').then(function() {
           System['import']('another-define').then(function(m) {
             ok(m.named == 'define');
             start();
           }, err);
+        }, err);
+      });
+
+      asyncTest('Loading a badly named AMD define', function() {
+        System['import']('tests/jquery-named').then(function(jquery) {
+          ok(jquery.is == 'jquery');
+          start();
         }, err);
       });
 
@@ -149,6 +142,18 @@
       asyncTest('Loading System.register from ES6', function() {
         System['import']('tree/first').then(function(m) {
           ok(m.p == 5);
+          start();
+        });
+      });
+
+      asyncTest('Running a simple non-fetch plugin', function() {
+        System.set('tests/es6-plugin', System.newModule({
+          fetch: function() {
+            return 'module.exports = "plugin";';
+          }
+        }));
+        System['import']('test/file!tests/es6-plugin').then(function(m) {
+          ok(m == 'plugin');
           start();
         });
       });
