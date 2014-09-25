@@ -552,7 +552,7 @@ asyncTest('Relative dyanamic loading', function() {
 asyncTest('ES6 Circular', function() {
   System['import']('tests/es6-circular1').then(function(m) {
     ok(m.q == 3, 'Binding not allocated');
-    ok(m.r == 5, 'Binding not updated');
+    ok(m.r == 3, 'Binding not updated');
     start();
   }, err);
 });
