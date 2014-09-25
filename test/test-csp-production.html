@@ -145,6 +145,18 @@
           start();
         });
       });
+
+      asyncTest('Running a simple non-fetch plugin', function() {
+        System.set('tests/es6-plugin', System.newModule({
+          fetch: function() {
+            return 'module.exports = "plugin";';
+          }
+        }));
+        System['import']('test/file!tests/es6-plugin').then(function(m) {
+          ok(m == 'plugin');
+          start();
+        });
+      });
     </script>
   </body>
 </html>

@@ -360,6 +360,13 @@ asyncTest('Plugin as a dependency', function() {
   }, err);
 });
 
+asyncTest('ES6 plugin', function() {
+  System['import']('tests/blah!tests/es6-plugin').then(function(m) {
+    ok(m == 'plugin');
+    start();
+  }, err);
+})
+
 asyncTest('AMD Circular', function() {
   System['import']('tests/amd-circular1').then(function(m) {
     ok(m.outFunc() == 5, 'Expected execution');
