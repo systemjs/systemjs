@@ -157,6 +157,13 @@
           start();
         });
       });
+
+      asyncTest('Loading a non-registering module', function() {
+        System['import']('tests/global-dep')['catch'](function(e) {
+          ok(e == System.baseURL + 'tests/global-dep.js did not call System.register or AMD define');
+          start();
+        });
+      })
     </script>
   </body>
 </html>
