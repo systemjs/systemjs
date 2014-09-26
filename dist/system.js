@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.8.1
+ * SystemJS v0.9.0
  */
 
 (function($__global) {
@@ -335,10 +335,10 @@ function register(loader) {
       if (anonRegister)
         load.metadata.entry = anonRegister;
       
-      if (anonRegister || calledRegister)
+      if (calledRegister) {
         load.metadata.format = load.metadata.format || 'register';
-      if (calledRegister)
         load.metadata.registered = true;
+      }
     }
   }
 
@@ -500,8 +500,6 @@ function register(loader) {
       exports = loader.get(name);
       if (!exports)
         throw "System Register: The module requested " + name + " but this was not declared as a dependency";
-      if (exports.__useDefault)
-        exports = exports['default'];
     }
 
     else {
@@ -514,6 +512,9 @@ function register(loader) {
       exports = entry.module.exports;
     }
 
+    if ((!entry || entry.declarative) && exports && exports.__useDefault)
+      return exports['default'];
+    
     return exports;
   }
 
@@ -715,7 +716,6 @@ function register(loader) {
           loader.defined[load.name] = undefined;
 
           var module = loader.newModule(entry.declarative ? entry.module.exports : { 'default': entry.module.exports, '__useDefault': true });
-          entry.module.module = module;
 
           // return the defined module object
           return module;
@@ -834,8 +834,8 @@ function core(loader) {
     // support ES6 alias modules ("export * from 'module';") without needing Traceur
     var match;
     if ((load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
-      load.metadata.format = 'cjs';
-      load.source = 'module.exports = require("' + (match[1] || match[2]) + '");\n';
+      load.metadata.format = 'alias';
+      load.metadata.alias = match[1] || match[2];
     }
 
     // detect ES6
@@ -866,6 +866,17 @@ function core(loader) {
         }
       };
     }
+    if (load.metadata.format == 'alias') {
+      return Promise.resolve(loader.normalize(load.metadata.alias, load.name, load.address))
+      .then(function(alias) {
+        return {
+          deps: [alias],
+          execute: function() {
+            return System.get(alias);
+          }
+        };
+      });
+    }
     return loaderInstantiate.call(loader, load);
   }
 }
@@ -881,6 +892,14 @@ function core(loader) {
   See the SystemJS readme global support section for further information.
 */
 function global(loader) {
+
+  function readGlobalProperty(p, value) {
+    var pParts = p.split('.');
+    while (pParts.length)
+      value = value[pParts.shift()];
+    return value;
+  }
+
   function createHelpers(loader) {
     if (loader.has('@@global-helpers'))
       return;
@@ -904,7 +923,10 @@ function global(loader) {
         // now store a complete copy of the global object
         // in order to detect changes
         curGlobalObj = {};
-        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'webkitStorageInfo'];
+        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage',
+          'clipboardData', 'frames', 'webkitStorageInfo', 'toolbar', 'statusbar',
+          'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB'
+        ];
         for (var g in loader.global) {
           if (indexOf.call(ignoredGlobalProps, g) != -1) { continue; }
           if (!hasOwnProperty || loader.global.hasOwnProperty(g)) {
@@ -934,7 +956,7 @@ function global(loader) {
         // if one global, then that is the module directly
         else if (exportName) {
           var firstPart = exportName.split('.')[0];
-          singleGlobal = eval.call(loader.global, exportName);
+          singleGlobal = readGlobalProperty(exportName, loader.global);
           exports[firstPart] = loader.global[firstPart];
         }
 
@@ -1009,12 +1031,12 @@ function cjs(loader) {
 
   // CJS Module Format
   // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
-  var cjsExportsRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*|module\.)(exports\s*\[\s*('[^']+'|"[^"]+")\s*\]|\exports\s*\.\s*[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*|exports\s*\=)/;
-  var cjsRequireRegEx = /(?:^\s*|[}{\(\);,\n=:\?\&]\s*)require\s*\(\s*("([^"]+)"|'([^']+)')\s*\)/g;
+  var cjsExportsRegEx = /(?:^|[^$_a-zA-Z\xA0-\uFFFF.]|module\.)(exports\s*\[['"]|\exports\s*\.)|(?:^|[^$_a-zA-Z\xA0-\uFFFF.])module\.exports\s*\=/;
+  // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
+  var cjsRequireRegEx = /(?:^|[^$_a-zA-Z\xA0-\uFFFF.])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
   function getCJSDeps(source) {
-    cjsExportsRegEx.lastIndex = 0;
     cjsRequireRegEx.lastIndex = 0;
 
     var deps = [];
@@ -1025,7 +1047,7 @@ function cjs(loader) {
     var match;
 
     while (match = cjsRequireRegEx.exec(source))
-      deps.push(match[2] || match[3]);
+      deps.push(match[1].substr(1, match[1].length - 2));
 
     return deps;
   }
@@ -1092,10 +1114,10 @@ function amd(loader) {
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
   // define(varName); || define(function(require, exports) {}); || define({})
-  var amdRegEx = /(?:^\s*|[}{\(\);,\n\?\&]\s*)define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?)?(\s*(\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*\s*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
+  var amdRegEx = /(?:^|[^$_a-zA-Z\xA0-\uFFFF.])define\s*\(\s*("[^"]+"\s*,\s*|'[^']+'\s*,\s*)?\s*(\[(\s*(("[^"]+"|'[^']+')\s*,|\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*(\s*("[^"]+"|'[^']+')\s*,?)?(\s*(\/\/.*\r?\n|\/\*(.|\s)*?\*\/))*\s*\]|function\s*|{|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*\))/;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
-  var cjsRequirePre = "(?:^\\s*|[}{\\(\\);,\\n=:\\?\\&]\\s*)";
+  var cjsRequirePre = "(?:^|[^$_a-zA-Z\\xA0-\\uFFFF.])";
   var cjsRequirePost = "\\s*\\(\\s*(\"([^\"]+)\"|'([^']+)')\\s*\\)";
 
   var fnBracketRegEx = /\(([^\)]*)\)/;
@@ -1172,8 +1194,10 @@ function amd(loader) {
     var onScriptLoad = loader.onScriptLoad;
     loader.onScriptLoad = function(load) {
       onScriptLoad(load);
-      if (anonDefine || defineBundle)
+      if (anonDefine || defineBundle) {
         load.metadata.format = 'defined';
+        load.metadata.registered = true;
+      }
 
       if (anonDefine) {
         load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(anonDefine.deps) : anonDefine.deps;
@@ -1342,26 +1366,7 @@ function amd(loader) {
 
       createDefine(loader);
 
-      try {
-        loader.__exec(load);
-      }
-      catch(e) {
-        if (loader.execute === false && isNode) {
-          // use a regular expression to pull out deps
-          var match = load.source.match(amdRegEx);
-          if (match) {
-            // named or anonymous
-            if (match[1] && match[1][0] == '[')
-              define(match[1].substr(match[1].length - 2), eval(match[2]), function() {});
-            else if (match[2] && match[2][0] == '[')
-              define(eval(match[2]), function() {});
-            else
-              define(function() {});
-          }
-        }
-        else
-          throw e;
-      }
+      loader.__exec(load);
 
       removeDefine(loader);
 
@@ -1583,6 +1588,10 @@ function plugins(loader) {
     var loader = this;
 
     var name = load.name;
+
+    // only fetch the plugin itself if this name isn't defined
+    if (this.defined && this.defined[name])
+      return loaderLocate.call(this, load);
 
     // plugin
     var pluginIndex = name.lastIndexOf('!');

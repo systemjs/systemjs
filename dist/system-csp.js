@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.8.2
+ * SystemJS v0.9.0
  */
 
 (function($__global) {
@@ -566,8 +566,6 @@ function register(loader) {
       exports = loader.get(name);
       if (!exports)
         throw "System Register: The module requested " + name + " but this was not declared as a dependency";
-      if (exports.__useDefault)
-        exports = exports['default'];
     }
 
     else {
@@ -580,6 +578,9 @@ function register(loader) {
       exports = entry.module.exports;
     }
 
+    if ((!entry || entry.declarative) && exports && exports.__useDefault)
+      return exports['default'];
+    
     return exports;
   }
 
@@ -781,7 +782,6 @@ function register(loader) {
           loader.defined[load.name] = undefined;
 
           var module = loader.newModule(entry.declarative ? entry.module.exports : { 'default': entry.module.exports, '__useDefault': true });
-          entry.module.module = module;
 
           // return the defined module object
           return module;
@@ -900,8 +900,8 @@ function core(loader) {
     // support ES6 alias modules ("export * from 'module';") without needing Traceur
     var match;
     if ((load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
-      load.metadata.format = 'cjs';
-      load.source = 'module.exports = require("' + (match[1] || match[2]) + '");\n';
+      load.metadata.format = 'alias';
+      load.metadata.alias = match[1] || match[2];
     }
 
     // detect ES6
@@ -931,6 +931,17 @@ function core(loader) {
           return loader.newModule({});
         }
       };
+    }
+    if (load.metadata.format == 'alias') {
+      return Promise.resolve(loader.normalize(load.metadata.alias, load.name, load.address))
+      .then(function(alias) {
+        return {
+          deps: [alias],
+          execute: function() {
+            return System.get(alias);
+          }
+        };
+      });
     }
     return loaderInstantiate.call(loader, load);
   }
@@ -1417,7 +1428,6 @@ function amd(loader) {
     var loader = this;
 
     if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
-      console.log('is amd');
       load.metadata.format = 'amd';
 
       createDefine(loader);

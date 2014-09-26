@@ -23,7 +23,7 @@ Basic Configuration
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.8.1/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.58/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.9.1/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.66/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 
@@ -103,6 +103,21 @@ ES6 modules define named exports, provided as getters on a special immutable `Mo
 To build for production, see the [System.register build workflow](#es6-systemregister-compilation).
 
 For further infomation on ES6 module loading, see the [ES6 Module Loader polyfill documentation](https://github.com/ModuleLoader/es6-module-loader).
+
+### Loading Other Formats
+
+When loading from CommonJS, AMD or globals, SystemJS will detect the format automatically.
+
+Any module type can be loaded from any other type.
+
+When loading CommonJS, AMD or globals from ES6, use the `default` import syntax:
+
+app/es6-loading-commonjs:
+```javascript
+import _ from './underscore';
+```
+
+Where underscore.js is located in the same folder.
 
 Features
 ---
@@ -336,7 +351,7 @@ This will compile all ES6 files in the directory `app` into corresponding ES5 `S
 
 The `instantiate` modules option writes the modules out using a `System.register` call, which is supported by SystemJS.
 
-Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.58/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
+Then include [`traceur-runtime.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.66/traceur-runtimr.js) (also found inside traceur's `bin` folder when installed via npm) before es6-module-loader.js:
 
 ```html
   <script src="traceur-runtime.js"></script>
@@ -390,12 +405,12 @@ We can also just include this bundle with a `<script>` tag in the page.
 SystemJS comes with a separate build for production only. This is fully CSP-compatible using script tag injection to load scripts, while still remaining an
 extension of the ES6 Module Loader.
 
-Replace the `system.js` file with `dist/system-production-csp.js`.
+Replace the `system.js` file with `dist/system-csp.js`.
 
 If we have compiled all our modules into a `System.register` bundle, we can do:
 
 ```html
-  <script src="system-production-csp.js"></script>
+  <script src="system-csp.js"></script>
   <script>
     System.paths['app-built'] = '/app-built.js';
     System.bundles['app-built'] = ['app/main'];
