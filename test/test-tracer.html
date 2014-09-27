@@ -36,7 +36,7 @@
       System.pluginLoader.paths = System.paths;
       System.pluginLoader.baseURL = System.baseURL;
       System.trace = true;
-      System.execute = false;
+      // System.execute = false;
 
       asyncTest('ES6 Circular', function() {
         System['import']('tests/es6-circular1').then(function(m) {
