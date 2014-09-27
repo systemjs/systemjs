@@ -1,37 +1,33 @@
 
-START = cat lib/banner.js lib/polyfill-wrapper-start.js > dist/$@.js;
+START = cat lib/banner.js lib/polyfill-wrapper-start.js > dist/$@.src.js;
 
-END = cat lib/polyfill-wrapper-end.js >> dist/$@.js;
+END = cat lib/polyfill-wrapper-end.js >> dist/$@.src.js;
 
 SystemJS = meta register core global cjs amd map plugins bundles versions depCache
 SystemCSP = scriptLoader meta register core global cjs amd map plugins bundles versions depCache
 
 all: system system-csp uglify
 
-uglify:
-	cat lib/banner.js > dist/system.min.js;
-	./node_modules/.bin/uglifyjs dist/system.js -cm >> dist/system.min.js
-
-	cat lib/banner.js > dist/system-csp.min.js;
-	./node_modules/.bin/uglifyjs dist/system-csp.js -cm >> dist/system-csp.min.js
-
+uglify: system system-csp
+	cd dist && ../node_modules/.bin/uglifyjs system.src.js -cm --source-map system.js.map > system.js
+	cd dist && ../node_modules/.bin/uglifyjs system-csp.src.js -cm --source-map system-csp.js.map > system-csp.js
 
 system:
 	$(START)
 	for extension in $(SystemJS); do \
-		cat lib/extension-$$extension.js >> dist/$@.js; \
+		cat lib/extension-$$extension.js >> dist/$@.src.js; \
 	done
 	for extension in $(SystemJS); do \
-		echo $$extension"(System);" >> dist/$@.js; \
+		echo $$extension"(System);" >> dist/$@.src.js; \
 	done
 	$(END)
 
 system-csp:
 	$(START)
 	for extension in $(SystemCSP); do \
-		cat lib/extension-$$extension.js >> dist/$@.js; \
+		cat lib/extension-$$extension.js >> dist/$@.src.js; \
 	done
 	for extension in $(SystemCSP); do \
-		echo $$extension"(System);" >> dist/$@.js; \
+		echo $$extension"(System);" >> dist/$@.src.js; \
 	done
 	$(END)
