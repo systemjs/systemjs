@@ -455,6 +455,16 @@ asyncTest('Wrapper module support', function() {
   }, err);
 });
 
+asyncTest('Custom alias module', function() {
+  System.meta['tests/aliased'] = {
+    alias: 'tests/alias-main'
+  };
+  System['import']('tests/aliased').then(function(m) {
+    ok(m['alias'] == 'value');
+    start();
+  }, err);
+});
+
 asyncTest('Basic exporting & importing', function() {
   var m1, m2, m3, m4, err;
   var checkComplete = function() {
