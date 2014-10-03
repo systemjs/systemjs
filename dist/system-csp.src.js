@@ -565,7 +565,7 @@ function register(loader) {
     if (!entry) {
       exports = loader.get(name);
       if (!exports)
-        throw "System Register: The module requested " + name + " but this was not declared as a dependency";
+        throw "Unable to load dependency " + name + ".";
     }
 
     else {
@@ -610,6 +610,7 @@ function register(loader) {
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
+      throw 'Module ' + name + ' not declared as a dependency.';
     }, exports, module);
     
     if (output)
@@ -734,6 +735,9 @@ function register(loader) {
 
       if (anonRegister)
         entry = anonRegister;
+
+      if (!entry && System.defined[load.name])
+        entry = System.defined[load.name];
 
       if (!calledRegister && !load.metadata.registered)
         throw load.name + " detected as System.register but didn't execute.";
@@ -932,16 +936,12 @@ function core(loader) {
         }
       };
     }
-    if (load.metadata.format == 'alias') {
-      return Promise.resolve(loader.normalize(load.metadata.alias, load.name, load.address))
-      .then(function(alias) {
-        return {
-          deps: [alias],
-          execute: function() {
-            return System.get(alias);
-          }
-        };
-      });
+    if (load.metadata.alias) {
+      var alias = load.metadata.alias;
+      load.metadata.deps = [alias];
+      load.metadata.execute = function(require) {
+        return require(alias);
+      }
     }
     return loaderInstantiate.call(loader, load);
   }
@@ -1107,8 +1107,9 @@ function cjs(loader) {
 
     var deps = [];
 
-    // remove comments from the source first
-    var source = source.replace(commentRegEx, '');
+    // remove comments from the source first, if not minified
+    if (source.length / source.split('\n').length < 200)
+      source = source.replace(commentRegEx, '');
 
     var match;
 
