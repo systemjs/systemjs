@@ -45,6 +45,13 @@
         }, err);
       });
 
+      asyncTest('Loading a module with the same name', function() {
+        System['import']('tests/foo').then(function(m) {
+          ok(m.f == 'f');
+          start();
+        }, err);
+      });
+
     </script>
   </body>
 </html>
