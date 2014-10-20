@@ -277,6 +277,15 @@ asyncTest('CommonJS detection variattion', function() {
   }, err);
 });
 
+asyncTest('CommonJS require variations', function() {
+  System['import']('tests/commonjs-requires').then(function(m) {
+    ok(m.d1 == 'd');
+    ok(m.d2 == 'd');
+    ok(m.d3 == "require('not a dep')");
+    start();
+  }, err);
+});
+
 asyncTest('Loading a UMD module', function() {
   System['import']('tests/umd').then(function(m) {
     ok(m.d == 'hi', 'module value not defined');
