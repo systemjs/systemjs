@@ -889,9 +889,7 @@ function core(loader) {
     return Promise.resolve(loaderLocate.call(this, load));
   }
 
-
   // Traceur conveniences
-  var aliasRegEx = /^\s*export\s*\*\s*from\s*(?:'([^']+)'|"([^"]+)")/;
   var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
 
   var loaderTranslate = loader.translate;
@@ -900,13 +898,6 @@ function core(loader) {
 
     if (load.name == '@traceur')
       return loaderTranslate.call(loader, load);
-
-    // support ES6 alias modules ("export * from 'module';") without needing Traceur
-    var match;
-    if ((load.metadata.format == 'es6' || !load.metadata.format) && (match = load.source.match(aliasRegEx))) {
-      load.metadata.format = 'es6';
-      load.metadata.alias = match[1] || match[2];
-    }
 
     // detect ES6
     else if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
@@ -935,13 +926,6 @@ function core(loader) {
           return loader.newModule({});
         }
       };
-    }
-    if (load.metadata.alias) {
-      var alias = load.metadata.alias;
-      load.metadata.deps = [alias];
-      load.metadata.execute = function(require) {
-        return require(alias);
-      }
     }
     return loaderInstantiate.call(loader, load);
   }

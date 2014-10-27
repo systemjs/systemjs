@@ -508,6 +508,14 @@ asyncTest('Basic exporting & importing', function() {
   })['catch'](err);
 });
 
+asyncTest('Export Star', function(assert) {
+  System['import']('tests/export-star').then(function(m) {
+    ok(m.foo == 'foo');
+    ok(m.bar == 'bar');
+    start();
+  }, err);
+});
+
 asyncTest('Importing a mapped loaded module', function() {
   System.map['default1'] = 'tests/default1';
   System['import']('default1').then(function(m) {
@@ -517,6 +525,13 @@ asyncTest('Importing a mapped loaded module', function() {
     }, err);
   }, err);
 });
+
+asyncTest('Loading empty ES6', function() {
+  System['import']('tests/empty-es6').then(function(m) {
+    ok(m && window.emptyES6);
+    start();
+  }, err);
+})
 
 asyncTest('Loading ES6 with format hint', function() {
   System['import']('tests/es6-format').then(function(m) {
