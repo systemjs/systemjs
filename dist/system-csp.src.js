@@ -2099,7 +2099,7 @@ function versions(loader) {
       // no match found -> send a request to the server
       var versionRequest;
       if (parsedRange.semver) {
-        versionRequest = parsedRange.version.major == 0 ? '0.' + parsedRange.version.minor : parsedRange.version.major;
+        versionRequest = parsedRange.version.major == 0 && !isNaN(parsedRange.version.minor) ? '0.' + parsedRange.version.minor : parsedRange.version.major;
       }
       else if (parsedRange.fuzzy) {
         versionRequest = parsedRange.version.major + '.' + parsedRange.version.minor;
