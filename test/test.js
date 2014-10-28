@@ -315,6 +315,13 @@ asyncTest('Versions support', function() {
   }, err);
 });
 
+asyncTest('Versions 2', function() {
+  System['import']('tests/zero@0').then(function(m) {
+    ok(m == '0');
+    start()
+  }, err);
+})
+
 asyncTest('Version with map', function() {
   System.versions['tests/mvd'] = '2.0.0';
   System.map['tests/map-version'] = {
