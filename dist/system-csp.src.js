@@ -17,7 +17,7 @@ $__global.upgradeSystemLoader = function() {
 
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
   function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@\/?#]*(?::[^:@\/?#]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
     // authority = '//' + user + ':' + pass '@' + hostname + ':' port
     return (m ? {
       href     : m[0] || '',
@@ -331,7 +331,7 @@ function register(loader) {
     else {
       // ES6 declarative
       if (deps.length > 0 && declare.length != 1)
-        throw 'Invalid System.register form for ' + name + '. Declare function must take one argument.';
+        throw new TypeError('Invalid System.register form for ' + name + '. Declare function must take one argument.');
       register = {
         declarative: true,
         deps: deps,
@@ -349,7 +349,7 @@ function register(loader) {
     // anonymous register
     else if (register.declarative) {
       if (anonRegister)
-        throw 'Multiple anonymous System.register calls in the same module file.';
+        throw new TypeError('Multiple anonymous System.register calls in the same module file.');
       anonRegister = register;
     }
   }
@@ -512,7 +512,7 @@ function register(loader) {
     module.execute = declaration.execute;
 
     if (!module.setters || !module.execute) {
-      throw "Invalid System.register form for " + entry.name;
+      throw new TypeError('Invalid System.register form for ' + entry.name);
     }
 
     // now link all the module dependencies
@@ -565,7 +565,7 @@ function register(loader) {
     if (!entry) {
       exports = loader.get(name);
       if (!exports)
-        throw "Unable to load dependency " + name + ".";
+        throw new Error('Unable to load dependency ' + name + '.');
     }
 
     else {
@@ -610,7 +610,7 @@ function register(loader) {
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-      throw 'Module ' + name + ' not declared as a dependency.';
+      throw new TypeError('Module ' + name + ' not declared as a dependency.');
     }, exports, module);
     
     if (output)
@@ -740,7 +740,7 @@ function register(loader) {
         entry = System.defined[load.name];
 
       if (!calledRegister && !load.metadata.registered)
-        throw load.name + " detected as System.register but didn't execute.";
+        throw new TypeError(load.name + ' detected as System.register but didn\'t execute.');
     }
 
     // named bundles are just an empty module
@@ -890,7 +890,8 @@ function core(loader) {
   }
 
   // Traceur conveniences
-  var es6RegEx = /(?:^\s*|[}{\(\);,\n]\s*)(import\s+['"]|(import|module)\s+[^"'\(\)\n;]+\s+from\s+['"]|export\s+(\*|\{|default|function|var|const|let|[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))/;
+  // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
+  var es6RegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let))/;
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
@@ -1227,7 +1228,7 @@ function amd(loader) {
     }
 
     else
-      throw 'Invalid require';
+      throw new TypeError('Invalid require');
   };
   loader.amdRequire = require;
 
@@ -1331,7 +1332,7 @@ function amd(loader) {
       if (!name) {
         // already defined anonymously -> throw
         if (anonDefine)
-          throw "Multiple defines for anonymous module";
+          throw new TypeError('Multiple defines for anonymous module');
         anonDefine = define;
       }
       // named define
@@ -1423,7 +1424,7 @@ function amd(loader) {
         removeDefine(loader);
 
         if (!anonDefine && !defineBundle && !isNode)
-          throw "AMD module " + load.name + " did not define";
+          throw new TypeError('AMD module ' + load.name + ' did not define');
       }
 
       if (anonDefine) {
@@ -2189,7 +2190,12 @@ var $__curScript, __eval;
       doEval(source);
     }
     catch(e) {
-      throw 'Error evaluating ' + address;
+      var msg = 'Error evaluating ' + address + '\n';
+      if (e instanceof Error)
+        e.message = msg + e.message;
+      else
+        e = msg + e;
+      throw e;
     }
   };
 
@@ -2246,7 +2252,7 @@ var $__curScript, __eval;
     if (!$__global.System || !$__global.LoaderPolyfill) {
       var basePath = '';
       try {
-        throw new Error('Getting the path');
+        throw new TypeError('Unable to get Worker base path.');
       } catch(err) {
         var idx = err.stack.indexOf('at ') + 3;
         var withSystem = err.stack.substr(idx, err.stack.substr(idx).indexOf('\n'));
