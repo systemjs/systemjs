@@ -376,13 +376,6 @@ asyncTest('Plugin as a dependency', function() {
   }, err);
 });
 
-asyncTest('ES6 plugin', function() {
-  System['import']('tests/blah!tests/es6-plugin').then(function(m) {
-    ok(m == 'plugin');
-    start();
-  }, err);
-})
-
 asyncTest('AMD Circular', function() {
   System['import']('tests/amd-circular1').then(function(m) {
     ok(m.outFunc() == 5, 'Expected execution');
@@ -467,6 +460,20 @@ if (ie8)
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
     ok(m['default'] == 'default1', 'Wrapper module not defined.');
+    start();
+  }, err);
+});
+
+asyncTest('ES6 plugin', function() {
+  System['import']('tests/blah!tests/es6-plugin').then(function(m) {
+    ok(m == 'plugin');
+    start();
+  }, err);
+});
+
+asyncTest('ES6 detection', function() {
+  System['import']('tests/es6-detection1').then(function(m) {
+    ok(true);
     start();
   }, err);
 });
