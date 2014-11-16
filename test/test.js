@@ -618,6 +618,15 @@ asyncTest('AMD -> System.register circular -> ES6', function() {
   }, err);
 });
 
+asyncTest('Metadata dependencies work for named defines', function() {
+  System['import']('tests/meta-deps').then(function(m) {
+    return System['import']('b');
+  }).then(function(m) {
+    ok(m.a === 'a');
+    start();
+  });
+});
+
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
     var worker = new Worker('tests/worker.js');
