@@ -1,13 +1,17 @@
+(function(global) {
+
 System.meta.b = {
   deps: ['a']
 };
 
 define('a', [], function() {
-  window.MODULEA = 'a';
+  global.MODULEA = 'a';
 });
 
 define('b', [], function() {
   return {
-    a: window.MODULEA
+    a: global.MODULEA
   };
 });
+
+})(typeof window == 'undefined' ? global : window);
