@@ -14,7 +14,7 @@
     <div id="qunit-test-area"></div>
 
     <!-- <script src="../bower_components/traceur/traceur.js"></script> -->
-    <script src="../bower_components/es6-module-loader/dist/es6-module-loader.js"></script>
+    <script src="../bower_components/es6-module-loader/dist/es6-module-loader.src.js"></script>
     <script src="../dist/system-csp.js" type="text/javascript"></script>
 
     <script src="../bower_components/qunit/qunit/qunit.js"></script>
@@ -160,7 +160,7 @@
 
       asyncTest('Loading a non-registering module', function() {
         System['import']('tests/global-dep')['catch'](function(e) {
-          ok(e == System.baseURL + 'tests/global-dep.js did not call System.register or AMD define');
+          ok(e);
           start();
         });
       })
