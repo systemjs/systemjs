@@ -1,6 +1,6 @@
 "format global";
 
-(function() {
+(function(global) {
 
 QUnit.config.testTimeout = 2000;
 
@@ -550,7 +550,7 @@ asyncTest('Importing a mapped loaded module', function() {
 
 asyncTest('Loading empty ES6', function() {
   System['import']('tests/empty-es6').then(function(m) {
-    ok(m && window.emptyES6);
+    ok(m && emptyES6);
     start();
   }, err);
 })
@@ -638,4 +638,4 @@ if(typeof window !== 'undefined' && window.Worker) {
   });
 }
 
-})();
+})(typeof window == 'undefined' ? global : window);

@@ -1,1 +1,3 @@
-window.emptyES6 = true;
+(function(global) {
+  global.emptyES6 = true;
+})(typeof window == 'undefined' ? global : window);
