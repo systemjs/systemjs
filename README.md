@@ -12,7 +12,7 @@ Designed as a collection of small extensions to the ES6 specification System loa
 * Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (8KB) for a combined total footprint of 16KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
 
 Runs in IE8+ and NodeJS.
 
@@ -52,8 +52,6 @@ index.html:
   });
 
   System.import('app/app')
-  // we add this since promises suppress all errors
-  .catch(console.error.bind(console));
 </script>
 ```
 
@@ -94,7 +92,7 @@ app/es6-file.js:
   <script>
     System.import('app/es6-file').then(function(m) {
       console.log(new m.q().es6); // yay
-    }, console.error.bind(console));
+    });
   </script>
 ```
 
@@ -192,7 +190,7 @@ app/sample-global.js
 ```javascript
   System.import('app/sample-global').then(function(m) {
     m == 'world';
-  }, console.error.bind(console));
+  });
 ```
 
 When multiple global properties are detected, the module object becomes the collection of those objects:
@@ -207,7 +205,7 @@ app/multi-global.js
 System.import('app/multi-global').then(function(m) {
   m.first == 'global1';
   m.second == 'global2';
-}, console.error.bind(console));
+});
 ```
 
 Global dependencies can be specified with the `deps` [meta config](#meta-configuration):
@@ -266,8 +264,7 @@ For example, consider an app which wants to specify the jQuery version through c
 Now an import of the form:
 
 ```javascript
-  System.import('jquery')
-  .catch(console.error.bind(console));
+  System.import('jquery');
 ```
 
 will load a load will be made to the file `/lib/jquery@2.0.3.js`.
@@ -301,7 +298,7 @@ Semver-compatible requires of any of the following forms can be used:
 
 ### Relative Dynamic Loading
 
-Modules can check their own name from the global variable `__moduleName`.
+Modules can check their own name from the global variable `__moduleName`. `__moduleAddress` is also available.
 
 This allows easy relative dynamic loading, allowing modules to load additional functionality after the initial load:
 
@@ -416,7 +413,7 @@ If we have compiled all our modules into a `System.register` bundle, we can do:
     System.bundles['app-built'] = ['app/main'];
     System.import('app/main').then(function(m) { 
       // loads app/main from the app-built bundle
-    }, console.error.bind(console));
+    });
   </script>
 ```
 
@@ -426,7 +423,7 @@ See [SystemJS Builder](https://github.com/systemjs/builder) for a single-file bu
 
 ### RequireJS Support
 
-To use SystemJS side-by-side in a RequireJS project, make sure to include RequireJS before SystemJS.
+To use SystemJS side-by-side in a RequireJS project, make sure to include RequireJS after ES6 Module Loader but before SystemJS.
 
 Conversely, to have SystemJS provide a RequireJS-like API in an application set:
 
@@ -451,8 +448,6 @@ var System = require('systemjs');
 // loads './app.js' from the current directory
 System.import('./app').then(function(m) {
   console.log(m);
-}, function(e) {
-  console.log(e);
 });
 ```
 
