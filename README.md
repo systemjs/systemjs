@@ -378,7 +378,7 @@ Bundles configuration allows a single bundle file to be loaded in place of separ
   System.bundles['build/core'] = ['jquery', 'app/app', 'app/dep', 'lib/third-party'];
   
   // loads "app/app" from the module "build/core".
-  System.import('app/app'));
+  System.import('app/app');
   
   // a request to any one of 'jquery', 'app/app', 'app/dep', 'lib/third-party'
   // would delegate to the "build/core" module
