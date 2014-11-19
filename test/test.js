@@ -224,6 +224,13 @@ asyncTest('AMD detection test with comments', function() {
   }, err);
 });
 
+asyncTest('AMD detection test with byte order mark (BOM)', function() {
+  System['import']('tests/amd-module-bom').then(function(m) {
+    ok(m.amd);
+    start();
+  }, err);
+});
+
 System.bundles['tests/amd-bundle'] = ['bundle-1', 'bundle-2'];
 asyncTest('Loading an AMD bundle', function() {
   System['import']('bundle-1').then(function(m) {
@@ -273,14 +280,28 @@ asyncTest('Loading a CommonJS module with this', function() {
 
 asyncTest('CommonJS setting module.exports', function() {
   System['import']('tests/cjs-exports').then(function(m) {
-    ok(m.e = 'export');
+    ok(m.e == 'export');
     start();
   }, err);
 });
 
-asyncTest('CommonJS detection variattion', function() {
+asyncTest('CommonJS detection variation', function() {
   System['import']('tests/commonjs-variation').then(function(m) {
     ok(m.e === System.get('@empty'));
+    start();
+  }, err);
+});
+
+asyncTest('CommonJS detection test with byte order mark (BOM)', function() {
+  System['import']('tests/cjs-exports-bom').then(function(m) {
+    ok(m.foo == 'bar');
+    start();
+  }, err);
+});
+
+asyncTest('CommonJS module detection test with byte order mark (BOM)', function() {
+  System['import']('tests/cjs-module-bom').then(function(m) {
+    ok(m.foo == 'bar');
     start();
   }, err);
 });
