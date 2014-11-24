@@ -1104,6 +1104,8 @@ function cjs(loader) {
     return deps;
   }
 
+  var nodeRequire = require;
+
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
 
@@ -1130,11 +1132,12 @@ function cjs(loader) {
           module: module,
           require: require,
           __filename: load.address,
-          __dirname: dirname
+          __dirname: dirname,
+          nodeRequire: nodeRequire
         };
 
-        var source = '(function(global, exports, module, require, __filename, __dirname) { ' + load.source 
-          + '\n}).call(_g.exports, _g.global, _g.exports, _g.module, _g.require, _g.__filename, _g.__dirname);';
+        var source = '(function(global, exports, module, require, __filename, __dirname, nodeRequire) { ' + load.source 
+          + '\n}).call(_g.exports, _g.global, _g.exports, _g.module, _g.require, _g.__filename, _g.__dirname, _g.nodeRequire);';
 
         // disable AMD detection
         var define = loader.global.define;
