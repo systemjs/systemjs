@@ -93,7 +93,7 @@ $__global.upgradeSystemLoader = function() {
  *   console.log('this is my/module');
  *
  * The benefit of inline meta is that coniguration doesn't need
- * to be known in advanced, which is useful for modularising
+ * to be known in advance, which is useful for modularising
  * configuration and avoiding the need for configuration injection.
  *
  *
@@ -165,7 +165,8 @@ function meta(loader) {
     
     return loaderTranslate.call(this, load);
   }
-}/*
+}
+/*
  * Instantiate registry extension
  *
  * Supports Traceur System.register 'instantiate' output for loading ES6 as ES5.
@@ -759,6 +760,10 @@ function core(loader) {
   // support the empty module, as a concept
   loader.set('@empty', loader.newModule({}));
 
+  // include the node require since we're overriding it
+  if (typeof require != 'undefined')
+    loader._nodeRequire = require;
+
   /*
     Config
     Extends config merging one deep only
@@ -1038,8 +1043,6 @@ function cjs(loader) {
     return deps;
   }
 
-  var nodeRequire = require;
-
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
 
@@ -1066,12 +1069,11 @@ function cjs(loader) {
           module: module,
           require: require,
           __filename: load.address,
-          __dirname: dirname,
-          nodeRequire: nodeRequire
+          __dirname: dirname
         };
 
-        var source = '(function(global, exports, module, require, __filename, __dirname, nodeRequire) { ' + load.source 
-          + '\n}).call(_g.exports, _g.global, _g.exports, _g.module, _g.require, _g.__filename, _g.__dirname, _g.nodeRequire);';
+        var source = '(function(global, exports, module, require, __filename, __dirname) { ' + load.source 
+          + '\n}).call(_g.exports, _g.global, _g.exports, _g.module, _g.require, _g.__filename, _g.__dirname);';
 
         // disable AMD detection
         var define = loader.global.define;
@@ -1091,7 +1093,8 @@ function cjs(loader) {
 
     return loaderInstantiate.call(this, load);
   };
-}/*
+}
+/*
   SystemJS AMD Format
   Provides the AMD module format definition at System.format.amd
   as well as a RequireJS-style require on System.require
