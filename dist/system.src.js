@@ -830,13 +830,15 @@ function core(loader) {
 
   // Traceur conveniences
   // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
-  var es6RegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let))/;
+  var es6RegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+
+  var traceurRuntimeRegEx = /\$traceurRuntime/;
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
     var loader = this;
 
-    if (load.name == '@traceur')
+    if (load.name == '@traceur' || load.name == '@traceur-runtime')
       return loaderTranslate.call(loader, load);
 
     // detect ES6
@@ -851,6 +853,13 @@ function core(loader) {
       }
     }
 
+    // dynamicallly load Traceur runtime if necessary
+    if (!loader.global.$traceurRuntime && load.source.match(traceurRuntimeRegEx)) {
+      return loader['import']('@traceur-runtime').then(function() {
+        return loaderTranslate.call(loader, load);
+      });
+    }
+
     return loaderTranslate.call(loader, load);
   }
 
@@ -858,7 +867,7 @@ function core(loader) {
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
-    if (load.name == '@traceur') {
+    if (load.name == '@traceur' || load.name == '@traceur-runtime') {
       loader.__exec(load);
       return {
         deps: [],
@@ -1063,12 +1072,16 @@ function cjs(loader) {
         dirname.pop();
         dirname = dirname.join('/');
 
+        // if on the server, remove the "file:" part from the dirname
+        if (System._nodeRequire)
+          dirname = dirname.substr(5);
+
         var globals = loader.global._g = {
           global: loader.global,
           exports: exports,
           module: module,
           require: require,
-          __filename: load.address,
+          __filename: System._nodeRequire ? load.address.substr(5) : load.address,
           __dirname: dirname
         };
 
@@ -1983,8 +1996,9 @@ function versions(loader) {
 
     // strip the version before applying map config
     var stripVersion, stripSubPathLength;
-    if (name.indexOf('@') > 0) {
-      var versionIndex = name.lastIndexOf('@');
+    var pluginIndex = name.lastIndexOf('!');
+    var versionIndex = (pluginIndex == -1 ? name : name.substr(0, pluginIndex)).lastIndexOf('@');
+    if (versionIndex > 0) {
       var parts = name.substr(versionIndex + 1, name.length - versionIndex - 1).split('/');
       stripVersion = parts[0];
       stripSubPathLength = parts.length;
@@ -2117,6 +2131,8 @@ depCache(System);
         ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1) 
         : System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/')
         ) + 'traceur.js';
+  if (!System.paths['@traceur-runtime'])
+    System.paths['@traceur-runtime'] = $__curScript && $__curScript.getAttribute('data-traceur-runtime-src') || System.paths['@traceur'].replace(/\.js$/, '-runtime.js');
 };
 
 var $__curScript, __eval;
