@@ -22,7 +22,7 @@ function err(e) {
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
 
-System.traceurOptions = { asyncFunctions: true };
+System.traceurOptions.asyncFunctions = true;
 
 asyncTest('Error handling', function() {
   System['import']('tests/error-loader').then(err, function(e) {
@@ -372,6 +372,15 @@ asyncTest('Simple compiler Plugin', function() {
     start();
   }, err);
 });
+
+asyncTest('Versioned plugin', function() {
+  System.versions['tests/versioned-plugin-test'] = '1.2.3';
+  System['import']('tests/versioned-plugin-test/main').then(function(m) {
+    ok(m.output == 'plugin output');
+    ok(m.versionedPlugin == true);
+    start();
+  }, err);
+})
 
 asyncTest('Mapping to a plugin', function() {
   System.map['pluginrequest'] = 'tests/compiled.coffee!';
