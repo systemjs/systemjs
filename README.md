@@ -429,8 +429,8 @@ To use SystemJS side-by-side in a RequireJS project, make sure to include Requir
 Conversely, to have SystemJS provide a RequireJS-like API in an application set:
 
 ```javascript
-window.define = loader.amdDefine;
-window.require = window.requirejs = loader.amdRequire;
+window.define = System.amdDefine;
+window.require = window.requirejs = System.amdRequire;
 ```
 
 ### NodeJS Usage
