@@ -5,14 +5,12 @@ Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global sc
 
 Designed as a collection of extensions to the [ES6 module loader](https://github.com/ModuleLoader/es6-module-loader) which can also be applied individually.
 
-* [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support).
-* Provides comprehensive and exact replications of AMD, CommonJS and ES6 [circular reference handling](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
-* Loads [ES6 modules compiled into the `System.register` form for production](#es6-systemregister-compilation), maintaining full circular references support.
-* Supports RequireJS-style [map](#map-configuration), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](#bundles), [shim](#global-module-format-support) and [plugins](#plugins).
-* Tracks package versions, and resolves semver-compatibile requests through [package version syntax](#versions) - `package@x.y.z`, `package^@x.y.z`.
+* [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
+* Loads [ES6 modules compiled into the `System.register` bundle format for production](https://github.com/systemjs/systemjs/wiki/Production-Workflows), maintaining circular references support.
+* Supports RequireJS-style [map](https://github.com/systemjs/systemjs/wiki/Map-Configuration), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](https://github.com/systemjs/systemjs/wiki/Production-Workflows#bundle-extension) and [global shims](https://github.com/systemjs/systemjs/wiki/Module-Format-Support#globals-global).
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped. In future, with native implementations, the ES6 Module Loader polyfill should no longer be necessary. As jQuery provides for the DOM, this library can smooth over inconsistiencies and missing practical functionality provided by the native System loader.
+Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped.
 
 Runs in IE8+ and NodeJS.
 
@@ -111,11 +109,11 @@ app/es6-file.js:
 
 ES6 modules define named exports, provided as getters on a special immutable `Module` object.
 
-To build for production, see the [System.register build workflow](#es6-systemregister-compilation).
-
-For further infomation on ES6 module loading, see the [ES6 Module Loader polyfill documentation](https://github.com/ModuleLoader/es6-module-loader).
+To build for production, see the [production workflows](https://github.com/systemjs/systemjs/wiki/Production-Workflows).
 
 [For further details about SystemJS module format support, see the wiki page](https://github.com/systemjs/systemjs/wiki/Module-Format-Support).
+
+For further infomation on ES6 module loading, see the [ES6 Module Loader polyfill documentation](https://github.com/ModuleLoader/es6-module-loader).
 
 ### Plugins
 
