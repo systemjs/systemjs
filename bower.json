@@ -1,9 +1,9 @@
 {
   "name": "system.js",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "main": "dist/system.js",
   "dependencies": {
-    "es6-module-loader": "~0.10.0",
+    "es6-module-loader": "~0.11.0",
     "traceur-runtime": "~0.0.79"
   },
   "devDependencies": {

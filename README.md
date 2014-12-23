@@ -36,7 +36,7 @@ Getting Started
 
 ### Setup
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.9.4/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.72/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.11.0/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.79/traceur.js) and locate them in the same folder as `system.js` from this repo.
 
 We then include `dist/system.js` with a script tag in the page.
 
