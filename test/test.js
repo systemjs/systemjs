@@ -338,31 +338,12 @@ asyncTest('Loading CJS with format hint', function() {
   }, err);
 });
 
-asyncTest('Versions support', function() {
-  System.versions['tests/versioned'] = '2.0.3';
-  System['import']('tests/versioned@^2.0.3').then(function(m) {
-    ok(m.version == '2.3.4', 'Version not loaded');
-    start();
-  }, err);
-});
-
-asyncTest('Versions 2', function() {
+asyncTest('Versions', function() {
   System['import']('tests/zero@0').then(function(m) {
     ok(m == '0');
     start()
   }, err);
 })
-
-asyncTest('Version with map', function() {
-  System.versions['tests/mvd'] = '2.0.0';
-  System.map['tests/map-version'] = {
-    'tests/mvd': 'tests/mvd@^2.0.0'
-  };
-  System['import']('tests/map-version').then(function(m) {
-    ok(m == 'overridden map version');
-    start();
-  }, err);
-});
 
 asyncTest('Simple compiler Plugin', function() {
   System.map['coffee'] = 'tests/compiler-plugin';
@@ -372,15 +353,6 @@ asyncTest('Simple compiler Plugin', function() {
     start();
   }, err);
 });
-
-asyncTest('Versioned plugin', function() {
-  System.versions['tests/versioned-plugin-test'] = '1.2.3';
-  System['import']('tests/versioned-plugin-test/main').then(function(m) {
-    ok(m.output == 'plugin output');
-    ok(m.versionedPlugin == true);
-    start();
-  }, err);
-})
 
 asyncTest('Mapping to a plugin', function() {
   System.map['pluginrequest'] = 'tests/compiled.coffee!';
@@ -392,8 +364,7 @@ asyncTest('Mapping to a plugin', function() {
 });
 
 asyncTest('Mapping a plugin argument', function() {
-  System.map['bootstrap'] = 'tests/bootstrap@^3.1.1';
-  System.versions['tests/bootstrap'] = '3.1.1';
+  System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
   System.map['coffee'] = 'tests/compiler-plugin';
   System['import']('bootstrap/test.coffee!coffee').then(function(m) {
     ok(m.extra == 'yay!', 'not working');
@@ -415,6 +386,14 @@ asyncTest('Plugin as a dependency', function() {
     start();
   }, err);
 });
+
+asyncTest('Hashed request', function() {
+  System.meta['tests/hash-module'] = { hash: 'a0g8n7' };
+  System['import']('tests/hash-module').then(function(m) {
+    ok(m.isHashed);
+    start();
+  });
+})
 
 asyncTest('AMD Circular', function() {
   System['import']('tests/amd-circular1').then(function(m) {
