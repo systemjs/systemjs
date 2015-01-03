@@ -855,7 +855,10 @@ function core(loader) {
 
     // dynamicallly load Traceur runtime if necessary
     if (!loader.global.$traceurRuntime && load.source.match(traceurRuntimeRegEx)) {
+      var System = $__global.System;
       return loader['import']('@traceur-runtime').then(function() {
+        // traceur runtme annihilates System global
+        $__global.System = System;
         return loaderTranslate.call(loader, load);
       });
     }
