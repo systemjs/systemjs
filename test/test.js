@@ -666,6 +666,14 @@ asyncTest('Metadata dependencies work for named defines', function() {
   });
 });
 
+asyncTest('Loading an AMD module that requires another works', function() {
+  expect(0);
+  System['import']('tests/amd-require').then(function(){
+    // Just getting this far means it is working.
+    start();
+  });
+});
+
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
     var worker = new Worker('tests/worker.js');
