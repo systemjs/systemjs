@@ -9,7 +9,7 @@ Designed as a collection of extensions to the [ES6 module loader](https://github
 
 * [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Loads [ES6 modules compiled into the `System.register` bundle format for production](https://github.com/systemjs/systemjs/wiki/Production-Workflows), maintaining circular references support.
-* Supports RequireJS-style [map](https://github.com/systemjs/systemjs/wiki/Map-Configuration), [paths](https://github.com/ModuleLoader/es6-module-loader#paths-implementation), [bundles](https://github.com/systemjs/systemjs/wiki/Production-Workflows#bundle-extension) and [global shims](https://github.com/systemjs/systemjs/wiki/Module-Format-Support#globals-global).
+* Supports RequireJS-style [map](https://github.com/systemjs/systemjs/wiki/Map-Configuration), [paths](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader#paths-implementation), [bundles](https://github.com/systemjs/systemjs/wiki/Production-Workflows#bundle-extension) and [global shims](https://github.com/systemjs/systemjs/wiki/Module-Format-Support#globals-global).
 * [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
 Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped.
