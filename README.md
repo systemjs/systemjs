@@ -157,6 +157,14 @@ System.import('./app').then(function(m) {
 });
 ```
 
+If configuring `baseURL` please prepend `file:` i.e.
+
+```javascipt
+System.config({
+  baseURL: 'file:' + __dirname.replace('bin', '')
+});
+```
+
 #### Running the tests
 
 To install the dependencies correctly, run `bower install` from the root of the repo, then open `test/test.html` in a browser with a local server
