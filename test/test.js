@@ -674,6 +674,13 @@ asyncTest('Loading an AMD module that requires another works', function() {
   });
 });
 
+asyncTest('Loading a connected tree that connects ES and CJS modules', function(){
+	System['import']('tests/connected-tree/a').then(function(a){
+		ok(a.name === "a");
+		start();
+	});
+});
+
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
     var worker = new Worker('tests/worker.js');
