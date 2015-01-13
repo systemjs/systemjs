@@ -133,6 +133,7 @@ Additional Community Plugins:
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
+* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee!')`
 
 Additional plugin submissions to the above are welcome.
 
