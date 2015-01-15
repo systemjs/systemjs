@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.11.1
+ * SystemJS v0.11.2
  */
 
 (function($__global) {
@@ -1037,6 +1037,7 @@ function cjs(loader) {
   // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
   var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+  var otherStringsRegEx = /(require\s*\(\s*)?(?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/g;
 
   function getCJSDeps(source) {
     cjsRequireRegEx.lastIndex = 0;
@@ -1046,6 +1047,13 @@ function cjs(loader) {
     // remove comments from the source first, if not minified
     if (source.length / source.split('\n').length < 200)
       source = source.replace(commentRegEx, '');
+
+    // remove strings unrelated to require() calls from the source first
+    // to avoid parsing a require() inside a string
+    // Note: simulating lookbehind by checking for a prefix match
+    source = source.replace(otherStringsRegEx, function(wholeMatch, reqPrefix) {
+      return reqPrefix ? wholeMatch : '';
+    });
 
     var match;
 
@@ -1174,7 +1182,9 @@ function amd(loader) {
       Promise.all(names.map(function(name) {
         return loader['import'](name, referer);
       })).then(function(modules) {
-        callback.apply(null, modules);
+        if(callback) {
+          callback.apply(null, modules);
+        }
       }, errback);
 
     // commonjs require
