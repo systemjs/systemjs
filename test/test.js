@@ -441,6 +441,14 @@ asyncTest('System.register Circular', function() {
   }, err);
 });
 
+asyncTest('System.register group linking test', function() {
+  System.bundles['tests/group-test'] = ['group-a'];
+  System['import']('group-a').then(function(m) {
+    ok(m);
+    start();
+  }, err);
+});
+
 System.bundles['tests/mixed-bundle'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
 
 asyncTest('Loading AMD from a bundle', function() {
