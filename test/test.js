@@ -17,7 +17,7 @@ function err(e) {
     else
       throw e;
     start();
-  });  
+  });
 }
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
@@ -689,6 +689,18 @@ asyncTest('Loading a connected tree that connects ES and CJS modules', function(
 		ok(a.name === "a");
 		start();
 	});
+});
+
+asyncTest('Loading two bundles that have a shared dependency', function() {
+  System.bundles["tests/shared-dep-bundles/a"] = ["lib/shared-dep", "lib/a"];
+  System.bundles["tests/shared-dep-bundles/b"] = ["lib/shared-dep", "lib/b"];
+  expect(0);
+  System['import']('lib/a').then(function() {
+    System['import']('lib/b').then(function() {
+      //If it gets here it's fine
+      start();
+    }).catch(function(err) { console.log(err.stack); });
+  });
 });
 
 if(typeof window !== 'undefined' && window.Worker) {
