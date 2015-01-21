@@ -15,7 +15,7 @@ function err(e) {
     if (typeof window == 'undefined')
       console.log(e.stack);
     else
-      throw e;
+      throw e.stack || e;
     start();
   });
 }
@@ -699,8 +699,8 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
     System['import']('lib/b').then(function() {
       //If it gets here it's fine
       start();
-    }).catch(function(err) { console.log(err.stack); });
-  });
+    }, err);
+  }, err);
 });
 
 if(typeof window !== 'undefined' && window.Worker) {
