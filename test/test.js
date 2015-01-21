@@ -315,6 +315,7 @@ asyncTest('CommonJS require variations', function() {
     ok(m.d3 == "require('not a dep')");
     ok(m.d4 == "text require('still not a dep') text");
     ok(m.d5 == 'text \'quote\' require("yet still not a dep")');
+    ok(m.d6 == 'e');
     start();
   }, err);
 });

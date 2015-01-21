@@ -10,3 +10,7 @@ exports.d3 = "require('not a dep')";
 exports.d4 = "text require('still not a dep') text";
 
 exports.d5 = 'text \'quote\' require("yet still not a dep")';
+
+var stringRegEx = /"string in regex/;
+
+exports.d6 = require(/*  comment in require */"./commonjs-e");
