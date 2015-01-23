@@ -18,6 +18,8 @@ Runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 
+For community guides and tools, see the [community project page](https://github.com/systemjs/systemjs/wiki/Community-Projects).
+
 Documentation
 ---
 
