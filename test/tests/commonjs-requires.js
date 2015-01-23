@@ -13,4 +13,4 @@ exports.d5 = 'text \'quote\' require("yet still not a dep")';
 
 var stringRegEx = /"string in regex/;
 
-exports.d6 = require(/*  comment in require */"./commonjs-e");
+exports.d6 = require(      "./commonjs-e"     );
