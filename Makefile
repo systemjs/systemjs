@@ -3,8 +3,8 @@ START = cat lib/banner.js lib/polyfill-wrapper-start.js > dist/$@.src.js;
 
 END = cat lib/polyfill-wrapper-end.js >> dist/$@.src.js;
 
-SystemJS = meta register core global cjs amd map plugins bundles versions depCache
-SystemCSP = scriptLoader meta register core global cjs amd map plugins bundles versions depCache
+SystemJS = core meta register es6 global cjs amd map plugins bundles versions depCache
+SystemCSP = core scriptLoader meta register es6 global cjs amd map plugins bundles versions depCache
 
 all: system system-csp uglify
 
