@@ -618,6 +618,13 @@ asyncTest('Loading ES6 loading AMD', function() {
   })
 });
 
+asyncTest('Loading AMD with import *', function() {
+  System['import']('tests/es6-import-star-amd').then(function(m) {
+    ok(m.g == true);
+    start();
+  }, err);
+});
+
 asyncTest('Loading ES6 and AMD', function() {
   System['import']('tests/es6-and-amd').then(function(m) {
     ok(m.amd_module == 'AMD Module');

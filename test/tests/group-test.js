@@ -16,7 +16,7 @@ System.register("group-c", [], function($__export) {
 System.register("group-b", ["group-c"], false, function(__require, __exports, __module) {
   System.get("@@global-helpers").prepareGlobal(__module.id, ["group-c"]);
   (function() {
-    window.foo = 'foo';
+    this.foo = 'foo';
   }).call(System.global);
   return System.get("@@global-helpers").retrieveGlobal(__module.id, false);
 });
