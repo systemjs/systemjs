@@ -28,7 +28,6 @@ Documentation
 * [Meta Configuration](https://github.com/systemjs/systemjs/wiki/Meta-Configuration)
 * [Module Format Support](https://github.com/systemjs/systemjs/wiki/Module-Format-Support)
 * [Relative Dynamic Loading](https://github.com/systemjs/systemjs/wiki/Relative-Dynamic-Loading)
-* [Versions Extension](https://github.com/systemjs/systemjs/wiki/Versions-Extension)
 * [Production Workflows](https://github.com/systemjs/systemjs/wiki/Production-Workflows)
 * [Creating Plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin)
 * [Creating a Custom Module Format](https://github.com/systemjs/systemjs/wiki/Creating-a-Custom-Format-Extension)
