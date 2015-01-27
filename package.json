@@ -13,6 +13,7 @@
     "es6-module-loader": "~0.11.2"
   },
   "devDependencies": {
+    "6to5": "^2.13.7",
     "qunit": "^0.6.2",
     "uglify-js": "~2.4.13"
   },
