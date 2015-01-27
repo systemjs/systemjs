@@ -132,10 +132,12 @@ Supported Plugins:
 
 Additional Community Plugins:
 
+* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee!')`
+* [Jade](https://github.com/johnsoftek/plugin-jade)
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
+* [TypeScript](https://www.npmjs.com/package/plugin-typescript)
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
-* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee!')`
 
 Additional plugin submissions to the above are welcome.
 
