@@ -18,6 +18,7 @@
 		<script src="../dist/system.src.js" data-6to5-src="../node_modules/6to5/browser.js" type="text/javascript"></script>
 		<script>
 			System.parser = '6to5';
+			System.to5Options = { experimental: true };
 			System['import']('test')['catch'](function(e) {
 				setTimeout(function() {
 					throw e;
