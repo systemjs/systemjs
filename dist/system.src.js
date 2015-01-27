@@ -73,6 +73,105 @@ $__global.upgradeSystemLoader = function() {
 
   
 /*
+ * SystemJS Core
+ * Code should be vaguely readable
+ * 
+ */
+function core(loader) {
+
+  /*
+    __useDefault
+    
+    When a module object looks like:
+    newModule(
+      __useDefault: true,
+      default: 'some-module'
+    })
+
+    Then importing that module provides the 'some-module'
+    result directly instead of the full module.
+
+    Useful for eg module.exports = function() {}
+  */
+  var loaderImport = loader['import'];
+  loader['import'] = function(name, options) {
+    return loaderImport.call(this, name, options).then(function(module) {
+      return module.__useDefault ? module['default'] : module;
+    });
+  }
+
+  // support the empty module, as a concept
+  loader.set('@empty', loader.newModule({}));
+
+  // include the node require since we're overriding it
+  if (typeof require != 'undefined')
+    loader._nodeRequire = require;
+
+  /*
+    Config
+    Extends config merging one deep only
+
+    loader.config({
+      some: 'random',
+      config: 'here',
+      deep: {
+        config: { too: 'too' }
+      }
+    });
+
+    <=>
+
+    loader.some = 'random';
+    loader.config = 'here'
+    loader.deep = loader.deep || {};
+    loader.deep.config = { too: 'too' };
+  */
+  loader.config = function(cfg) {
+    for (var c in cfg) {
+      var v = cfg[c];
+      if (typeof v == 'object' && !(v instanceof Array)) {
+        this[c] = this[c] || {};
+        for (var p in v)
+          this[c][p] = v[p];
+      }
+      else
+        this[c] = v;
+    }
+  }
+
+  // override locate to allow baseURL to be document-relative
+  var baseURI;
+  if (typeof window == 'undefined' &&
+      typeof WorkerGlobalScope == 'undefined') {
+    baseURI = 'file:' + process.cwd() + '/';
+  }
+  // Inside of a Web Worker
+  else if(typeof window == 'undefined') {
+    baseURI = loader.global.location.href;
+  }
+  else {
+    baseURI = document.baseURI;
+    if (!baseURI) {
+      var bases = document.getElementsByTagName('base');
+      baseURI = bases[0] && bases[0].href || window.location.href;
+    }
+  }
+
+  var loaderLocate = loader.locate;
+  var normalizedBaseURL;
+  loader.locate = function(load) {
+    if (this.baseURL != normalizedBaseURL) {
+      normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
+
+      if (normalizedBaseURL.substr(normalizedBaseURL.length - 1, 1) != '/')
+        normalizedBaseURL += '/';
+      this.baseURL = normalizedBaseURL;
+    }
+
+    return Promise.resolve(loaderLocate.call(this, load));
+  }
+}
+/*
  * Meta Extension
  *
  * Sets default metadata on a load record (load.metadata) from
@@ -733,133 +832,63 @@ function register(loader) {
   }
 }
 /*
- * SystemJS Core
- * Code should be vaguely readable
- * 
+ * Extension to detect ES6 and auto-load Traceur or 6to5 for processing
  */
-function core(loader) {
+function es6(loader) {
 
-  /*
-    __useDefault
-    
-    When a module object looks like:
-    newModule({
-      __useDefault: true,
-      default: 'some-module'
-    })
+  var parser, parserName, parserModule, parserRuntimeModule, parserRuntimeGlobal;
 
-    Then importing that module provides the 'some-module'
-    result directly instead of the full module.
+  var isBrowser = typeof window != 'undefined';
 
-    Useful for eg module.exports = function() {}
-  */
-  var loaderImport = loader['import'];
-  loader['import'] = function(name, options) {
-    return loaderImport.call(this, name, options).then(function(module) {
-      return module.__useDefault ? module['default'] : module;
-    });
-  }
+  function setParser(name) {
+    parser = name;
+    parserName = this.parser == '6to5' ? 'to5' : parser;
+    parserModule = '@' + parser;
+    parserRuntimeModule = '@' + parser + '-runtime';
+    parserRuntimeGlobal = (parserName == 'to5' ? parserName : '$' + parserName) + 'Runtime';
 
-  // support the empty module, as a concept
-  loader.set('@empty', loader.newModule({}));
-
-  // include the node require since we're overriding it
-  if (typeof require != 'undefined')
-    loader._nodeRequire = require;
-
-  /*
-    Config
-    Extends config merging one deep only
-
-    loader.config({
-      some: 'random',
-      config: 'here',
-      deep: {
-        config: { too: 'too' }
-      }
-    });
-
-    <=>
-
-    loader.some = 'random';
-    loader.config = 'here'
-    loader.deep = loader.deep || {};
-    loader.deep.config = { too: 'too' };
-  */
-  loader.config = function(cfg) {
-    for (var c in cfg) {
-      var v = cfg[c];
-      if (typeof v == 'object' && !(v instanceof Array)) {
-        this[c] = this[c] || {};
-        for (var p in v)
-          this[c][p] = v[p];
-      }
-      else
-        this[c] = v;
+    // auto-detection of paths to loader parser files
+    if (typeof $__curScript != 'undefined') {
+      if (!loader.paths[parserModule])
+        loader.paths[parserModule] = $__curScript.getAttribute('data-' + loader.parser + '-src')
+          || ($__curScript.src ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1)
+            : loader.baseURL + (loader.baseURL.lastIndexOf('/') == loader.baseURL.length - 1 ? '' : '/')
+            ) + loader.parser + '.js';
+      if (!loader.paths[parserRuntimeModule])
+        loader.paths[parserRuntimeModule] = $__curScript.getAttribute('data-' + loader.parser + '-runtime-src') || loader.paths[parserModule].replace(/\.js$/, '-runtime.js');
     }
   }
 
-  // override locate to allow baseURL to be document-relative
-  var baseURI;
-  if (typeof window == 'undefined' &&
-      typeof WorkerGlobalScope == 'undefined') {
-    baseURI = 'file:' + process.cwd() + '/';
-  }
-  // Inside of a Web Worker
-  else if(typeof window == 'undefined') {
-    baseURI = loader.global.location.href;
-  }
-  else {
-    baseURI = document.baseURI;
-    if (!baseURI) {
-      var bases = document.getElementsByTagName('base');
-      baseURI = bases[0] && bases[0].href || window.location.href;
-    }
-  }
-
-  var loaderLocate = loader.locate;
-  var normalizedBaseURL;
-  loader.locate = function(load) {
-    if (this.baseURL != normalizedBaseURL) {
-      normalizedBaseURL = toAbsoluteURL(baseURI, this.baseURL);
-
-      if (normalizedBaseURL.substr(normalizedBaseURL.length - 1, 1) != '/')
-        normalizedBaseURL += '/';
-      this.baseURL = normalizedBaseURL;
-    }
-
-    return Promise.resolve(loaderLocate.call(this, load));
-  }
-
-  // Traceur conveniences
   // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
   var es6RegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
 
-  var traceurRuntimeRegEx = /\$traceurRuntime/;
-
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
+    // update parser info if necessary
+    if (this.parser !== parser)
+      setParser(this.parser);
+
     var loader = this;
 
-    if (load.name == '@traceur' || load.name == '@traceur-runtime')
+    if (load.name == parserModule || load.name == parserRuntimeModule)
       return loaderTranslate.call(loader, load);
 
     // detect ES6
     else if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
       load.metadata.format = 'es6';
 
-      // dynamically load Traceur for ES6 if necessary
-      if (!loader.global.traceur) {
-        return loader['import']('@traceur').then(function() {
+      // dynamically load parser for ES6 if necessary
+      if (isBrowser && !loader.global[parserName]) {
+        return loader['import'](parserModule).then(function() {
           return loaderTranslate.call(loader, load);
         });
       }
     }
 
-    // dynamicallly load Traceur runtime if necessary
-    if (!loader.global.$traceurRuntime && load.source.match(traceurRuntimeRegEx)) {
+    // dynamically load parser runtime if necessary
+    if (isBrowser && !loader.global[parserRuntimeGlobal] && load.source.indexOf(parserRuntimeGlobal) != -1) {
       var System = $__global.System;
-      return loader['import']('@traceur-runtime').then(function() {
+      return loader['import'](parserRuntimeModule).then(function() {
         // traceur runtme annihilates System global
         $__global.System = System;
         return loaderTranslate.call(loader, load);
@@ -869,11 +898,11 @@ function core(loader) {
     return loaderTranslate.call(loader, load);
   }
 
-  // always load Traceur as a global
+  // always load parser as a global
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
-    if (load.name == '@traceur' || load.name == '@traceur-runtime') {
+    if (isBrowser && (load.name == parserModule || load.name == parserRuntimeModule)) {
       loader.__exec(load);
       return {
         deps: [],
@@ -884,8 +913,8 @@ function core(loader) {
     }
     return loaderInstantiate.call(loader, load);
   }
-}
-/*
+
+}/*
   SystemJS Global Format
 
   Supports
@@ -2122,9 +2151,10 @@ function depCache(loader) {
   }
 }
   
+core(System);
 meta(System);
 register(System);
-core(System);
+es6(System);
 global(System);
 cjs(System);
 amd(System);
@@ -2133,14 +2163,7 @@ plugins(System);
 bundles(System);
 versions(System);
 depCache(System);
-  if (!System.paths['@traceur'])
-    System.paths['@traceur'] = $__curScript && $__curScript.getAttribute('data-traceur-src')
-      || ($__curScript && $__curScript.src 
-        ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1) 
-        : System.baseURL + (System.baseURL.lastIndexOf('/') == System.baseURL.length - 1 ? '' : '/')
-        ) + 'traceur.js';
-  if (!System.paths['@traceur-runtime'])
-    System.paths['@traceur-runtime'] = $__curScript && $__curScript.getAttribute('data-traceur-runtime-src') || System.paths['@traceur'].replace(/\.js$/, '-runtime.js');
+
 };
 
 var $__curScript, __eval;
@@ -2244,5 +2267,4 @@ var $__curScript, __eval;
   }
 })();
 
-})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ?
-                                           self : global));
+})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ? self : global));
