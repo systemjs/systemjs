@@ -507,6 +507,7 @@ asyncTest('AMD simplified CommonJS wrapping with an aliased require', function()
 if (ie8)
   return;
 
+if (typeof to5 != 'undefined')
 asyncTest('Async functions', function() {
   System['import']('tests/async').then(function(m) {
     ok(true);
