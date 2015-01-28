@@ -3,7 +3,7 @@ SystemJS
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS.
+Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and 6to5.
 
 Designed as a collection of extensions to the [ES6 module loader](https://github.com/ModuleLoader/es6-module-loader) which can also be applied individually.
 
@@ -18,11 +18,12 @@ Runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 
-For community guides and tools, see the [community project page](https://github.com/systemjs/systemjs/wiki/Community-Projects).
+For a list of guides and tools, see the [community project page](https://github.com/systemjs/systemjs/wiki/Community-Projects).
 
 Documentation
 ---
 
+* [Basic Use](https://github.com/systemjs/systemjs/wiki/Basic-Use)
 * [Loader Configuration](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader)
 * [Map Configuration](https://github.com/systemjs/systemjs/wiki/Map-Configuration)
 * [Meta Configuration](https://github.com/systemjs/systemjs/wiki/Meta-Configuration)
@@ -36,114 +37,35 @@ Documentation
 Getting Started
 ---
 
-### Setup
+### Browser Use
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.11.0/dist/es6-module-loader.js) and [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.79/traceur.js) and locate them in the same folder as `system.js` from this repo.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.12.0/dist/es6-module-loader.js) into the same folder as `system.js`.
 
-We then include `dist/system.js` with a script tag in the page.
+Load SystemJS with a single script tag:
 
-`es6-module-loader.js` will then be included from the same folder automatically and [Traceur](https://github.com/google/traceur-compiler) is dynamically included from `traceur.js` when loading an ES6 module only.
-
-Alternatively, `es6-module-loader.js` or `traceur.js` can be included before `system.js` with a script tag in the page.
-
-### Simple Application Structure
-
-The standard application structure would be something like the following:
-
-index.html:
 ```html
 <script src="system.js"></script>
+```
+
+It will load `es6-module-loader.js` itself.
+
+To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.82/traceur.js) in the same folder and it will be loaded when needed.
+
+For use with 6to5 set:
+
+```html
 <script>
-  // Identical to writing System.baseURL = ...
-  System.config({
-
-    // set all requires to "lib" for library code
-    baseURL: '/lib/',
-    
-    // set "app" as an exception for our application code
-    paths: {
-      'app/*': '/app/*.js'
-    }
-  });
-
-  System.import('app/app')
+  System.parser = '6to5';
 </script>
 ```
 
-app/app.js:
-```javascript
-  // relative require for within the package
-  require('./local-dep');    // -> /app/local-dep.js
-
-  // library resource
-  var $ = require('jquery'); // -> /lib/jquery.js
-
-  // format detected automatically
-  console.log('loaded CommonJS');
-```
-
-Module format detection happens in the order System.register, ES6, AMD, then CommonJS and falls back to global modules.
-
-Named defines are also supported, with the return value for a module containing named defines being its last named define.
-
-> _Note that when running locally, ensure you are running from a local server or a browser with local XHR requests enabled. If not you will get an error message._
-
-> _For Chrome on Mac, you can run it with: `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --allow-file-access-from-files &> /dev/null &`_
-
-> _In Firefox this requires navigating to `about:config`, entering `security.fileuri.strict_origin_policy` in the filter box and toggling the option to false._
-
-### Loading ES6
-
-app/es6-file.js:
-```javascript
-  export class q {
-    constructor() {
-      this.es6 = 'yay';
-    }
-  }
-```
+Alternatively a custom path to 6to5 can also be set:
 
 ```html
-  <script>
-    System.import('app/es6-file').then(function(m) {
-      console.log(new m.q().es6); // yay
-    });
-  </script>
+<script src="system.js" data-6to5-src="path/to/6to5.js"></script>
 ```
 
-ES6 modules define named exports, provided as getters on a special immutable `Module` object.
-
-To build for production, see the [production workflows](https://github.com/systemjs/systemjs/wiki/Production-Workflows).
-
-[For further details about SystemJS module format support, see the wiki page](https://github.com/systemjs/systemjs/wiki/Module-Format-Support).
-
-For further infomation on ES6 module loading, see the [ES6 Module Loader polyfill documentation](https://github.com/ModuleLoader/es6-module-loader).
-
-### Plugins
-
-Plugins handle alternative loading scenarios, including loading assets such as CSS or images, and providing custom transpilation scenarios.
-
-Supported Plugins:
-
-* [CSS](https://github.com/systemjs/plugin-css) `System.import('my/file.css!')`
-* [Image](https://github.com/systemjs/plugin-image) `System.import('some/image.png!image')`
-* [JSON](https://github.com/systemjs/plugin-json) `System.import('some/data.json!').then(function(json){})`
-* [Text](https://github.com/systemjs/plugin-text) `System.import('some/text.txt!text').then(function(text) {})`
-
-Additional Community Plugins:
-
-* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee!')`
-* [Jade](https://github.com/johnsoftek/plugin-jade)
-* [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
-* [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
-* [TypeScript](https://www.npmjs.com/package/plugin-typescript)
-* [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
-
-Additional plugin submissions to the above are welcome.
-
-[Read the guide here on creating plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
-
-### NodeJS Usage
+### NodeJS Use
 
 To load modules in NodeJS, install SystemJS with:
 
@@ -155,6 +77,12 @@ We can then load modules equivalently to in the browser:
 
 ```javascript
 var System = require('systemjs');
+
+/* 
+ * Include
+ *   System.parser = '6to5';
+ * to use 6to5 instead of Traceur
+ */
 
 // loads './app.js' from the current directory
 System.import('./app').then(function(m) {
@@ -169,6 +97,28 @@ System.config({
  baseURL: 'file:' + path.resolve('../path')
 });
 ```
+
+### Plugins
+
+Plugins handle alternative loading scenarios, including loading assets such as CSS or images, and providing custom transpilation scenarios.
+
+Supported Plugins:
+
+* [CSS](https://github.com/systemjs/plugin-css) `System.import('my/file.css!')`
+* [Image](https://github.com/systemjs/plugin-image) `System.import('some/image.png!image')`
+* [JSON](https://github.com/systemjs/plugin-json) `System.import('some/data.json!').then(function(json){})`
+* [Text](https://github.com/systemjs/plugin-text) `System.import('some/text.txt!text').then(function(text) {})`
+
+Additional Plugins:
+
+* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee!')`
+* [Jade](https://github.com/johnsoftek/plugin-jade)
+* [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
+* [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
+* [TypeScript](https://www.npmjs.com/package/plugin-typescript)
+* [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
+
+[Read the guide here on creating plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
 
 #### Running the tests
 
