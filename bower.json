@@ -3,8 +3,8 @@
   "version": "0.11.3",
   "main": "dist/system.js",
   "dependencies": {
-    "es6-module-loader": "~0.11.2",
-    "traceur-runtime": "~0.0.79"
+    "es6-module-loader": "~0.12.0",
+    "traceur-runtime": "~0.0.82"
   },
   "devDependencies": {
     "qunit": "~1.12.0"
