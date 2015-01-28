@@ -18,6 +18,8 @@
     "uglify-js": "~2.4.13"
   },
   "scripts": {
-    "test": "qunit -c s:./dist/system.js -t ./test/test.js"
+    "test": "npm run test:6to5 && npm run test:traceur",
+    "test:6to5": "qunit -c s:./dist/system.js -t ./test/test-6to5.js",
+    "test:traceur": "qunit -c s:./dist/system.js -t ./test/test.js"
   }
 }

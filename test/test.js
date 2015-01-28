@@ -506,6 +506,8 @@ if (ie8)
   return;
 
 asyncTest('Async functions', function() {
+  System.to5Options = { experimental: true };
+  System.traceurOptions = { asyncFunctions: true };
   System['import']('tests/async').then(function(m) {
     ok(true);
     start();
