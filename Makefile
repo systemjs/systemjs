@@ -20,9 +20,6 @@ system:
 	for extension in $(SystemJS); do \
 		echo $$extension"(System);" >> dist/$@.src.js; \
 	done
-	for extension in $(SystemJS); do \
-		echo "System._extensions.push("$$extension");" >> dist/$@.src.js; \
-	done
 	$(END)
 
 system-csp:
@@ -32,8 +29,5 @@ system-csp:
 	done
 	for extension in $(SystemCSP); do \
 		echo $$extension"(System);" >> dist/$@.src.js; \
-	done
-	for extension in $(SystemJS); do \
-		echo "System._extensions.push("$$extension");" >> dist/$@.src.js; \
 	done
 	$(END)

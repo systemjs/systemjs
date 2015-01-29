@@ -18,6 +18,7 @@
     <script src="../lib/extension-register.js"></script>
     <script>
       // apply system.register extension (note normally we do this in closure to not have 'register' global)
+      System._extensions = [];
       register(System);
     </script>
 
