@@ -710,6 +710,25 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
   }, err);
 });
 
+asyncTest("System.clone", function() {
+  var ClonedSystem  = System.clone();
+
+  System.map['maptest'] = 'tests/map-test';
+  ClonedSystem.map['maptest'] = 'tests/map-test-dep';
+
+  var systemDef = System['import']('maptest');
+  var cloneDef = ClonedSystem['import']('maptest');
+
+  Promise.all([systemDef, cloneDef]).then(function(modules){
+    var m = modules[0];
+    var mClone = modules[1];
+    ok(m.maptest == 'maptest', 'Mapped module not loaded');
+    ok(mClone.dep == 'maptest', 'Mapped module not loaded');
+    ok(mClone !== m, "different modules");
+    start();
+  });
+});
+
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
     var worker = new Worker('tests/worker.js');
