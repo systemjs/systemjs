@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.12.0
+ * SystemJS v0.12.1
  */
 
 (function($__global) {
@@ -77,8 +77,8 @@ $__global.upgradeSystemLoader = function() {
  * Code should be vaguely readable
  * 
  */
+var originalSystem = $__global.System.originalSystem;
 function core(loader) {
-
   /*
     __useDefault
     
@@ -170,6 +170,25 @@ function core(loader) {
 
     return Promise.resolve(loaderLocate.call(this, load));
   }
+
+  function applyExtensions(extensions, loader) {
+    loader._extensions = [];
+    for(var i = 0, len = extensions.length; i < len; i++) {
+      extensions[i](loader);
+    }
+  }
+
+  loader._extensions = loader._extensions || [];
+  loader._extensions.push(core);
+
+  loader.clone = function() {
+    var originalLoader = this;
+    var loader = new LoaderPolyfill(originalSystem);
+    loader.baseURL = originalLoader.baseURL;
+    loader.paths = { '*': '*.js' };
+    applyExtensions(originalLoader._extensions, loader);
+    return loader;
+  };
 }
 /*
  * Script tag fetch
@@ -178,6 +197,8 @@ function core(loader) {
 function scriptLoader(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
+
+  loader._extensions.push(scriptLoader);
 
   var head = document.getElementsByTagName('head')[0];
 
@@ -281,6 +302,8 @@ function meta(loader) {
   var metaPartRegEx = /\/\*.*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
 
   loader.meta = {};
+  loader._extensions = loader._extensions || [];
+  loader._extensions.push(meta);
 
   function setConfigMeta(loader, load) {
     var meta = loader.meta && loader.meta[load.name];
@@ -355,6 +378,9 @@ function register(loader) {
   if (typeof __eval == 'undefined')
     __eval = 0 || eval; // uglify breaks without the 0 ||
 
+  loader._extensions = loader._extensions || [];
+  loader._extensions.push(register);
+
   // define exec for easy evaluation of a load record (load.name, load.source, load.address)
   // main feature is source maps support handling
   var curSystem;
@@ -407,7 +433,7 @@ function register(loader) {
   // loader.register sets loader.defined for declarative modules
   var anonRegister;
   var calledRegister;
-  function register(name, deps, declare, execute) {
+  function registerModule(name, deps, declare, execute) {
     if (typeof name != 'string') {
       execute = declare;
       declare = deps;
@@ -486,7 +512,7 @@ function register(loader) {
     if (loader.register)
       return;
 
-    loader.register = register;
+    loader.register = registerModule;
 
     if (!loader.defined)
       loader.defined = {};
@@ -774,7 +800,7 @@ function register(loader) {
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
-    this.register = register;
+    this.register = registerModule;
 
     this.__exec = exec;
 
@@ -902,6 +928,8 @@ function register(loader) {
  */
 function es6(loader) {
 
+  loader._extensions.push(es6);
+
   var parser, parserName, parserModule, parserRuntimeModule, parserRuntimeGlobal;
 
   var isBrowser = typeof window != 'undefined';
@@ -910,8 +938,10 @@ function es6(loader) {
     parser = name;
     parserName = this.parser == '6to5' ? 'to5' : parser;
     parserModule = '@' + parser;
-    parserRuntimeModule = '@' + parser + '-runtime';
-    parserRuntimeGlobal = (parserName == 'to5' ? parserName : '$' + parserName) + 'Runtime';
+    if (parserName == 'traceur') {
+      parserRuntimeModule = '@' + parser + '-runtime';
+      parserRuntimeGlobal = '$' + parserName + 'Runtime';
+    }
 
     // auto-detection of paths to loader parser files
     if (typeof $__curScript != 'undefined') {
@@ -920,7 +950,7 @@ function es6(loader) {
           || ($__curScript.src ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1)
             : loader.baseURL + (loader.baseURL.lastIndexOf('/') == loader.baseURL.length - 1 ? '' : '/')
             ) + loader.parser + '.js';
-      if (!loader.paths[parserRuntimeModule])
+      if (parserRuntimeModule && !loader.paths[parserRuntimeModule])
         loader.paths[parserRuntimeModule] = $__curScript.getAttribute('data-' + loader.parser + '-runtime-src') || loader.paths[parserModule].replace(/\.js$/, '-runtime.js');
     }
   }
@@ -952,7 +982,7 @@ function es6(loader) {
     }
 
     // dynamically load parser runtime if necessary
-    if (isBrowser && !loader.global[parserRuntimeGlobal] && load.source.indexOf(parserRuntimeGlobal) != -1) {
+    if (isBrowser && parserRuntimeGlobal && !loader.global[parserRuntimeGlobal] && load.source.indexOf(parserRuntimeGlobal) != -1) {
       var System = $__global.System;
       return loader['import'](parserRuntimeModule).then(function() {
         // traceur runtme annihilates System global
@@ -980,7 +1010,8 @@ function es6(loader) {
     return loaderInstantiate.call(loader, load);
   }
 
-}/*
+}
+/*
   SystemJS Global Format
 
   Supports
@@ -992,6 +1023,8 @@ function es6(loader) {
   See the SystemJS readme global support section for further information.
 */
 function global(loader) {
+
+  loader._extensions.push(global);
 
   function readGlobalProperty(p, value) {
     var pParts = p.split('.');
@@ -1128,6 +1161,7 @@ function global(loader) {
   SystemJS CommonJS Format
 */
 function cjs(loader) {
+  loader._extensions.push(cjs);
 
   // CJS Module Format
   // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
@@ -1216,6 +1250,8 @@ function cjs(loader) {
 function amd(loader) {
   // by default we only enforce AMD noConflict mode in Node
   var isNode = typeof module != 'undefined' && module.exports;
+
+  loader._extensions.push(amd);
 
   // AMD Module Format Detection RegEx
   // define([.., .., ..], ...)
@@ -1518,6 +1554,8 @@ function amd(loader) {
 function map(loader) {
   loader.map = loader.map || {};
 
+  loader._extensions.push(map);
+
   // return if prefix parts (separated by '/') match the name
   // eg prefixMatch('jquery/some/thing', 'jquery') -> true
   //    prefixMatch('jqueryhere/', 'jquery') -> false
@@ -1655,6 +1693,8 @@ function map(loader) {
 function plugins(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
+
+  loader._extensions.push(plugins);
 
   var loaderNormalize = loader.normalize;
   loader.normalize = function(name, parentName, parentAddress) {
@@ -1795,7 +1835,8 @@ function plugins(loader) {
       return loaderInstantiate.call(loader, load);
   }
 
-}/*
+}
+/*
   System bundles
 
   Allows a bundle module to be specified which will be dynamically 
@@ -1813,6 +1854,8 @@ function plugins(loader) {
 function bundles(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
+
+  loader._extensions.push(bundles);
 
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
@@ -1852,7 +1895,8 @@ function bundles(loader) {
     }
     return loaderFetch.call(this, load);
   }
-}/*
+}
+/*
   SystemJS Semver Version Addon
   
   1. Uses Semver convention for major and minor forms
@@ -1912,6 +1956,8 @@ function bundles(loader) {
 function versions(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
+
+  loader._extensions.push(versions);
 
   var semverRegEx = /^(\d+)(?:\.(\d+)(?:\.(\d+)(?:-([\da-z-]+(?:\.[\da-z-]+)*)(?:\+([\da-z-]+(?:\.[\da-z-]+)*))?)?)?)?$/i;
   var numRegEx = /^\d+$/;
@@ -2199,6 +2245,8 @@ function versions(loader) {
 
 function depCache(loader) {
   loader.depCache = loader.depCache || {};
+
+  loader._extensions.push(depCache);
 
   loaderLocate = loader.locate;
   loader.locate = function(load) {
