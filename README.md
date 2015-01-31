@@ -115,7 +115,6 @@ Additional Plugins:
 * [Jade](https://github.com/johnsoftek/plugin-jade)
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
-* [TypeScript](https://www.npmjs.com/package/plugin-typescript)
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
 
 [Read the guide here on creating plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
