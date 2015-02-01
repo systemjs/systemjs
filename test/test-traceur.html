@@ -20,7 +20,7 @@
 			System.traceurOptions = { asyncFunctions: true };
 			System['import']('test')['catch'](function(e) {
 				setTimeout(function() {
-					throw e;
+					throw e.stack || e;
 				})
 			});
 		</script>

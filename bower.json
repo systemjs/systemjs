@@ -1,17 +1,6 @@
 {
-  "name": "system.js",
-  "version": "0.12.1",
-  "main": "dist/system.js",
-  "dependencies": {
-    "es6-module-loader": "~0.12.0",
-    "traceur-runtime": "~0.0.82"
-  },
+  "name": "systemjs",
   "devDependencies": {
     "qunit": "~1.12.0"
-  },
-  "ignore": [
-    "test",
-    "Makefile",
-    "package.json"
-  ]
+  }
 }

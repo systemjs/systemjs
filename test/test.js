@@ -654,14 +654,14 @@ asyncTest('Relative dyanamic loading', function() {
 asyncTest('ES6 Circular', function() {
   System['import']('tests/es6-circular1').then(function(m) {
     ok(m.q == 3, 'Binding not allocated');
-    if (System.parser != '6to5') ok(m.r == 3, 'Binding not updated');
+    if (System.transpiler != '6to5') ok(m.r == 3, 'Binding not updated');
     start();
   }, err);
 });
 
 asyncTest('AMD & CJS circular, ES6 Circular', function() {
   System['import']('tests/all-circular1').then(function(m) {
-    if (System.parser != '6to5') ok(m.q == 4);
+    if (System.transpiler != '6to5') ok(m.q == 4);
     ok(m.o.checkObj() == 'changed');
     start();
   }, err);
