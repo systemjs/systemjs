@@ -39,7 +39,7 @@ Getting Started
 
 ### Browser Use
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.12.0/dist/es6-module-loader.js) into the same folder as `system.js`.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.13.0/dist/es6-module-loader.js) into the same folder as `system.js`.
 
 Load SystemJS with a single script tag:
 

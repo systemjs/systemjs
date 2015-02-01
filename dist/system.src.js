@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.12.1
+ * SystemJS v0.13.0
  */
 
 (function($__global) {
@@ -862,28 +862,26 @@ function es6(loader) {
 
   loader._extensions.push(es6);
 
-  var parser, parserName, parserModule, parserRuntimeModule, parserRuntimeGlobal;
+  var transpiler, transpilerName, transpilerModule, transpilerRuntimeModule, transpilerRuntimeGlobal;
 
   var isBrowser = typeof window != 'undefined';
 
-  function setParser(name) {
-    parser = name;
-    parserName = this.parser == '6to5' ? 'to5' : parser;
-    parserModule = '@' + parser;
-    if (parserName == 'traceur') {
-      parserRuntimeModule = '@' + parser + '-runtime';
-      parserRuntimeGlobal = '$' + parserName + 'Runtime';
-    }
+  function setTranspiler(name) {
+    transpiler = name;
+    transpilerName = transpiler == '6to5' ? 'to5' : transpiler;
+    transpilerModule = '@' + transpiler;
+    transpilerRuntimeModule = '@' + transpiler + '-runtime';
+    transpilerRuntimeGlobal = (transpilerName == 'to5' ? transpilerName : '$' + transpilerName) + 'Runtime';
 
-    // auto-detection of paths to loader parser files
+    // auto-detection of paths to loader transpiler files
     if (typeof $__curScript != 'undefined') {
-      if (!loader.paths[parserModule])
-        loader.paths[parserModule] = $__curScript.getAttribute('data-' + loader.parser + '-src')
+      if (!loader.paths[transpilerModule])
+        loader.paths[transpilerModule] = $__curScript.getAttribute('data-' + loader.transpiler + '-src')
           || ($__curScript.src ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1)
             : loader.baseURL + (loader.baseURL.lastIndexOf('/') == loader.baseURL.length - 1 ? '' : '/')
-            ) + loader.parser + '.js';
-      if (parserRuntimeModule && !loader.paths[parserRuntimeModule])
-        loader.paths[parserRuntimeModule] = $__curScript.getAttribute('data-' + loader.parser + '-runtime-src') || loader.paths[parserModule].replace(/\.js$/, '-runtime.js');
+            ) + loader.transpiler + '.js';
+      if (!loader.paths[transpilerRuntimeModule])
+        loader.paths[transpilerRuntimeModule] = $__curScript.getAttribute('data-' + loader.transpiler + '-runtime-src') || loader.paths[transpilerModule].replace(/\.js$/, '-runtime.js');
     }
   }
 
@@ -892,31 +890,30 @@ function es6(loader) {
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
-    // update parser info if necessary
-    if (this.parser !== parser)
-      setParser(this.parser);
+    // update transpiler info if necessary
+    if (this.transpiler !== transpiler)
+      setTranspiler(this.transpiler);
 
     var loader = this;
 
-    if (load.name == parserModule || load.name == parserRuntimeModule)
+    if (load.name == transpilerModule || load.name == transpilerRuntimeModule)
       return loaderTranslate.call(loader, load);
 
     // detect ES6
     else if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
       load.metadata.format = 'es6';
 
-      // dynamically load parser for ES6 if necessary
-      if (isBrowser && !loader.global[parserName]) {
-        return loader['import'](parserModule).then(function() {
+      // dynamically load transpiler for ES6 if necessary
+      if (isBrowser && !loader.global[transpilerName])
+        return loader['import'](transpilerModule).then(function() {
           return loaderTranslate.call(loader, load);
         });
-      }
     }
 
-    // dynamically load parser runtime if necessary
-    if (isBrowser && parserRuntimeGlobal && !loader.global[parserRuntimeGlobal] && load.source.indexOf(parserRuntimeGlobal) != -1) {
+    // dynamically load transpiler runtime if necessary
+    if (isBrowser && !loader.global[transpilerRuntimeGlobal] && load.source.indexOf(transpilerRuntimeGlobal) != -1) {
       var System = $__global.System;
-      return loader['import'](parserRuntimeModule).then(function() {
+      return loader['import'](transpilerRuntimeModule).then(function() {
         // traceur runtme annihilates System global
         $__global.System = System;
         return loaderTranslate.call(loader, load);
@@ -926,11 +923,11 @@ function es6(loader) {
     return loaderTranslate.call(loader, load);
   }
 
-  // always load parser as a global
+  // always load transpiler as a global
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
     var loader = this;
-    if (isBrowser && (load.name == parserModule || load.name == parserRuntimeModule)) {
+    if (isBrowser && (load.name == transpilerModule || load.name == transpilerRuntimeModule)) {
       loader.__exec(load);
       return {
         deps: [],
