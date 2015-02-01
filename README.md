@@ -55,7 +55,7 @@ For use with 6to5 set:
 
 ```html
 <script>
-  System.parser = '6to5';
+  System.transpiler = '6to5';
 </script>
 ```
 
@@ -80,7 +80,7 @@ var System = require('systemjs');
 
 /* 
  * Include
- *   System.parser = '6to5';
+ *   System.transpiler = '6to5';
  * to use 6to5 instead of Traceur
  */
 
