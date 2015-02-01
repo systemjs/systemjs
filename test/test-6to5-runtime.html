@@ -15,7 +15,7 @@
 
     <!-- <script src="../bower_components/traceur/traceur.js"></script> -->
     <script src="../bower_components/es6-module-loader/dist/es6-module-loader.js"></script>
-    <script src="../dist/system.js" data-traceur-runtime-src="../bower_components/traceur-runtime/traceur-runtime.js" type="text/javascript"></script>
+    <script src="../dist/system.js" data-6to5-runtime-src="../node_modules/6to5-core/runtime.js" type="text/javascript"></script>
 
     <script src="../bower_components/qunit/qunit/qunit.js"></script>
 
@@ -31,8 +31,10 @@
         });  
       }
 
+      System.transpiler = '6to5';
+
       asyncTest('Dynamicall loading modules with Traceur runtime', function() {
-        System['import']('tests/with-runtime').then(function(m) {
+        System['import']('tests/with-runtime-6to5').then(function(m) {
           ok(m.c);
           start();
         }, err);
