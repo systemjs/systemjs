@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.13.0
+ * SystemJS v0.13.1
  */
 
 (function($__global) {
@@ -375,7 +375,7 @@ function meta(loader) {
 function register(loader) {
   if (typeof indexOf == 'undefined')
     indexOf = Array.prototype.indexOf;
-  if (typeof __eval == 'undefined')
+  if (typeof __eval == 'undefined' || typeof document != 'undefined' && !document.addEventListener)
     __eval = 0 || eval; // uglify breaks without the 0 ||
 
   loader._extensions = loader._extensions || [];
