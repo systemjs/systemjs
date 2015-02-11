@@ -416,6 +416,13 @@ asyncTest('Plugin as a dependency', function() {
   }, err);
 });
 
+asyncTest('Plugin version stripping', function() {
+  System.normalize('some/module@1.2.3!some/plugin@3.4.5.jsx').then(function(normalized) {
+    ok(normalized == 'some/module@1.2.3!some/plugin@3.4.5.jsx');
+    start();
+  }, err);
+})
+
 asyncTest('AMD Circular', function() {
   System['import']('tests/amd-circular1').then(function(m) {
     ok(m.outFunc() == 5, 'Expected execution');
