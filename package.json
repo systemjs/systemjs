@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "System loader extension for flexible AMD & CommonJS support",
   "main": "dist/system.src.js",
   "repository": {
@@ -10,10 +10,10 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "es6-module-loader": "~0.13.0"
+    "es6-module-loader": "~0.13.1"
   },
   "devDependencies": {
-    "6to5-core": "~3.3.2",
+    "6to5-core": "~3.5.3",
     "qunit": "^0.6.2",
     "uglify-js": "~2.4.13",
     "traceur": "0.0.82"

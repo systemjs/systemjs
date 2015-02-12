@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.13.1
+ * SystemJS v0.13.2
  */
 
 (function($__global) {
@@ -1775,7 +1775,7 @@ function plugins(loader) {
         else
           return Promise.resolve(loader.locate(load))
           .then(function(address) {
-            return address.substr(0, address.length - 3);
+            return address.replace(/\.js$/, '');
           });
       });
     }
@@ -1801,7 +1801,7 @@ function plugins(loader) {
     var loader = this;
     if (load.metadata.plugin && load.metadata.plugin.translate)
       return Promise.resolve(load.metadata.plugin.translate.call(loader, load)).then(function(result) {
-        if (result)
+        if (typeof result == 'string')
           load.source = result;
         return loaderTranslate.call(loader, load);
       });
@@ -2142,8 +2142,7 @@ function versions(loader) {
 
     // strip the version before applying map config
     var stripVersion, stripSubPathLength;
-    var pluginIndex = name.lastIndexOf('!');
-    var versionIndex = (pluginIndex == -1 ? name : name.substr(0, pluginIndex)).lastIndexOf('@');
+    var versionIndex = name.indexOf('!') != -1 ? 0 : name.lastIndexOf('@');
     if (versionIndex > 0) {
       var parts = name.substr(versionIndex + 1, name.length - versionIndex - 1).split('/');
       stripVersion = parts[0];
@@ -2154,7 +2153,7 @@ function versions(loader) {
     // run all other normalizers first
     return Promise.resolve(loaderNormalize.call(this, name, parentName, parentAddress)).then(function(normalized) {
       
-      var index = normalized.indexOf('@');
+      var index = normalized.indexOf('!') != -1 ? 0 : normalized.indexOf('@');
 
       // if we stripped a version, and it still has no version, add it back
       if (stripVersion && (index == -1 || index == 0)) {
