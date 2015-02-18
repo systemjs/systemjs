@@ -10,17 +10,17 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "es6-module-loader": "~0.13.1"
+    "es6-module-loader": "~0.14.0"
   },
   "devDependencies": {
-    "6to5-core": "~3.5.3",
+    "babel-core": "^4.1.1",
     "qunit": "^0.6.2",
     "uglify-js": "~2.4.13",
     "traceur": "0.0.82"
   },
   "scripts": {
     "test": "npm run test:6to5 && npm run test:traceur",
-    "test:6to5": "qunit -c s:./dist/system.js -t ./test/test-6to5.js",
+    "test:babel": "qunit -c s:./dist/system.js -t ./test/test-babel.js",
     "test:traceur": "qunit -c s:./dist/system.js -t ./test/test.js"
   }
 }
