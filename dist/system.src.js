@@ -869,19 +869,21 @@ function es6(loader) {
   function setTranspiler(name) {
     transpiler = name;
     transpilerModule = '@' + transpiler;
-    transpilerRuntimeModule = transpilerModule + '-runtime';
+    transpilerRuntimeModule = transpilerModule + (transpiler == 'babel' ? '-helpers' : '-runtime');
     transpilerRuntimeGlobal = transpiler == 'babel' ? transpiler + 'Helpers' : '$' + transpiler + 'Runtime';
 
     // auto-detection of paths to loader transpiler files
-    if (typeof $__curScript != 'undefined') {
-      if (!loader.paths[transpilerModule])
-        loader.paths[transpilerModule] = $__curScript.getAttribute('data-' + loader.transpiler + '-src')
-          || ($__curScript.src ? $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1)
-            : loader.baseURL + (loader.baseURL.lastIndexOf('/') == loader.baseURL.length - 1 ? '' : '/')
-            ) + loader.transpiler + '.js';
-      if (!loader.paths[transpilerRuntimeModule])
-        loader.paths[transpilerRuntimeModule] = $__curScript.getAttribute('data-' + loader.transpiler + '-runtime-src') || loader.paths[transpilerModule].replace(/\.js$/, '-runtime.js');
-    }
+    var scriptBase;
+    if ($__curScript && $__curScript.src)
+      scriptBase = $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1);
+    else
+      scriptBase = loader.baseURL + (loader.baseURL.lastIndexOf('/') == loader.baseURL.length - 1 ? '' : '/');
+
+    if (!loader.paths[transpilerModule])
+      loader.paths[transpilerModule] = $__curScript && $__curScript.getAttribute('data-' + loader.transpiler + '-src') || scriptBase + loader.transpiler + '.js';
+    
+    if (!loader.paths[transpilerRuntimeModule])
+      loader.paths[transpilerRuntimeModule] = $__curScript && $__curScript.getAttribute('data-' + transpilerRuntimeModule.substr(1) + '-src') || scriptBase + transpilerRuntimeModule.substr(1) + '.js';
   }
 
   // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
