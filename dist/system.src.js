@@ -856,22 +856,21 @@ function register(loader) {
   }
 }
 /*
- * Extension to detect ES6 and auto-load Traceur or 6to5 for processing
+ * Extension to detect ES6 and auto-load Traceur or Babel for processing
  */
 function es6(loader) {
 
   loader._extensions.push(es6);
 
-  var transpiler, transpilerName, transpilerModule, transpilerRuntimeModule, transpilerRuntimeGlobal;
+  var transpiler, transpilerModule, transpilerRuntimeModule, transpilerRuntimeGlobal;
 
   var isBrowser = typeof window != 'undefined';
 
   function setTranspiler(name) {
     transpiler = name;
-    transpilerName = transpiler == '6to5' ? 'to5' : transpiler;
     transpilerModule = '@' + transpiler;
-    transpilerRuntimeModule = '@' + transpiler + '-runtime';
-    transpilerRuntimeGlobal = (transpilerName == 'to5' ? transpilerName : '$' + transpilerName) + 'Runtime';
+    transpilerRuntimeModule = transpilerModule + '-runtime';
+    transpilerRuntimeGlobal = transpiler == 'babel' ? transpiler + 'Helpers' : '$' + transpiler + 'Runtime';
 
     // auto-detection of paths to loader transpiler files
     if (typeof $__curScript != 'undefined') {
@@ -904,7 +903,7 @@ function es6(loader) {
       load.metadata.format = 'es6';
 
       // dynamically load transpiler for ES6 if necessary
-      if (isBrowser && !loader.global[transpilerName])
+      if (isBrowser && !loader.global[transpiler])
         return loader['import'](transpilerModule).then(function() {
           return loaderTranslate.call(loader, load);
         });

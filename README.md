@@ -3,7 +3,7 @@ SystemJS
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and 6to5.
+Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
 
 Designed as a collection of extensions to the [ES6 module loader](https://github.com/ModuleLoader/es6-module-loader) which can also be applied individually.
 
@@ -51,18 +51,18 @@ It will load `es6-module-loader.js` itself.
 
 To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.82/traceur.js) in the same folder and it will be loaded when needed.
 
-For use with 6to5 set:
+For use with Babel set:
 
 ```html
 <script>
-  System.transpiler = '6to5';
+  System.transpiler = 'babel';
 </script>
 ```
 
-Alternatively a custom path to 6to5 can also be set:
+Alternatively a custom path to Babel can also be set:
 
 ```html
-<script src="system.js" data-6to5-src="path/to/6to5.js"></script>
+<script src="system.js" data-babel-src="path/to/babel.js"></script>
 ```
 
 ### NodeJS Use
@@ -80,8 +80,8 @@ var System = require('systemjs');
 
 /* 
  * Include
- *   System.transpiler = '6to5';
- * to use 6to5 instead of Traceur
+ *   System.transpiler = 'babel';
+ * to use Babel instead of Traceur
  */
 
 // loads './app.js' from the current directory
