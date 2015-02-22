@@ -16,7 +16,7 @@
     "babel-core": "^4.1.1",
     "qunit": "^0.6.2",
     "uglify-js": "~2.4.13",
-    "traceur": "0.0.82"
+    "traceur": "0.0.85"
   },
   "scripts": {
     "test": "npm run test:6to5 && npm run test:traceur",
