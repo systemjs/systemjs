@@ -127,7 +127,7 @@ Loading through plugin is indicated with `!` at the end of the name:
 
 ```javascript
 System.import('file.css!');      // will use the "css" plugin, assumed from the extension
-System.import('file.css!text');  // will use the "text" plugin, and not use the extension
+System.import('file.css!text');  // will use the "text" plugin, instead of checking the extension
 ```
 
 [Read the guide here on creating plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
