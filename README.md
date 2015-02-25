@@ -117,10 +117,17 @@ Additional Plugins:
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
 
-Plugins are loaded from the module name of the extension. To set them up, you'll most likely want to add some map configuration. For example:
+Plugins are loaded from the module name of the extension. To set them up, you'll most likely want to add map configuration. For example:
 
 ```javascript
 System.map['css'] = 'path/to/css/plugin';
+```
+
+Loading through plugin is indicated with `!` at the end of the name:
+
+```javascript
+System.import('file.css!');      // will use the "css" plugin, assumed from the extension
+System.import('file.css!text');  // will use the "text" plugin, and not use the extension
 ```
 
 [Read the guide here on creating plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
