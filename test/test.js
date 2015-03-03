@@ -509,6 +509,16 @@ asyncTest('AMD simplified CommonJS wrapping with an aliased require', function()
   }, err);
 });
 
+asyncTest('Loading dynamic modules with __esModule flag set', function() {
+  System['import']('tests/es-module-flag').then(function() {
+    m = System.get('tests/es-module-flag');
+    ok(m.exportName == 'export');
+    ok(m['default'] == 'default export');
+    ok(m.__esModule === true);
+    start();
+  }, err);
+});
+
 if (ie8)
   return;
 
