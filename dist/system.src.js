@@ -980,7 +980,9 @@ function global(loader) {
           var moduleGlobal = moduleGlobals[deps[i]];
           if (moduleGlobal)
             for (var m in moduleGlobal)
-              loader.global[m] = moduleGlobal[m];
+				try{ 
+				  loader.global[m] = moduleGlobal[m];
+				} catch(e){};
         }
 
         // now store a complete copy of the global object
