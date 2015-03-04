@@ -39,7 +39,7 @@ Getting Started
 
 ### Browser Use
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.13.0/dist/es6-module-loader.js) into the same folder as `system.js`.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.15.0/dist/es6-module-loader.js) into the same folder as `system.js`.
 
 Load SystemJS with a single script tag:
 
@@ -49,7 +49,7 @@ Load SystemJS with a single script tag:
 
 It will load `es6-module-loader.js` itself.
 
-To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.82/traceur.js) in the same folder and it will be loaded when needed.
+To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.86/traceur.js) in the same folder and it will be loaded when needed.
 
 For use with Babel set:
 
