@@ -117,6 +117,7 @@ Additional Plugins:
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
+* [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
 
 Plugins are loaded from the module name of the extension. To set them up, you'll most likely want to add map configuration. For example:
 
