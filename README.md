@@ -24,6 +24,7 @@ Documentation
 ---
 
 * [Basic Use](https://github.com/systemjs/systemjs/wiki/Basic-Use)
+* [Configuration Options](https://github.com/systemjs/systemjs/wiki/Configuration-Options)
 * [Loader Configuration](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader)
 * [Map Configuration](https://github.com/systemjs/systemjs/wiki/Map-Configuration)
 * [Meta Configuration](https://github.com/systemjs/systemjs/wiki/Meta-Configuration)
