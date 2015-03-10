@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.13.2
+ * SystemJS v0.15.0
  */
 
 (function($__global) {
@@ -846,10 +846,13 @@ function register(loader) {
           // remove from the registry
           loader.defined[load.name] = undefined;
 
-          var module = loader.newModule(entry.declarative ? entry.module.exports : { 'default': entry.module.exports, '__useDefault': true });
+          var module = entry.module.exports;
+
+          if (!entry.declarative && module.__esModule !== true)
+            module = { 'default': module, __useDefault: true };
 
           // return the defined module object
-          return module;
+          return loader.newModule(module);
         }
       };
     });
@@ -891,37 +894,44 @@ function es6(loader) {
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
-    // update transpiler info if necessary
-    if (this.transpiler !== transpiler)
-      setTranspiler(this.transpiler);
+    var self = this;
 
-    var loader = this;
+    return loaderTranslate.call(loader, load)
+    .then(function(source) {
 
-    if (load.name == transpilerModule || load.name == transpilerRuntimeModule)
-      return loaderTranslate.call(loader, load);
+      // update transpiler info if necessary
+      if (self.transpiler !== transpiler)
+        setTranspiler(self.transpiler);
 
-    // detect ES6
-    else if (load.metadata.format == 'es6' || !load.metadata.format && load.source.match(es6RegEx)) {
-      load.metadata.format = 'es6';
+      var loader = self;
 
-      // dynamically load transpiler for ES6 if necessary
-      if (isBrowser && !loader.global[transpiler])
-        return loader['import'](transpilerModule).then(function() {
-          return loaderTranslate.call(loader, load);
-        });
-    }
-
-    // dynamically load transpiler runtime if necessary
-    if (isBrowser && !loader.global[transpilerRuntimeGlobal] && load.source.indexOf(transpilerRuntimeGlobal) != -1) {
-      var System = $__global.System;
-      return loader['import'](transpilerRuntimeModule).then(function() {
-        // traceur runtme annihilates System global
-        $__global.System = System;
+      if (load.name == transpilerModule || load.name == transpilerRuntimeModule)
         return loaderTranslate.call(loader, load);
-      });
-    }
 
-    return loaderTranslate.call(loader, load);
+      // detect ES6
+      else if (load.metadata.format == 'es6' || !load.metadata.format && source.match(es6RegEx)) {
+        load.metadata.format = 'es6';
+
+        // dynamically load transpiler for ES6 if necessary
+        if (isBrowser && !loader.global[transpiler])
+          return loader['import'](transpilerModule).then(function() {
+            return source;
+          });
+      }
+
+      // dynamically load transpiler runtime if necessary
+      if (isBrowser && !loader.global[transpilerRuntimeGlobal] && source.indexOf(transpilerRuntimeGlobal) != -1) {
+        var System = $__global.System;
+        return loader['import'](transpilerRuntimeModule).then(function() {
+          // traceur runtme annihilates System global
+          $__global.System = System;
+          return source;
+        });
+      }
+
+      return source;
+
+    });
   }
 
   // always load transpiler as a global
@@ -988,7 +998,8 @@ function global(loader) {
         curGlobalObj = {};
         ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage',
           'clipboardData', 'frames', 'webkitStorageInfo', 'toolbar', 'statusbar',
-          'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB'
+          'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB',
+          'screenTop', 'screenLeft'
         ];
         for (var g in loader.global) {
           if (indexOf.call(ignoredGlobalProps, g) != -1) { continue; }
@@ -1007,12 +1018,8 @@ function global(loader) {
         var exports = {};
 
         // run init
-        if (init) {
-          var depModules = [];
-          for (var i = 0; i < deps.length; i++)
-            depModules.push(require(deps[i]));
-          singleGlobal = init.apply(loader.global, depModules);
-        }
+        if (init)
+          singleGlobal = init.call(loader.global);
 
         // check for global changes, creating the globalObject for the module
         // if many globals, then a module object for those is created
