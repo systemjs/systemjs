@@ -15,6 +15,8 @@ $__global.upgradeSystemLoader = function() {
     return -1;
   }
 
+  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
+
   // Absolute URL parsing, from https://gist.github.com/Yaffle/1088850
   function parseURI(url) {
     var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@\/?#]*(?::[^:@\/?#]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
@@ -45,6 +47,9 @@ $__global.upgradeSystemLoader = function() {
       });
       return output.join('').replace(/^\//, input.charAt(0) === '/' ? '/' : '');
     }
+
+    if (isWindows)
+      href = href.replace(/\\/g, '/');
 
     href = parseURI(href || '');
     base = parseURI(base || '');
@@ -144,6 +149,8 @@ function core(loader) {
   if (typeof window == 'undefined' &&
       typeof WorkerGlobalScope == 'undefined') {
     baseURI = 'file:' + process.cwd() + '/';
+    if (isWindows)
+      baseURI = baseURI.replace(/\\/g, '/');
   }
   // Inside of a Web Worker
   else if(typeof window == 'undefined') {
@@ -875,7 +882,7 @@ function register(loader) {
     // named bundles are just an empty module
     if (!entry && load.metadata.format != 'es6')
       return {
-        deps: [],
+        deps: load.metadata.deps,
         execute: function() {
           return loader.newModule({});
         }
@@ -916,7 +923,7 @@ function register(loader) {
 
           var module = entry.module.exports;
 
-          if (!entry.declarative && module.__esModule !== true)
+          if (!module || !entry.declarative && module.__esModule !== true)
             module = { 'default': module, __useDefault: true };
 
           // return the defined module object
@@ -933,90 +940,59 @@ function es6(loader) {
 
   loader._extensions.push(es6);
 
-  var transpiler, transpilerModule, transpilerRuntimeModule, transpilerRuntimeGlobal;
-
-  var isBrowser = typeof window != 'undefined';
-
-  function setTranspiler(name) {
-    transpiler = name;
-    transpilerModule = '@' + transpiler;
-    transpilerRuntimeModule = transpilerModule + (transpiler == 'babel' ? '-helpers' : '-runtime');
-    transpilerRuntimeGlobal = transpiler == 'babel' ? transpiler + 'Helpers' : '$' + transpiler + 'Runtime';
-
-    // auto-detection of paths to loader transpiler files
-    var scriptBase;
-    if ($__curScript && $__curScript.src)
-      scriptBase = $__curScript.src.substr(0, $__curScript.src.lastIndexOf('/') + 1);
-    else
-      scriptBase = loader.baseURL + (loader.baseURL.lastIndexOf('/') == loader.baseURL.length - 1 ? '' : '/');
-
-    if (!loader.paths[transpilerModule])
-      loader.paths[transpilerModule] = $__curScript && $__curScript.getAttribute('data-' + loader.transpiler + '-src') || scriptBase + loader.transpiler + '.js';
-    
-    if (!loader.paths[transpilerRuntimeModule])
-      loader.paths[transpilerRuntimeModule] = $__curScript && $__curScript.getAttribute('data-' + transpilerRuntimeModule.substr(1) + '-src') || scriptBase + transpilerRuntimeModule.substr(1) + '.js';
+  function setConfig(module) {
+    loader.meta[module] = {format: 'global'};
+    loader.paths[module] = loader.paths[module] || module + '.js';
   }
+  
+  setConfig('traceur');
+  loader.meta['traceur'].exports = 'traceur';
+  setConfig('traceur-runtime');
+  setConfig('babel');
+  setConfig('babel-runtime');
 
   // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
   var es6RegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
 
+  var traceurRuntimeRegEx = /\$traceurRuntime\s*\./;
+  var babelHelpersRegEx = /babelHelpers\s*\./;
+
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
-    var self = this;
+    var loader = this;
 
     return loaderTranslate.call(loader, load)
     .then(function(source) {
 
-      // update transpiler info if necessary
-      if (self.transpiler !== transpiler)
-        setTranspiler(self.transpiler);
-
-      var loader = self;
-
-      if (load.name == transpilerModule || load.name == transpilerRuntimeModule)
-        return loaderTranslate.call(loader, load);
-
       // detect ES6
-      else if (load.metadata.format == 'es6' || !load.metadata.format && source.match(es6RegEx)) {
+      if (load.metadata.format == 'es6' || !load.metadata.format && source.match(es6RegEx)) {
         load.metadata.format = 'es6';
-
-        // dynamically load transpiler for ES6 if necessary
-        if (isBrowser && !loader.global[transpiler])
-          return loader['import'](transpilerModule).then(function() {
-            return source;
-          });
+        return source;
       }
 
-      // dynamically load transpiler runtime if necessary
-      if (isBrowser && !loader.global[transpilerRuntimeGlobal] && source.indexOf(transpilerRuntimeGlobal) != -1) {
-        var System = $__global.System;
-        return loader['import'](transpilerRuntimeModule).then(function() {
-          // traceur runtme annihilates System global
-          $__global.System = System;
-          return source;
-        });
+      // ensure Traceur doesn't clobber the System global
+      if (load.name == 'traceur' || load.name == 'traceur-runtime')
+        return '(function() { var curSystem = System; ' + source + '\nSystem = curSystem; })();';
+      if (load.name == 'babel' || load.name == 'babel/external-helpers')
+        return '(function(require,exports,module){' + source + '})();';
+
+      if (load.metadata.format == 'register') {
+        if (!loader.global.$traceurRuntime && load.source.match(traceurRuntimeRegEx)) {
+          return loader['import']('traceur-runtime').then(function() {
+            return source;
+          });
+        }
+        if (!loader.global.babelHelpers && load.source.match(babelHelpersRegEx)) {
+          return loader['import']('babel/external-helpers').then(function() {
+            return source;
+          });
+        }
       }
 
       return source;
-
     });
-  }
 
-  // always load transpiler as a global
-  var loaderInstantiate = loader.instantiate;
-  loader.instantiate = function(load) {
-    var loader = this;
-    if (isBrowser && (load.name == transpilerModule || load.name == transpilerRuntimeModule)) {
-      loader.__exec(load);
-      return {
-        deps: [],
-        execute: function() {
-          return loader.newModule({});
-        }
-      };
-    }
-    return loaderInstantiate.call(loader, load);
-  }
+  };
 
 }
 /*
@@ -1327,7 +1303,7 @@ function amd(loader) {
     else
       throw new TypeError('Invalid require');
   };
-  loader.amdRequire = require;
+  loader.amdRequire = require.bind(loader);
 
   function makeRequire(parentName, staticRequire, loader) {
     return function(names, callback, errback) {
@@ -1794,7 +1770,8 @@ function plugins(loader) {
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
-    if (load.metadata.build === false)
+    // ignore fetching build = false unless in a plugin loader
+    if (load.metadata.build === false && loader.pluginLoader)
       return '';
     else if (load.metadata.plugin && load.metadata.plugin.fetch && !load.metadata.pluginFetchCalled) {
       load.metadata.pluginFetchCalled = true;
@@ -2307,11 +2284,7 @@ var $__curScript, __eval;
     }
   };
 
-  var isWorker = typeof WorkerGlobalScope !== 'undefined' &&
-    self instanceof WorkerGlobalScope;
-  var isBrowser = typeof window != 'undefined';
-
-  if (isBrowser) {
+  if (typeof document != 'undefined') {
     var head;
 
     var scripts = document.getElementsByTagName('script');
@@ -2348,7 +2321,7 @@ var $__curScript, __eval;
       $__global.upgradeSystemLoader();
     }
   }
-  else if(isWorker) {
+  else if (typeof WorkerGlobalScope != 'undefined' && typeof importScripts != 'undefined') {
     doEval = function(source) {
       try {
         eval(source);
@@ -2360,13 +2333,14 @@ var $__curScript, __eval;
     if (!$__global.System || !$__global.LoaderPolyfill) {
       var basePath = '';
       try {
-        throw new TypeError('Unable to get Worker base path.');
-      } catch(err) {
-        var idx = err.stack.indexOf('at ') + 3;
-        var withSystem = err.stack.substr(idx, err.stack.substr(idx).indexOf('\n'));
-        basePath = withSystem.substr(0, withSystem.lastIndexOf('/') + 1);
+        throw new Error('Get worker base path via error stack');
+      } catch (e) {
+        e.stack.replace(/(?:at|@).*(http.+):[\d]+:[\d]+/, function (m, url) {
+          basePath = url.replace(/\/[^\/]*$/, '/');
+        });
       }
       importScripts(basePath + 'es6-module-loader.js');
+      $__global.upgradeSystemLoader();
     } else {
       $__global.upgradeSystemLoader();
     }
