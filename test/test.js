@@ -9,6 +9,8 @@ QUnit.module("SystemJS");
 if (typeof window == 'undefined') {
   System.baseURL = 'test';
 }
+System.paths['traceur'] = '../node_modules/traceur/bin/traceur.js';
+System.paths['babel'] = '../node_modules/babel-core/browser.js';
 
 function err(e) {
   setTimeout(function() {

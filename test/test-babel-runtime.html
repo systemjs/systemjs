@@ -15,7 +15,7 @@
 
     <!-- <script src="../bower_components/traceur/traceur.js"></script> -->
     <script src="../bower_components/es6-module-loader/dist/es6-module-loader.js"></script>
-    <script src="../dist/system.js" data-babel-helpers-src="../node_modules/babel-core/external-helpers.js" type="text/javascript"></script>
+    <script src="../dist/system.js" type="text/javascript"></script>
 
     <script src="../bower_components/qunit/qunit/qunit.js"></script>
 
@@ -32,6 +32,7 @@
       }
 
       System.transpiler = 'babel';
+      System.paths['babel-helpers'] = '../node_modules/babel-core/external-helpers.js';
 
       asyncTest('Dynamicall loading modules with Traceur runtime', function() {
         System['import']('tests/with-runtime-babel').then(function(m) {
