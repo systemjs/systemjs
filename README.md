@@ -5,8 +5,6 @@ SystemJS
 
 Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
 
-Designed as a collection of extensions to the [ES6 module loader](https://github.com/ModuleLoader/es6-module-loader) which can also be applied individually.
-
 * [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Loads [ES6 modules compiled into the `System.register` bundle format for production](https://github.com/systemjs/systemjs/wiki/Production-Workflows), maintaining circular references support.
 * Supports RequireJS-style [map](https://github.com/systemjs/systemjs/wiki/Map-Configuration), [paths](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader#paths-implementation), [bundles](https://github.com/systemjs/systemjs/wiki/Production-Workflows#bundle-extension) and [global shims](https://github.com/systemjs/systemjs/wiki/Module-Format-Support#globals-global).
@@ -40,7 +38,7 @@ Getting Started
 
 ### Browser Use
 
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.15.0/dist/es6-module-loader.js) into the same folder as `system.js`.
+Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.16.0/dist/es6-module-loader.js) into the same folder as `system.js`.
 
 Load SystemJS with a single script tag:
 
@@ -48,11 +46,11 @@ Load SystemJS with a single script tag:
 <script src="system.js"></script>
 ```
 
-It will load `es6-module-loader.js` itself.
+It will then load `es6-module-loader.js` itself.
 
-To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.86/traceur.js) in the same folder and it will be loaded when needed.
+To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.87/traceur.js) in the baseURL path and it will be loaded when needed.
 
-For use with Babel set:
+For use with Babel, locate the `browser.js` file at `babel.js` in the baseURL and set:
 
 ```html
 <script>
@@ -60,10 +58,14 @@ For use with Babel set:
 </script>
 ```
 
-Alternatively a custom path to Babel can also be set:
+Alternatively a custom path to Babel or Traceur can also be set through paths:
 
-```html
-<script src="system.js" data-babel-src="path/to/babel.js"></script>
+```javascript
+System.config({
+  paths: {
+    traceur: 'path/to/traceur.js'
+  }
+});
 ```
 
 ### NodeJS Use
@@ -71,8 +73,10 @@ Alternatively a custom path to Babel can also be set:
 To load modules in NodeJS, install SystemJS with:
 
 ```
-  npm install systemjs
+  npm install systemjs traceur
 ```
+
+(making sure to also install Traceur or Babel as needed, as they are not included as dependencies as of SystemJS 0.16)
 
 We can then load modules equivalently to in the browser:
 
@@ -91,7 +95,7 @@ System.import('./app').then(function(m) {
 });
 ```
 
-If configuring `baseURL` for use in Windows, prepend `file:` i.e.
+If configuring the `baseURL` for use in Windows, prepend `file:` i.e.
 
 ```javascipt
 System.config({
