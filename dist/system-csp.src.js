@@ -957,6 +957,8 @@ function es6(loader) {
   var traceurRuntimeRegEx = /\$traceurRuntime\s*\./;
   var babelHelpersRegEx = /babelHelpers\s*\./;
 
+  var transpilerNormalized;
+
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
     var loader = this;
@@ -970,12 +972,6 @@ function es6(loader) {
         return source;
       }
 
-      // ensure Traceur doesn't clobber the System global
-      if (load.name == 'traceur' || load.name == 'traceur-runtime')
-        return '(function() { var curSystem = System; ' + source + '\nSystem = curSystem; })();';
-      if (load.name == 'babel' || load.name == 'babel/external-helpers')
-        return '(function(require,exports,module){' + source + '})();';
-
       if (load.metadata.format == 'register') {
         if (!loader.global.$traceurRuntime && load.source.match(traceurRuntimeRegEx)) {
           return loader['import']('traceur-runtime').then(function() {
@@ -987,6 +983,17 @@ function es6(loader) {
             return source;
           });
         }
+      }
+
+      if (loader.transpiler == 'traceur' || loader.transpiler == 'babel') {
+        return Promise.resolve(transpilerNormalized || (transpilerNormalized = loader.normalize(loader.transpiler)))
+        .then(function(transpilerNormalized) {
+          // ensure Traceur doesn't clobber the System global
+          if (loader.transpiler == 'traceur' && (load.name == transpilerNormalized || load.name == transpilerNormalized + '-runtime'))
+            return '(function() { var curSystem = System; ' + source + '\nSystem = curSystem; })();';
+
+          return source;
+        });
       }
 
       return source;
