@@ -3,6 +3,8 @@ SystemJS
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+For upgrading to SystemJS 0.16, [read the release notes here](https://github.com/systemjs/systemjs/releases).
+
 Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
 
 * [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
