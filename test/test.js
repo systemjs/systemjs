@@ -750,7 +750,7 @@ asyncTest("System.clone", function() {
 
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
-    var worker = new Worker('tests/worker.js');
+    var worker = new Worker('tests/worker-' + System.transpiler + '.js');
     worker.onmessage = function(e) {
       ok(e.data.amd === 'AMD Module');
       ok(e.data.es6 === 'ES6 Module');
