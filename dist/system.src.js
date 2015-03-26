@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.2
+ * SystemJS v0.16.3
  */
 
 (function($__global) {
@@ -860,7 +860,6 @@ function register(loader) {
  * Extension to detect ES6 and auto-load Traceur or Babel for processing
  */
 function es6(loader) {
-
   loader._extensions.push(es6);
 
   // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
@@ -877,7 +876,7 @@ function es6(loader) {
 
   function setConfig(loader, module, nodeModule) {
     loader.meta[module] = {format: 'global'};
-    if (nodeResolver)
+    if (nodeResolver && !loader.paths[module])
       loader.paths[module] = require.resolve(nodeModule || module);
   }
 
@@ -887,7 +886,7 @@ function es6(loader) {
     if (firstLoad) {
       if (self.transpiler == 'traceur') {
         setConfig(self, 'traceur', 'traceur/bin/traceur.js');
-        loader.meta['traceur'].exports = 'traceur';
+        self.meta['traceur'].exports = 'traceur';
         setConfig(self, 'traceur-runtime', 'traceur/bin/traceur-runtime.js');
       }
       else if (self.transpiler == 'babel') {
@@ -1658,7 +1657,7 @@ function plugins(loader) {
       // standard normalization
       return name;
     });
-  }
+  };
 
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
@@ -1711,7 +1710,7 @@ function plugins(loader) {
     }
 
     return loaderLocate.call(this, load);
-  }
+  };
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
@@ -2175,7 +2174,7 @@ function depCache(loader) {
 
   loader._extensions.push(depCache);
 
-  loaderLocate = loader.locate;
+  var loaderLocate = loader.locate;
   loader.locate = function(load) {
     var loader = this;
 
