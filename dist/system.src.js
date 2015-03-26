@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.3
+ * SystemJS v0.16.4
  */
 
 (function($__global) {
@@ -876,8 +876,12 @@ function es6(loader) {
 
   function setConfig(loader, module, nodeModule) {
     loader.meta[module] = {format: 'global'};
-    if (nodeResolver && !loader.paths[module])
-      loader.paths[module] = require.resolve(nodeModule || module);
+    if (nodeResolver && !loader.paths[module]) {
+      try {
+        loader.paths[module] = require.resolve(nodeModule || module);
+      }
+      catch(e) {}
+    }
   }
 
   var loaderLocate = loader.locate;
