@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.1
+ * SystemJS v0.16.2
  */
 
 (function($__global) {
@@ -393,9 +393,6 @@ function register(loader) {
   var curSystem;
   function exec(load) {
     var loader = this;
-    if (load.name == '@traceur') {
-      curSystem = System;
-    }
     // support sourceMappingURL (efficiently)
     var sourceMappingURL;
     var lastLineIndex = load.source.lastIndexOf('\n');
@@ -408,12 +405,6 @@ function register(loader) {
     }
 
     __eval(load.source, load.address, sourceMappingURL);
-
-    // traceur overwrites System and Module - write them back
-    if (load.name == '@traceur') {
-      loader.global.traceurSystem = loader.global.System;
-      loader.global.System = curSystem;
-    }
   }
   loader.__exec = exec;
 
@@ -940,17 +931,6 @@ function es6(loader) {
 
   loader._extensions.push(es6);
 
-  function setConfig(module) {
-    loader.meta[module] = {format: 'global'};
-    loader.paths[module] = loader.paths[module] || module + '.js';
-  }
-  
-  setConfig('traceur');
-  loader.meta['traceur'].exports = 'traceur';
-  setConfig('traceur-runtime');
-  setConfig('babel');
-  setConfig('babel-runtime');
-
   // good enough ES6 detection regex - format detections not designed to be accurate, but to handle the 99% use case
   var es6RegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
 
@@ -958,6 +938,34 @@ function es6(loader) {
   var babelHelpersRegEx = /babelHelpers\s*\./;
 
   var transpilerNormalized;
+
+  var firstLoad = true;
+
+  var nodeResolver = typeof process != 'undefined' && typeof require != 'undefined' && require.resolve;
+
+  function setConfig(loader, module, nodeModule) {
+    loader.meta[module] = {format: 'global'};
+    if (nodeResolver)
+      loader.paths[module] = require.resolve(nodeModule || module);
+  }
+
+  var loaderLocate = loader.locate;
+  loader.locate = function(load) {
+    var self = this;
+    if (firstLoad) {
+      if (self.transpiler == 'traceur') {
+        setConfig(self, 'traceur', 'traceur/bin/traceur.js');
+        loader.meta['traceur'].exports = 'traceur';
+        setConfig(self, 'traceur-runtime', 'traceur/bin/traceur-runtime.js');
+      }
+      else if (self.transpiler == 'babel') {
+        setConfig(self, 'babel', 'babel-core/browser.js');
+        setConfig(self, 'babel-runtime', 'babel-core/external-helpers.js');
+      }
+      firstLoad = false;
+    }
+    return loaderLocate.call(self, load);
+  };
 
   var loaderTranslate = loader.translate;
   loader.translate = function(load) {
@@ -985,16 +993,15 @@ function es6(loader) {
         }
       }
 
-      if (loader.transpiler == 'traceur' || loader.transpiler == 'babel') {
+      // ensure Traceur doesn't clobber the System global
+      if (loader.transpiler == 'traceur')
         return Promise.resolve(transpilerNormalized || (transpilerNormalized = loader.normalize(loader.transpiler)))
         .then(function(transpilerNormalized) {
-          // ensure Traceur doesn't clobber the System global
-          if (loader.transpiler == 'traceur' && (load.name == transpilerNormalized || load.name == transpilerNormalized + '-runtime'))
+          if (load.name == transpilerNormalized || load.name == transpilerNormalized + '-runtime')
             return '(function() { var curSystem = System; ' + source + '\nSystem = curSystem; })();';
 
           return source;
         });
-      }
 
       return source;
     });
