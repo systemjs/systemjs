@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.5
+ * SystemJS v0.16.6
  */
 
 (function($__global) {
@@ -939,7 +939,7 @@ function es6(loader) {
   var traceurRuntimeRegEx = /\$traceurRuntime\s*\./;
   var babelHelpersRegEx = /babelHelpers\s*\./;
 
-  var transpilerNormalized;
+  var transpilerNormalized, transpilerRuntimeNormalized;
 
   var firstLoad = true;
 
@@ -1001,9 +1001,12 @@ function es6(loader) {
 
       // ensure Traceur doesn't clobber the System global
       if (loader.transpiler == 'traceur')
-        return Promise.resolve(transpilerNormalized || (transpilerNormalized = loader.normalize(loader.transpiler)))
-        .then(function(transpilerNormalized) {
-          if (load.name == transpilerNormalized || load.name == transpilerNormalized + '-runtime')
+        return Promise.all([
+          transpilerNormalized || (transpilerNormalized = loader.normalize(loader.transpiler)),
+          transpilerRuntimeNormalized || (transpilerRuntimeNormalized = loader.normalize(loader.transpiler + '-runtime'))
+        ])
+        .then(function(normalized) {
+          if (load.name == normalized[0] || load.name == normalized[1])
             return '(function() { var curSystem = System; ' + source + '\nSystem = curSystem; })();';
 
           return source;
