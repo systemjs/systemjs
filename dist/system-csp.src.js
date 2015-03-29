@@ -1143,16 +1143,17 @@ function global(loader) {
         if (exportName)
           load.source += '\nthis["' + exportName + '"] = ' + exportName + ';';
 
-        // disable AMD detection
+        // disable module detection
         var define = loader.global.define;
+        var require = loader.global.require;
+        
         loader.global.define = undefined;
-
-        // ensure no NodeJS environment detection
         loader.global.module = undefined;
         loader.global.exports = undefined;
 
         loader.__exec(load);
 
+        loader.global.require = require;
         loader.global.define = define;
 
         return loader.get('@@global-helpers').retrieveGlobal(module.id, exportName, load.metadata.init);
