@@ -1743,12 +1743,12 @@ function plugins(loader) {
   var loaderLocate = loader.locate;
   loader.locate = function(load) {
     var loader = this;
-
+    
     var name = load.name;
 
     // only fetch the plugin itself if this name isn't defined
-    if (this.defined && this.defined[name])
-      return loaderLocate.call(this, load);
+    if (loader.defined && loader.defined[name])
+      return loaderLocate.call(loader, load);
 
     // plugin
     var pluginIndex = name.lastIndexOf('!');
@@ -1779,23 +1779,35 @@ function plugins(loader) {
 
         // run plugin locate if given
         if (plugin.locate)
-          return plugin.locate.call(loader, load);
+          return plugin.locate.call(loader, load)
+          .then(function(address) {
+            load.metadata.pluginAddress = address;
+            return address + '!' + pluginName.replace(/\//g, '-');
+          });
 
         // otherwise use standard locate without '.js' extension adding
         else
           return Promise.resolve(loader.locate(load))
           .then(function(address) {
-            return address.replace(/\.js$/, '');
+            address = address.replace(/\.js$/, '');
+            load.metadata.pluginAddress = address;
+            return address + '!' + pluginName.replace(/\//g, '\\');
           });
       });
     }
 
-    return loaderLocate.call(this, load);
+    return loaderLocate.call(loader, load);
   };
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
+
+    if (!load.metadata.plugin)
+      return loaderFetch.call(loader, load);
+
+    load.address = load.metadata.pluginAddress;
+
     // ignore fetching build = false unless in a plugin loader
     if (load.metadata.build === false && loader.pluginLoader)
       return '';
