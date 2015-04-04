@@ -1,5 +1,5 @@
 if (typeof Promise === 'undefined')
-  require('when');
+  require('when/es6-shim/Promise');
 
 var System = require('./dist/system.src');
 

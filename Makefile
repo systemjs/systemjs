@@ -31,7 +31,6 @@ dist/%.js: dist/%.src.js
 dist/system.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
-		node_modules/when/es6-shim/Promise.js \
 		$(ESML)/wrapper-start.js \
 			$(ESML)/loader.js \
 			$(ESML)/declarative.js \
@@ -58,7 +57,6 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
-		node_modules/when/es6-shim/Promise.js \
 		$(ESML)/wrapper-start.js \
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
@@ -79,7 +77,6 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 dist/system-csp.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
-		node_modules/when/es6-shim/Promise.js \
 		$(ESML)/wrapper-start.js \
 			$(ESML)/loader.js \
 			$(ESML)/declarative.js \
