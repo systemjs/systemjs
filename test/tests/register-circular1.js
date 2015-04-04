@@ -1,4 +1,4 @@
-System.register(["./register-circular2"], function($__export) {
+System.register(["./register-circular2.js"], function($__export) {
   "use strict";
   var c,
       q,

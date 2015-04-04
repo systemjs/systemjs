@@ -2,7 +2,6 @@
   "name": "systemjs",
   "version": "0.16.11",
   "description": "System loader extension for flexible AMD & CommonJS support",
-  "main": "dist/system.src.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/systemjs/systemjs"
@@ -10,17 +9,19 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "dependencies": {
-    "es6-module-loader": "^0.16.6"
+    "es6-module-loader": "^0.16.4",
+    "when": "^3.7.2"
   },
   "devDependencies": {
     "babel-core": "^5.0.10",
     "qunit": "^0.6.2",
+    "traceur": "0.0.87",
     "uglify-js": "~2.4.13",
-    "traceur": "0.0.88"
+    "when": "^3.7.2"
   },
   "scripts": {
     "test": "npm run test:babel && npm run test:traceur",
-    "test:babel": "qunit -c s:./dist/system.js -t ./test/test-babel.js",
-    "test:traceur": "qunit -c s:./dist/system.js -t ./test/test.js"
+    "test:babel": "qunit -c s:./index.js -t ./test/test-babel.js",
+    "test:traceur": "qunit -c s:./index.js -t ./test/test.js"
   }
 }

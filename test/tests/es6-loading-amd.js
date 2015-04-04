@@ -1,4 +1,4 @@
-System.register(["./es6-loading-amd-dep"], function($__export) {
+System.register(["./es6-loading-amd-dep.js"], function($__export) {
   "use strict";
   return {
     setters: [function(m) {

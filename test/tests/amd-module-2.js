@@ -1,5 +1,5 @@
 define([
-  './amd-module',
+  './amd-module.js',
   '@empty',
 ], function () {
   return { amd: true };

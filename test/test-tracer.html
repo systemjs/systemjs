@@ -13,13 +13,12 @@
     <ol id="qunit-tests"></ol>
     <div id="qunit-test-area"></div>
 
-    <script src="../node_modules/es6-module-loader/dist/es6-module-loader.js"></script>
     <script src="../dist/system.src.js" type="text/javascript"></script>
 
     <script src="../bower_components/qunit/qunit/qunit.js"></script>
 
     <script>
-      System.paths['traceur'] = '../node_modules/traceur/bin/traceur.js';
+      System.paths.traceur = '../node_modules/traceur/bin/traceur.js';
 
       QUnit.config.testTimeout = 2000;
 
@@ -33,35 +32,35 @@
       }
 
       // enable tracing
-      System.pluginLoader = new LoaderPolyfill(System);
+      System.pluginLoader = new System.constructor();
       System.pluginLoader.paths = System.paths;
       System.pluginLoader.baseURL = System.baseURL;
       System.trace = true;
       // System.execute = false;
 
       asyncTest('ES6 Circular', function() {
-        System['import']('tests/es6-circular1').then(function(m) {
-          ok(System.loads['tests/es6-circular1'].deps[0] == './es6-circular2');
+        System['import']('tests/es6-circular1.js').then(function(m) {
+          ok(System.loads['tests/es6-circular1.js'].deps[0] == './es6-circular2.js');
           start();
         }, err);
       });
 
       asyncTest('AMD & CJS circular, ES6 Circular', function() {
-        System['import']('tests/all-circular1').then(function(m) {
-          ok(System.loads['tests/all-circular1'].deps[0] == './all-circular2');
+        System['import']('tests/all-circular1.js').then(function(m) {
+          ok(System.loads['tests/all-circular1.js'].deps[0] == './all-circular2.js');
           start();
         }, err);
       });
 
       asyncTest('AMD -> System.register circular -> ES6', function() {
-        System['import']('tests/all-layers1').then(function(m) {
-          ok(System.loads['tests/all-layers1'].deps[0] == './all-layers2');
+        System['import']('tests/all-layers1.js').then(function(m) {
+          ok(System.loads['tests/all-layers1.js'].deps[0] == './all-layers2.js');
           start();
         }, err);
       });
 
       asyncTest('Advanced compiler plugin', function() {
-        System['import']('tests/compiler-test!tests/advanced-plugin').then(function(m) {
+        System['import']('tests/compiler-test.coffee!tests/advanced-plugin.js').then(function(m) {
           ok(true);
           start();
         }, err);

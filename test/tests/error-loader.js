@@ -1,1 +1,1 @@
-require('./error');
+require('./error.js');

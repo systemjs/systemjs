@@ -1,3 +1,3 @@
-System.parser = 'babel';
+System.transpiler = 'babel';
 
 require('./test');

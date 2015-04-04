@@ -1,6 +1,6 @@
 // a.js 
-var c = require("./c");
-var b = require('./b');
+var c = require("./c.js");
+var b = require('./b.js');
 
 module.exports = {
 	name: "a",

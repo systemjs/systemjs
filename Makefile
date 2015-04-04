@@ -1,33 +1,105 @@
+VERSION = $(shell cat package.json | sed -n 's/.*"version": "\([^"]*\)",/\1/p')
+ESML = node_modules/es6-module-loader/src
 
-START = cat lib/banner.js lib/polyfill-wrapper-start.js > dist/$@.src.js;
+define BANNER
+/*
+ * SystemJS v$(VERSION)
+ */
+endef
+export BANNER
 
-END = cat lib/polyfill-wrapper-end.js >> dist/$@.src.js;
+compile: dist/system.src.js dist/system-prod.src.js dist/system-csp.src.js
+build: dist/system.js dist/system-prod.js dist/system-csp.js
 
-SystemJS = core meta register es6 global cjs amd map plugins bundles versions depCache
-SystemCSP = core scriptLoader meta register es6 global cjs amd map plugins bundles versions depCache
+version:
+	@echo $(VERSION)
 
-all: system system-csp uglify
+clean:
+	@rm -f dist/*
 
-uglify: system system-csp
-	cd dist && ../node_modules/.bin/uglifyjs system.src.js -cm --source-map system.js.map > system.js
-	cd dist && ../node_modules/.bin/uglifyjs system-csp.src.js -cm --source-map system-csp.js.map > system-csp.js
+test: compile
+	open test/test-traceur.html test/test-traceur-runtime.html
+	sleep 0.1
+	open test/test-babel.html test/test-babel-runtime.html
+	sleep 0.1
+	open test/test-prod.html test/test-tracer.html test/test-csp.html
 
-system:
-	$(START)
-	for extension in $(SystemJS); do \
-		cat lib/extension-$$extension.js >> dist/$@.src.js; \
-	done
-	for extension in $(SystemJS); do \
-		echo $$extension"(System);" >> dist/$@.src.js; \
-	done
-	$(END)
+dist/%.js: dist/%.src.js
+	@echo "$$BANNER" > $@;
+	./node_modules/.bin/uglifyjs $< -cm --source-map dist/$*.js.map >> $@ || rm $@
 
-system-csp:
-	$(START)
-	for extension in $(SystemCSP); do \
-		cat lib/extension-$$extension.js >> dist/$@.src.js; \
-	done
-	for extension in $(SystemCSP); do \
-		echo $$extension"(System);" >> dist/$@.src.js; \
-	done
-	$(END)
+dist/system.src.js: lib/*.js $(ESML)/*.js
+	@echo "$$BANNER" > $@;
+	cat \
+		node_modules/when/es6-shim/Promise.js \
+		$(ESML)/wrapper-start.js \
+			$(ESML)/loader.js \
+			$(ESML)/declarative.js \
+			$(ESML)/transpiler.js \
+			$(ESML)/url-polyfill.js \
+			$(ESML)/system.js \
+			$(ESML)/module-tag.js \
+			lib/wrapper-start.js \
+				lib/core.js \
+				lib/meta.js \
+				lib/register.js \
+				lib/es6.js \
+				lib/global.js \
+				lib/cjs.js \
+				lib/amd.js \
+				lib/map.js \
+				lib/plugins.js \
+				lib/bundles.js \
+				lib/depCache.js \
+			lib/wrapper-end.js \
+		$(ESML)/wrapper-end.js \
+	>> $@;
+
+dist/system-prod.src.js: lib/*.js $(ESML)/*.js
+	@echo "$$BANNER" > $@;
+	cat \
+		node_modules/when/es6-shim/Promise.js \
+		$(ESML)/wrapper-start.js \
+			$(ESML)/loader.js \
+			$(ESML)/dynamic-only.js \
+			$(ESML)/url-polyfill.js \
+			$(ESML)/system.js \
+			lib/wrapper-start.js \
+				lib/core.js \
+				lib/meta.js \
+				lib/register.js \
+				lib/map.js \
+				lib/plugins.js \
+				lib/bundles.js \
+				lib/depCache.js \
+			lib/wrapper-end.js \
+		$(ESML)/wrapper-end.js \
+	>> $@;
+
+dist/system-csp.src.js: lib/*.js $(ESML)/*.js
+	@echo "$$BANNER" > $@;
+	cat \
+		node_modules/when/es6-shim/Promise.js \
+		$(ESML)/wrapper-start.js \
+			$(ESML)/loader.js \
+			$(ESML)/declarative.js \
+			$(ESML)/transpiler.js \
+			$(ESML)/url-polyfill.js \
+			$(ESML)/system.js \
+			$(ESML)/module-tag.js \
+			lib/wrapper-start.js \
+				lib/core.js \
+				lib/scriptLoader.js \
+				lib/meta.js \
+				lib/register.js \
+				lib/es6.js \
+				lib/global.js \
+				lib/cjs.js \
+				lib/amd.js \
+				lib/map.js \
+				lib/plugins.js \
+				lib/bundles.js \
+				lib/depCache.js \
+			lib/wrapper-end.js \
+		$(ESML)/wrapper-end.js \
+	>> $@;
