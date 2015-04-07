@@ -39,6 +39,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/system.js \
 			$(ESML)/module-tag.js \
 			lib/wrapper-start.js \
+				lib/global-eval.js \
 				lib/core.js \
 				lib/meta.js \
 				lib/register.js \
