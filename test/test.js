@@ -471,6 +471,13 @@ asyncTest('Loading dynamic modules with __esModule flag set', function() {
 if (ie8)
   return;
 
+asyncTest('ES6 named export loading of CJS', function() {
+  System['import']('tests/es-named-import-cjs.js').then(function(m) {
+    ok(m.cjsFuncValue === 'named export');
+    start();
+  });
+});
+
 asyncTest('Async functions', function() {
   System.babelOptions = { stage: 0 };
   System.traceurOptions = { asyncFunctions: true };
