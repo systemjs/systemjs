@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.6
+ * SystemJS v0.16.7
  */
 
 (function($__global) {
@@ -877,11 +877,23 @@ function es6(loader) {
 
   var nodeResolver = typeof process != 'undefined' && typeof require != 'undefined' && require.resolve;
 
-  function setConfig(loader, module, nodeModule) {
-    loader.meta[module] = {format: 'global'};
-    if (nodeResolver && !loader.paths[module]) {
+  function configNodeGlobal(loader, module, nodeModule, wilcardDummy) {
+    var meta = loader.meta[module] = loader.meta[module] || {};
+    meta.format = meta.format || 'global';
+    if (!loader.paths[module]) {
+      var path = resolvePath(nodeModule, wilcardDummy);
+      if (path) {
+        loader.paths[module] = path;
+      }
+    }
+  }
+
+  function resolvePath(nodeModule, wildcard) {
+    if (nodeResolver) {
+      var ext = wildcard ? '/package.json' : '';
       try {
-        loader.paths[module] = require.resolve(nodeModule || module);
+        var match = nodeResolver(nodeModule + ext);
+        return 'file:' + match.substr(0, match.length - ext.length) + (wildcard ? '/*.js' : '');
       }
       catch(e) {}
     }
@@ -892,13 +904,16 @@ function es6(loader) {
     var self = this;
     if (firstLoad) {
       if (self.transpiler == 'traceur') {
-        setConfig(self, 'traceur', 'traceur/bin/traceur.js');
+        configNodeGlobal(self, 'traceur', 'traceur/bin/traceur.js');
         self.meta['traceur'].exports = 'traceur';
-        setConfig(self, 'traceur-runtime', 'traceur/bin/traceur-runtime.js');
+        configNodeGlobal(self, 'traceur-runtime', 'traceur/bin/traceur-runtime.js');
       }
       else if (self.transpiler == 'babel') {
-        setConfig(self, 'babel', 'babel-core/browser.js');
-        setConfig(self, 'babel-runtime', 'babel-core/external-helpers.js');
+        configNodeGlobal(self, 'babel', 'babel-core/browser.js');
+        configNodeGlobal(self, 'babel/external-helpers', 'babel-core/external-helpers.js');
+        configNodeGlobal(self, 'babel', 'babel/browser.js');
+        configNodeGlobal(self, 'babel/external-helpers', 'babel/external-helpers.js');
+        configNodeGlobal(self, 'babel-runtime/*', 'babel-runtime', true);
       }
       firstLoad = false;
     }
@@ -1075,16 +1090,17 @@ function global(loader) {
         if (exportName)
           load.source += '\nthis["' + exportName + '"] = ' + exportName + ';';
 
-        // disable AMD detection
+        // disable module detection
         var define = loader.global.define;
+        var require = loader.global.require;
+        
         loader.global.define = undefined;
-
-        // ensure no NodeJS environment detection
         loader.global.module = undefined;
         loader.global.exports = undefined;
 
         loader.__exec(load);
 
+        loader.global.require = require;
         loader.global.define = define;
 
         return loader.get('@@global-helpers').retrieveGlobal(module.id, exportName, load.metadata.init);
