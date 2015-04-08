@@ -523,7 +523,7 @@ if (ie8)
   return;
 
 asyncTest('Async functions', function() {
-  System.babelOptions = { experimental: true };
+  System.babelOptions = { stage: 0 };
   System.traceurOptions = { asyncFunctions: true };
   System['import']('tests/async').then(function(m) {
     ok(true);
