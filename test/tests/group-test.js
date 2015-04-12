@@ -13,7 +13,7 @@ System.register("group-c", [], function($__export) {
 
 
 
-System.register("group-b", ["group-c"], false, function(__require, __exports, __module) {
+System.registerDynamic("group-b", ["group-c"], false, function(__require, __exports, __module) {
   System.get("@@global-helpers").prepareGlobal(__module.id, ["group-c"]);
   (function() {
     this.foo = 'foo';
