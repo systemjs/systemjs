@@ -117,7 +117,7 @@ asyncTest('Global script loading that detects as AMD with shim config', function
 
 if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
-  System.meta['tests/meta-override.js'] = { format: 'es6' };
+  System.meta['tests/meta-override.js'] = { format: 'es' };
   System['import']('tests/meta-override.js').then(function(m) {
     ok(m.p == 'value', 'Not ES6');
     start();
@@ -683,7 +683,7 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
   }, err);
 });
 
-asyncTest("System.clone", function() {
+asyncTest("System clone", function() {
   var clonedSystem = new System.constructor();
 
   clonedSystem.baseURL = System.baseURL;
