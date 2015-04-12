@@ -52,6 +52,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/plugins.js \
 				lib/bundles.js \
 				lib/depCache.js \
+				lib/package.js \
 			lib/wrapper-end.js \
 		$(ESML)/wrapper-end.js \
 	>> $@;
@@ -100,6 +101,7 @@ dist/system-csp.src.js: lib/*.js $(ESML)/*.js
 				lib/plugins.js \
 				lib/bundles.js \
 				lib/depCache.js \
+				lib/package.js \
 			lib/wrapper-end.js \
 		$(ESML)/wrapper-end.js \
 	>> $@;
