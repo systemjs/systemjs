@@ -189,6 +189,7 @@ asyncTest('Contextual map with shim', function() {
 });
 
 asyncTest('Loading an AMD module', function() {
+  System.meta['tests/amd-module.js'] = { format: 'amd' };
   System['import']('tests/amd-module.js').then(function(m) {
     ok(m.amd == true, 'Incorrect module');
     ok(m.dep.amd == 'dep', 'Dependency not defined');
@@ -397,6 +398,7 @@ asyncTest('CJS Circular', function() {
 });
 
 asyncTest('System.register Circular', function() {
+  System.meta['tests/register-circular1.js'] = { scriptLoad: true };
   System['import']('tests/register-circular1.js').then(function(m) {
     ok(m.q == 3, 'Binding not allocated');
     ok(m.r == 5, 'Binding not updated');
