@@ -15,7 +15,7 @@ define POLYFILLS_BANNER
 endef
 export POLYFILLS_BANNER
 
-compile: clean dist/system.src.js dist/system-prod.src.js
+compile: clean-compile dist/system.src.js dist/system-prod.src.js
 build: clean dist/system.js dist/system-prod.js dist/system-polyfills.js
 
 version:
@@ -24,6 +24,9 @@ version:
 footprint: build
 	@cat dist/system.js | gzip -9f | wc -c
 	@cat dist/system-prod.js | gzip -9f | wc -c
+
+clean-compile:
+	@rm dist/system.src.js dist/system-prod.src.js
 
 clean:
 	@rm -f dist/*
