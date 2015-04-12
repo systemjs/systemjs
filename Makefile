@@ -48,8 +48,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 	cat \
 		$(ESML)/wrapper-start.js \
 			$(ESML)/loader.js \
-			$(ESML)/declarative.js \
-			$(ESML)/transpiler.js \
+			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
 			lib/wrapper-start.js \
 				lib/global-eval.js \
@@ -58,6 +57,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/meta.js \
 				lib/register.js \
 				lib/alias.js \
+				$(ESML)/transpiler.js \
 				lib/es.js \
 				lib/global.js \
 				lib/cjs.js \
