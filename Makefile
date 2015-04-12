@@ -24,9 +24,10 @@ version:
 footprint: build
 	@cat dist/system.js | gzip -9f | wc -c
 	@cat dist/system-prod.js | gzip -9f | wc -c
+	@cat dist/system-polyfills.js | gzip -9f | wc -c
 
 clean-compile:
-	@rm dist/system.src.js dist/system-prod.src.js
+	@rm -f dist/system.src.js dist/system-prod.src.js
 
 clean:
 	@rm -f dist/*
@@ -58,7 +59,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/core.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
-				lib/register.js \				
+				lib/register.js \
 				$(ESML)/transpiler.js \
 				lib/es.js \
 				lib/global.js \
@@ -66,10 +67,11 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/amd.js \
 				lib/map.js \
 				lib/plugins.js \
-				lib/bundles.js \
-				lib/depCache.js \
 				lib/alias.js \
 				lib/package.js \
+				lib/bundles.js \
+				lib/depCache.js \
+				lib/conditionals.js \
 			lib/wrapper-end.js \
 		$(ESML)/wrapper-end.js \
 	>> $@;
@@ -89,10 +91,11 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 				lib/register.js \
 				lib/map.js \
 				lib/plugins.js \
-				lib/bundles.js \
-				lib/depCache.js \
 				lib/alias.js \
 				lib/package.js \
+				lib/bundles.js \
+				lib/depCache.js \
+				lib/conditionals.js \
 			lib/wrapper-end.js \
 		$(ESML)/wrapper-end.js \
 	>> $@;
