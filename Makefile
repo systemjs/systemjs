@@ -43,6 +43,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/core.js \
 				lib/meta.js \
 				lib/register.js \
+				lib/alias.js \
 				lib/es.js \
 				lib/global.js \
 				lib/cjs.js \
@@ -90,6 +91,7 @@ dist/system-csp.src.js: lib/*.js $(ESML)/*.js
 				lib/scriptLoader.js \
 				lib/meta.js \
 				lib/register.js \
+				lib/alias.js \
 				lib/es.js \
 				lib/global.js \
 				lib/cjs.js \
