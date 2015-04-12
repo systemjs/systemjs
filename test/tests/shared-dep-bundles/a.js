@@ -1,4 +1,4 @@
-"format register";
+"format system";
 
 System.register("lib/shared-dep", [], function($__export) {
   "use strict";

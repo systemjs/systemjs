@@ -1,5 +1,3 @@
-"format register";
-
 System.register("group-c", [], function($__export) {
   "use strict";
   var __moduleName = "group-c";
