@@ -58,8 +58,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/core.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
-				lib/register.js \
-				lib/alias.js \
+				lib/register.js \				
 				$(ESML)/transpiler.js \
 				lib/es.js \
 				lib/global.js \
@@ -69,6 +68,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/plugins.js \
 				lib/bundles.js \
 				lib/depCache.js \
+				lib/alias.js \
 				lib/package.js \
 			lib/wrapper-end.js \
 		$(ESML)/wrapper-end.js \
@@ -87,11 +87,11 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 				lib/meta.js \
 				lib/scriptOnly.js \
 				lib/register.js \
-				lib/alias.js \
 				lib/map.js \
 				lib/plugins.js \
 				lib/bundles.js \
 				lib/depCache.js \
+				lib/alias.js \
 				lib/package.js \
 			lib/wrapper-end.js \
 		$(ESML)/wrapper-end.js \
