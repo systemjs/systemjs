@@ -15,8 +15,8 @@ define POLYFILLS_BANNER
 endef
 export POLYFILLS_BANNER
 
-compile: clean-compile dist/system.src.js dist/system-prod.src.js
-build: clean dist/system.js dist/system-prod.js dist/system-polyfills.js
+compile: clean-compile dist/system.src.js dist/system-prod.src.js dist/system-register-only.src.js
+build: clean dist/system.js dist/system-prod.js dist/system-register-only.js dist/polyfills.js
 
 version:
 	@echo $(VERSION)
@@ -24,7 +24,8 @@ version:
 footprint: build
 	@cat dist/system.js | gzip -9f | wc -c
 	@cat dist/system-prod.js | gzip -9f | wc -c
-	@cat dist/system-polyfills.js | gzip -9f | wc -c
+	@cat dist/system-register-only.js | gzip -9f | wc -c
+	@cat dist/polyfills.js | gzip -9f | wc -c
 
 clean-compile:
 	@rm -f dist/system.src.js dist/system-prod.src.js
@@ -39,9 +40,9 @@ test: compile
 	sleep 0.1
 	open test/test-prod.html test/test-tracer.html
 
-dist/system-polyfills.js: dist/system-polyfills.src.js
+dist/polyfills.js: dist/polyfills.src.js
 	@echo "$$POLYFILLS_BANNER" > $@
-	./node_modules/.bin/uglifyjs $< -cm --source-map dist/system-polyfills.js.map >> $@ || rm $@
+	./node_modules/.bin/uglifyjs $< -cm --source-map dist/polyfills.js.map >> $@ || rm $@
 
 dist/%.js: dist/%.src.js
 	@echo "$$BANNER" > $@
@@ -50,13 +51,14 @@ dist/%.js: dist/%.src.js
 dist/system.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
+		lib/wrapper-start.js \
 		$(ESML)/wrapper-start.js \
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
-			lib/wrapper-start.js \
 				lib/global-eval.js \
 				lib/core.js \
+				lib/config.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
 				lib/register.js \
@@ -73,19 +75,21 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/bundles.js \
 				lib/depCache.js \
 				lib/conditionals.js \
-			lib/wrapper-end.js \
+				lib/createSystem.js \
 		$(ESML)/wrapper-end.js \
+		lib/wrapper-end.js \
 	>> $@;
 
 dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
+		lib/wrapper-start.js \
 		$(ESML)/wrapper-start.js \
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
-			lib/wrapper-start.js \
 				lib/core.js \
+				lib/config.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
 				lib/scriptOnly.js \
@@ -97,13 +101,30 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 				lib/bundles.js \
 				lib/depCache.js \
 				lib/conditionals.js \
-			lib/wrapper-end.js \
+				lib/createSystem.js \
+		$(ESML)/wrapper-end.js \
+		lib/wrapper-end.js \
+	>> $@;
+
+dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
+	@echo "$$BANNER" > $@;
+	cat \
+		$(ESML)/wrapper-start.js \
+			$(ESML)/loader.js \
+			$(ESML)/dynamic-only.js \
+			$(ESML)/system.js \
+				lib/core.js \
+				lib/scriptLoader.js \
+				lib/scriptOnly.js \
+				lib/register.js \
+				lib/createSystem.js \
 		$(ESML)/wrapper-end.js \
 	>> $@;
 
-dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js
+dist/polyfills.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$POLYFILLS_BANNER" > $@;
 	cat \
 		$(ESML)/url-polyfill.js \
 		node_modules/when/es6-shim/Promise.js \
+		lib/polyfills-bootstrap.js \
 	>> $@;
