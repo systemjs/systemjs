@@ -56,6 +56,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
+			$(ESML)/transpiler.js \
 				lib/global-eval.js \
 				lib/core.js \
 				lib/config.js \
@@ -63,7 +64,6 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/meta.js \
 				lib/register.js \
 				lib/node-transpiler-paths.js \
-				$(ESML)/transpiler.js \
 				lib/es.js \
 				lib/global.js \
 				lib/cjs.js \
