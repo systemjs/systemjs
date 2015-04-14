@@ -66,6 +66,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/node-transpiler-paths.js \
 				lib/es.js \
 				lib/global.js \
+				lib/global-helpers.js \
 				lib/cjs.js \
 				lib/amd.js \
 				lib/map.js \
@@ -94,6 +95,7 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 				lib/meta.js \
 				lib/scriptOnly.js \
 				lib/register.js \
+				lib/global-helpers.js \
 				lib/map.js \
 				lib/plugins.js \
 				lib/alias.js \
