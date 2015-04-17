@@ -155,34 +155,31 @@ asyncTest('Map configuration subpath', function() {
   }, err);
 });
 
-asyncTest('Contextual map configuration', function() {
-  System.map['tests/contextual-map.js'] = {
-    maptest: 'tests/contextual-map-dep.js'
+asyncTest('Package map configuration', function() {
+  System.packages['tests/contextual-test'] = {
+    main: 'contextual-map.js',
+    map: {
+      maptest: 'tests/contextual-map-dep.js'
+    }
   };
-  System['import']('tests/contextual-map.js').then(function(m) {
+  System['import']('tests/contextual-test').then(function(m) {
     ok(m.mapdep == 'mapdep', 'Contextual map dep not loaded');
     start();
   }, err);
 });
 
-asyncTest('Submodule contextual map configuration', function() {
-  System.map['tests/subcontextual-map'] = {
-    dep: 'tests/subcontextual-mapdep.js'
+asyncTest('Package map with shim', function() {
+  System.packages['tests/shim-package'] = {
+    meta: {
+      '*': {
+        deps: ['shim-map-dep']
+      }
+    },
+    map: {
+      'shim-map-dep': 'tests/shim-map-test-dep.js'
+    }
   };
-  System['import']('tests/subcontextual-map/submodule.js').then(function(m) {
-    ok(m == 'submapdep', 'Submodule contextual map not loaded');
-    start();
-  }, err);
-});
-
-asyncTest('Contextual map with shim', function() {
-  System.meta['tests/shim-map-test.js'] = {
-    deps: ['shim-map-dep']
-  };
-  System.map['tests/shim-map-test.js'] = {
-    'shim-map-dep': 'tests/shim-map-test-dep.js'
-  };
-  System['import']('tests/shim-map-test.js').then(function(m) {
+  System['import']('tests/shim-package/shim-map-test.js').then(function(m) {
     ok(m == 'depvalue', 'shim dep not loaded');
     start();
   }, err);

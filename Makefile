@@ -70,9 +70,9 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/cjs.js \
 				lib/amd.js \
 				lib/map.js \
+				lib/package.js \
 				lib/plugins.js \
 				lib/alias.js \
-				lib/package.js \
 				lib/bundles.js \
 				lib/depCache.js \
 				lib/conditionals.js \
@@ -97,9 +97,9 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 				lib/register.js \
 				lib/global-helpers.js \
 				lib/map.js \
+				lib/package.js \
 				lib/plugins.js \
 				lib/alias.js \
-				lib/package.js \
 				lib/bundles.js \
 				lib/depCache.js \
 				lib/conditionals.js \
