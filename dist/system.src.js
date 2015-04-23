@@ -147,14 +147,14 @@ function core(loader) {
   // override locate to allow baseURL to be document-relative
   var baseURI;
   if (typeof window == 'undefined' &&
-      typeof WorkerGlobalScope == 'undefined') {
+      typeof WorkerGlobalScope == 'undefined' && typeof process != 'undefined') {
     baseURI = 'file:' + process.cwd() + '/';
     if (isWindows)
       baseURI = baseURI.replace(/\\/g, '/');
   }
   // Inside of a Web Worker
-  else if(typeof window == 'undefined') {
-    baseURI = loader.global.location.href;
+  else if (typeof window == 'undefined') {
+    baseURI = location.href;
   }
   else {
     baseURI = document.baseURI;
@@ -653,15 +653,19 @@ function register(loader) {
 
     var module = entry.module = { exports: exports, id: entry.name };
 
-    // AMD requires execute the tree first
-    if (!entry.executingRequire) {
+    function linkDeps() {
       for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
         var depName = entry.normalizedDeps[i];
+        // we know we only need to link dynamic due to linking algorithm
         var depEntry = loader.defined[depName];
         if (depEntry)
           linkDynamicModule(depEntry, loader);
       }
     }
+
+    // AMD requires execute the tree first
+    if (!entry.executingRequire)
+      linkDeps();
 
     // now execute
     entry.evaluated = true;
@@ -673,6 +677,11 @@ function register(loader) {
       }
       throw new TypeError('Module ' + name + ' not declared as a dependency.');
     }, exports, module);
+
+    // in case we missed anything, link it now
+    // this does mean that deferred execution isn't supported
+    if (entry.executingRequire)
+      linkDeps();
     
     if (output)
       module.exports = output;
@@ -714,6 +723,13 @@ function register(loader) {
     entry.evaluated = true;
     entry.module.execute.call(loader.global);
   }
+
+  // override the delete method to also clear the register caches
+  var loaderDelete = loader['delete'];
+  loader['delete'] = function(name) {
+    delete moduleRecords[name];
+    return loaderDelete.call(this, name);
+  };
 
   var registerRegEx = /System\.register/;
 
@@ -797,6 +813,8 @@ function register(loader) {
 
       if (anonRegister)
         entry = anonRegister;
+      else
+        load.metadata.bundle = true;
 
       if (!entry && System.defined[load.name])
         entry = System.defined[load.name];
@@ -878,6 +896,7 @@ function es6(loader) {
   var nodeResolver = typeof process != 'undefined' && typeof require != 'undefined' && require.resolve;
 
   function configNodeGlobal(loader, module, nodeModule, wilcardDummy) {
+    loader.meta = loader.meta || {};
     var meta = loader.meta[module] = loader.meta[module] || {};
     meta.format = meta.format || 'global';
     if (!loader.paths[module]) {
@@ -911,8 +930,6 @@ function es6(loader) {
       else if (self.transpiler == 'babel') {
         configNodeGlobal(self, 'babel', 'babel-core/browser.js');
         configNodeGlobal(self, 'babel/external-helpers', 'babel-core/external-helpers.js');
-        configNodeGlobal(self, 'babel', 'babel/browser.js');
-        configNodeGlobal(self, 'babel/external-helpers', 'babel/external-helpers.js');
         configNodeGlobal(self, 'babel-runtime/*', 'babel-runtime', true);
       }
       firstLoad = false;
@@ -987,15 +1004,46 @@ function global(loader) {
     return value;
   }
 
+  var ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage',
+      'clipboardData', 'frames', 'webkitStorageInfo', 'toolbar', 'statusbar',
+      'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB',
+      'screenTop', 'screenLeft', 'external'];
+
+  var globalName = typeof window != 'undefined' ? 'window' : (typeof global != 'undefined' ? 'global' : 'self');
+
+  try {
+    var hasOwnProperty = loader.global.hasOwnProperty;
+    // throws in Safari web-worker
+    loader.global.hasOwnProperty('window');
+  }
+  catch(e) {
+    hasOwnProperty = false;
+  }
+
+  function forEachGlobal(callback) {
+    for (var g in loader.global) {
+      var curGlobal;
+      if (indexOf.call(ignoredGlobalProps, g) != -1)
+        continue;
+      if (hasOwnProperty && !loader.global.hasOwnProperty(g))
+        continue;
+      try {
+        curGlobal = loader.global[g];
+      } catch (e) {
+        ignoredGlobalProps.push(g);
+      }
+      if (curGlobal !== loader.global)
+        callback(g, curGlobal);
+    }
+  }
+
   function createHelpers(loader) {
     if (loader.has('@@global-helpers'))
       return;
-
-    var hasOwnProperty = loader.global.hasOwnProperty;
+    
     var moduleGlobals = {};
 
     var curGlobalObj;
-    var ignoredGlobalProps;
 
     loader.set('@@global-helpers', loader.newModule({
       prepareGlobal: function(moduleName, deps) {
@@ -1010,21 +1058,10 @@ function global(loader) {
         // now store a complete copy of the global object
         // in order to detect changes
         curGlobalObj = {};
-        ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage',
-          'clipboardData', 'frames', 'webkitStorageInfo', 'toolbar', 'statusbar',
-          'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB',
-          'screenTop', 'screenLeft'
-        ];
-        for (var g in loader.global) {
-          if (indexOf.call(ignoredGlobalProps, g) != -1) { continue; }
-          if (!hasOwnProperty || loader.global.hasOwnProperty(g)) {
-            try {
-              curGlobalObj[g] = loader.global[g];
-            } catch (e) {
-              ignoredGlobalProps.push(g);
-            }
-          }
-        }
+        
+        forEachGlobal(function(name, value) {
+          curGlobalObj[name] = value;
+        });
       },
       retrieveGlobal: function(moduleName, exportName, init) {
         var singleGlobal;
@@ -1045,20 +1082,20 @@ function global(loader) {
         }
 
         else {
-          for (var g in loader.global) {
-            if (indexOf.call(ignoredGlobalProps, g) != -1)
-              continue;
-            if ((!hasOwnProperty || loader.global.hasOwnProperty(g)) && g != loader.global && curGlobalObj[g] != loader.global[g]) {
-              exports[g] = loader.global[g];
-              if (singleGlobal) {
-                if (singleGlobal !== loader.global[g])
-                  multipleExports = true;
-              }
-              else if (singleGlobal !== false) {
-                singleGlobal = loader.global[g];
-              }
+          forEachGlobal(function(name, value) {
+            if (curGlobalObj[name] === value)
+              return;
+            if (typeof value === 'undefined')
+              return;
+            exports[name] = value;
+            if (typeof singleGlobal !== 'undefined') {
+              if (!multipleExports && singleGlobal !== value)
+                multipleExports = true;
             }
-          }
+            else {
+              singleGlobal = value;
+            }
+          });
         }
 
         moduleGlobals[moduleName] = exports;
@@ -1088,7 +1125,7 @@ function global(loader) {
         loader.get('@@global-helpers').prepareGlobal(module.id, load.metadata.deps);
 
         if (exportName)
-          load.source += '\nthis["' + exportName + '"] = ' + exportName + ';';
+          load.source += globalName + '["' + exportName + '"] = ' + exportName + ';';
 
         // disable module detection
         var define = loader.global.define;
@@ -1139,6 +1176,9 @@ function cjs(loader) {
     return deps;
   }
 
+  if (typeof location != 'undefined' && location.origin)
+    var curOrigin = location.origin;
+
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
 
@@ -1159,6 +1199,17 @@ function cjs(loader) {
         dirname.pop();
         dirname = dirname.join('/');
 
+        var address = load.address;
+
+        if (curOrigin && address.substr(0, curOrigin.length) === curOrigin) {
+          address = address.substr(curOrigin.length);
+          dirname = dirname.substr(curOrigin.length);
+        }
+        else if (address.substr(0, 5) == 'file:') {
+          address = address.substr(5);
+          dirname = dirname.substr(5);
+        }
+
         // if on the server, remove the "file:" part from the dirname
         if (System._nodeRequire)
           dirname = dirname.substr(5);
@@ -1168,7 +1219,7 @@ function cjs(loader) {
           exports: exports,
           module: module,
           require: require,
-          __filename: System._nodeRequire ? load.address.substr(5) : load.address,
+          __filename: address,
           __dirname: dirname
         };
 
@@ -1256,14 +1307,16 @@ function amd(loader) {
       return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
 
     // amd require
-    if (names instanceof Array)
-      Promise.all(names.map(function(name) {
-        return loader['import'](name, referer);
-      })).then(function(modules) {
+    if (names instanceof Array) {
+      var dynamicRequires = [];
+      for (var i = 0; i < names.length; i++)
+        dynamicRequires.push(loader['import'](names[i], referer));
+      Promise.all(dynamicRequires).then(function(modules) {
         if(callback) {
           callback.apply(null, modules);
         }
       }, errback);
+    }
 
     // commonjs require
     else if (typeof names == 'string') {
@@ -1280,8 +1333,12 @@ function amd(loader) {
 
   function makeRequire(parentName, staticRequire, loader) {
     return function(names, callback, errback) {
-      if (typeof names == 'string')
-        return staticRequire(names);
+      if (typeof names == 'string') {
+        if (typeof callback === 'function')
+          names = [names];
+        else
+          return staticRequire(names);
+      }
       return require.call(loader, names, callback, errback, { name: parentName });
     }
   }
@@ -1819,6 +1876,29 @@ function bundles(loader) {
   // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
   loader.bundles = loader.bundles || {};
 
+  var loadedBundles = [];
+
+  function loadFromBundle(loader, bundle) {
+    // we do manual normalization in case the bundle is mapped
+    // this is so we can still know the normalized name is a bundle
+    return Promise.resolve(loader.normalize(bundle))
+    .then(function(normalized) {
+      if (indexOf.call(loadedBundles, normalized) == -1) {
+        loadedBundles.push(normalized);
+        loader.bundles[normalized] = loader.bundles[normalized] || loader.bundles[bundle];
+
+        // note this module is a bundle in the meta
+        loader.meta = loader.meta || {};
+        loader.meta[normalized] = loader.meta[normalized] || {};
+        loader.meta[normalized].bundle = true;
+      }
+      return loader.load(normalized);
+    })
+    .then(function() {
+      return '';
+    });
+  }
+
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
     var loader = this;
@@ -1827,27 +1907,22 @@ function bundles(loader) {
     if (!loader.bundles)
       loader.bundles = {};
 
+    // check what bundles we've already loaded
+    for (var i = 0; i < loadedBundles.length; i++) {
+      if (indexOf.call(loader.bundles[loadedBundles[i]], load.name) == -1)
+        continue;
+
+      return loadFromBundle(loader, loadedBundles[i]);
+    }
+
     // if this module is in a bundle, load the bundle first then
     for (var b in loader.bundles) {
       if (indexOf.call(loader.bundles[b], load.name) == -1)
         continue;
-      // we do manual normalization in case the bundle is mapped
-      // this is so we can still know the normalized name is a bundle
-      return Promise.resolve(loader.normalize(b))
-      .then(function(normalized) {
-        loader.bundles[normalized] = loader.bundles[normalized] || loader.bundles[b];
 
-        // note this module is a bundle in the meta
-        loader.meta = loader.meta || {};
-        loader.meta[normalized] = loader.meta[normalized] || {};
-        loader.meta[normalized].bundle = true;
-
-        return loader.load(normalized);
-      })
-      .then(function() {
-        return '';
-      });
+      return loadFromBundle(loader, b);
     }
+
     return loaderFetch.call(this, load);
   }
 }
@@ -2293,7 +2368,7 @@ var $__curScript, __eval;
       $__global.upgradeSystemLoader();
     }
   }
-  else if (typeof WorkerGlobalScope != 'undefined' && typeof importScripts != 'undefined') {
+  else if (typeof importScripts != 'undefined') {
     doEval = function(source) {
       try {
         eval(source);
@@ -2332,4 +2407,4 @@ var $__curScript, __eval;
   }
 })();
 
-})(typeof window != 'undefined' ? window : (typeof WorkerGlobalScope != 'undefined' ? self : global));
+})(typeof window != 'undefined' ? window : (typeof global != 'undefined' ? global : self));
