@@ -2,7 +2,7 @@
  * SystemJS v0.16.8
  */
 
-(function($__global) {
+(function($__global, $__globalName) {
 
 $__global.upgradeSystemLoader = function() {
   $__global.upgradeSystemLoader = undefined;
@@ -1004,37 +1004,34 @@ function global(loader) {
     return value;
   }
 
-  var ignoredGlobalProps = ['indexedDB', 'sessionStorage', 'localStorage',
-      'clipboardData', 'frames', 'webkitStorageInfo', 'toolbar', 'statusbar',
-      'scrollbars', 'personalbar', 'menubar', 'locationbar', 'webkitIndexedDB',
-      'screenTop', 'screenLeft', 'external'];
+  // bare minimum ignores for IE8
+  var ignoredGlobalProps = ['sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external'];
 
-  var globalName = typeof window != 'undefined' ? 'window' : (typeof global != 'undefined' ? 'global' : 'self');
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-  try {
-    var hasOwnProperty = loader.global.hasOwnProperty;
-    // throws in Safari web-worker
-    loader.global.hasOwnProperty('window');
-  }
-  catch(e) {
-    hasOwnProperty = false;
+  function iterateGlobals(callback) {
+    if (Object.keys)
+      Object.keys(loader.global).forEach(callback);
+    else
+      for (var g in loader.global) {
+        if (!hasOwnProperty.call(loader.global, g))
+          continue;
+        callback(g);
+      }
   }
 
   function forEachGlobal(callback) {
-    for (var g in loader.global) {
-      var curGlobal;
-      if (indexOf.call(ignoredGlobalProps, g) != -1)
-        continue;
-      if (hasOwnProperty && !loader.global.hasOwnProperty(g))
-        continue;
+    iterateGlobals(function(globalName) {
+      if (indexOf.call(ignoredGlobalProps, globalName) != -1)
+        return;
       try {
-        curGlobal = loader.global[g];
-      } catch (e) {
-        ignoredGlobalProps.push(g);
+        var value = loader.global[globalName];
       }
-      if (curGlobal !== loader.global)
-        callback(g, curGlobal);
-    }
+      catch(e) {
+        ignoredGlobalProps.push(globalName);
+      }
+      callback(globalName, value);
+    });
   }
 
   function createHelpers(loader) {
@@ -1043,7 +1040,7 @@ function global(loader) {
     
     var moduleGlobals = {};
 
-    var curGlobalObj;
+    var globalSnapshot;
 
     loader.set('@@global-helpers', loader.newModule({
       prepareGlobal: function(moduleName, deps) {
@@ -1057,10 +1054,10 @@ function global(loader) {
 
         // now store a complete copy of the global object
         // in order to detect changes
-        curGlobalObj = {};
+        globalSnapshot = {};
         
         forEachGlobal(function(name, value) {
-          curGlobalObj[name] = value;
+          globalSnapshot[name] = value;
         });
       },
       retrieveGlobal: function(moduleName, exportName, init) {
@@ -1083,7 +1080,7 @@ function global(loader) {
 
         else {
           forEachGlobal(function(name, value) {
-            if (curGlobalObj[name] === value)
+            if (globalSnapshot[name] === value)
               return;
             if (typeof value === 'undefined')
               return;
@@ -1125,7 +1122,7 @@ function global(loader) {
         loader.get('@@global-helpers').prepareGlobal(module.id, load.metadata.deps);
 
         if (exportName)
-          load.source += globalName + '["' + exportName + '"] = ' + exportName + ';';
+          load.source += $__globalName + '["' + exportName + '"] = ' + exportName + ';';
 
         // disable module detection
         var define = loader.global.define;
@@ -1421,7 +1418,13 @@ function amd(loader) {
           if (requireIndex != -1)
             depValues.splice(requireIndex, 0, makeRequire(module.id, require, loader));
 
+          // set global require to AMD require
+          var curRequire = global.require;
+          global.require = System.amdRequire;
+
           var output = factory.apply(global, depValues);
+
+          global.require = curRequire;
 
           if (typeof output == 'undefined' && module)
             output = module.exports;
@@ -2331,7 +2334,10 @@ var $__curScript, __eval;
     }
   };
 
-  if (typeof document != 'undefined') {
+  if ($__global.chrome && chrome.extension) {
+    doEval = 0 || eval; // for uglify
+  }
+  else if (typeof document != 'undefined') {
     var head;
 
     var scripts = document.getElementsByTagName('script');
@@ -2407,4 +2413,5 @@ var $__curScript, __eval;
   }
 })();
 
-})(typeof window != 'undefined' ? window : (typeof global != 'undefined' ? global : self));
+})(typeof window != 'undefined' ? window : (typeof global != 'undefined' ? global : self),
+typeof window != 'undefined' ? 'window' : (typeof global != 'undefined' ? 'global' : 'self'));
