@@ -18,7 +18,7 @@ Runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 
-For a list of guides and tools, see [Third-Party Resources](https://github.com/systemjs/systemjs/wiki/Third-Party Resources).
+For a list of guides and tools, see [Third-Party Resources](https://github.com/systemjs/systemjs/wiki/Third-Party-Resources).
 
 Documentation
 ---
