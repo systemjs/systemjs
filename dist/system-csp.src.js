@@ -721,7 +721,8 @@ function register(loader) {
 
     var module = entry.module = { exports: exports, id: entry.name };
 
-    function linkDeps() {
+    // AMD requires execute the tree first
+    if (!entry.executingRequire) {
       for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
         var depName = entry.normalizedDeps[i];
         // we know we only need to link dynamic due to linking algorithm
@@ -730,10 +731,6 @@ function register(loader) {
           linkDynamicModule(depEntry, loader);
       }
     }
-
-    // AMD requires execute the tree first
-    if (!entry.executingRequire)
-      linkDeps();
 
     // now execute
     entry.evaluated = true;
@@ -745,11 +742,6 @@ function register(loader) {
       }
       throw new TypeError('Module ' + name + ' not declared as a dependency.');
     }, exports, module);
-
-    // in case we missed anything, link it now
-    // this does mean that deferred execution isn't supported
-    if (entry.executingRequire)
-      linkDeps();
     
     if (output)
       module.exports = output;
@@ -2403,10 +2395,7 @@ var $__curScript, __eval;
     }
   };
 
-  if ($__global.chrome && chrome.extension) {
-    doEval = 0 || eval; // for uglify
-  }
-  else if (typeof document != 'undefined') {
+  if (typeof document != 'undefined') {
     var head;
 
     var scripts = document.getElementsByTagName('script');
