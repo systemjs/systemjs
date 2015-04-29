@@ -2,7 +2,7 @@ define(['require'], function(require) {
 
   var cb, module;
 
-  require('tests/amd-dynamic', function(_module) {
+  require('tests/amd-dynamic.js', function(_module) {
     module = _module;
     
     if (cb)

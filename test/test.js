@@ -215,6 +215,15 @@ asyncTest('AMD detection test with byte order mark (BOM)', function() {
   }, err);
 });
 
+asyncTest('AMD with dynamic require callback', function() {
+  System['import']('tests/amd-dynamic-require.js').then(function(m) {
+    m.onCallback(function(m) {
+      ok(m === 'dynamic');
+      start();
+    });
+  });
+});
+
 System.bundles['tests/amd-bundle.js'] = ['bundle-1', 'bundle-2'];
 
 asyncTest('Loading an AMD bundle', function() {
