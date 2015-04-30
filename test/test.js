@@ -531,6 +531,8 @@ asyncTest('Loading dynamic modules with __esModule flag set', function() {
 if (ie8)
   return;
 
+// TypeScript does not support async functions yet
+if (System.transpiler !== 'typescript')
 asyncTest('Async functions', function() {
   System.babelOptions = { stage: 0 };
   System.traceurOptions = { asyncFunctions: true };
@@ -540,6 +542,7 @@ asyncTest('Async functions', function() {
   });
 });
 
+if (System.transpiler !== 'typescript')
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
     ok(m['default'] == 'default1', 'Wrapper module not defined.');
@@ -718,10 +721,10 @@ asyncTest('Loading an AMD module that requires another works', function() {
 });
 
 asyncTest('Loading a connected tree that connects ES and CJS modules', function(){
-	System['import']('tests/connected-tree/a').then(function(a){
-		ok(a.name === "a");
-		start();
-	});
+    System['import']('tests/connected-tree/a').then(function(a){
+        ok(a.name === "a");
+        start();
+    });
 });
 
 asyncTest('Loading two bundles that have a shared dependency', function() {
