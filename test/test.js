@@ -294,9 +294,16 @@ asyncTest('CommonJS setting module.exports', function() {
   }, err);
 });
 
-asyncTest('CommonJS detection variation', function() {
+asyncTest('CommonJS detection variation 1', function() {
   System['import']('tests/commonjs-variation').then(function(m) {
     ok(m.e === System.get('@empty'));
+    start();
+  }, err);
+});
+
+asyncTest('CommonJS detection variation 2', function() {
+  System['import']('tests/commonjs-variation2').then(function(m) {
+    ok(typeof m.OpaqueToken === 'function');
     start();
   }, err);
 });
@@ -542,7 +549,7 @@ asyncTest('Async functions', function() {
 
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper').then(function(m) {
-    ok(m['default'] == 'default1', 'Wrapper module not defined.');
+    ok(m.d == 'default1', 'Wrapper module not defined.');
     start();
   }, err);
 });
