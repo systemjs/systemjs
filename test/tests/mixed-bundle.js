@@ -1,3 +1,5 @@
+"format register";
+
 System.register("tree/third", [], function($__export) {
   var some;
   return {
