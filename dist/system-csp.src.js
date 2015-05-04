@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.10
+ * SystemJS v0.16.11
  */
 
 (function($__global, $__globalName) {
@@ -1211,7 +1211,7 @@ function cjs(loader) {
 
   // CJS Module Format
   // require('...') || exports[''] = ... || exports.asd = ... || module.exports = ...
-  var cjsExportsRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF.]|module\.)(exports\s*\[['"]|\exports\s*\.)|(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF.])module\.exports\s*\=/;
+  var cjsExportsRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF.]|module\.)exports\s*(\[['"]|\.)|(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF.])module\.exports\s*[=,]/;
   // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
   var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g;
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
@@ -1234,7 +1234,7 @@ function cjs(loader) {
   }
 
   if (typeof location != 'undefined' && location.origin)
-    var curOrigin = location.origin;
+    var curOrigin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
 
   var loaderInstantiate = loader.instantiate;
   loader.instantiate = function(load) {
