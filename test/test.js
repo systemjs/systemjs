@@ -497,7 +497,7 @@ asyncTest('Async functions', function() {
 
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper.js').then(function(m) {
-    ok(m['default'] == 'default1', 'Wrapper module not defined.');
+    ok(m.d == 'default1', 'Wrapper module not defined.');
     start();
   }, err);
 });
