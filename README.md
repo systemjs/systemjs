@@ -109,6 +109,11 @@ System.config({
 
 Plugins handle alternative loading scenarios, including loading assets such as CSS or images, and providing custom transpilation scenarios.
 
+#### Usage
+
+1. First, you should install SystemJS plugin by issuing command `jspm install plugin-name`. For example, you are going to use **CSS** plugin to load css files, then you install it with `jspm install css`.
+2. Now that we got SystemJS css plugin, we can `import` our css files with `System.import('path/to/css_filename.css!')`, or if you are using a ES6 module then you do it with `import 'path/to/css_filename.css!';`.
+
 Supported Plugins:
 
 * [CSS](https://github.com/systemjs/plugin-css) `System.import('my/file.css!')`
