@@ -56,6 +56,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
+			$(ESML)/system-fetch.js \
 			$(ESML)/transpiler.js \
 				lib/global-eval.js \
 				lib/core.js \
@@ -89,11 +90,11 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
+			$(ESML)/system-fetch.js \
 				lib/core.js \
 				lib/misc.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
-				lib/scriptOnly.js \
 				lib/register.js \
 				lib/global-helpers.js \
 				lib/map.js \
