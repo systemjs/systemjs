@@ -59,7 +59,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/transpiler.js \
 				lib/global-eval.js \
 				lib/core.js \
-				lib/config.js \
+				lib/misc.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
 				lib/register.js \
@@ -90,7 +90,7 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
 				lib/core.js \
-				lib/config.js \
+				lib/misc.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
 				lib/scriptOnly.js \
@@ -115,9 +115,6 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
-				lib/core.js \
-				lib/scriptLoader.js \
-				lib/scriptOnly.js \
 				lib/register.js \
 				lib/createSystem.js \
 		$(ESML)/wrapper-end.js \
