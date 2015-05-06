@@ -111,8 +111,8 @@ Plugins handle alternative loading scenarios, including loading assets such as C
 
 #### Usage
 
-1. First, you should install SystemJS plugin by issuing command `jspm install plugin-name`. For example, you are going to use **CSS** plugin to load css files, then you install it with `jspm install css`.
-2. Now that we got SystemJS css plugin, we can `import` our css files with `System.import('path/to/css_filename.css!')`, or if you are using a ES6 module then you do it with `import 'path/to/css_filename.css!';`.
+1. Install SystemJS plugin by running the command `jspm install plugin-name`. For example, if you are going to use the CSS plugin to load CSS files, then you would install it with `jspm install css` first.
+2. Now that we have SystemJS css plugin, we can `import` our css files with `System.import('path/to/css_filename.css!')`, or if you are using a ES6 module then you do it with `import 'path/to/css_filename.css!';`.
 
 Supported Plugins:
 
