@@ -15,20 +15,20 @@ define POLYFILLS_BANNER
 endef
 export POLYFILLS_BANNER
 
-compile: clean-compile dist/system.src.js dist/system-prod.src.js dist/system-register-only.src.js
-build: clean dist/system.js dist/system-prod.js dist/system-register-only.js dist/polyfills.js
+compile: clean-compile dist/system.src.js dist/system-csp.src.js dist/system-register-only.src.js
+build: clean dist/system.js dist/system-csp.js dist/system-register-only.js dist/polyfills.js
 
 version:
 	@echo $(VERSION)
 
 footprint: build
 	@cat dist/system.js | gzip -9f | wc -c
-	@cat dist/system-prod.js | gzip -9f | wc -c
+	@cat dist/system-csp.js | gzip -9f | wc -c
 	@cat dist/system-register-only.js | gzip -9f | wc -c
 	@cat dist/polyfills.js | gzip -9f | wc -c
 
 clean-compile:
-	@rm -f dist/system.src.js dist/system-prod.src.js
+	@rm -f dist/system.src.js dist/system-csp.src.js
 
 clean:
 	@rm -f dist/*
@@ -59,8 +59,8 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/system-fetch.js \
 			$(ESML)/transpiler.js \
 				lib/global-eval.js \
+				lib/proto.js \
 				lib/core.js \
-				lib/misc.js \
 				lib/scriptLoader.js \
 				lib/meta.js \
 				lib/register.js \
@@ -82,7 +82,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 		lib/wrapper-end.js \
 	>> $@;
 
-dist/system-prod.src.js: lib/*.js $(ESML)/*.js
+dist/system-csp.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
 		lib/wrapper-start.js \
@@ -90,10 +90,10 @@ dist/system-prod.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
-			$(ESML)/system-fetch.js \
+				lib/proto.js \
 				lib/core.js \
-				lib/misc.js \
 				lib/scriptLoader.js \
+				lib/scriptOnly.js \
 				lib/meta.js \
 				lib/register.js \
 				lib/global-helpers.js \
@@ -116,6 +116,9 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 			$(ESML)/loader.js \
 			$(ESML)/dynamic-only.js \
 			$(ESML)/system.js \
+				lib/proto.js \
+				lib/scriptLoader.js \
+				lib/scriptOnly.js \
 				lib/register.js \
 				lib/createSystem.js \
 		$(ESML)/wrapper-end.js \
