@@ -396,7 +396,6 @@ function register(loader) {
     // named register
     if (name) {
       register.name = name;
-      // we never overwrite an existing define
       if (!(name in loader.defined))
         loader.defined[name] = register; 
     }
@@ -720,10 +719,11 @@ function register(loader) {
   var loaderDelete = loader['delete'];
   loader['delete'] = function(name) {
     delete moduleRecords[name];
+    delete loader.defined[name];
     return loaderDelete.call(this, name);
   };
 
-  var registerRegEx = /System\.register/;
+  var registerRegEx = /^\s*(\/\*.*\*\/\s*|\/\/[^\n]*\s*)*System\.register/;
 
   var loaderFetch = loader.fetch;
   loader.fetch = function(load) {
@@ -1296,6 +1296,8 @@ function amd(loader) {
       return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
 
     // amd require
+    if (typeof names == 'string' && typeof callback == 'function')
+      names = [names];
     if (names instanceof Array) {
       var dynamicRequires = [];
       for (var i = 0; i < names.length; i++)
@@ -1322,12 +1324,8 @@ function amd(loader) {
 
   function makeRequire(parentName, staticRequire, loader) {
     return function(names, callback, errback) {
-      if (typeof names == 'string') {
-        if (typeof callback === 'function')
-          names = [names];
-        else
-          return staticRequire(names);
-      }
+      if (typeof names == 'string' && typeof callback != 'function')
+        return staticRequire(names);
       return require.call(loader, names, callback, errback, { name: parentName });
     }
   }
