@@ -5,7 +5,7 @@ SystemJS
 
 _For upgrading to SystemJS 0.16, see the [ES6 Module Loader 0.16 release upgrade notes for more information](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.16.0), or read the updated [Getting Started](#getting-started) guide below._
 
-Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
+Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with Traceur, Babel and TypeScript.
 
 * [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
 * Loads [ES6 modules compiled into the `System.register` bundle format for production](https://github.com/systemjs/systemjs/wiki/Production-Workflows), maintaining circular references support.
@@ -60,7 +60,16 @@ For use with Babel, locate the `browser.js` file at `babel.js` in the baseURL an
 </script>
 ```
 
-Alternatively a custom path to Babel or Traceur can also be set through paths:
+For use with TypeScript, locate `typescript.js` in the baseURL path and set:
+
+```html
+<script>
+  System.transpiler = 'typescript';
+  System.meta['typescript'] = { format: 'global', exports: 'ts' };
+</script>
+```
+
+Alternatively a custom path to Babel, Traceur or TypeScript can also be set through paths:
 
 ```javascript
 System.config({
@@ -78,7 +87,7 @@ To load modules in NodeJS, install SystemJS with:
   npm install systemjs traceur
 ```
 
-(making sure to also install Traceur or Babel as needed, as they are not included as dependencies as of SystemJS 0.16)
+(making sure to also install Traceur, Babel or TypeScript as needed, as they are not included as dependencies as of SystemJS 0.16)
 
 We can then load modules equivalently to in the browser:
 
@@ -88,7 +97,9 @@ var System = require('systemjs');
 /* 
  * Include
  *   System.transpiler = 'babel';
- * to use Babel instead of Traceur
+ * to use Babel or 
+ *   System.transpiler = 'typescript'
+ * to use TypeScript instead of Traceur
  */
 
 // loads './app.js' from the current directory
@@ -149,4 +160,3 @@ License
 ---
 
 MIT
-
