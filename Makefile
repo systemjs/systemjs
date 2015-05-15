@@ -69,6 +69,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/global.js \
 				lib/global-helpers.js \
 				lib/cjs.js \
+				lib/amd-helpers.js \
 				lib/amd.js \
 				lib/map.js \
 				lib/package.js \
