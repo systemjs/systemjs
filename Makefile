@@ -98,6 +98,7 @@ dist/system-csp.src.js: lib/*.js $(ESML)/*.js
 				lib/meta.js \
 				lib/register.js \
 				lib/global-helpers.js \
+				lib/amd-helpers.js \
 				lib/map.js \
 				lib/package.js \
 				lib/plugins.js \
