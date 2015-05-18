@@ -1,4 +1,4 @@
 define(function(require, exports) {
-  var p = require('./amd-dep');
+  var p = require('./amd-dep.js');
   exports.test = 'hi';
 });

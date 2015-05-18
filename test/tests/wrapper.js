@@ -1,1 +1,1 @@
-export * from './default1';
+export * from './default1.js';

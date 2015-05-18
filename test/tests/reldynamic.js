@@ -1,5 +1,5 @@
 
 
 export function dynamicLoad() {
-  return System.import('./reldynamicdep', { name: __moduleName });
+  return System.import('./reldynamicdep.js', __moduleName);
 }

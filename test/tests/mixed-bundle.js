@@ -10,7 +10,7 @@ System.register("tree/third", [], function($__export) {
   };
 });
 
-System.register("tree/cjs", [], true, function(require, exports, __moduleName) {
+System.registerDynamic("tree/cjs", [], true, function(require, exports, __moduleName) {
   var global = System.global;
   var __define = global.define;
   global.define = undefined;
@@ -21,7 +21,7 @@ System.register("tree/cjs", [], true, function(require, exports, __moduleName) {
   return module.exports;
 });
 
-System.register("tree/jquery", [], false, function(require, exports, __moduleName) {
+System.registerDynamic("tree/jquery", [], false, function(require, exports, __moduleName) {
   System.get("@@global-helpers").prepareGlobal(__moduleName, []);
   this.jquery = {};
   
@@ -41,7 +41,7 @@ System.register("tree/second", ["./third", "./cjs"], function($__export) {
   };
 });
 
-System.register("tree/global", ['./jquery'], false, function(__require, __exports, __moduleName) {
+System.registerDynamic("tree/global", ['./jquery'], false, function(__require, __exports, __moduleName) {
   System.get("@@global-helpers").prepareGlobal(__moduleName, ["./jquery"]);
   "deps ./jquery";
   "exports jquery.test";
@@ -52,7 +52,7 @@ System.register("tree/global", ['./jquery'], false, function(__require, __export
   return System.get("@@global-helpers").retrieveGlobal(__moduleName, "jquery.test");
 });
 
-System.register("tree/amd", ['./global'], false, function() {
+System.registerDynamic("tree/amd", ['./global'], false, function() {
   return { is: 'amd' };
 });
 

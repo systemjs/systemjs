@@ -16,5 +16,5 @@ exports.fetch = function(load) {
 }
 
 exports.translate = function(load) {
-  load.source = '"deps ./plugin-dep"; (typeof window != "undefined" ? window : global).q = "' + load.source + ':' + load.name + '";';
+  load.source = '"deps ./plugin-dep.js"; (typeof window != "undefined" ? window : global).q = "' + load.source + ':' + load.name + '";';
 }

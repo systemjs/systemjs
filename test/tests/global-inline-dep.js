@@ -1,5 +1,5 @@
 'format global';
-'deps ./global-dep';
+'deps ./global-dep.js';
 
 
 (function(window) {

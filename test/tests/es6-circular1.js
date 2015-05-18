@@ -1,4 +1,4 @@
-import {c} from './es6-circular2';
+import {c} from './es6-circular2.js';
 export var q;
 export var r;
 export function p() {

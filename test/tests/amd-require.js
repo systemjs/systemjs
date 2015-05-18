@@ -1,3 +1,3 @@
 define(function(require) {
-  require(["tests/amd-dep"]);
+  require(["tests/amd-dep.js"]);
 });

@@ -1,4 +1,4 @@
-System.register("tests/foo", [], function($__export) {
+System.register("tests/foo.js", [], function($__export) {
   "use strict";
   var __moduleName = "foo";
   return {

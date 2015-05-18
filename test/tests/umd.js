@@ -1,6 +1,6 @@
 (function (root, factory) {
   if (typeof define === 'function' && define.amd)
-    define(['./umd-dep'], function(dep) {
+    define(['./umd-dep.js'], function(dep) {
       return (root.amdWebGlobal = factory(dep));
     });
   else

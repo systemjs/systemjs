@@ -1,1 +1,1 @@
-import {q} from './es6-format';
+import {q} from './es6-format.js';

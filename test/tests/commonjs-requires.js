@@ -1,9 +1,9 @@
 exports.d1 = require(
-  './commonjs-d'
+  './commonjs-d.js'
 );
 
 exports.d2 = (require
-("./commonjs-d"));
+("./commonjs-d.js"));
 
 exports.d3 = "require('not a dep')";
 

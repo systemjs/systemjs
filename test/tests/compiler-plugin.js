@@ -1,4 +1,4 @@
 "format cjs";
 exports.translate = function(load) {
-  load.source = 'require("tests/global"); exports.extra = "yay!"; \n' + load.source;
+  load.source = 'require("tests/global.js"); exports.extra = "yay!"; \n' + load.source;
 }
