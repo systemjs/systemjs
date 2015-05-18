@@ -15,20 +15,20 @@ define POLYFILLS_BANNER
 endef
 export POLYFILLS_BANNER
 
-compile: clean-compile dist/system.src.js dist/system-csp.src.js dist/system-register-only.src.js
-build: clean dist/system.js dist/system-csp.js dist/system-register-only.js dist/polyfills.js
+compile: clean-compile dist/system.src.js dist/system-csp-production.src.js dist/system-register-only.src.js
+build: clean dist/system.js dist/system-csp-production.js dist/system-register-only.js dist/polyfills.js
 
 version:
 	@echo $(VERSION)
 
 footprint: build
 	@cat dist/system.js | gzip -9f | wc -c
-	@cat dist/system-csp.js | gzip -9f | wc -c
+	@cat dist/system-csp-production.js | gzip -9f | wc -c
 	@cat dist/system-register-only.js | gzip -9f | wc -c
 	@cat dist/polyfills.js | gzip -9f | wc -c
 
 clean-compile:
-	@rm -f dist/system.src.js dist/system-csp.src.js
+	@rm -f dist/system.src.js dist/system-csp-production.src.js
 
 clean:
 	@rm -f dist/*
@@ -83,7 +83,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 		lib/wrapper-end.js \
 	>> $@;
 
-dist/system-csp.src.js: lib/*.js $(ESML)/*.js
+dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
 	cat \
 		lib/wrapper-start.js \
