@@ -155,12 +155,10 @@ asyncTest('Map configuration subpath', function() {
   }, err);
 });
 
-asyncTest('Package map configuration', function() {
-  System.packages['tests/contextual-test'] = {
-    main: 'contextual-map.js',
-    map: {
-      maptest: 'tests/contextual-map-dep.js'
-    }
+asyncTest('Contextual map configuration', function() {
+  System.packages['tests/contextual-test'] = { main: 'contextual-map.js' };
+  System.map['tests/contextual-test'] = {
+    maptest: 'tests/contextual-map-dep.js'
   };
   System['import']('tests/contextual-test').then(function(m) {
     ok(m.mapdep == 'mapdep', 'Contextual map dep not loaded');
