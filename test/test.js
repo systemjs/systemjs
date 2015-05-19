@@ -484,6 +484,8 @@ asyncTest('ES6 named export loading of CJS', function() {
   });
 });
 
+// TypeScript does not support async functions yet
+if (System.transpiler !== 'typescript')
 asyncTest('Async functions', function() {
   System.babelOptions = { stage: 0 };
   System.traceurOptions = { asyncFunctions: true };
@@ -493,6 +495,7 @@ asyncTest('Async functions', function() {
   });
 });
 
+if (System.transpiler !== 'typescript')
 asyncTest('Wrapper module support', function() {
   System['import']('tests/wrapper.js').then(function(m) {
     ok(m.d == 'default1', 'Wrapper module not defined.');
