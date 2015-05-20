@@ -84,7 +84,14 @@ asyncTest('Global script with inline exports', function() {
 });
 
 asyncTest('Global script with shim config', function() {
-  System.meta['tests/global-shim-config.js'] = { deps: ['./global-shim-config-dep.js'] };
+  System.config({
+    meta: {
+      'tests/global-shim-config.js': {
+        deps: ['./global-shim-config-dep.js']
+      }
+    }
+  });
+  // System. = { deps: ['./global-shim-config-dep.js'] };
   System['import']('tests/global-shim-config.js').then(function(m) {
     ok(m == 'shimmed', 'Not shimmed');
     start();
@@ -108,7 +115,12 @@ asyncTest('Global script with inaccessible properties', function() {
 });
 
 asyncTest('Global script loading that detects as AMD with shim config', function() {
-  System.meta['tests/global-shim-amd.js'] = { format: 'global' };
+  System.config({
+    meta: {
+      'tests/global-shim-amd.js': { format: 'global' }
+    }
+  });
+
   System['import']('tests/global-shim-amd.js').then(function(m) {
     ok(m == 'global', 'Not shimmed');
     start();
@@ -117,7 +129,7 @@ asyncTest('Global script loading that detects as AMD with shim config', function
 
 if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
-  System.meta['tests/meta-override.js'] = { format: 'es' };
+  System.meta[System.normalizeSync('tests/meta-override.js')] = { format: 'es' };
   System['import']('tests/meta-override.js').then(function(m) {
     ok(m.p == 'value', 'Not ES6');
     start();
@@ -238,7 +250,7 @@ asyncTest('Loading an AMD bundle', function() {
 });
 
 asyncTest('Loading an AMD named define', function() {
-  System['import']('tests/nameddefine.js').then(function(m1){
+  System['import']('tests/nameddefine.js').then(function(m1) {
     ok(m1.converter, 'Showdown not loaded');
     System['import']('another-define').then(function(m2) {
       ok(m2.named === 'define', 'Another module is not defined');
@@ -246,7 +258,6 @@ asyncTest('Loading an AMD named define', function() {
     }, err);
   }, err);
 });
-
 
 asyncTest('Loading AMD CommonJS form', function() {
   System['import']('tests/amd-cjs-module.js').then(function(m) {
@@ -695,8 +706,6 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
 asyncTest("System clone", function() {
   var clonedSystem = new System.constructor();
 
-  clonedSystem.baseURL = System.baseURL;
-
   System.map['maptest'] = 'tests/map-test.js';
   clonedSystem.map['maptest'] = 'tests/map-test-dep.js';
 
@@ -710,7 +719,6 @@ asyncTest("System clone", function() {
 
     start();
   }, err);
-  
 });
 
 if(typeof window !== 'undefined' && window.Worker) {
@@ -723,5 +731,70 @@ if(typeof window !== 'undefined' && window.Worker) {
     };
   });
 }
+
+// new features!!
+
+asyncTest('Named imports for non-es6', function() {
+  System['import']('./tests/es6-cjs-named-export.js').then(function(m) {
+    ok(m.someExport == 'asdf');
+    start();
+  }, err);
+});
+
+asyncTest('Globals', function() {
+  System.config({
+    meta: {
+      './tests/with-global-deps.js': {
+        globals: {
+          '$$$': 'tests/dep.js'
+        }
+      }
+    }
+  });
+  System['import']('./tests/with-global-deps.js').then(function(m) {
+    for (var p in m)
+      ok(false);
+    ok(true);
+    start();
+  }, err);
+});
+
+asyncTest('Multi-format deps meta', function() {
+  System['import']('tests/amd-extra-deps.js').then(function(m) {
+    ok(m.join(',') == '10,5');
+    start();
+  }, err);
+});
+
+/* asyncTest('Wildcard meta', function() {
+
+});
+
+asyncTest('Plugins via meta', function() {
+
+});
+
+asyncTest('Package configuration', function() {
+
+}); */
+
+asyncTest('Conditional loading', function() {
+  System.set('env', System.newModule({ 'browser': 'ie' }));
+
+  System['import']('./tests/branch-#{env.browser}.js').then(function(m) {
+    ok(m.branch == 'ie');
+    start();
+  }, err);
+});
+
+asyncTest('Boolean conditional', function() {
+  System.set('env', System.newModule({ 'js': { 'es5': false } }));
+
+  System['import']('./tests/branch-boolean.js#?env.js.es5').then(function(m) {
+
+    ok(m === System.get('@empty'));
+    start();
+  }, err);
+});
 
 })(typeof window == 'undefined' ? global : window);
