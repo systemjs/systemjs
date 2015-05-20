@@ -766,16 +766,25 @@ asyncTest('Multi-format deps meta', function() {
   }, err);
 });
 
-/* asyncTest('Wildcard meta', function() {
-
+asyncTest('Wildcard meta', function() {
+  System.config({
+    meta: {
+      'tests/cs/main.js': {
+        deps: ['./dep.js']
+      },
+      'tests/cs/*': {
+        loader: 'tests/cs-loader.js'
+      }
+    }
+  });
+  System['import']('tests/cs/main.js').then(function(m) {
+    ok(m == 'cs');
+    start();
+  });
 });
 
-asyncTest('Plugins via meta', function() {
-
-});
-
-asyncTest('Package configuration', function() {
-
+/* asyncTest('Package configuration', function() {
+  
 }); */
 
 asyncTest('Conditional loading', function() {

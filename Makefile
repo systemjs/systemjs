@@ -62,7 +62,6 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/proto.js \
 				lib/core.js \
 				lib/scriptLoader.js \
-				lib/meta.js \
 				lib/register.js \
 				lib/node-transpiler-paths.js \
 				lib/es.js \
@@ -75,6 +74,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/package.js \
 				lib/plugins.js \
 				lib/alias.js \
+				lib/meta.js \
 				lib/bundles.js \
 				lib/depCache.js \
 				lib/conditionals.js \
@@ -95,7 +95,6 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 				lib/core.js \
 				lib/scriptLoader.js \
 				lib/scriptOnly.js \
-				lib/meta.js \
 				lib/register.js \
 				lib/global-helpers.js \
 				lib/amd-helpers.js \
@@ -103,6 +102,7 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 				lib/package.js \
 				lib/plugins.js \
 				lib/alias.js \
+				lib/meta.js \
 				lib/bundles.js \
 				lib/depCache.js \
 				lib/conditionals.js \
