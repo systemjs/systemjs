@@ -13,6 +13,12 @@ The behavior of the hooks is:
 * Translate: Returning undefined, assumes `load.source` was modified, and runs default translate hooks as well. Returning a source skips running the default hooks.
 * Instantiate: Providing this hook as a promise or function allows the plugin to hook instantiate. Any return value becomes the defined custom module object for the plugin call.
 
+### Plugin Hook APIs
+
+#### locate(load) -> address
+
+load.metadata, load.name and load.address are already set
+
 #### Sample CoffeeScript Plugin
 
 For example, we can write a CoffeeScript plugin with the following (CommonJS as an example, any module format works fine):

@@ -783,9 +783,38 @@ asyncTest('Wildcard meta', function() {
   });
 });
 
-/* asyncTest('Package configuration', function() {
-  
-}); */
+asyncTest('Package configuration CommonJS config example', function() {
+  System.config({
+    packages: {
+      './tests/testpkg': {
+        main: 'noext',
+        format: 'cjs',
+        defaultExtension: 'js',
+        meta: {
+          '*.json': { loader: './json.js' },
+          'noext': { alias: './json.json' }
+        },
+        map: {
+          './noext': './noext',
+          './json': './json.json',
+          './dir/': './dir/index.js',
+          './dir2': './dir2/index.json'
+        }
+      }
+    }
+  });
+
+  Promise.all([
+    System['import']('./tests/testpkg'),
+    System['import']('./tests/testpkg/dir/'),
+    System['import']('./tests/testpkg/dir2')
+  ]).then(function(m) {
+    ok(m[0].prop == 'value');
+    ok(m[1] == 'dirindex');
+    ok(m[2].json == 'index');
+    start();
+  }, err);
+});
 
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
