@@ -64,7 +64,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				lib/scriptLoader.js \
 				lib/register.js \
 				lib/node-transpiler-paths.js \
-				lib/es.js \
+				lib/esm.js \
 				lib/global.js \
 				lib/global-helpers.js \
 				lib/cjs.js \

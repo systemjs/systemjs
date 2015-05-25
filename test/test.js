@@ -129,7 +129,7 @@ asyncTest('Global script loading that detects as AMD with shim config', function
 
 if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
-  System.meta[System.normalizeSync('tests/meta-override.js')] = { format: 'es' };
+  System.meta[System.normalizeSync('tests/meta-override.js')] = { format: 'esm' };
   System['import']('tests/meta-override.js').then(function(m) {
     ok(m.p == 'value', 'Not ES6');
     start();
