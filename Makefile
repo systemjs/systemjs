@@ -42,11 +42,11 @@ test: compile
 
 dist/polyfills.js: dist/polyfills.src.js
 	@echo "$$POLYFILLS_BANNER" > $@
-	./node_modules/.bin/uglifyjs $< --compress drop_console --mangle --source-map dist/polyfills.js.map >> $@ || rm $@
+	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map polyfills.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
 
 dist/%.js: dist/%.src.js
 	@echo "$$BANNER" > $@
-	./node_modules/.bin/uglifyjs $< --compress drop_console --mangle --source-map dist/$*.js.map >> $@ || rm $@
+	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map $*.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
 
 dist/system.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$BANNER" > $@;
