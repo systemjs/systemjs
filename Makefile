@@ -16,7 +16,7 @@ endef
 export POLYFILLS_BANNER
 
 compile: clean-compile dist/system.src.js dist/system-csp-production.src.js dist/system-register-only.src.js
-build: clean dist/system.js dist/system-csp-production.js dist/system-register-only.js dist/polyfills.js
+build: clean dist/system.js dist/system-csp-production.js dist/system-register-only.js dist/system-polyfills.js
 
 version:
 	@echo $(VERSION)
@@ -25,7 +25,7 @@ footprint: build
 	@cat dist/system.js | gzip -9f | wc -c
 	@cat dist/system-csp-production.js | gzip -9f | wc -c
 	@cat dist/system-register-only.js | gzip -9f | wc -c
-	@cat dist/polyfills.js | gzip -9f | wc -c
+	@cat dist/system-polyfills.js | gzip -9f | wc -c
 
 clean-compile:
 	@rm -f dist/system.src.js dist/system-csp-production.src.js
@@ -40,9 +40,9 @@ test: compile
 	sleep 0.1
 	open test/test-prod.html test/test-tracer.html
 
-dist/polyfills.js: dist/polyfills.src.js
+dist/system-polyfills.js: dist/system-polyfills.src.js
 	@echo "$$POLYFILLS_BANNER" > $@
-	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map polyfills.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
+	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map system-polyfills.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
 
 dist/%.js: dist/%.src.js
 	@echo "$$BANNER" > $@
@@ -126,7 +126,7 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 		$(ESML)/wrapper-end.js \
 	>> $@;
 
-dist/polyfills.src.js: lib/*.js $(ESML)/*.js
+dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js
 	@echo "$$POLYFILLS_BANNER" > $@;
 	cat \
 		$(ESML)/url-polyfill.js \
