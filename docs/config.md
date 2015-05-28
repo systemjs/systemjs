@@ -24,6 +24,22 @@ System.config({
 
 A list of options is available in the [Babel project documentation](https://babeljs.io/docs/usage/options/).
 
+#### typescriptOptions
+Type: `Object`
+Default: `{}`
+
+Set the TypeScript transpiler options.
+
+```javascript
+System.config({
+    typescriptOptions: {
+        inlineSources: true
+    }
+});
+```
+
+A list of options is available in the [TypeScript project documentation](https://github.com/Microsoft/TypeScript/wiki/Compiler%20Options).
+
 #### baseURL
 Type: `String` 
 Default: `./`

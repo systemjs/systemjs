@@ -60,7 +60,17 @@ For use with Babel, locate the `browser.js` file at `babel.js` in the baseURL an
 </script>
 ```
 
-Alternatively a custom path to Babel or Traceur can also be set through paths:
+For use with TypeScript, locate the `typescript.js` in the baseURL and set:
+
+```html
+<script>
+  System.transpiler = 'typescript';
+  System.meta['typescript'] = { format: 'global', exports: 'ts' };
+</script>
+```
+
+
+Alternatively a custom path to Babel, Traceur or TypeScript can also be set through paths:
 
 ```javascript
 System.config({
@@ -75,10 +85,10 @@ System.config({
 To load modules in NodeJS, install SystemJS with:
 
 ```
-  npm install systemjs traceur
+  npm install systemjs traceur typescript
 ```
 
-(making sure to also install Traceur or Babel as needed, as they are not included as dependencies as of SystemJS 0.16)
+(making sure to also install Traceur, Babel or TypeScript as needed, as they are not included as dependencies as of SystemJS 0.16)
 
 We can then load modules equivalently to in the browser:
 
@@ -88,7 +98,9 @@ var System = require('systemjs');
 /* 
  * Include
  *   System.transpiler = 'babel';
- * to use Babel instead of Traceur
+ * to use Babel or
+ *   System.transpiler = 'typescript';
+ * to use TypeScript instead of Traceur
  */
 
 // loads './app.js' from the current directory
