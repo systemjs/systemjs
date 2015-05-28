@@ -168,10 +168,18 @@ asyncTest('Map configuration subpath', function() {
 });
 
 asyncTest('Contextual map configuration', function() {
-  System.packages['tests/contextual-test'] = { main: 'contextual-map.js' };
-  System.map['tests/contextual-test'] = {
-    maptest: 'tests/contextual-map-dep.js'
-  };
+  System.config({
+    packages: {
+      'tests/contextual-test': {
+        main: 'contextual-map.js'
+      }
+    },
+    map: {
+      'tests/contextual-test': {
+        maptest: '../contextual-map-dep.js'
+      }
+    }
+  });
   System['import']('tests/contextual-test').then(function(m) {
     ok(m.mapdep == 'mapdep', 'Contextual map dep not loaded');
     start();
@@ -179,16 +187,20 @@ asyncTest('Contextual map configuration', function() {
 });
 
 asyncTest('Package map with shim', function() {
-  System.packages['tests/shim-package'] = {
-    meta: {
-      '*': {
-        deps: ['shim-map-dep']
+  System.config({
+    packages: {
+      'tests/shim-package': {
+        meta: {
+          '*': {
+            deps: ['shim-map-dep']
+          }
+        },
+        map: {
+          'shim-map-dep': '../shim-map-test-dep.js'
+        }
       }
-    },
-    map: {
-      'shim-map-dep': 'tests/shim-map-test-dep.js'
     }
-  };
+  });
   System['import']('tests/shim-package/shim-map-test.js').then(function(m) {
     ok(m == 'depvalue', 'shim dep not loaded');
     start();
@@ -234,7 +246,11 @@ asyncTest('AMD with dynamic require callback', function() {
   });
 });
 
-System.bundles['tests/amd-bundle.js'] = ['bundle-1', 'bundle-2'];
+System.config({
+  bundles: {
+    'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
+  }
+});
 
 asyncTest('Loading an AMD bundle', function() {
   System['import']('bundle-1').then(function(m) {
@@ -384,7 +400,7 @@ asyncTest('Mapping a plugin argument', function() {
 
 asyncTest('Advanced compiler plugin', function() {
   System['import']('tests/compiler-test.js!tests/advanced-plugin.js').then(function(m) {
-    ok(m == 'custom fetch:tests/compiler-test.js!tests/advanced-plugin.js', m);
+    ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
     start();
   }, err);
 });
@@ -422,14 +438,22 @@ asyncTest('System.register Circular', function() {
 });
 
 asyncTest('System.register group linking test', function() {
-  System.bundles['tests/group-test.js'] = ['group-a'];
+  System.config({
+    bundles: {
+      'tests/group-test.js': ['group-a']
+    }
+  });
   System['import']('group-a').then(function(m) {
     ok(m);
     start();
   }, err);
 });
 
-System.bundles['tests/mixed-bundle.js'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
+System.config({
+  bundles: {
+    'tests/mixed-bundle.js': ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first']
+  }
+});
 
 asyncTest('Loading AMD from a bundle', function() {
   System['import']('tree/amd').then(function(m) {
@@ -438,8 +462,11 @@ asyncTest('Loading AMD from a bundle', function() {
   }, err);
 });
 
-
-System.bundles['tests/mixed-bundle.js'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
+System.config({
+  bundles: {
+    'tests/mixed-bundle.js': ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first']
+  }
+});
 asyncTest('Loading CommonJS from a bundle', function() {
   System['import']('tree/cjs').then(function(m) {
     ok(m.cjs === true);
@@ -477,7 +504,7 @@ asyncTest('AMD simplified CommonJS wrapping with an aliased require', function()
 
 asyncTest('Loading dynamic modules with __esModule flag set', function() {
   System['import']('tests/es-module-flag.js').then(function() {
-    m = System.get('tests/es-module-flag.js');
+    m = System.get(System.normalizeSync('tests/es-module-flag.js'));
     ok(m.exportName == 'export');
     ok(m['default'] == 'default export');
     ok(m.__esModule === true);
@@ -628,7 +655,7 @@ asyncTest('Loading ES6 and AMD', function() {
 
 asyncTest('Module Name meta', function() {
   System['import']('tests/reflection.js').then(function(m) {
-    ok(m.myname == 'tests/reflection.js', 'Module name not returned');
+    ok(m.myname == System.normalizeSync('tests/reflection.js'), 'Module name not returned');
     start();
   }, err);
 });
@@ -692,8 +719,12 @@ asyncTest('Loading a connected tree that connects ES and CJS modules', function(
 });
 
 asyncTest('Loading two bundles that have a shared dependency', function() {
-  System.bundles["tests/shared-dep-bundles/a.js"] = ["lib/shared-dep", "lib/a"];
-  System.bundles["tests/shared-dep-bundles/b.js"] = ["lib/shared-dep", "lib/b"];
+  System.config({
+    bundles: {
+      "tests/shared-dep-bundles/a.js": ["lib/shared-dep", "lib/a"],
+      "tests/shared-dep-bundles/b.js": ["lib/shared-dep", "lib/b"]
+    }
+  });
   expect(0);
   System['import']('lib/a').then(function() {
     System['import']('lib/b').then(function() {
@@ -704,7 +735,7 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
 });
 
 asyncTest("System clone", function() {
-  var clonedSystem = new System.constructor();
+  var clonedSystem = new System.constructor(System.baseURL);
 
   System.map['maptest'] = 'tests/map-test.js';
   clonedSystem.map['maptest'] = 'tests/map-test-dep.js';

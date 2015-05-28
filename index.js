@@ -3,4 +3,44 @@ if (typeof Promise === 'undefined')
 if (typeof URL === 'undefined')
   require('es6-module-loader/src/url-polyfill');
 
-module.exports = require('./dist/system.src');
+var isWindows = process.platform.match(/^win/);
+
+// set transpiler paths in Node
+var nodeResolver = typeof process != 'undefined' && typeof require != 'undefined' && require.resolve;
+function configNodePath(loader, module, nodeModule, wildcard) {
+  if (loader.paths[module])
+    return;
+
+  var ext = wildcard ? '/package.json' : '';
+  try {
+    var match = nodeResolver(nodeModule + ext);
+  }
+  catch(e) {}
+  
+  if (match)
+    loader.paths[module] = 'file://' + (isWindows ? '/' : '') + match.substr(0, match.length - ext.length) + (wildcard ? '/*.js' : '');
+}
+
+var SystemJSLoader = require('./dist/system.src').constructor;
+
+// standard class extend SystemJSLoader to SystemJSNodeLoader
+function SystemJSNodeLoaderProto() {}
+SystemJSNodeLoaderProto.prototype = SystemJSLoader.prototype;
+
+function SystemJSNodeLoader(baseURL) {
+  SystemJSLoader.call(this, baseURL);
+  this.constructor = SystemJSNodeLoader;
+
+  if (nodeResolver) {
+    configNodePath(this, 'traceur', 'traceur/bin/traceur.js');
+    configNodePath(this, 'traceur-runtime', 'traceur/bin/traceur-runtime.js');
+    configNodePath(this, 'babel', 'babel-core/browser.js');
+    configNodePath(this, 'babel/external-helpers', 'babel-core/external-helpers.js');
+    configNodePath(this, 'babel-runtime/*', 'babel-runtime', true);
+  }
+}
+SystemJSNodeLoader.prototype = new SystemJSNodeLoaderProto();
+
+global.System = new SystemJSNodeLoader();
+
+module.exports = SystemJSNodeLoader;

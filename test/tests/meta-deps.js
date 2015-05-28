@@ -1,8 +1,12 @@
 (function(global) {
 
-System.meta.b = {
-  deps: ['a']
-};
+System.config({
+  meta: {
+    b: {
+      deps: ['a']
+    }
+  }
+});
 
 define('a', [], function() {
   global.MODULEA = 'a';
