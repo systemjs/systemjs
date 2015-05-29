@@ -27,9 +27,8 @@ var SystemJSLoader = require('./dist/system.src').constructor;
 function SystemJSNodeLoaderProto() {}
 SystemJSNodeLoaderProto.prototype = SystemJSLoader.prototype;
 
-function SystemJSNodeLoader(baseURL) {
-  SystemJSLoader.call(this, baseURL);
-  this.constructor = SystemJSNodeLoader;
+function SystemJSNodeLoader() {
+  SystemJSLoader.call(this);
 
   if (nodeResolver) {
     configNodePath(this, 'traceur', 'traceur/bin/traceur.js');
@@ -40,7 +39,6 @@ function SystemJSNodeLoader(baseURL) {
   }
 }
 SystemJSNodeLoader.prototype = new SystemJSNodeLoaderProto();
+SystemJSNodeLoader.prototype.constructor = SystemJSNodeLoader;
 
-global.System = new SystemJSNodeLoader();
-
-module.exports = SystemJSNodeLoader;
+module.exports = global.System = new SystemJSNodeLoader();

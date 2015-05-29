@@ -144,7 +144,7 @@ asyncTest('Support the empty module', function() {
 });
 
 asyncTest('Global script with shim config exports', function() {
-  System.meta['tests/global-shim-config-exports.js'] = { exports: 'p' };
+  System.meta[System.normalizeSync('tests/global-shim-config-exports.js')] = { exports: 'p' };
   System['import']('tests/global-shim-config-exports.js').then(function(m) {
     ok(m == 'export', 'Exports not shimmed');
     start();
@@ -208,7 +208,13 @@ asyncTest('Package map with shim', function() {
 });
 
 asyncTest('Loading an AMD module', function() {
-  System.meta['tests/amd-module.js'] = { format: 'amd' };
+  System.config({
+    meta: {
+      'tests/amd-module.js': {
+        format: 'amd'
+      }
+    }
+  });
   System['import']('tests/amd-module.js').then(function(m) {
     ok(m.amd == true, 'Incorrect module');
     ok(m.dep.amd == 'dep', 'Dependency not defined');
@@ -399,8 +405,14 @@ asyncTest('Mapping a plugin argument', function() {
 });
 
 asyncTest('Advanced compiler plugin', function() {
+  var baseURI;
+  if (typeof window == 'undefined')
+    baseURI = 'file://' + (process.platform.match(/^win/) ? '/' : '') + process.cwd().replace(/\\/g, '/') + '/test/';
+  else
+    baseURI = document.baseURI.split('/').splice(0, document.baseURI.split('/').length - 1).join('/') + '/';
+
   System['import']('tests/compiler-test.js!tests/advanced-plugin.js').then(function(m) {
-    ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
+    ok(m == 'custom fetch:' + baseURI + 'tests/compiler-test.js!' + baseURI + 'tests/advanced-plugin.js', m);
     start();
   }, err);
 });
@@ -429,7 +441,13 @@ asyncTest('CJS Circular', function() {
 });
 
 asyncTest('System.register Circular', function() {
-  System.meta['tests/register-circular1.js'] = { scriptLoad: true };
+  System.config({
+    meta: {
+      'tests/register-circular1.js': {
+        scriptLoad: true
+      }
+    }
+  });
   System['import']('tests/register-circular1.js').then(function(m) {
     ok(m.q == 3, 'Binding not allocated');
     ok(m.r == 5, 'Binding not updated');
@@ -736,6 +754,8 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
 
 asyncTest("System clone", function() {
   var clonedSystem = new System.constructor();
+
+  clonedSystem.paths['*'] = System.paths['*'];
   clonedSystem.baseURL = System.baseURL;
 
   System.map['maptest'] = 'tests/map-test.js';
@@ -767,7 +787,7 @@ if(typeof window !== 'undefined' && window.Worker) {
 // new features!!
 
 asyncTest('Named imports for non-es6', function() {
-  System['import']('./tests/es6-cjs-named-export.js').then(function(m) {
+  System['import']('tests/es6-cjs-named-export.js').then(function(m) {
     ok(m.someExport == 'asdf');
     start();
   }, err);
@@ -776,14 +796,14 @@ asyncTest('Named imports for non-es6', function() {
 asyncTest('Globals', function() {
   System.config({
     meta: {
-      './tests/with-global-deps.js': {
+      'tests/with-global-deps.js': {
         globals: {
           '$$$': 'tests/dep.js'
         }
       }
     }
   });
-  System['import']('./tests/with-global-deps.js').then(function(m) {
+  System['import']('tests/with-global-deps.js').then(function(m) {
     for (var p in m)
       ok(false);
     ok(true);
@@ -818,7 +838,7 @@ asyncTest('Wildcard meta', function() {
 asyncTest('Package configuration CommonJS config example', function() {
   System.config({
     packages: {
-      './tests/testpkg': {
+      'tests/testpkg': {
         main: './noext',
         format: 'cjs',
         defaultExtension: 'js',
@@ -836,10 +856,10 @@ asyncTest('Package configuration CommonJS config example', function() {
   });
 
   Promise.all([
-    System['import']('./tests/testpkg'),
-    System['import']('./tests/testpkg/json'),
-    System['import']('./tests/testpkg/dir/'),
-    System['import']('./tests/testpkg/dir2')
+    System['import']('tests/testpkg'),
+    System['import']('tests/testpkg/json'),
+    System['import']('tests/testpkg/dir/'),
+    System['import']('tests/testpkg/dir2')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
@@ -852,7 +872,7 @@ asyncTest('Package configuration CommonJS config example', function() {
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
 
-  System['import']('./tests/branch-#{env.browser}.js').then(function(m) {
+  System['import']('tests/branch-#{env.browser}.js').then(function(m) {
     ok(m.branch == 'ie');
     start();
   }, err);
@@ -861,7 +881,7 @@ asyncTest('Conditional loading', function() {
 asyncTest('Boolean conditional', function() {
   System.set('env', System.newModule({ 'js': { 'es5': false } }));
 
-  System['import']('./tests/branch-boolean.js#?env.js.es5').then(function(m) {
+  System['import']('tests/branch-boolean.js#?env.js.es5').then(function(m) {
 
     ok(m === System.get('@empty'));
     start();

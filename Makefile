@@ -38,6 +38,8 @@ test: compile
 	sleep 0.1
 	open test/test-babel.html test/test-babel-runtime.html
 	sleep 0.1
+	open test/test-typescript.html
+	sleep 0.1
 	open test/test-prod.html test/test-tracer.html
 
 dist/system-polyfills.js: dist/system-polyfills.src.js

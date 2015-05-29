@@ -1,3 +1,3 @@
-System.transpiler = 'babel';
+System.transpiler = 'traceur';
 System.baseURL = 'test/';
 require('./test');

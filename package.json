@@ -20,8 +20,9 @@
     "uglify-js": "~2.4.13"
   },
   "scripts": {
-    "test": "npm run test:babel && npm run test:traceur && make test",
+    "test": "npm run test:babel && npm run test:traceur && npm run test:typescript && make test",
     "test:babel": "qunit -c s:./index.js -t ./test/test-babel.js",
-    "test:traceur": "qunit -c s:./index.js -t ./test/test.js"
+    "test:traceur": "qunit -c s:./index.js -t ./test/test-traceur.js",
+    "test:typescript": "qunit -c s:./index.js -t ./test/test-typescript.js"
   }
 }
