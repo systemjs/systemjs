@@ -22,11 +22,11 @@ System.registerDynamic("tree/cjs", [], true, function(require, exports, __module
 });
 
 System.registerDynamic("tree/jquery", [], false, function(require, exports, __moduleName) {
-  System.get("@@global-helpers").prepareGlobal(__moduleName, []);
+  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(__moduleName);
   this.jquery = {};
   
   
-  return System.get("@@global-helpers").retrieveGlobal(__moduleName, false);
+  return _retrieveGlobal();
 });
 
 System.register("tree/second", ["./third", "./cjs"], function($__export) {
@@ -42,14 +42,14 @@ System.register("tree/second", ["./third", "./cjs"], function($__export) {
 });
 
 System.registerDynamic("tree/global", ['./jquery'], false, function(__require, __exports, __moduleName) {
-  System.get("@@global-helpers").prepareGlobal(__moduleName, ["./jquery"]);
+  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(__moduleName, "jquery.test");
   "deps ./jquery";
   "exports jquery.test";
   this.jquery = this.jquery || {};
   this.jquery.test = 'output';
   
   this["jquery.test"] = jquery.test;
-  return System.get("@@global-helpers").retrieveGlobal(__moduleName, "jquery.test");
+  return _retrieveGlobal();
 });
 
 System.registerDynamic("tree/amd", ['./global'], false, function() {

@@ -14,11 +14,11 @@ System.register("group-c", [], function($__export) {
 
 
 System.registerDynamic("group-b", ["group-c"], false, function(__require, __exports, __module) {
-  System.get("@@global-helpers").prepareGlobal(__module.id, ["group-c"]);
+  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(__module.id);
   (function() {
     this.foo = 'foo';
   }).call(System.global);
-  return System.get("@@global-helpers").retrieveGlobal(__module.id, false);
+  return _retrieveGlobal();
 });
 
 System.register("group-a", ["./group-b"], function($__export) {
