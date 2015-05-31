@@ -40,21 +40,21 @@
 
       asyncTest('ES6 Circular', function() {
         System['import']('tests/es6-circular1.js').then(function(m) {
-          ok(System.loads['tests/es6-circular1.js'].deps[0] == './es6-circular2.js');
+          ok(System.loads[System.normalizeSync('tests/es6-circular1.js')].deps[0] == './es6-circular2.js');
           start();
         }, err);
       });
 
       asyncTest('AMD & CJS circular, ES6 Circular', function() {
         System['import']('tests/all-circular1.js').then(function(m) {
-          ok(System.loads['tests/all-circular1.js'].deps[0] == './all-circular2.js');
+          ok(System.loads[System.normalizeSync('tests/all-circular1.js')].deps[0] == './all-circular2.js');
           start();
         }, err);
       });
 
       asyncTest('AMD -> System.register circular -> ES6', function() {
         System['import']('tests/all-layers1.js').then(function(m) {
-          ok(System.loads['tests/all-layers1.js'].deps[0] == './all-layers2.js');
+          ok(System.loads[System.normalizeSync('tests/all-layers1.js')].deps[0] == './all-layers2.js');
           start();
         }, err);
       });

@@ -40,7 +40,7 @@ test: compile
 	sleep 0.1
 	open test/test-typescript.html
 	sleep 0.1
-	open test/test-prod.html test/test-tracer.html
+	open test/test-csp.html test/test-tracer.html
 
 dist/system-polyfills.js: dist/system-polyfills.src.js
 	@echo "$$POLYFILLS_BANNER" > $@
