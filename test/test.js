@@ -2,7 +2,7 @@
 
 (function(global) {
 
-QUnit.config.testTimeout = 2000;
+QUnit.config.testTimeout = 30000;
 
 QUnit.module("SystemJS");
 
@@ -317,6 +317,7 @@ asyncTest('CommonJS detection variation 1', function() {
   }, err);
 });
 
+if (!ie8)
 asyncTest('CommonJS detection variation 2', function() {
   System['import']('tests/commonjs-variation2.js').then(function(m) {
     ok(typeof m.OpaqueToken === 'function');
@@ -406,10 +407,31 @@ asyncTest('Mapping a plugin argument', function() {
 
 asyncTest('Advanced compiler plugin', function() {
   var baseURI;
-  if (typeof window == 'undefined')
-    baseURI = 'file://' + (process.platform.match(/^win/) ? '/' : '') + process.cwd().replace(/\\/g, '/') + '/test/';
-  else
-    baseURI = document.baseURI.split('/').splice(0, document.baseURI.split('/').length - 1).join('/') + '/';
+  // environent baseURI detection
+  if (typeof document != 'undefined' && document.getElementsByTagName) {
+    baseURI = document.baseURI;
+
+    if (!baseURI) {
+      var bases = document.getElementsByTagName('base');
+      baseURI = bases[0] && bases[0].href || window.location.href;
+    }
+
+    // sanitize out the hash and querystring
+    baseURI = baseURI.split('#')[0].split('?')[0];
+    baseURI = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
+  }
+  else if (typeof process != 'undefined' && process.cwd) {
+    var isWindows = process.platform.match(/^win/);
+    baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
+    if (isWindows)
+      baseURI = baseURI.replace(/\\/g, '/');
+  }
+  else if (typeof location != 'undefined') {
+    baseURI = __global.location.href;
+  }
+  else {
+    throw new TypeError('No environment baseURI');
+  }
 
   System['import']('tests/compiler-test.js!tests/advanced-plugin.js').then(function(m) {
     ok(m == 'custom fetch:' + baseURI + 'tests/compiler-test.js!' + baseURI + 'tests/advanced-plugin.js', m);
@@ -775,7 +797,7 @@ asyncTest("System clone", function() {
 
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
-    var worker = new Worker('tests/worker-' + System.transpiler + '.js');
+    var worker = new Worker('./tests/worker-' + System.transpiler + '.js');
     worker.onmessage = function(e) {
       ok(e.data.amd === 'AMD Module');
       ok(e.data.es6 === 'ES6 Module');
