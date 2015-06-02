@@ -397,35 +397,8 @@ asyncTest('Mapping a plugin argument', function() {
 });
 
 asyncTest('Advanced compiler plugin', function() {
-  var baseURI;
-  // environent baseURI detection
-  if (typeof document != 'undefined' && document.getElementsByTagName) {
-    baseURI = document.baseURI;
-
-    if (!baseURI) {
-      var bases = document.getElementsByTagName('base');
-      baseURI = bases[0] && bases[0].href || window.location.href;
-    }
-
-    // sanitize out the hash and querystring
-    baseURI = baseURI.split('#')[0].split('?')[0];
-    baseURI = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
-  }
-  else if (typeof process != 'undefined' && process.cwd) {
-    var isWindows = process.platform.match(/^win/);
-    baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd() + '/';
-    if (isWindows)
-      baseURI = baseURI.replace(/\\/g, '/');
-  }
-  else if (typeof location != 'undefined') {
-    baseURI = __global.location.href;
-  }
-  else {
-    throw new TypeError('No environment baseURI');
-  }
-
   System['import']('tests/compiler-test.js!tests/advanced-plugin.js').then(function(m) {
-    ok(m == 'custom fetch:' + baseURI + 'tests/compiler-test.js!' + baseURI + 'tests/advanced-plugin.js', m);
+    ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
     start();
   }, err);
 });
