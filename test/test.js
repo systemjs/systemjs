@@ -387,15 +387,6 @@ asyncTest('Simple compiler Plugin', function() {
   }, err);
 });
 
-asyncTest('Mapping to a plugin', function() {
-  System.map['pluginrequest'] = 'tests/compiled.coffee!';
-  System.map['coffee'] = 'tests/compiler-plugin.js';
-  System['import']('pluginrequest').then(function(m) {
-    ok(m.extra == 'yay!', 'Plugin not applying.');
-    start();
-  }, err);
-});
-
 asyncTest('Mapping a plugin argument', function() {
   System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
   System.map['coffee'] = 'tests/compiler-plugin.js';
