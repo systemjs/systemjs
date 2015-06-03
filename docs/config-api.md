@@ -245,3 +245,11 @@ Sets the module name of the transpiler to be used for loading ES6 modules.
 Represents a module name for `System.import` that must resolve to either Traceur, Babel or TypeScript.
 
 When set to `traceur`, `babel` or `typescript`, loading will be automatically configured as far as possible.
+
+#### typescriptOptions
+Type: `Object`
+Default: `{}`
+
+Sets the TypeScript transpiler options.
+
+A list of options is available in the [TypeScript project documentation](https://github.com/Microsoft/TypeScript/wiki/Compiler%20Options).

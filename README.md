@@ -49,13 +49,19 @@ Basic Use
 </script>
 ```
 
-To load ES6, locate `traceur.js` (eg from https://github.com/jmcriffey/bower-traceur) in the baseURL path and it will be loaded when needed.
-
-For use with Babel, locate the `browser.js` file at `babel.js` in the baseURL and set:
+To load ES6, locate a transpiler ([`traceur.js`](https://github.com/jmcriffey/bower-traceur), ['browser.js' from Babel](https://github.com/babel/babel), or ['typescript.js' from TypeScript](https://github.com/Microsoft/TypeScript)) 
+in the baseURL path, then set the transpiler:
 
 ```html
 <script>
-  System.transpiler = 'babel';
+  System.config({
+    // or 'traceur' or 'typescript'
+    transpiler: 'babel'
+    // or traceurOptions or typescriptOptions
+    babelOptions: {
+
+    }
+  });
 </script>
 ```
 
@@ -63,7 +69,7 @@ Alternatively a custom path to Babel or Traceur can also be set through paths:
 
 ```javascript
 System.config({
-  paths: {
+  map: {
     traceur: 'path/to/traceur.js'
   }
 });
@@ -74,27 +80,29 @@ System.config({
 To load modules in NodeJS, install SystemJS with:
 
 ```
-  npm install systemjs traceur
+  npm install systemjs
 ```
 
-(making sure to also install Traceur or Babel as needed, as they are not included as dependencies as of SystemJS 0.16)
+If transpiling ES6, also install the transpiler:
+
+```
+  npm install traceur babel typescript 
+```
 
 We can then load modules equivalently to in the browser:
 
 ```javascript
 var System = require('systemjs');
 
-/* 
- * Include
- *   System.transpiler = 'babel';
- * to use Babel instead of Traceur
- */
+System.transpiler = 'traceur';
 
 // loads './app.js' from the current directory
 System.import('./app').then(function(m) {
   console.log(m);
 });
 ```
+
+If using TypeScript, set `global.ts = require('typescript')` before importing to ensure it is loaded correctly.
 
 ### Plugins
 
