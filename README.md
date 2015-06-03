@@ -3,54 +3,53 @@ SystemJS
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-_For upgrading to SystemJS 0.16, see the [ES6 Module Loader 0.16 release upgrade notes for more information](https://github.com/ModuleLoader/es6-module-loader/releases/tag/v0.16.0), or read the updated [Getting Started](#getting-started) guide below._
+_For upgrading to SystemJS 0.17, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
 
 Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
 
-* [Loads any module format](https://github.com/systemjs/systemjs/wiki/Module-Format-Support) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/wiki/Circular-References-&-Bindings).
-* Loads [ES6 modules compiled into the `System.register` bundle format for production](https://github.com/systemjs/systemjs/wiki/Production-Workflows), maintaining circular references support.
-* Supports RequireJS-style [map](https://github.com/systemjs/systemjs/wiki/Map-Configuration), [paths](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader#paths-implementation), [bundles](https://github.com/systemjs/systemjs/wiki/Production-Workflows#bundle-extension) and [global shims](https://github.com/systemjs/systemjs/wiki/Module-Format-Support#globals-global).
-* [Loader plugins](#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
+* [Loads any module format](docs/module-formats.md) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md).
+* Loads [ES6 modules compiled into the `System.register` bundle format for production](docs/production-workflows.md), maintaining circular references support.
+* Supports RequireJS-style [map](docs/overview.md#map-config), [paths](docs/overview.md#paths-config), [bundles](docs/production-workflows.md#bundle-extension) and [global shims](docs/module-formats.md#shim-dependencies).
+* [Loader plugins](docs/overview.md#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Designed to work with the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) (9KB) for a combined total footprint of 16KB minified and gzipped.
+Built on top of the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) coming to under 12KB minified and gzipped.
 
 Runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 
-For a list of guides and tools, see [Third-Party Resources](https://github.com/systemjs/systemjs/wiki/Third-Party-Resources).
+For a list of guides and tools, see the [Third-Party Resources Wiki](https://github.com/systemjs/systemjs/wiki/Third-Party-Resources).
 
 Documentation
 ---
 
-* [Basic Use](https://github.com/systemjs/systemjs/wiki/Basic-Use)
-* [Configuration Options](https://github.com/systemjs/systemjs/wiki/Configuration-Options)
-* [Loader Configuration](https://github.com/ModuleLoader/es6-module-loader/wiki/Configuring-the-Loader)
-* [Map Configuration](https://github.com/systemjs/systemjs/wiki/Map-Configuration)
-* [Meta Configuration](https://github.com/systemjs/systemjs/wiki/Meta-Configuration)
-* [Module Format Support](https://github.com/systemjs/systemjs/wiki/Module-Format-Support)
-* [Relative Dynamic Loading](https://github.com/systemjs/systemjs/wiki/Relative-Dynamic-Loading)
-* [Versions Extension](https://github.com/systemjs/systemjs/wiki/Versions-Extension)
-* [Production Workflows](https://github.com/systemjs/systemjs/wiki/Production-Workflows)
-* [Creating Plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin)
-* [Creating a Custom Module Format](https://github.com/systemjs/systemjs/wiki/Creating-a-Custom-Format-Extension)
+* [ES6 Modules Overview](docs/es6-modules-overview.md)
+* [SystemJS Overview](docs/overview.md)
+* [Config API](docs/config-api.md)
+* [Module Formats](docs/module-formats.md)
+* [Production Workflows](docs/production-workflows.md)
+* [System API](docs/system-api.md)
+* [Creating Plugins](docs/creating-plugins.md)
 
-Getting Started
+Basic Use
 ---
 
-### Browser Use
-
-Download [`es6-module-loader.js`](https://github.com/ModuleLoader/es6-module-loader/blob/v0.16.0/dist/es6-module-loader.js) into the same folder as `system.js`.
-
-Load SystemJS with a single script tag:
+### Browser
 
 ```html
 <script src="system.js"></script>
+<script>
+  // set our baseURL reference path
+  System.config({
+    baseURL: '/app'
+  });
+
+  // loads /app/main.js
+  System.import('main.js');
+</script>
 ```
 
-It will then load `es6-module-loader.js` itself.
-
-To load ES6, locate [`traceur.js`](https://raw.githubusercontent.com/jmcriffey/bower-traceur/0.0.87/traceur.js) in the baseURL path and it will be loaded when needed.
+To load ES6, locate `traceur.js` (eg from https://github.com/jmcriffey/bower-traceur) in the baseURL path and it will be loaded when needed.
 
 For use with Babel, locate the `browser.js` file at `babel.js` in the baseURL and set:
 
@@ -70,7 +69,7 @@ System.config({
 });
 ```
 
-### NodeJS Use
+### NodeJS
 
 To load modules in NodeJS, install SystemJS with:
 
@@ -97,49 +96,27 @@ System.import('./app').then(function(m) {
 });
 ```
 
-If configuring the `baseURL` for use in Windows, prepend `file:` i.e.
-
-```javascipt
-System.config({
- baseURL: 'file:' + path.resolve('../path')
-});
-```
-
 ### Plugins
 
-Plugins handle alternative loading scenarios, including loading assets such as CSS or images, and providing custom transpilation scenarios.
+Supported loader plugins:
 
-Supported Plugins:
-
-* [CSS](https://github.com/systemjs/plugin-css) `System.import('my/file.css!')`
+* [CSS](https://github.com/systemjs/plugin-css) `System.import('my/file.css')`
 * [Image](https://github.com/systemjs/plugin-image) `System.import('some/image.png!image')`
-* [JSON](https://github.com/systemjs/plugin-json) `System.import('some/data.json!').then(function(json){})`
-* [Text](https://github.com/systemjs/plugin-text) `System.import('some/text.txt!text').then(function(text) {})`
+* [JSON](https://github.com/systemjs/plugin-json) `System.import('some/data.json')`
+* [Text](https://github.com/systemjs/plugin-text) `System.import('some/text.txt!text')`
 
 Additional Plugins:
 
-* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee!')`
+* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
 * [Jade](https://github.com/johnsoftek/plugin-jade)
-* [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx!')`
-* [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md!').then(function(html) {})`
+* [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx')`
+* [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md').then(function(html) {})`
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
-* [Handlebars] (https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
+* [Handlebars](https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
 * [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
 
-Plugins are loaded from the module name of the extension. To set them up, you'll most likely want to add map configuration. For example:
-
-```javascript
-System.map['css'] = 'path/to/css/plugin';
-```
-
-Loading through plugin is indicated with `!` at the end of the name:
-
-```javascript
-System.import('file.css!');      // will use the "css" plugin, assumed from the extension
-System.import('file.css!text');  // will use the "text" plugin, instead of checking the extension
-```
-
-[Read the guide here on creating plugins](https://github.com/systemjs/systemjs/wiki/Creating-a-Plugin).
+[Read about using plugins here](docs/overview.md#plugin-loaders)
+[Read the guide here on creating plugins](docs/creating-plugins.md).
 
 #### Running the tests
 

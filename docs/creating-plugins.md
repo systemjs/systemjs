@@ -4,7 +4,7 @@ A plugin is just a set of overrides for the loader hooks of the ES6 module speci
 
 The hooks plugins can override are `locate`, `fetch`, `translate` and `instantiate`.
 
-Read more about loader extensions and hooks at the [ES6 Module Loader polyfill wiki](https://github.com/ModuleLoader/es6-module-loader/wiki/Extending-the-ES6-Loader).
+Read more about loader extensions and hooks at the [ES6 Module Loader polyfill wiki](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/loader-extensions.md).
 
 The behavior of the hooks is:
 
@@ -13,11 +13,14 @@ The behavior of the hooks is:
 * Translate: Returning undefined, assumes `load.source` was modified, and runs default translate hooks as well. Returning a source skips running the default hooks.
 * Instantiate: Providing this hook as a promise or function allows the plugin to hook instantiate. Any return value becomes the defined custom module object for the plugin call.
 
-### Plugin Hook APIs
+### Building Plugins
 
-#### locate(load) -> address
+When building via [SystemJS Builder](https://github.com/systemjs/builder), plugins that use the translate hook will be inlined into the bundle automatically.
 
-load.metadata, load.name and load.address are already set
+In this way, the bundle file becomes independent of the plugin loader and resource.
+
+If it is desired for the plugin itself not to be inlined into the bundle in this way, setting `exports.build = false` on the plugin will disable this,
+causing the plugin loader itself to be bundled in production instead to continue to dynamically load the resource.
 
 #### Sample CoffeeScript Plugin
 
@@ -28,7 +31,7 @@ js/coffee.js:
   var CoffeeScript = require('coffeescript');
 
   exports.translate = function(load) {
-    load.source = CoffeeScript.compile(load.source);
+    return CoffeeScript.compile(load.source);
   }
 ```
 
@@ -47,6 +50,8 @@ By overriding the `translate` hook, we now support CoffeeScript loading with:
     // main is now loaded from CoffeeScript
   });
 ```
+
+Source maps can also be passed by setting `load.metadata.sourceMap`.
 
 #### Sample CSS Plugin
 
