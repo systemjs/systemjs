@@ -55,9 +55,11 @@ Bundles allow a collection of modules to be downloaded together as a package whe
 Useful for splitting an application into sub-modules for production. Use with the [SystemJS Builder](https://github.com/systemjs/builder).
 
 ```javascript
-System.bundles = {
-  bundleA: ['dependencyA', 'dependencyB']  
-};
+System.config({
+  bundles: {
+    bundleA: ['dependencyA', 'dependencyB']
+  }
+});
 ```
 
 A built bundle file must contain the exact named defines or named System.register statements for the modules it contains.
@@ -85,8 +87,12 @@ An alternative to bundling providing a solution to the latency issue of progress
 When a module specified in depCache is loaded, asynchronous loading of its pre-cached dependency list begins in parallel.
 
 ```javascript
-System.depCache['moduleA'] = ['moduleB']; // moduleA depends on moduleB
-System.depCache['moduleB'] = ['moduleC']; // moduleB depends on moduleC
+System.config({
+  depCache: {
+    moduleA: ['moduleB'], // moduleA depends on moduleB
+    moduleB: ['moduleC'] // moduleB depends on moduleC
+  }
+});
 
 // when we do this import, depCache knows we also need moduleB and moduleC,
 // it then directly requests those modules as well as soon as we request moduleA
@@ -206,7 +212,11 @@ Very similar to map configuration, but applies after normalization and supports 
 _It is usually advisable to use map configuration over paths unless you need strict control over normalized module names._
 
 ```javascript
-  System.paths['jquery'] = '//code.jquery.com/jquery-1.10.2.min.js';
+  System.config({
+    paths: {
+      jquery: '//code.jquery.com/jquery-1.10.2.min.js'
+    }
+  });
   System.import('jquery').then(function($) {
     // ...
   });
@@ -215,7 +225,11 @@ _It is usually advisable to use map configuration over paths unless you need str
 When using wildcards, the most specific rule will be used:
 
 ```javascript
-  System.paths['lodash/*'] = '/js/lodash/*.js'
+  System.config({
+    paths: {
+      'lodash/*': '/js/lodash/*.js'
+    }
+  });
   System.import('lodash/map').then(function(map) {
     // ...
   });
