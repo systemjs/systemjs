@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.11
+ * SystemJS v0.17.0
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2086,14 +2086,14 @@ SystemJSLoader.prototype.config = function(cfg) {
 
           // setting _loadedTranspiler = false tells the next block to
           // do checks for setting transpiler metadata
-          this._loadedTranspiler = this._loadedTranspiler || false;
+          loader._loadedTranspiler = loader._loadedTranspiler || false;
 
           // defined in es6-module-loader/src/transpile.js
           return transpile.call(loader, load);
         }
 
         // load the transpiler correctly
-        if (this._loadedTranspiler === false && load.name == loader.normalizeSync(loader.transpiler)) {
+        if (loader._loadedTranspiler === false && load.name == loader.normalizeSync(loader.transpiler)) {
           // always load transpiler as a global
           if (source.length > 100) {
             load.metadata.format = load.metadata.format || 'global';
@@ -2104,30 +2104,30 @@ SystemJSLoader.prototype.config = function(cfg) {
               load.metadata.exports = 'ts';
           }
 
-          this._loadedTranspiler = true;
+          loader._loadedTranspiler = true;
         }
 
         // load the transpiler runtime correctly
-        if (this._loadedTranspilerRuntime === false) {
+        if (loader._loadedTranspilerRuntime === false) {
           if (load.name == loader.normalizeSync('traceur-runtime')
               || load.name == loader.normalizeSync('babel/external-helpers*')) {
             if (source.length > 100)
               load.metadata.format = load.metadata.format || 'global';
 
-            this._loadedTranspilerRuntime = true;
+            loader._loadedTranspilerRuntime = true;
           }
         }
 
         // detect transpiler runtime usage to load runtimes
-        if (load.metadata.format == 'register' && this._loadedTranspilerRuntime !== true) {
+        if (load.metadata.format == 'register' && loader._loadedTranspilerRuntime !== true) {
           if (!__global.$traceurRuntime && load.source.match(traceurRuntimeRegEx)) {
-            this._loadedTranspilerRuntime = this._loadedTranspilerRuntime || false;
+            loader._loadedTranspilerRuntime = loader._loadedTranspilerRuntime || false;
             return loader['import']('traceur-runtime').then(function() {
               return source;
             });
           }
           if (!__global.babelHelpers && load.source.match(babelHelpersRegEx)) {
-            this._loadedTranspilerRuntime = this._loadedTranspilerRuntime || false;
+            loader._loadedTranspilerRuntime = loader._loadedTranspilerRuntime || false;
             return loader['import']('babel/external-helpers').then(function() {
               return source;
             });

@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.16.11
+ * SystemJS v0.17.0
  */
 (function(__global) {
 
@@ -952,8 +952,6 @@ function applyPaths(loader, name) {
 function LoaderProto() {}
 LoaderProto.prototype = Loader.prototype;
 SystemLoader.prototype = new LoaderProto();
-var baseURLCache = {};
-
 var absURLRegEx = /^([^\/]+:\/\/|\/)/;
 
 // Normalization with module names as absolute URLs
