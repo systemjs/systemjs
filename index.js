@@ -13,7 +13,7 @@ function configNodePath(loader, module, nodeModule, wildcard) {
 
   var ext = wildcard ? '/package.json' : '';
   try {
-    var match = nodeResolver(nodeModule + ext);
+    var match = nodeResolver(nodeModule + ext).replace(/\\/g, '/');
   }
   catch(e) {}
   
