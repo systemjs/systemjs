@@ -117,6 +117,8 @@ To create a custom plugin, see the documentation on [creating plugins](creating-
 
 #### Basic Use
 
+> Note that if using the `defaultJSExtensions` compatibility feature, plugins for resources with custom extensions will not work. Instead [plugin syntax](#plugin-syntax) should be used in compatibility mode.
+
 To use a plugin, set up the plugin itself as a standard module, either locating it in the baseURL or providing map configuration for it.
 
 In this case, we're using the [text plugin](https://github.com/systemjs/plugin-text) as an example.
