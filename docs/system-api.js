@@ -62,11 +62,6 @@ Given a plain JavaScript object, return an equivalent `Module` object.
 
 Useful when writing a custom `instantiate` hook or using `System.set`.
 
-#### System.normalizeSync(name [, parentName]) -> moduleName
-Type: `Function`
-
-Synchronous normalization function for determining normalized module names.
-
 #### System.register([name ,] deps, declare)
 Type: `Function`
 
