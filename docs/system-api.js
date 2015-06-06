@@ -17,6 +17,19 @@ Type: `Function`
 
 SystemJS configuration helper function. See the [Configuration API](configuration.md).
 
+#### System.constructor
+Type: `Function`
+
+This represents the System base class, which can be extended or reinstantiated to create a custom System instance.
+
+Example:
+
+```javascript
+  var clonedSystem = System.constructor();
+  clonedSystem.baseURL = System.baseURL;
+  clonedSystem.import('x'); // imports in a custom context
+```
+
 #### System.delete(moduleName)
 Type: `Function`
 
