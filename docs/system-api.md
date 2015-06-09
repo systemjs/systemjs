@@ -1,6 +1,6 @@
 ## SystemJS API
 
-For setting SystemJS configuration see the [Configuration API](configuration.md) page.
+For setting SystemJS configuration see the [Configuration API](config-api.md) page.
 
 #### System.amdDefine
 Type: `Function`
