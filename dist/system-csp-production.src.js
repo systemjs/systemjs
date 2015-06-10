@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.17.0
+ * SystemJS v0.17.1
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2213,15 +2213,19 @@ hook('normalize', function(normalize) {
     if (this.has(normalized))
       return normalized;
 
-    // automatic js extension adding for backwards compatibility
-    if (this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
-      normalized += '.js';
-
-    if (normalized.match(absURLRegEx))
+    if (normalized.match(absURLRegEx)) {
+      // automatic js extension adding for backwards compatibility
+      if (this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
+        normalized += '.js';
       return normalized;
+    }
 
     // applyPaths implementation provided from ModuleLoader system.js source
     normalized = applyPaths(this, normalized) || normalized;
+
+    // automatic js extension adding for backwards compatibility
+    if (this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
+      normalized += '.js';
 
     // ./x, /x -> page-relative
     if (normalized[0] == '.' || normalized[0] == '/')
@@ -2431,25 +2435,6 @@ hook('normalize', function(normalize) {
 */
 (function() {
 
-  // parentName assumed not to be a plugin itself
-  function normalizeIfPlugin(loader, name, parentName) {
-    var pluginIndex = name.lastIndexOf('!');
-    if (pluginIndex != -1) {
-      var argumentName = name.substr(0, pluginIndex);
-      var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
-      
-      argumentName = loader.normalizeSync(argumentName, parentName);
-
-      // note if normalize will add a default js extension
-      // if so, remove for backwards compat
-      // this is strange and sucks, but will be deprecated
-      if (loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) == '.js')
-        argumentName = argumentName.substr(0, argumentName.length - 3);
-
-      return argumentName + '!' + loader.normalizeSync(pluginName, parentName);
-    }
-  }
-
   hook('normalize', function(normalize) {
     // plugin syntax normalization
     return function(name, parentName) {
@@ -2464,13 +2449,15 @@ hook('normalize', function(normalize) {
       if (pluginIndex != -1) {
         var argumentName = name.substr(0, pluginIndex);
         var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
-        
-        argumentName = loader.normalizeSync(argumentName, parentName);
 
         // note if normalize will add a default js extension
         // if so, remove for backwards compat
         // this is strange and sucks, but will be deprecated
-        if (loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) == '.js')
+        var defaultExtension = loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) != '.js';
+        
+        argumentName = loader.normalizeSync(argumentName, parentName);
+
+        if (defaultExtension)
           argumentName = argumentName.substr(0, argumentName.length - 3);
 
         return argumentName + '!' + loader.normalizeSync(pluginName, parentName);
@@ -2982,7 +2969,7 @@ System.constructor = SystemJSLoader;  // -- exporting --
 })(typeof self != 'undefined' ? self : global);}
 
 // auto-load Promise and URL polyfills if needed in the browser
-if (typeof Promise === 'undefined' || typeof URL !== 'function') {
+if (typeof Promise === 'undefined' || (typeof URL !== 'function' && typeof URLPolyfill !== 'function')) {
   // document.write
   if (typeof document !== 'undefined') {
     var scripts = document.getElementsByTagName('script');
