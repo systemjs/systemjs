@@ -104,7 +104,8 @@ Over HTTP/2 this approach may be preferable as it allows files to be individuall
 #### map
 Type: `Object`
 
-The map option allows you to map a module alias to its location. For example:
+The map option is similar to paths, but acts very early in the normalization process. It allows you to map a module alias to a
+location or package:
 
 ```javascript
 System.config({
@@ -119,7 +120,7 @@ import $ from 'jquery';
 
 ```
 
-Map will also apply to subpaths making it suitable for package folders as well:
+In addition, a map also applies to any subpaths, making it suitable for package folders as well:
 
 ```javascript
 System.config({
@@ -207,33 +208,9 @@ System.config({
 #### paths
 Type: `Object`
 
-Very similar to map configuration, but applies after normalization and supports subpaths via wildcards instead of by default.
+The [ES6 Module Loader](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md) paths implementation, applied after normalization and supporting subpaths via wildcards.
 
 _It is usually advisable to use map configuration over paths unless you need strict control over normalized module names._
-
-```javascript
-  System.config({
-    paths: {
-      jquery: '//code.jquery.com/jquery-1.10.2.min.js'
-    }
-  });
-  System.import('jquery').then(function($) {
-    // ...
-  });
-```
-
-When using wildcards, the most specific rule will be used:
-
-```javascript
-  System.config({
-    paths: {
-      'lodash/*': '/js/lodash/*.js'
-    }
-  });
-  System.import('lodash/map').then(function(map) {
-    // ...
-  });
-```
 
 #### traceurOptions
 Type: `Object`
