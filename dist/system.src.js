@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.17.0
+ * SystemJS v0.17.2-dev
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1136,10 +1136,18 @@ var __exec;
     __global.System = curSystem;
   }
 
+  var hasBtoa = typeof btoa != 'undefined';
+
   function getSource(load) {
-    // adds the sourceURL comment if not already present
     var lastLineIndex = load.source.lastIndexOf('\n');
-    return load.source + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' ? '\n//# sourceURL=' + load.address : '');
+
+    return load.source
+        // adds the sourceURL comment if not already present
+        + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
+          ? '\n//# sourceURL=' + load.address + (load.metadata.sourceMap ? '!transpiled' : '') : '')
+        // add sourceMappingURL if load.metadata.sourceMap is set
+        + (load.metadata.sourceMap && hasBtoa && 
+          '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(load.metadata.sourceMap))) || '')
   }
 
   // use script injection eval to get identical global script behaviour
@@ -1746,7 +1754,14 @@ SystemJSLoader.prototype.config = function(cfg) {
 
     var declaration = entry.declare.call(__global, function(name, value) {
       module.locked = true;
-      exports[name] = value;
+
+      if (typeof name == 'object') {
+        for (var p in name)
+          exports[p] = name[p];
+      }
+      else {
+        exports[name] = value;
+      }
 
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
@@ -1883,7 +1898,9 @@ SystemJSLoader.prototype.config = function(cfg) {
           entry.esModule[p] = exports[p];
       }
       entry.esModule['default'] = exports;
-      entry.esModule.__useDefault = true;
+      defineProperty(entry.esModule, '__useDefault', {
+        value: true
+      });
     }
   }
 
@@ -1948,6 +1965,9 @@ SystemJSLoader.prototype.config = function(cfg) {
       
       if (load.metadata.format == 'register')
         load.metadata.scriptLoad = true;
+
+      // NB remove when "deps " is deprecated
+      load.metadata.deps = load.metadata.deps || [];
       
       return fetch.call(this, load);
     };
@@ -2089,7 +2109,12 @@ SystemJSLoader.prototype.config = function(cfg) {
           loader._loadedTranspiler = loader._loadedTranspiler || false;
 
           // defined in es6-module-loader/src/transpile.js
-          return transpile.call(loader, load);
+          return transpile.call(loader, load)
+          .then(function(source) {
+            // clear sourceMap as transpiler embeds it
+            load.metadata.sourceMap = undefined;
+            return source;
+          });
         }
 
         // load the transpiler correctly
@@ -3013,25 +3038,6 @@ hook('normalize', function(normalize) {
 */
 (function() {
 
-  // parentName assumed not to be a plugin itself
-  function normalizeIfPlugin(loader, name, parentName) {
-    var pluginIndex = name.lastIndexOf('!');
-    if (pluginIndex != -1) {
-      var argumentName = name.substr(0, pluginIndex);
-      var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
-      
-      argumentName = loader.normalizeSync(argumentName, parentName);
-
-      // note if normalize will add a default js extension
-      // if so, remove for backwards compat
-      // this is strange and sucks, but will be deprecated
-      if (loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) == '.js')
-        argumentName = argumentName.substr(0, argumentName.length - 3);
-
-      return argumentName + '!' + loader.normalizeSync(pluginName, parentName);
-    }
-  }
-
   hook('normalize', function(normalize) {
     // plugin syntax normalization
     return function(name, parentName) {
@@ -3046,13 +3052,15 @@ hook('normalize', function(normalize) {
       if (pluginIndex != -1) {
         var argumentName = name.substr(0, pluginIndex);
         var pluginName = name.substr(pluginIndex + 1) || argumentName.substr(argumentName.lastIndexOf('.') + 1);
-        
-        argumentName = loader.normalizeSync(argumentName, parentName);
 
         // note if normalize will add a default js extension
         // if so, remove for backwards compat
         // this is strange and sucks, but will be deprecated
-        if (loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) == '.js')
+        var defaultExtension = loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) != '.js';
+        
+        argumentName = loader.normalizeSync(argumentName, parentName);
+
+        if (defaultExtension)
           argumentName = argumentName.substr(0, argumentName.length - 3);
 
         return argumentName + '!' + loader.normalizeSync(pluginName, parentName);
@@ -3564,7 +3572,7 @@ System.constructor = SystemJSLoader;  // -- exporting --
 })(typeof self != 'undefined' ? self : global);}
 
 // auto-load Promise and URL polyfills if needed in the browser
-if (typeof Promise === 'undefined' || typeof URL !== 'function') {
+if (typeof Promise === 'undefined' || (typeof URL !== 'function' && typeof URLPolyfill !== 'function')) {
   // document.write
   if (typeof document !== 'undefined') {
     var scripts = document.getElementsByTagName('script');

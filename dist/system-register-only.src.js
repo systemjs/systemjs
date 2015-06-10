@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.17.0
+ * SystemJS v0.17.2-dev
  */
 (function(__global) {
 
@@ -1370,7 +1370,14 @@ hook('fetch', function(fetch) {
 
     var declaration = entry.declare.call(__global, function(name, value) {
       module.locked = true;
-      exports[name] = value;
+
+      if (typeof name == 'object') {
+        for (var p in name)
+          exports[p] = name[p];
+      }
+      else {
+        exports[name] = value;
+      }
 
       for (var i = 0, l = module.importers.length; i < l; i++) {
         var importerModule = module.importers[i];
@@ -1507,7 +1514,9 @@ hook('fetch', function(fetch) {
           entry.esModule[p] = exports[p];
       }
       entry.esModule['default'] = exports;
-      entry.esModule.__useDefault = true;
+      defineProperty(entry.esModule, '__useDefault', {
+        value: true
+      });
     }
   }
 
@@ -1572,6 +1581,9 @@ hook('fetch', function(fetch) {
       
       if (load.metadata.format == 'register')
         load.metadata.scriptLoad = true;
+
+      // NB remove when "deps " is deprecated
+      load.metadata.deps = load.metadata.deps || [];
       
       return fetch.call(this, load);
     };
