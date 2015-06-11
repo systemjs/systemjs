@@ -840,10 +840,11 @@ asyncTest('Package configuration CommonJS config example', function() {
           '*.json': { loader: './json.js' },
           'noext': { alias: './json.json' },
         },
-        map: {
-          './json': './json.json',
-          './dir/': './dir/index.js',
-          './dir2': './dir2/index.json'
+        paths: {
+          'json': 'json.json',
+          'dir/': 'dir/index.js',
+          'dir2': 'dir2/index.json',
+          'dir/*': '*.ts'
         }
       }
     }
@@ -853,12 +854,14 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg'),
     System['import']('tests/testpkg/json'),
     System['import']('tests/testpkg/dir/'),
-    System['import']('tests/testpkg/dir2')
+    System['import']('tests/testpkg/dir2'),
+    System['import']('tests/testpkg/dir/test')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
     ok(m[2] == 'dirindex');
     ok(m[3].json == 'index');
+    ok(m[4] == 'ts');
     start();
   }, err);
 });
