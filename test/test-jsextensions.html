@@ -36,6 +36,30 @@
 			    start();
 			  });
 			});
+
+			asyncTest('Pathing extension handling', function() {
+			  System.config({
+			  	paths: {
+			  		'*': '*',
+			  		'another': 'tests/main.js',
+			  		'test/*': 'tests/*.ts'
+			  	}
+			  });
+
+			  Promise.all([
+			  	System['import']('test/typescript'),
+			  	System['import']('another'),
+			  	System['import']('tests/main-dep'),
+			  	System['import']('tests/main-dep.js')
+			  ])
+			  .then(function(mods) {
+			  	ok(mods[0] == 'typescript');
+			  	ok(mods[1].dep == 'value');
+			  	ok(mods[2].dep == 'value');
+			  	ok(mods[2] == mods[3]);
+			  	start();
+			  })
+			});
 		</script>
 	</body>
 </html>
