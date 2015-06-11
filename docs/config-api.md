@@ -20,17 +20,17 @@ For this reason it is usually advisable to use `System.config` instead of settin
 
 ### Configuration Options
 
-* [babelOptions](#babelOptions)
+* [babelOptions](#babeloptions)
 * [bundle](#bundle)
-* [defaultJSExtensions](#defaultJSExtensions)
-* [depCache](#depCache)
+* [defaultJSExtensions](#defaultjsextensions)
+* [depCache](#depcache)
 * [map](#map)
 * [meta](#meta)
 * [packages](#packages)
 * [paths](#paths)
-* [traceurOptions](#traceurOptions)
+* [traceurOptions](#traceuroptions)
 * [transpiler](#transpiler)
-* [typescriptOptions](#typescriptOptions)
+* [typescriptOptions](#typescriptoptions)
 
 #### babelOptions
 Type: `Object`
