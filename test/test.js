@@ -288,6 +288,14 @@ asyncTest('Loading AMD CommonJS form', function() {
   }, err);
 });
 
+asyncTest('AMD contextual require toUrl', function() {
+  System['import']('tests/amd-contextual.js').then(function(m) {
+    ok(m.name == System.baseURL + 'tests/amd-contextual.js');
+    ok(m.rel == System.baseURL + 'rel-path.js');
+    start();
+  }, err);
+});
+
 asyncTest('Loading a CommonJS module', function() {
   System['import']('tests/common-js-module.js').then(function(m) {
     ok(m.hello == 'world', 'module value not defined');
