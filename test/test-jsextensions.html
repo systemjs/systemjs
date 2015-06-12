@@ -41,22 +41,37 @@
 			  System.config({
 			  	paths: {
 			  		'*': '*',
-			  		'another': 'tests/main.js',
-			  		'test/*': 'tests/*.ts'
+			  		'path': 'tests/main'
+			  	},
+			  	packages: {
+			  		'tests/testpkg': {
+			  			defaultExtension: 'ts',
+			  			paths: {
+			  				'asdf': 'test.ts'
+			  			}
+			  		},
+			  		'tests/subcontextual-map': {
+			  			main: 'submodule',
+				  		map: {
+				  			dep: 'path'
+				  		}
+			  		}
 			  	}
 			  });
 
 			  Promise.all([
-			  	System['import']('test/typescript'),
-			  	System['import']('another'),
+			  	System['import']('path'),
+			  	System['import']('tests/testpkg/asdf'),
+			  	System['import']('tests/subcontextual-map'),
 			  	System['import']('tests/main-dep'),
 			  	System['import']('tests/main-dep.js')
 			  ])
 			  .then(function(mods) {
-			  	ok(mods[0] == 'typescript');
-			  	ok(mods[1].dep == 'value');
+			  	ok(mods[0].dep == 'value');
+			  	ok(mods[1] == 'ts');
 			  	ok(mods[2].dep == 'value');
-			  	ok(mods[2] == mods[3]);
+			  	ok(mods[3] == mods[2]);
+			  	ok(mods[3] == mods[4]);
 			  	start();
 			  })
 			});

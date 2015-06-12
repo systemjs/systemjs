@@ -838,7 +838,7 @@ asyncTest('Package configuration CommonJS config example', function() {
         defaultExtension: 'js',
         meta: {
           '*.json': { loader: './json.js' },
-          'noext': { alias: './json.json' },
+          'noext.js': { alias: './json.json' },
         },
         paths: {
           'json': 'json.json',
