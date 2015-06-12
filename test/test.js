@@ -844,7 +844,7 @@ asyncTest('Package configuration CommonJS config example', function() {
           'json': 'json.json',
           'dir/': 'dir/index.js',
           'dir2': 'dir2/index.json',
-          'dir/*': '*.ts'
+          //'dir/': './'
         }
       }
     }
@@ -855,13 +855,13 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/json'),
     System['import']('tests/testpkg/dir/'),
     System['import']('tests/testpkg/dir2'),
-    System['import']('tests/testpkg/dir/test')
+    //System['import']('tests/testpkg/dir/test')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
     ok(m[2] == 'dirindex');
     ok(m[3].json == 'index');
-    ok(m[4] == 'ts');
+    //ok(m[4] == 'ts');
     start();
   }, err);
 });
