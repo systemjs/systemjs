@@ -40,14 +40,13 @@
 			asyncTest('Pathing extension handling', function() {
 			  System.config({
 			  	paths: {
-			  		'*': '*',
 			  		'path': 'tests/main'
 			  	},
 			  	packages: {
 			  		'tests/testpkg': {
 			  			defaultExtension: 'ts',
-			  			paths: {
-			  				'asdf': 'test.ts'
+			  			map: {
+			  				'./asdf': './test.ts'
 			  			}
 			  		},
 			  		'tests/subcontextual-map': {

@@ -838,13 +838,13 @@ asyncTest('Package configuration CommonJS config example', function() {
         defaultExtension: 'js',
         meta: {
           '*.json': { loader: './json.js' },
-          'noext.js': { alias: './json.json' },
+          'noext': { alias: './json.json' },
         },
-        paths: {
-          'json': 'json.json',
-          'dir/': 'dir/index.js',
-          'dir2': 'dir2/index.json',
-          //'dir/': './'
+        map: {
+          './json': './json.json',
+          './dir/': './dir/index.js',
+          './dir2': './dir2/index.json',
+          './dir/test': './test.ts'
         }
       }
     }
@@ -853,15 +853,15 @@ asyncTest('Package configuration CommonJS config example', function() {
   Promise.all([
     System['import']('tests/testpkg'),
     System['import']('tests/testpkg/json'),
-    System['import']('tests/testpkg/dir/'),
+    System['import']('tests/testpkg/dir/test'),
     System['import']('tests/testpkg/dir2'),
-    //System['import']('tests/testpkg/dir/test')
+    System['import']('tests/testpkg/dir/')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
-    ok(m[2] == 'dirindex');
+    ok(m[2] == 'ts');
     ok(m[3].json == 'index');
-    //ok(m[4] == 'ts');
+    ok(m[4] == 'dirindex');
     start();
   }, err);
 });

@@ -194,12 +194,9 @@ System.config({
       map: {
         // use local jquery for all jquery requires in this package
         'jquery': './vendor/local-jquery.js'
-      },
-      // just like paths, but only for paths within this package
-      // wildcards are also supported
-      paths: {
+        
         // import '/local/package/custom-import' should route to '/local/package/local/import/file.js'
-        'custom-import': 'local/import/file.js'
+        './custom-import': './local/import/file.js'
       }
       meta: {
         // set meta for loading the local vendor files
