@@ -28,10 +28,7 @@
         });  
       }
 
-       
-      //NB move these old CSP tests to be CSP tests of the dev loader
-
-      /*asyncTest('Loading an AMD module', function() {
+      asyncTest('Loading an AMD module', function() {
         System['import']('tests/amd-module.js').then(function(m) {
           ok(m.amd == true);
           ok(m.dep.amd == 'dep');
@@ -39,7 +36,11 @@
         }, err);
       });
 
-      System.bundles['tests/amd-bundle.js'] = ['bundle-1', 'bundle-2'];
+      System.config({
+        bundles: {
+          'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
+        }
+      });
       asyncTest('Loading an AMD bundle', function() {
         System['import']('bundle-1').then(function(m) {
           ok(m.defined == true);
@@ -67,7 +68,7 @@
           ok(jquery.is == 'jquery');
           start();
         }, err);
-      }); */
+      });
       
 
       asyncTest('System.register Circular', function() {
@@ -78,7 +79,7 @@
         }, err);
       });
 
-      /*
+      
       asyncTest('Loading a UMD module', function() {
         System['import']('tests/umd.js').then(function(m) {
           ok(m.d == 'hi');
@@ -105,14 +106,22 @@
 
       asyncTest('Loading a bundle on demand', function() {
 
-        System.bundles['tests/main-bundle.js'] = ['jquery'];
+        System.config({
+          bundles: {
+            'tests/main-bundle.js': ['jquery']
+          }
+        });
         System['import']('jquery').then(function(m) {
           ok(m.name == 'jquery-bundled');
           start();
         }, err);
       });
 
-      System.bundles['tests/mixed-bundle.js'] = ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first'];
+      System.config({
+        bundles: {
+          'tests/mixed-bundle.js': ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first']
+        }
+      });
       asyncTest('Loading AMD from a bundle', function() {
         System['import']('tree/amd').then(function(m) {
           ok(m.is == 'amd');
@@ -151,14 +160,17 @@
       asyncTest('Running a simple non-fetch plugin', function() {
         System.set('tests/es6-plugin', System.newModule({
           fetch: function() {
-            return 'module.exports = "plugin";';
+            return '';
+          },
+          instantiate: function() {
+            return "plugin";
           }
         }));
         System['import']('test/file!tests/es6-plugin').then(function(m) {
           ok(m == 'plugin');
           start();
         });
-      });*/
+      });
 
       asyncTest('Loading a non-registering module', function() {
         System['import']('tests/global-dep.js')['catch'](function(e) {
