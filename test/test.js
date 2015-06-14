@@ -382,7 +382,7 @@ asyncTest('Loading CJS with format hint', function() {
 asyncTest('CommonJS globals', function() {
   System['import']('tests/cjs-globals.js').then(function(m) {
     ok(m.filename.match(/tests\/cjs-globals\.js$/));
-    ok(m.dirname.match(/\/test$/) || m.dirname == __dirname);
+    ok(m.dirname.match(/\/tests$/));
     ok(m.global == global);
     start();
   }, err);
