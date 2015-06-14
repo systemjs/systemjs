@@ -379,6 +379,15 @@ asyncTest('Loading CJS with format hint', function() {
   }, err);
 });
 
+asyncTest('CommonJS globals', function() {
+  System['import']('tests/cjs-globals.js').then(function(m) {
+    ok(m.filename.match(/tests\/cjs-globals\.js$/));
+    ok(m.dirname.match(/\/test$/) || m.dirname == __dirname);
+    ok(m.global == global);
+    start();
+  }, err);
+});
+
 asyncTest('Versions', function() {
   System['import']('tests/zero@0.js').then(function(m) {
     ok(m == '0');
