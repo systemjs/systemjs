@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.17.2-dev
+ * SystemJS v0.17.1
  */
 (function(__global) {
 
@@ -911,12 +911,12 @@ function SystemLoader() {
 }
 
 // NB no specification provided for System.paths, used ideas discussed in https://github.com/jorendorff/js-loaders/issues/25
-function applyPaths(loader, name) {
+function applyPaths(paths, name) {
   // most specific (most number of slashes in path) match wins
   var pathMatch = '', wildcard, maxSlashCount = 0;
 
   // check to see if we have a paths entry
-  for (var p in loader.paths) {
+  for (var p in paths) {
     var pathParts = p.split('*');
     if (pathParts.length > 2)
       throw new TypeError('Only one wildcard in a path is permitted');
@@ -941,7 +941,7 @@ function applyPaths(loader, name) {
     }
   }
 
-  var outPath = loader.paths[pathMatch] || name;
+  var outPath = paths[pathMatch] || name;
   if (wildcard)
     outPath = outPath.replace('*', wildcard);
 
@@ -962,7 +962,7 @@ SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this, name), baseURI).href;
+    name = new URL(applyPaths(this.paths, name), baseURI).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
     name = new URL(name, parentName || baseURI).href;
@@ -1137,7 +1137,30 @@ function extend(a, b, underwrite) {
 hook('fetch', function(fetch) {
   return function(load) {
     load.metadata.scriptLoad = true;
+    // prepare amd define
+    this.get('@@amd-helpers').createDefine(this);
     return fetch.call(this, load);
+  };
+});
+
+// AMD support
+// script injection mode calls this function synchronously on load
+hook('onScriptLoad', function(onScriptLoad) {
+  return function(load) {
+    onScriptLoad.call(this, load);
+
+    var lastModule = this.get('@@amd-helpers').lastModule;
+    if (lastModule.anonDefine || lastModule.isBundle) {
+      load.metadata.format = 'defined';
+      load.metadata.registered = true;
+      lastModule.isBundle = false;
+    }
+
+    if (lastModule.anonDefine) {
+      load.metadata.deps = load.metadata.deps ? load.metadata.deps.concat(lastModule.anonDefine.deps) : lastModule.anonDefine.deps;
+      load.metadata.execute = lastModule.anonDefine.execute;
+      lastModule.anonDefine = null;
+    }
   };
 });/*
  * Instantiate registry extension
@@ -1274,7 +1297,7 @@ hook('fetch', function(fetch) {
         load.metadata.entry = anonRegister;
       
       if (calledRegister) {
-        load.metadata.format = load.metadata.format || 'register';
+        load.metadata.format = load.metadata.format || 'defined';
         load.metadata.registered = true;
         calledRegister = false;
         anonRegister = null;
@@ -1653,7 +1676,8 @@ hook('fetch', function(fetch) {
 
       // named bundles are just an empty module
       if (!entry)
-        return {
+        entry = {
+          declarative: false,
           deps: load.metadata.deps,
           execute: function() {
             return loader.newModule({});
@@ -1661,12 +1685,7 @@ hook('fetch', function(fetch) {
         };
 
       // place this module onto defined for circular references
-      if (entry)
-        loader.defined[load.name] = entry;
-
-      // no entry -> treat as ES6
-      else
-        return instantiate.call(loader, load);
+      loader.defined[load.name] = entry;
 
       entry.deps = dedupe(entry.deps);
       entry.name = load.name;
