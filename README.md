@@ -1,7 +1,8 @@
 SystemJS
 ========
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status][travis-image]][travis-url]
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 
 _For upgrading to SystemJS 0.17, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
 
@@ -136,3 +137,5 @@ License
 
 MIT
 
+[travis-url]: https://travis-ci.org/systemjs/systemjs
+[travis-image]: https://travis-ci.org/systemjs/systemjs.svg?branch=master
