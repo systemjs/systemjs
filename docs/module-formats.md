@@ -149,7 +149,7 @@ System.config({
     }
   }
 });
-System.import('vendor-angular-ui-router.js');
+System.import('vendor/angular-ui-router.js');
 ```
 
 > It is always advisable to explicitly shim global modules as above for any globals they expect to be present.
