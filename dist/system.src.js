@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.0
+ * SystemJS v0.18.1
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1379,6 +1379,11 @@ SystemJSLoader.prototype.config = function(cfg) {
 
     // sanitize baseURL
     getBaseURLObj.call(this);
+  }
+
+  if (cfg.paths) {
+    for (var p in cfg.paths)
+      this.paths[p] = cfg.paths[p];
   }
 
   if (cfg.map) {
