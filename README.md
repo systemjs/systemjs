@@ -4,7 +4,7 @@ SystemJS
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 
-_For upgrading to SystemJS 0.17, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
+_For upgrading to SystemJS 0.17 / 0.18, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
 
 Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
 
@@ -13,9 +13,9 @@ Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global sc
 * Supports RequireJS-style [map](docs/overview.md#map-config), [paths](docs/overview.md#paths-config), [bundles](docs/production-workflows.md#bundle-extension) and [global shims](docs/module-formats.md#shim-dependencies).
 * [Loader plugins](docs/overview.md#plugins) allow loading assets through the module naming system such as CSS, JSON or images.
 
-Built on top of the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader) coming to under 12KB minified and gzipped.
+Built on top of the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
-Runs in IE8+ and NodeJS.
+~12KB minified and gzipped, runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 
