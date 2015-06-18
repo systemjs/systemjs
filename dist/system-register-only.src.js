@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.1
+ * SystemJS v0.18.2-dev
  */
 (function(__global) {
 
@@ -891,6 +891,10 @@ function logloads(loads) {
   }
 
   function doEnsureEvaluated() {}
+
+  function transpile() {
+    throw new TypeError('The ES6 transpiler is not included in this polyfill build.');
+  }
 })();/*
 *********************************************************************************************
 

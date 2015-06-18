@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.1
+ * SystemJS v0.18.2-dev
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -892,6 +892,10 @@ function logloads(loads) {
   }
 
   function doEnsureEvaluated() {}
+
+  function transpile() {
+    throw new TypeError('The ES6 transpiler is not included in this polyfill build.');
+  }
 })();/*
 *********************************************************************************************
 
@@ -1191,7 +1195,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     var v = cfg[c];
     var normalizeProp = false, normalizeValArray = false;
 
-    if (c == 'baseURL' || c == 'map' || c == 'packages' || c == 'bundles')
+    if (c == 'baseURL' || c == 'map' || c == 'packages' || c == 'bundles' || c == 'paths')
       continue;
 
     if (typeof v != 'object' || v instanceof Array) {
@@ -2140,7 +2144,12 @@ hookConstructor(function(constructor) {
               return require.call(loader, names, callback, errback, module.id);
             }
             contextualRequire.toUrl = function(name) {
-              return loader.normalizeSync(name, module.id);
+              // normalize without defaultJSExtensions
+              var defaultJSExtension = loader.defaultJSEXtensions && name.substr(name.length - 3, 3) != '.js';
+              var url = loader.normalizeSync(name, module.id);
+              if (defaultJSExtension && url.substr(url.length - 3, 3) == '.js')
+                url = url.substr(0, url.length - 3);
+              return url;
             };
             depValues.splice(requireIndex, 0, contextualRequire);
           }
@@ -2558,7 +2567,7 @@ hook('normalize', function(normalize) {
         argumentName = loader.normalizeSync(argumentName, parentName);
         pluginName = loader.normalizeSync(pluginName, parentName);
 
-        if (defaultExtension)
+        if (defaultExtension && argumentName.substr(argumentName.length - 3, 3) == '.js')
           argumentName = argumentName.substr(0, argumentName.length - 3);
 
         return argumentName + '!' + pluginName;
