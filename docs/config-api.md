@@ -148,7 +148,8 @@ Meta is how we set the module format of a module, or know how to shim dependenci
 ```javascript
 System.config({
   meta: {
-    '/vendor/angular.js': {
+    // meaning [baseURL]/vendor/angular.js when no other rules are present
+    'vendor/angular.js': {
       format: 'global', // load this module as a global
       exports: 'angular', // the global property to take as the module value
       deps: [
@@ -182,7 +183,8 @@ This allows for full dependency encapsulation without always needing to have all
 ```javascript
 System.config({
   packages: {
-    '/local/package': {
+    // meaning [baseURL]/local/package when no other rules are present
+    'local/package': {
       // when importing the package by name, load /local/package/index.js
       main: 'index.js',
       // all modules are CommonJS format
