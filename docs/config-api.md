@@ -190,7 +190,7 @@ System.config({
       // all modules are CommonJS format
       format: 'cjs',
       // when requesting a module in the package with no extension, add ".js" automatically
-      // note this property is not available when using the defaultJSExtensions compatibility mode
+      // this takes preference over defaultJSExtensions compatibility mode for the package
       defaultExtension: 'js',
       // just like map but only for requires within this package
       map: {
