@@ -1390,6 +1390,27 @@ SystemJSLoader.prototype.config = function(cfg) {
       this.paths[p] = cfg.paths[p];
   }
 
+  // use `normalized.match(this.wildcardLoaders)` to prevent `.js` from being 
+  // appended to the normalized name when using `defaultJSExtensions` while 
+  // matching a `meta` key in the form of `*.extension` with a `loader` option
+  //
+  // e.g., System.meta['*.css'] = { loader: 'css' }
+  //       will prevent 'style.css' from becoming 'style.css.js'
+  if (cfg.meta && (cfg.defaultJSExtensions || this.defaultJSExtensions)) {
+    var meta = cfg.meta;
+    var extensions = [];
+
+    for (var module in meta) {
+      if (module.substr(0, 2) == '*.' && meta[module].loader) {
+        extensions.push(module.substr(2));
+      }
+    }
+
+    if (extensions.length) {
+      this.wildcardLoaders = new RegExp('\\.' + extensions.join('|') + '$');
+    }
+  }
+
   if (cfg.map) {
     for (var p in cfg.map) {
       var v = cfg.map[p];
@@ -1399,8 +1420,9 @@ SystemJSLoader.prototype.config = function(cfg) {
         var normalized = this.normalizeSync(p);
 
         // if doing default js extensions, undo to get package name
-        if (this.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js')
+        if (this.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js' && !normalized.match(this.wildcardLoaders)) {
           normalized = normalized.substr(0, normalized.length - 3);
+        }
 
         // if a package main, revert it
         var pkgMatch = '';
@@ -1410,8 +1432,9 @@ SystemJSLoader.prototype.config = function(cfg) {
               && pkgMatch.split('/').length < pkg.split('/').length)
             pkgMatch = pkg;
         }
-        if (pkgMatch && this.packages[pkgMatch].main)
+        if (pkgMatch && this.packages[pkgMatch].main) {
           normalized = normalized.substr(0, normalized.length - this.packages[pkgMatch].main.length - 1);
+        }
 
         var pkg = this.packages[normalized] = this.packages[normalized] || {};
         pkg.map = v;
@@ -1427,7 +1450,7 @@ SystemJSLoader.prototype.config = function(cfg) {
       var prop = this.normalizeSync(p);
 
       // if doing default js extensions, undo to get package name
-      if (this.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js')
+      if (this.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js' && !prop.match(this.wildcardLoaders))
         prop = prop.substr(0, prop.length - 3);
 
       this.packages[prop]= this.packages[prop] || {};
@@ -2876,14 +2899,15 @@ hook('normalize', function(normalize) {
 
   return function(name, parentName) {
     var normalized = normalize.call(this, name, parentName);
+    var wildcardLoader = normalized.match(this.wildcardLoaders);
 
     // if the module is in the registry already, use that
     if (this.has(normalized))
       return normalized;
-
+    
     if (normalized.match(absURLRegEx)) {
       // defaultJSExtensions backwards compatibility
-      if (this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
+      if (!wildcardLoader && this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
         normalized += '.js';
       return normalized;
     }
@@ -2892,7 +2916,7 @@ hook('normalize', function(normalize) {
     normalized = applyPaths(this.paths, normalized) || normalized;
 
     // defaultJSExtensions backwards compatibility
-    if (this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
+    if (!wildcardLoader && this.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js')
       normalized += '.js';
 
     // ./x, /x -> page-relative
@@ -3005,7 +3029,7 @@ hook('normalize', function(normalize) {
         }
       }
 
-      var defaultJSExtension = this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js';
+      var defaultJSExtension = this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !name.match(this.wildcardLoaders);
 
       // apply global map, relative normalization
       var normalized = normalize.call(this, name, parentName);
@@ -3013,8 +3037,9 @@ hook('normalize', function(normalize) {
       // undo defaultJSExtension
       if (normalized.substr(normalized.length - 3, 3) != '.js')
         defaultJSExtension = false;
-      if (defaultJSExtension)
+      if (defaultJSExtension && !normalized.match(this.wildcardLoaders)) {
         normalized = normalized.substr(0, normalized.length - 3);
+      }
 
       // check if we are inside a package
       var pkgName = getPackage.call(this, normalized);
@@ -3141,7 +3166,7 @@ hook('normalize', function(normalize) {
       // note if normalize will add a default js extension
       // if so, remove for backwards compat
       // this is strange and sucks, but will be deprecated
-      var defaultExtension = loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) != '.js';
+      var defaultExtension = loader.defaultJSExtensions && argumentName.substr(argumentName.length - 3, 3) != '.js' && !argumentName.match(loader.wildcardLoaders);
 
       if (sync) {
         argumentName = loader.normalizeSync(argumentName, parentName);
