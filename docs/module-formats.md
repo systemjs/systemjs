@@ -3,9 +3,9 @@
 The following module formats are supported:
 
 * `esm`: ECMAScript Module (previously referred to as `es6`)
-* `cjs`: [CommonJS](#CommonJS)
-* `amd`: [Asynchronous Module Definition](#AMD)
-* `global`: [Global shim module format](#Globals)
+* `cjs`: [CommonJS](#commonjs)
+* `amd`: [Asynchronous Module Definition](#amd)
+* `global`: [Global shim module format](#globals)
 * `register`: [System.register](system-api.md#systemregister-name-deps-declare) or [System.registerDynamic](system-api.md#systemregisterdynamic-name-deps-executingrequire-declare) module format
 
 The module format can be set via meta configuration:
