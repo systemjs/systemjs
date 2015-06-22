@@ -22,6 +22,8 @@ System.config({
 
 By default when not set, automatic regular-expression-based detection is used.
 
+> Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
+
 It is typically advisable to set the module format where possible.
 
 ### Inter-Format Dependencies
