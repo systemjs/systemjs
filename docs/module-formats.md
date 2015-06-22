@@ -152,6 +152,8 @@ System.config({
 System.import('vendor/angular-ui-router.js');
 ```
 
+Note that deps is only supported for global modules.
+
 > It is always advisable to explicitly shim global modules as above for any globals they expect to be present.
   For example, the above module may work fine without the shim if Angular always happens to load first in the page,
   but this isn't always guaranteed, and problems will likely be hit later on when the load order happens to change.
