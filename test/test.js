@@ -854,6 +854,13 @@ asyncTest('Package configuration CommonJS config example', function() {
           './dir/': './dir/index.js',
           './dir2': './dir2/index.json',
           './dir/test': './test.ts'
+        },
+        env: {
+          browser: {
+            map: {
+              './env-module': './env-module-browser.js'
+            }
+          }
         }
       }
     }
@@ -864,13 +871,15 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/json'),
     System['import']('tests/testpkg/dir/test'),
     System['import']('tests/testpkg/dir2'),
-    System['import']('tests/testpkg/dir/')
+    System['import']('tests/testpkg/dir/'),
+    System['import']('tests/testpkg/env-module')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
     ok(m[2] == 'ts');
     ok(m[3].json == 'index');
     ok(m[4] == 'dirindex');
+    ok(m[5] == typeof window != 'undefined' ? 'browser' : 'not browser');
     start();
   }, err);
 });
