@@ -76,6 +76,14 @@ System.config({
 });
 ```
 
+### Polyfills
+
+SystemJS relies on `Promise` and `URL` being present in the environment. When these are not available it will send a request out to the `system-polyfills.js` file located in the dist folder which will polyfill `window.Promise` and `window.URLPolyfill`.
+
+This is typically necessary in IE, so ensure to keep this file in the same folder as SystemJS.
+
+Alternatively the polyfills can be loaded manually or via other polyfill implementations as well.
+
 ### NodeJS
 
 To load modules in NodeJS, install SystemJS with:
