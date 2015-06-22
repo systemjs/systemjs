@@ -420,6 +420,13 @@ asyncTest('Advanced compiler plugin', function() {
   }, err);
 });
 
+asyncTest('Plugin normalize hook', function() {
+  System['import']('normalize-test!tests/normalize-plugin.js').then(function(m) {
+    ok(m.name == 'normalize-test');
+    start();
+  }, err);
+});
+
 asyncTest('Plugin as a dependency', function() {
   System.map['css'] = 'tests/css.js';
   System['import']('tests/cjs-loading-plugin.js').then(function(m) {
