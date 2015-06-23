@@ -15,7 +15,7 @@ For backwards-compatibility with AMD environments, set `window.require = System.
 #### System.config
 Type: `Function`
 
-SystemJS configuration helper function. See the [Configuration API](configuration.md).
+SystemJS configuration helper function. See the [Configuration API](config-api.md).
 
 #### System.constructor
 Type: `Function`
