@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.2
+ * SystemJS v0.18.3
  */
 (function(__global) {
 
@@ -92,13 +92,7 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = __global.URL;
-  try {
-    new URL('test:///').protocol == 'test:';
-  }
-  catch(e) {
-    URL = URLPolyfill;
-  }
+  var URL = __global.URLPolyfill || __global.URL;
 /*
 *********************************************************************************************
 
