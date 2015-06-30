@@ -1541,11 +1541,23 @@ hook('onScriptLoad', function(onScriptLoad) {
       entry.esModule = exports;
     }
     else {
-      var hasOwnProperty = exports && exports.hasOwnProperty;
       entry.esModule = {};
-      for (var p in exports) {
-        if (!hasOwnProperty || exports.hasOwnProperty(p))
-          entry.esModule[p] = exports[p];
+
+      // don't trigger getters/setters in environments that support them
+      if (typeof exports == 'object' || typeof exports == 'function') {
+        if (Object.getOwnPropertyDescriptor) {
+          var d;
+          for (var p in exports)
+            if (d = Object.getOwnPropertyDescriptor(exports, p))
+              Object.defineProperty(entry.esModule, p, d);
+        }
+        else {
+          var hasOwnProperty = exports && exports.hasOwnProperty;
+          for (var p in exports) {
+            if (!hasOwnProperty || exports.hasOwnProperty(p))
+              entry.esModule[p] = exports[p];
+          }
+        }
       }
       entry.esModule['default'] = exports;
       defineProperty(entry.esModule, '__useDefault', {
@@ -1600,7 +1612,7 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*.*\*\/\s*|\/\/[^\n]*\s*)*System\.register(Dyanmic)?\s*\(/;
+  var registerRegEx = /^\s*(\/\*.*\*\/\s*|\/\/[^\n]*\s*)*System\.register(Dynamic)?\s*\(/;
 
   hook('fetch', function(fetch) {
     return function(load) {
