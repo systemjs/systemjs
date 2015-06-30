@@ -185,14 +185,9 @@ System.config({
   packages: {
     // meaning [baseURL]/local/package when no other rules are present
     'local/package': {
-      // when importing the package by name, load /local/package/index.js
       main: 'index.js',
-      // all modules are CommonJS format
       format: 'cjs',
-      // when requesting a module in the package with no extension, add ".js" automatically
-      // this takes preference over defaultJSExtensions compatibility mode for the package
       defaultExtension: 'js',
-      // just like map but only for requires within this package
       map: {
         // use local jquery for all jquery requires in this package
         'jquery': './vendor/local-jquery.js'
@@ -210,6 +205,14 @@ System.config({
   }
 });
 ```
+
+* `main`: The main entry point of the package (so `import 'local/package'` is equivalent to `import 'local/package/index.js'`)
+* `format`: The module format of the package.
+* `defaultExtension`: The default extension to add to modules requested within the package when no other extension is present.
+  Takes preference over defaultJSExtensions. Any filename containing a `.` is considered to have an extension.
+  Can be set to `defaultExtension: false` to optionally opt-out of extension-adding when `defaultJSExtensions` is enabled.
+* `map`: Local and relative map configurations scoped to the package. Apply for subpaths as well.
+* `meta`: Package-scoped meta configuration with wildcard support.
 
 #### paths
 Type: `Object`
