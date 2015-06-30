@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.3
+ * SystemJS v0.18.4
  */
 (function(__global) {
 
