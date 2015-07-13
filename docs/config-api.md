@@ -62,8 +62,12 @@ System.config({
 });
 ```
 
-A built bundle file must contain the exact named defines or named System.register statements for the modules it contains.
-Mismatched names will result in separate requests still being made.
+This bundles configuration is only a helper to ensure a bundle is used when needed. It is an alternative to including a script tag for a bundle in the page,
+useful for bundles that load dynamically.
+
+The bundle itself is a module which contains named System.register and define calls as an output of the builder. The dependency names the bundles config
+lists should be names that are in the bundle.
+
 
 #### defaultJSExtensions
 
