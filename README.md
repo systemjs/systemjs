@@ -131,6 +131,7 @@ Additional Plugins:
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
 * [Handlebars](https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
 * [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
+* [raw](https://github.com/matthewbauer/plugin-raw) `System.import('file.bin!raw').then(function(data) {})`
 
 [Read about using plugins here](docs/overview.md#plugin-loaders)
 [Read the guide here on creating plugins](docs/creating-plugins.md).
