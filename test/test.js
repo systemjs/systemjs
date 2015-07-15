@@ -22,6 +22,11 @@ function err(e) {
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
 
 asyncTest('Error handling', function() {
+  System.config({
+    meta: {
+      'tests/error.js': { format: 'esm' }
+    }
+  });
   System['import']('tests/error-loader.js').then(err, function(e) {
     ok(true);
     start();
