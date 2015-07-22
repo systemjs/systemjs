@@ -117,7 +117,7 @@ To create a custom plugin, see the documentation on [creating plugins](creating-
 
 #### Basic Use
 
-> Note that if using the `defaultJSExtensions` compatibility feature, plugins for resources with custom extensions will not work. Instead [plugin syntax](#plugin-syntax) should be used in compatibility mode.
+> Note that if using the `defaultJSExtensions` compatibility feature, plugins for resources with custom extensions will only work by using the [package configuration](config-api.md#packages) `defaultExtension: false` option to override this for specific packages.
 
 To use a plugin, set up the plugin itself as a standard module, either locating it in the baseURL or providing map configuration for it.
 
