@@ -779,11 +779,17 @@ function logloads(loads) {
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
     load: function(name, options) {
-      if (this._loader.modules[name]) {
-        doEnsureEvaluated(this._loader.modules[name], [], this._loader);
-        return Promise.resolve(this._loader.modules[name].module);
+      var loader = this._loader;
+      if (loader.modules[name]) {
+        doEnsureEvaluated(loader.modules[name], [], loader);
+        return Promise.resolve(loader.modules[name].module);
       }
-      return this._loader.importPromises[name] || createImportPromise(this, name, loadModule(this._loader, name, {}));
+      return loader.importPromises[name] || createImportPromise(this, name,
+        loadModule(loader, name, {})
+        .then(function(load) {
+          delete loader.importPromises[name];
+          return evaluateLoadedModule(loader, load);
+        }));
     },
     // 26.3.3.11
     module: function(source, options) {
@@ -1215,7 +1221,9 @@ SystemJSLoader.prototype.config = function(cfg) {
         normalizeProp = true;
 
       for (var p in v) {
-        if (normalizeProp)
+        if (c == 'meta' && p[0] == '*')
+          this[c][p] = v[p];
+        else if (normalizeProp)
           this[c][this.normalizeSync(p)] = v[p];
         else
           this[c][p] = v[p];
@@ -1392,7 +1400,7 @@ hook('onScriptLoad', function(onScriptLoad) {
 
     // named register
     if (name) {
-      name = loader.normalizeSync(name);
+      name = (loader.normalizeSync || loader.normalize).call(loader, name);
       register.name = name;
       if (!(name in loader.defined))
         loader.defined[name] = register; 
@@ -1400,7 +1408,7 @@ hook('onScriptLoad', function(onScriptLoad) {
     // anonymous register
     else if (register.declarative) {
       if (anonRegister)
-        throw new TypeError('Multiple anonymous System.register calls in the same module file.');
+        throw new TypeError('Invalid anonymous System.register module load. If loading a single module, ensure anonymous System.register is loaded via System.import. If loading a bundle, ensure all the System.register calls are named.');
       anonRegister = register;
     }
   }
@@ -1933,7 +1941,7 @@ hookConstructor(function(constructor) {
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // bare minimum ignores for IE8
-    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external'];
+    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external', 'mozAnimationStartTime'];
 
     var globalSnapshot;
 
@@ -2089,7 +2097,9 @@ hookConstructor(function(constructor) {
 
       // commonjs require
       else if (typeof names == 'string') {
-        var module = loader.get(names);
+        var module = loader.get(loader.normalizeSync(names, referer));
+        if (!module)
+          throw new Error('Module not already loaded loading "' + names + '" from "' + referer + '".');
         return module.__useDefault ? module['default'] : module;
       }
 
@@ -2501,6 +2511,8 @@ hook('normalize', function(normalize) {
       // check if we are inside a package
       var pkgName = getPackage.call(this, normalized);
 
+      var loader = this;
+
       if (pkgName) {
         return getPackageConfig(this, pkgName)
         .then(function(pkg) {
@@ -2531,7 +2543,7 @@ hook('normalize', function(normalize) {
           var subPath = '.' + normalized.substr(pkgName.length);
           var mapped = applyMap(pkg.map, subPath) || defaultExtension && applyMap(pkg.map, subPath + defaultExtension);
           if (mapped)
-            normalized = mapped.substr(0, 2) == './' ? pkgName + mapped.substr(1) : mapped;
+            normalized = mapped.substr(0, 2) == './' ? pkgName + mapped.substr(1) : normalize.call(loader, mapped);
           else
             normalized += defaultExtension;
 
@@ -3121,7 +3133,7 @@ hook('normalize', function(normalize) {
         if (conditionModule[0] == '.' || conditionModule.indexOf('/') != -1)
           throw new TypeError('Invalid condition ' + conditionalMatch[0] + '\n\tCondition modules cannot contain . or / in the name.');
 
-        var conditionExport = 'default';
+        var conditionExport;
         var conditionExportIndex = conditionModule.indexOf('.');
         if (conditionExportIndex != -1) {
           conditionExport = conditionModule.substr(conditionExportIndex + 1);
@@ -3131,19 +3143,30 @@ hook('normalize', function(normalize) {
         var booleanNegation = !substitution && conditionModule[0] == '~';
         if (booleanNegation)
           conditionModule = conditionModule.substr(1);
-        
-        return loader['import'](conditionModule, parentName, parentAddress)
-        .then(function(m) {
-          var conditionValue = readMemberExpression(conditionExport, m);
 
+        var pluginLoader = loader.pluginLoader || loader;
+        
+        return pluginLoader['import'](conditionModule, parentName, parentAddress)
+        .then(function(m) {
+          if (conditionExport === undefined) {
+            // CommonJS case
+            if (typeof m == 'string')
+              return m;
+            else
+              return m['default'];
+          }
+          
+          return readMemberExpression(conditionExport, m);
+        })
+        .then(function(conditionValue) {
           if (substitution) {
             if (typeof conditionValue !== 'string')
-              throw new TypeError('The condition value for ' + conditionalMatch[0] + ' doesn\'t resolving to a string.');
+              throw new TypeError('The condition value for ' + conditionModule + ' doesn\'t resolve to a string.');
             name = name.replace(conditionalRegEx, conditionValue);
           }
           else {
             if (typeof conditionValue !== 'boolean')
-              throw new TypeError('The condition value for ' + conditionalMatch[0] + ' isn\'t resolving to a boolean.');
+              throw new TypeError('The condition value for ' + conditionModule + ' isn\'t resolving to a boolean.');
             if (booleanNegation)
               conditionValue = !conditionValue;
             if (!conditionValue)
