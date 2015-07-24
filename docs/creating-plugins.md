@@ -31,7 +31,7 @@ js/coffee.js:
   var CoffeeScript = require('coffeescript');
 
   exports.translate = function(load) {
-    // optionall also set the sourceMap to support both builds and in-browser transpilation
+    // optionally also set the sourceMap to support both builds and in-browser transpilation
     // load.metadata.sourceMap = generatedSourceMap;
     return CoffeeScript.compile(load.source);
   }

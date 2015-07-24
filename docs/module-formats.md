@@ -183,6 +183,8 @@ System.import('vendor/angular-ui-router.js');
 
 In the above scenario, a globally scoped `angular` will be set to the module value for the Angular ES6 module only for the duration of execution of the global plugin.
 
+> **The globals meta-configuration option is only available for the `global` and `cjs` module formats.** This is because these are the only module formats that are not CSP-compatible, as there is no CSP-compliant way to implement this configuration.
+
 #### Exports
 
 When automatic detection of exports is not enough, a custom exports meta value can be set.
