@@ -358,6 +358,22 @@ asyncTest('CommonJS require variations', function() {
   }, err);
 });
 
+asyncTest('CommonJS globals', function() {
+  System.config({
+    meta: {
+      'tests/commonjs-globals.js': {
+        globals: {
+          process: './cjs-process.js'
+        }
+      }
+    }
+  });
+  System['import']('tests/commonjs-globals.js').then(function(m) {
+    ok(m.process.env.NODE_ENV)
+    start();
+  }, err);
+});
+
 asyncTest('Loading a UMD module', function() {
   System['import']('tests/umd.js').then(function(m) {
     ok(m.d == 'hi', 'module value not defined');
