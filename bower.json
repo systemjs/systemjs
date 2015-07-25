@@ -1,5 +1,5 @@
 {
-  "name": "systemjs",
+  "name": "system.js",
   "main": "./dist/system.js",
   "devDependencies": {
     "qunit": "~1.12.0"
