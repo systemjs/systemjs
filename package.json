@@ -21,6 +21,7 @@
   },
   "scripts": {
     "test:browser": "make test",
+    "build": "make",
     "test": "npm run test:babel && npm run test:traceur && npm run test:typescript",
     "test:babel": "qunit -c s:./index.js -t ./test/test-babel.js",
     "test:traceur": "qunit -c s:./index.js -t ./test/test-traceur.js",
