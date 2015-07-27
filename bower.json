@@ -1,6 +1,16 @@
 {
   "name": "systemjs",
   "main": "./dist/system.js",
+  "ignore": [
+    ".agignore",
+    ".gitignore"
+    ".travis.yml",
+    "index.js",
+    "lib/"
+    "package.json",
+    "Makefile",
+    "test"
+  ],
   "devDependencies": {
     "qunit": "~1.12.0"
   }
