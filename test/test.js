@@ -803,6 +803,14 @@ if(typeof window !== 'undefined' && window.Worker) {
   });
 }
 
+asyncTest("Duplicate entries", function() {
+  System["import"]('tests/duplicateDeps/m1.js').then(function(m) {
+    var r = m.foo() + ":" + m.f3();
+    ok(r === "3:3", "duplicate entries in dependency list not handled correctly");
+    start();
+  })
+});
+
 // new features!!
 
 asyncTest('Named imports for non-es6', function() {
