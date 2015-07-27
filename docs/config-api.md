@@ -211,7 +211,7 @@ System.config({
 ```
 
 * `main`: The main entry point of the package (so `import 'local/package'` is equivalent to `import 'local/package/index.js'`)
-* `format`: The module format of the package.
+* `format`: The module format of the package. See [Module Formats](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md).
 * `defaultExtension`: The default extension to add to modules requested within the package when no other extension is present.
   Takes preference over defaultJSExtensions. Any filename containing a `.` is considered to have an extension.
   Can be set to `defaultExtension: false` to optionally opt-out of extension-adding when `defaultJSExtensions` is enabled.
