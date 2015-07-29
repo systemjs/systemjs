@@ -1,4 +1,4 @@
-System.register('custom.ext', [], function(_export) {
+System.register('custom/file.ext', [], function(_export) {
   return {
     setters: [],
     execute: function() {

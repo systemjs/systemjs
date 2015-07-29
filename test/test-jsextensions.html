@@ -75,9 +75,16 @@
 			  })
 			});
 
+			System.config({
+				packages: {
+					'custom': {
+						defaultExtension: 'ext'
+					}
+				}
+			});
 			asyncTest('Register extensions', function(err) {
 			  System['import']('tests/register-default-extension.js').then(function() {
-			    System['import']('custom.ext').then(function(m) {
+			    System['import']('custom/file.ext').then(function(m) {
 			      ok(m.custom == 'ext');
 			      start();
 			    }, err);
