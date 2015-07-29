@@ -3,10 +3,10 @@
   "main": "./dist/system.js",
   "ignore": [
     ".agignore",
-    ".gitignore"
+    ".gitignore",
     ".travis.yml",
     "index.js",
-    "lib/"
+    "lib/",
     "package.json",
     "Makefile",
     "test"
