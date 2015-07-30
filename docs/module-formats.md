@@ -31,9 +31,9 @@ The module format detection happens in the following order:
 * _ES modules_
   The source is only detected as an ES module if it contains explicit module syntax - valid `import` or `export` statements.
 * _AMD modules_
-  The precence of a valid AMD `define` statement in the code.
+  The presence of a valid AMD `define` statement in the code.
 * _CommonJS modules_
-  The precence of `require(...)` or `exports` / `module.exports` assigments
+  The presence of `require(...)` or `exports` / `module.exports` assigments
 * _Global_
   This is the fallback module format after all the above fail.
 
