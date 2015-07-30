@@ -6,7 +6,7 @@ The following module formats are supported:
 * `cjs`: [CommonJS](#commonjs)
 * `amd`: [Asynchronous Module Definition](#amd)
 * `global`: [Global shim module format](#globals)
-* `register`: [System.register](system-api.md#systemregister-name-deps-declare) or [System.registerDynamic](system-api.md#systemregisterdynamic-name-deps-executingrequire-declare) module format
+* `register`: [System.register](system-api.md#systemregister-name-deps-declare) or [System.registerDynamic](system-api.md#systemregisterdynamic-name-deps-executingrequire-declare) compatibility module format
 
 The module format can be set via meta configuration:
 
@@ -22,9 +22,23 @@ System.config({
 
 By default when not set, automatic regular-expression-based detection is used.
 
-> Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
+#### Module format detection
 
-It is typically advisable to set the module format where possible.
+Module format detection is never completely accurate, which is why setting the format via meta-configuration is encouraged.
+
+The module format detection happens in the following order:
+* System.register / System.registerDynamic
+  If the source code starts with a number of comments, followed by `System.register` or `System.registerDynamic` as the first line of code.
+* ES modules
+  The source is only detected as an ES module if it contains explicit module syntax - valid `import` or `export` statements.
+* AMD modules
+  The precence of a valid AMD `define` statement in the code.
+* CommonJS modules
+  The precence of `require(...)` or `exports` / `module.exports` assigments
+* Global
+  This is the fallback module format after all the above fail.
+
+> Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
 
 ### Inter-Format Dependencies
 
