@@ -20,27 +20,26 @@ System.config({
 });
 ```
 
-By default when not set, automatic regular-expression-based detection is used.
-
 #### Module format detection
 
-Module format detection is never completely accurate, which is why setting the format via meta-configuration is encouraged.
+When the module format is not set, automatic regular-expression-based detection is used.
+This module format detection is never completely accurate, but caters well for the majority use cases.
 
 The module format detection happens in the following order:
-* System.register / System.registerDynamic
+* _System.register / System.registerDynamic_
   If the source code starts with a number of comments, followed by `System.register` or `System.registerDynamic` as the first line of code.
-* ES modules
+* _ES modules_
   The source is only detected as an ES module if it contains explicit module syntax - valid `import` or `export` statements.
-* AMD modules
+* _AMD modules_
   The precence of a valid AMD `define` statement in the code.
-* CommonJS modules
+* _CommonJS modules_
   The precence of `require(...)` or `exports` / `module.exports` assigments
-* Global
+* _Global_
   This is the fallback module format after all the above fail.
 
 > Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
 
-### Inter-Format Dependencies
+#### Inter-Format Dependencies
 
 Any module type can be loaded from any other type with full support thanks to [zebra-striping](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md#zebra-striping).
 
