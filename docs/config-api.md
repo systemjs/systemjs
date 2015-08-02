@@ -51,7 +51,7 @@ A list of options is available in the [Babel project documentation](https://babe
 #### bundle
 Type: `Object`
 
-Bundles allow a collection of modules to be downloaded together as a package whenever any module from that collection is requested. 
+Bundles allow a collection of modules to be downloaded together as a package whenever any module from that collection is requested.
 Useful for splitting an application into sub-modules for production. Use with the [SystemJS Builder](https://github.com/systemjs/builder).
 
 ```javascript
@@ -62,12 +62,11 @@ System.config({
 });
 ```
 
-This bundles configuration is only a helper to ensure a bundle is used when needed. It is an alternative to including a script tag for a bundle in the page,
-useful for bundles that load dynamically.
+In the above any require to `dependencyA` or `dependencyB` will first trigger a `System.import('bundleA')` before proceeding with the load of `dependencyA` or `dependencyB`.
 
-The bundle itself is a module which contains named System.register and define calls as an output of the builder. The dependency names the bundles config
-lists should be names that are in the bundle.
+It is an alternative to including a script tag for a bundle in the page, useful for bundles that load dynamically where we want to trigger the bundle load automatically only when needed.
 
+The bundle itself is a module which contains named System.register and define calls as an output of the builder. The dependency names the bundles config lists should be the same names that are explicitly defined in the bundle.
 
 #### defaultJSExtensions
 
