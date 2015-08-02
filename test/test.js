@@ -21,6 +21,14 @@ function err(e) {
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
 
+asyncTest('new Module().toString() == "Module"', function() {
+  System['import']('tests/global.js').then(function() {
+    var m = System.get(System.normalizeSync('tests/global.js'));
+    ok(m.toString() == 'Module');
+    start();
+  });
+});
+
 asyncTest('Error handling', function() {
   System['import']('tests/error-loader.js').then(err, function(e) {
     ok(true);
