@@ -24,7 +24,7 @@ var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.a
 asyncTest('new Module().toString() == "Module"', function() {
   System['import']('tests/global.js').then(function() {
     var m = System.get(System.normalizeSync('tests/global.js'));
-    ok(m.toString() == 'Module');
+    ok(m == 'Module');
     start();
   });
 });
