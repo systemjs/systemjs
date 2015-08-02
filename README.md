@@ -76,6 +76,16 @@ System.config({
 });
 ```
 
+Please note that by default jspm disables `JSX` support as it is not an ES6 feature. You can override the config and reset the blacklist with: 
+```javascript
+System.config({
+  transpiler: 'babel',
+  babelOptions {
+    blacklist: []
+  }  
+});
+```
+
 ### Polyfills
 
 SystemJS relies on `Promise` and `URL` being present in the environment. When these are not available it will send a request out to the `system-polyfills.js` file located in the dist folder which will polyfill `window.Promise` and `window.URLPolyfill`.
@@ -126,7 +136,6 @@ Additional Plugins:
 
 * [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
 * [Jade](https://github.com/johnsoftek/plugin-jade)
-* [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md').then(function(html) {})`
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
 * [Handlebars](https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
