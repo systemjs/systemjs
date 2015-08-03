@@ -125,6 +125,7 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 				lib/proto.js \
 				lib/scriptLoader.js \
 				lib/scriptOnly.js \
+				lib/amd-helpers.js \
 				lib/register.js \
 				lib/createSystem.js \
 		$(ESML)/wrapper-end.js \
