@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.5
+ * SystemJS v0.18.6
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2940,7 +2940,7 @@ hookConstructor(function(constructor) {
       if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
         load.metadata.format = 'amd';
         
-        if (!loader.builder || loader.execute === false) {
+        if (!loader.builder && loader.execute !== false) {
           var removeDefine = this.get('@@amd-helpers').createDefine(loader);
 
           __exec.call(loader, load);
