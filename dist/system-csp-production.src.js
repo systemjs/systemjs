@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.4
+ * SystemJS v0.18.5
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -115,6 +115,12 @@ function bootstrap() {(function(__global) {
 */
 
 function Module() {}
+// http://www.ecma-international.org/ecma-262/6.0/#sec-@@tostringtag
+defineProperty(Module.prototype, 'toString', {
+  value: function() {
+    return 'Module';
+  }
+});
 function Loader(options) {
   this._loader = {
     loaderObj: this,
@@ -513,6 +519,9 @@ function logloads(loads) {
   }
   // 15.2.5.2.2
   function addLoadToLinkSet(linkSet, load) {
+    if (load.status == 'failed')
+      return;
+
     console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded on link set');
 
     for (var i = 0, l = linkSet.loads.length; i < l; i++)
@@ -530,6 +539,9 @@ function logloads(loads) {
     var loader = linkSet.loader;
 
     for (var i = 0, l = load.dependencies.length; i < l; i++) {
+      if (!load.dependencies[i])
+        continue;
+
       var name = load.dependencies[i].value;
 
       if (loader.modules[name])
@@ -613,13 +625,26 @@ function logloads(loads) {
   // 15.2.5.2.4
   function linkSetFailed(linkSet, load, exc) {
     var loader = linkSet.loader;
+    var requests;
 
+    checkError: 
     if (load) {
-      if (load && linkSet.loads[0].name != load.name)
-        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
-
-      if (load)
+      if (linkSet.loads[0].name == load.name) {
         exc = addToError(exc, 'Error loading ' + load.name);
+      }
+      else {
+        for (var i = 0; i < linkSet.loads.length; i++) {
+          var pLoad = linkSet.loads[i];
+          for (var j = 0; j < pLoad.dependencies.length; j++) {
+            var dep = pLoad.dependencies[j];
+            if (dep.value == load.name) {
+              exc = addToError(exc, 'Error loading ' + load.name + ' as "' + dep.key + '" from ' + pLoad.name);
+              break checkError;
+            }
+          }
+        }
+        exc = addToError(exc, 'Error loading ' + load.name + ' from ' + linkSet.loads[0].name);
+      }
     }
     else {
       exc = addToError(exc, 'Error linking ' + linkSet.loads[0].name);
@@ -1016,10 +1041,29 @@ function group(deps) {
   return { names: names, indices: indices };
 }
 
-function extend(a, b, underwrite) {
+function extend(a, b, prepend) {
   for (var p in b) {
-    if (!underwrite || !(p in a))
+    if (!prepend || !(p in a))
       a[p] = b[p];
+  }
+  return a;
+}
+
+// meta first-level extends where:
+// array + array appends
+// object + object extends
+// other properties replace
+function extendMeta(a, b, prepend) {
+  for (var p in b) {
+    var val = b[p];
+    if (!(p in a))
+      a[p] = val;
+    else if (val instanceof Array && a[p] instanceof Array)
+      a[p] = [].concat(prepend ? val : a[p]).concat(prepend ? a[p] : val);
+    else if (typeof val == 'object' && typeof a[p] == 'object')
+      a[p] = extend(extend({}, a[p]), val, prepend);
+    else if (!prepend)
+      a[p] = val;
   }
 }var absURLRegEx = /^[^\/]+:\/\//;
 
@@ -1424,7 +1468,10 @@ hook('onScriptLoad', function(onScriptLoad) {
 
     // named register
     if (name) {
+      var ext = loader.defaultJSExtensions && name.split('/').pop().split('.').pop();
       name = (loader.normalizeSync || loader.normalize).call(loader, name);
+      if (ext && name.substr(name.length - ext.length - 1, ext.length + 1) != '.' + ext)
+        name = name.substr(0, name.lastIndexOf('.'));
       register.name = name;
       if (!(name in loader.defined))
         loader.defined[name] = register; 
@@ -1598,11 +1645,18 @@ hook('onScriptLoad', function(onScriptLoad) {
   }
 
   // module binding records
+  function Module() {}
+  defineProperty(Module, 'toString', {
+    value: function() {
+      return 'Module';
+    }
+  });
+
   function getOrCreateModuleRecord(name, moduleRecords) {
     return moduleRecords[name] || (moduleRecords[name] = {
       name: name,
       dependencies: [],
-      exports: {}, // start from an empty module and extend
+      exports: new Module(), // start from an empty module and extend
       importers: []
     });
   }
@@ -1768,7 +1822,7 @@ hook('onScriptLoad', function(onScriptLoad) {
           var d;
           for (var p in exports)
             if (d = Object.getOwnPropertyDescriptor(exports, p))
-              Object.defineProperty(entry.esModule, p, d);
+              defineProperty(entry.esModule, p, d);
         }
         else {
           var hasOwnProperty = exports && exports.hasOwnProperty;
@@ -1831,7 +1885,7 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*.*\*\/\s*|\/\/[^\n]*\s*)*System\.register(Dynamic)?\s*\(/;
+  var registerRegEx = /^\s*(\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\s*)*System\.register(Dynamic)?\s*\(/;
 
   hook('fetch', function(fetch) {
     return function(load) {
@@ -2140,7 +2194,7 @@ hookConstructor(function(constructor) {
 
       else
         throw new TypeError('Invalid require');
-    };
+    }
 
     function define(name, deps, factory) {
       if (typeof name != 'string') {
@@ -2565,7 +2619,7 @@ hook('normalize', function(normalize) {
             // apply defaultExtension
 
             if ('defaultExtension' in pkg) {
-              if (pkg.defaultExtension !== false && normalized.split('/').pop().indexOf('.') == -1)
+              if (pkg.defaultExtension !== false && normalized.split('/').pop().lastIndexOf('.') == -1)
                 defaultExtension = '.' + pkg.defaultExtension;
             }
             // apply defaultJSExtensions if defaultExtension not set
@@ -2626,13 +2680,13 @@ hook('normalize', function(normalize) {
                 var depth = module.split('/').length;
                 if (depth > bestDepth)
                   bestDetph = depth;
-                extend(meta, pkg.meta[module], bestDepth != depth);
+                extendMeta(meta, pkg.meta[module], bestDepth != depth);
               }
             }
             // exact meta
             var exactMeta = pkg.meta[load.name.substr(pkgName.length + 1)];
             if (exactMeta)
-              extend(meta, exactMeta);
+              extendMeta(meta, exactMeta);
 
             // allow alias and loader to be package-relative
             if (meta.alias && meta.alias.substr(0, 2) == './')
@@ -2640,7 +2694,7 @@ hook('normalize', function(normalize) {
             if (meta.loader && meta.loader.substr(0, 2) == './')
               meta.loader = pkgName + meta.loader.substr(1);
             
-            extend(load.metadata, meta);
+            extendMeta(load.metadata, meta);
           }
         }
 
@@ -2935,13 +2989,13 @@ hook('normalize', function(normalize) {
           var depth = module.split('/').length;
           if (depth > bestDepth)
             bestDetph = depth;
-          extend(load.metadata, meta[module], bestDepth != depth);
+          extendMeta(load.metadata, meta[module], bestDepth != depth);
         }
       }
 
       // apply exact meta
       if (meta[name])
-        extend(load.metadata, meta[name]);
+        extendMeta(load.metadata, meta[name]);
 
       return locate.call(this, load);
     };
@@ -2949,8 +3003,8 @@ hook('normalize', function(normalize) {
 
   // detect any meta header syntax
   // only set if not already set
-  var metaRegEx = /^(\s*\/\*.*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
-  var metaPartRegEx = /\/\*.*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
+  var metaRegEx = /^(\s*\/\*[\s\S]*?\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
+  var metaPartRegEx = /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
 
   function setMetaProperty(target, p, value) {
     var pParts = p.split('.');
