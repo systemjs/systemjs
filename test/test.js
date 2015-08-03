@@ -38,7 +38,8 @@ asyncTest('Error handling', function() {
 
 asyncTest('Error handling2', function() {
   System['import']('tests/error-loader2.js').then(err, function(e) {
-    console.error(e);
+    if (typeof console != 'undefined' && console.error)
+      console.error(e);
     ok(true);
     start();
   });
