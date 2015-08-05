@@ -1204,6 +1204,9 @@ SystemJSLoader.prototype.config = function(cfg) {
     getBaseURLObj.call(this);
   }
 
+  if (cfg.defaultJSExtensions)
+    this.defaultJSExtensions = cfg.defaultJSExtensions;
+
   if (cfg.paths) {
     for (var p in cfg.paths)
       this.paths[p] = cfg.paths[p];
@@ -1470,16 +1473,16 @@ hook('onScriptLoad', function(onScriptLoad) {
 
     // named register
     if (name) {
-      var ext = loader.defaultJSExtensions && name.split('/').pop().split('.').pop();
+      // ideally wouldn't apply map config to bundle names but 
+      // dependencies go through map regardless so we can't restrict
+      // could reconsider in shift to new spec
       name = (loader.normalizeSync || loader.normalize).call(loader, name);
-      if (ext && name.substr(name.length - ext.length - 1, ext.length + 1) != '.' + ext)
-        name = name.substr(0, name.lastIndexOf('.'));
       register.name = name;
       if (!(name in loader.defined))
         loader.defined[name] = register; 
     }
     // anonymous register
-    else if (register.declarative) {
+    else {
       if (anonRegister)
         throw new TypeError('Invalid anonymous System.register module load. If loading a single module, ensure anonymous System.register is loaded via System.import. If loading a bundle, ensure all the System.register calls are named.');
       anonRegister = register;
@@ -2032,7 +2035,7 @@ hookConstructor(function(constructor) {
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // bare minimum ignores for IE8
-    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexDB'];
+    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
 
     var globalSnapshot;
 
@@ -2123,7 +2126,8 @@ hookConstructor(function(constructor) {
       }
     }));
   };
-});/*
+});
+/*
  * AMD Helper function module
  * Separated into its own file as this is the part needed for full AMD support in SFX builds
  *
@@ -3054,6 +3058,9 @@ hook('normalize', function(normalize) {
               load.metadata[metaName].push(metaValue);
             else
               setMetaProperty(load.metadata, metaName, metaValue);
+          }
+          else {
+            load.metadata[metaString] = true;
           }
         }
       }
