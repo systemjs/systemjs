@@ -792,7 +792,7 @@ asyncTest("System clone", function() {
   Promise.all([System['import']('maptest'), clonedSystem['import']('maptest')]).then(function(modules) {
     var m = modules[0];
     var mClone = modules[1];
-    
+
     ok(m.maptest == 'maptest', 'Mapped module not loaded');
     ok(mClone.dep == 'maptest', 'Mapped module not loaded');
     ok(mClone !== m, "different modules");
@@ -942,6 +942,14 @@ asyncTest('Boolean conditional true', function() {
     ok(m['default'] === true);
     start();
   }, err);
+});
+
+asyncTest('Loading a System.registerdynamic module (not bundled)', function() {
+  System['import']('tests/registerdynamic-main.js').then(function(m) {
+    ok(typeof m.dependency === 'function');
+    ok(m.dependency() === 'ok');
+    start();
+  }).then(null, err);
 });
 
 })(typeof window == 'undefined' ? global : window);
