@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.7
+ * SystemJS v0.18.8
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2120,7 +2120,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[^\*]*(\*[^\*]+)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
+  var registerRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
 
   hook('fetch', function(fetch) {
     return function(load) {
@@ -3622,8 +3622,8 @@ hook('normalize', function(normalize) {
 
   // detect any meta header syntax
   // only set if not already set
-  var metaRegEx = /^(\s*\/\*[^\*]*(\*[^\*]+)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
-  var metaPartRegEx = /\/\*[^\*]*(\*[^\*]+)*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
+  var metaRegEx = /^(\s*\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
+  var metaPartRegEx = /\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
 
   function setMetaProperty(target, p, value) {
     var pParts = p.split('.');

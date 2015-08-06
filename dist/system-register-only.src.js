@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.7
+ * SystemJS v0.18.8
  */
 (function(__global) {
 
@@ -1705,7 +1705,7 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[^\*]*(\*[^\*]+)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
+  var registerRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
 
   hook('fetch', function(fetch) {
     return function(load) {
