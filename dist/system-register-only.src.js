@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.6
+ * SystemJS v0.18.7
  */
 (function(__global) {
 
@@ -466,13 +466,15 @@ function logloads(loads) {
             proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
           }
 
-          return existingLoad.linkSets[0].done.then(function() {
-            resolve(existingLoad);
-          });
+          // a primary load -> use that existing linkset
+          if (existingLoad.linkSets.length)
+            return existingLoad.linkSets[0].done.then(function() {
+              resolve(existingLoad);
+            });
         }
       }
 
-      var load = createLoad(name);
+      var load = existingLoad || createLoad(name);
 
       load.metadata = stepState.moduleMetadata;
 
@@ -1703,7 +1705,7 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\s*)*System\.register(Dynamic)?\s*\(/;
+  var registerRegEx = /^\s*(\/\*[^\*]*(\*[^\*]+)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
 
   hook('fetch', function(fetch) {
     return function(load) {

@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.6
+ * SystemJS v0.18.7
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -467,13 +467,15 @@ function logloads(loads) {
             proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
           }
 
-          return existingLoad.linkSets[0].done.then(function() {
-            resolve(existingLoad);
-          });
+          // a primary load -> use that existing linkset
+          if (existingLoad.linkSets.length)
+            return existingLoad.linkSets[0].done.then(function() {
+              resolve(existingLoad);
+            });
         }
       }
 
-      var load = createLoad(name);
+      var load = existingLoad || createLoad(name);
 
       load.metadata = stepState.moduleMetadata;
 
@@ -2118,7 +2120,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\s*)*System\.register(Dynamic)?\s*\(/;
+  var registerRegEx = /^\s*(\/\*[^\*]*(\*[^\*]+)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
 
   hook('fetch', function(fetch) {
     return function(load) {
@@ -3620,8 +3622,8 @@ hook('normalize', function(normalize) {
 
   // detect any meta header syntax
   // only set if not already set
-  var metaRegEx = /^(\s*\/\*[\s\S]*?\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
-  var metaPartRegEx = /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
+  var metaRegEx = /^(\s*\/\*[^\*]*(\*[^\*]+)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)+/;
+  var metaPartRegEx = /\/\*[^\*]*(\*[^\*]+)*\*\/|\/\/[^\n]*|"[^"]+"\s*;?|'[^']+'\s*;?/g;
 
   function setMetaProperty(target, p, value) {
     var pParts = p.split('.');
