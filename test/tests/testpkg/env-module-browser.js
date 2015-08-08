@@ -1,1 +1,1 @@
-module.exports = 'not browser';
+module.exports = 'browser';

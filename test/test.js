@@ -886,13 +886,9 @@ asyncTest('Package configuration CommonJS config example', function() {
           './json': './json.json',
           './dir/': './dir/index.js',
           './dir2': './dir2/index.json',
-          './dir/test': './test.ts'
-        },
-        env: {
-          browser: {
-            map: {
-              './env-module': './env-module-browser.js'
-            }
+          './dir/test': './test.ts',
+          './env-module': {
+            browser: './env-module-browser.js'
           }
         },
         asdf: 'asdf'
@@ -913,7 +909,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     ok(m[2] == 'ts');
     ok(m[3].json == 'index');
     ok(m[4] == 'dirindex');
-    ok(m[5] == typeof window != 'undefined' ? 'browser' : 'not browser');
+    ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
     start();
   }, err);
 });
