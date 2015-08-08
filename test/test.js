@@ -894,7 +894,8 @@ asyncTest('Package configuration CommonJS config example', function() {
               './env-module': './env-module-browser.js'
             }
           }
-        }
+        },
+        asdf: 'asdf'
       }
     }
   });
