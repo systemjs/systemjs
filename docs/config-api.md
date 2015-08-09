@@ -175,10 +175,10 @@ System.config({
 });
 ```
 
-* `format`: Overrides in what format the module is loaded. See [Module Formats](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md).
+* `format`: Sets in what format the module is loaded. See [Module Formats](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md).
 * `exports`: Used to create a global variable, pointing to this meta path. Only available at the time of executing the module referenced by meta path. When meta is used inside `packages` configuration this variable is only available within that package. More info: [Exports](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#exports)
 * `globals`: Create globals that point to dependencies, but only within this meta path. More info: [Custom Globals](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#custom-globals).
-* `deps`: Dependencies to load before this module. Goes through regular paths and map normalization. More info: [Shim Dependencies](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#shim-dependencies). This is currently not supported for `esm` (ES modules) (`es6`), see: [#640](https://github.com/systemjs/systemjs/issues/640).
+* `deps`: Dependencies to load before this module. Goes through regular paths and map normalization. More info: [Shim Dependencies](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#shim-dependencies). Only supported for the `cjs`, `amd` and `global` formats.
 * `loader`: Set a loader for this meta path. More info: [Plugin loaders](https://github.com/systemjs/systemjs/blob/master/docs/overview.md#plugin-loaders).
 * `sourceMap`: For plugin transpilers to set the source map of their transpilation.
 
