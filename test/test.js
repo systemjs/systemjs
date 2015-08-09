@@ -888,7 +888,7 @@ asyncTest('Package configuration CommonJS config example', function() {
           './dir2': './dir2/index.json',
           './dir/test': './test.ts',
           './env-module': {
-            browser: './env-module-browser.js'
+            'browser': './env-module-browser.js'
           }
         },
         asdf: 'asdf'
