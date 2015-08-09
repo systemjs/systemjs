@@ -1,3 +1,3 @@
-export function translate(load) {
+exports.translate = function translate(load) {
   return load.source.replace(/#/g, '');
 }

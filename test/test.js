@@ -558,9 +558,7 @@ asyncTest('Loading dynamic modules with __esModule flag set', function() {
   }, err);
 });
 
-if (ie8)
-  return;
-
+if (!ie8) {
 asyncTest('ES6 named export loading of CJS', function() {
   System['import']('tests/es-named-import-cjs.js').then(function(m) {
     ok(m.cjsFuncValue === 'named export');
@@ -779,6 +777,7 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
     }, err);
   }, err);
 });
+}
 
 asyncTest("System clone", function() {
   var clonedSystem = new System.constructor();
@@ -821,7 +820,7 @@ asyncTest("Duplicate entries", function() {
 });
 
 // new features!!
-
+if (!ie8)
 asyncTest('Named imports for non-es6', function() {
   System['import']('tests/es6-cjs-named-export.js').then(function(m) {
     ok(m.someExport == 'asdf');
@@ -853,6 +852,7 @@ asyncTest('Multi-format deps meta', function() {
     start();
   }, err);
 });
+
 
 asyncTest('Wildcard meta', function() {
   System.config({
@@ -914,6 +914,7 @@ asyncTest('Package configuration CommonJS config example', function() {
   }, err);
 });
 
+if (!ie8)
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
 
@@ -932,6 +933,7 @@ asyncTest('Boolean conditional false', function() {
   }, err);
 });
 
+if (!ie8)
 asyncTest('Boolean conditional true', function() {
   System.set('env', System.newModule({ 'js': { 'es5': true } }));
 
