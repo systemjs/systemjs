@@ -871,6 +871,22 @@ asyncTest('Wildcard meta', function() {
   });
 });
 
+asyncTest('AMD-style loader first syntax', function() {
+  System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
+  System.map['coffee'] = 'tests/compiler-plugin.js';
+  System.config({
+    meta: {
+      '*': {
+        loaderFirst: true
+      }
+    }
+  })
+  System['import']('coffee!bootstrap/test.coffee').then(function(m) {
+    ok(m.extra == 'yay!', 'not working');
+    start();
+  }, err);
+});
+
 asyncTest('Package configuration CommonJS config example', function() {
   System.config({
     packages: {
