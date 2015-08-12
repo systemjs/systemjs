@@ -438,6 +438,17 @@ asyncTest('Mapping a plugin argument', function() {
   }, err);
 });
 
+asyncTest('Using pluginFirst config', function() {
+  System.pluginFirst = true;
+  System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
+  System.map['coffee'] = 'tests/compiler-plugin.js';
+  System['import']('coffee!bootstrap/test.coffee').then(function(m) {
+    ok(m.extra == 'yay!', 'not working');
+    System.pluginFirst = false;
+    start();
+  }, err);
+});
+
 asyncTest('Advanced compiler plugin', function() {
   System['import']('tests/compiler-test.js!tests/advanced-plugin.js').then(function(m) {
     ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
