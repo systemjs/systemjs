@@ -50,7 +50,7 @@ it contains. Mismatched names will result in separate requests still being made.
 
 ### CSP-Compatible Production
 
-SystemJS comes with a separate build for production only. This is fully CSP-compatible using script tag injection to load scripts, 
+SystemJS comes with a separate build for production only. This is fully [CSP](http://www.html5rocks.com/en/tutorials/security/content-security-policy/)-compatible using script tag injection to load scripts, 
 while still remaining an extension of the ES6 Module Loader.
 
 Replace the `system.js` file with `dist/system-csp-production.js`.
