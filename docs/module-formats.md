@@ -111,8 +111,8 @@ window.require = window.requirejs = System.amdRequire;
 ### Globals
 
 The `global` format loads globals identically to if they were included via `<script>` tags 
-but with some extra features including the ability to [shim dependencies](####shim-dependencies), 
-set [custom globals](####custom-globals), and [define the exports](####exports) of the global module.
+but with some extra features including the ability to [shim dependencies](#shim-dependencies), 
+set [custom globals](#custom-globals), and [define the exports](#exports) of the global module.
 
 By default, the exports of a global are calculated as the diff of the environment global from before to after execution.
 
@@ -147,7 +147,7 @@ y = 'global';     // detected as a global
 These two cases fail in IE8, so do need to have their [exports explicitly declared](#exports) if compatibility is desired.
 
 > Globals are not removed from the global object for shim compatibility, but this could become possible in future if all globals
-use the [globals](#globals) meta for shims instead of [deps](####shim-dependencies).
+use the [globals](#globals) meta for shims instead of [deps](#shim-dependencies).
 
 #### Shim Dependencies
 
