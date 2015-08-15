@@ -224,7 +224,7 @@ System.config({
   Takes preference over defaultJSExtensions. Any filename containing a `.` is considered to have an extension.
   Can be set to `defaultExtension: false` to optionally opt-out of extension-adding when `defaultJSExtensions` is enabled.
 * `map`: Local and relative map configurations scoped to the package. Apply for subpaths as well.
-* `meta`: Package-scoped meta configuration with wildcard support. Meta paths are subpaths within the package path.
+* `meta`: Package-scoped meta configuration with wildcard support. Meta paths are subpaths within the package path. As an exeption these do don't through regular map and paths normalization. 
 
 #### paths
 Type: `Object`
