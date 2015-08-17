@@ -175,14 +175,25 @@ System.config({
 });
 ```
 
-* `format`: Sets in what format the module is loaded. See [Module Formats](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md).
-* `exports`: For `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set. It tells the loader what global name to read, this is then used as the module's export value. More info: [Exports](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#exports)
-* `deps`: Dependencies to load before this module. Goes through regular paths and map normalization. More info: [Shim Dependencies](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#shim-dependencies). Only supported for the `cjs`, `amd` and `global` formats.
-* `globals`: A map of global names to modules names that should be defined only for the execution of this module. Enables use of legacy code that expects certain globals to be present. Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats. More info: [Custom Globals](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#custom-globals).
-* `loader`: Set a loader for this meta path. More info: [Plugin loaders](https://github.com/systemjs/systemjs/blob/master/docs/overview.md#plugin-loaders).
-* `sourceMap`: For plugin transpilers to set the source map of their transpilation.
-* `nonce`: The "[nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute)" attribute to use when loading the script. This enables the use of a content security policy when CJS or plugin loaders are used. This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
-* `integrity`: The "[integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute)" attribute of a resource corresponds to the "script" integrity property describing the expected checksum of a resource. For example, if you know the sha checksum of "src/example.js" to be ```e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855``` then you can set the ```integrity``` of a resource in the System config like ```System.config({meta: {"src/example.js": {integrity: "sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}});```
+* [format](module-formats.md):
+  _Sets in what format the module is loaded._
+* [exports](module-formats.md#exports):
+  _For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
+  This tells the loader what global name to use as the module's export value._
+* [deps](module-formats.md#shim-dependencies): 
+  _Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats._
+* [globals](module-formats.md#custom-globals):
+  _A map of global names to module names that should be defined only for the execution of this module. 
+    Enables use of legacy code that expects certain globals to be present. 
+    Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats._
+* [loader](overview.md#plugin-loaders):
+  _Set a loader for this meta path._
+* [sourceMap](creating-plugins.md):
+  _For plugin transpilers to set the source map of their transpilation._
+* `nonce`: _The [nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
+  This should correspond to the "nonce-" attribute set in the Content-Security-Policy header._
+* `integrity`: _The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
+  For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash._
 
 #### packages
 Type: `Object`
