@@ -962,4 +962,18 @@ asyncTest('Loading a System.registerdynamic module (not bundled)', function() {
   }).then(null, err);
 });
 
+asyncTest('Importing a script with wrong integrity fails', function() {
+  System.config({
+    meta: {
+      'tests/csp/integrity.js': {
+        integrity: 'sha256-abc'
+      }
+    }
+  });
+  System['import']('tests/csp/integrity.js').then(err, function(e) {
+    ok(typeof e !== 'undefined');
+    start();
+  });
+});
+
 })(typeof window == 'undefined' ? global : window);

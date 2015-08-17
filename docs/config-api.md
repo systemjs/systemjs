@@ -181,6 +181,8 @@ System.config({
 * `globals`: A map of global names to modules names that should be defined only for the execution of this module. Enables use of legacy code that expects certain globals to be present. Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats. More info: [Custom Globals](https://github.com/systemjs/systemjs/blob/master/docs/module-formats.md#custom-globals).
 * `loader`: Set a loader for this meta path. More info: [Plugin loaders](https://github.com/systemjs/systemjs/blob/master/docs/overview.md#plugin-loaders).
 * `sourceMap`: For plugin transpilers to set the source map of their transpilation.
+* `nonce`: The "[nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute)" attribute to use when loading the script. This enables the use of a content security policy when CJS or plugin loaders are used. This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
+* `integrity`: The "[integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute)" attribute of a resource corresponds to the "script" integrity property describing the expected checksum of a resource. For example, if you know the sha checksum of "src/example.js" to be ```e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855``` then you can set the ```integrity``` of a resource in the System config like ```System.config({meta: {"src/example.js": {integrity: "sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}});```
 
 #### packages
 Type: `Object`
@@ -203,7 +205,7 @@ System.config({
       map: {
         // use local jquery for all jquery requires in this package
         'jquery': './vendor/local-jquery.js'
-        
+
         // import '/local/package/custom-import' should route to '/local/package/local/import/file.js'
         './custom-import': './local/import/file.js'
       }
