@@ -175,25 +175,25 @@ System.config({
 });
 ```
 
-* [format](module-formats.md):
-  _Sets in what format the module is loaded._
-* [exports](module-formats.md#exports):
-  _For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
-  This tells the loader what global name to use as the module's export value._
-* [deps](module-formats.md#shim-dependencies): 
-  _Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats._
-* [globals](module-formats.md#custom-globals):
-  _A map of global names to module names that should be defined only for the execution of this module. 
+* `[format](module-formats.md)`:
+  Sets in what format the module is loaded.
+* `[exports](module-formats.md#exports)`:
+  For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
+  This tells the loader what global name to use as the module's export value.
+* `[deps](module-formats.md#shim-dependencies)`: 
+  Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats.
+* `[globals](module-formats.md#custom-globals)`:
+  A map of global names to module names that should be defined only for the execution of this module. 
     Enables use of legacy code that expects certain globals to be present. 
-    Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats._
-* [loader](overview.md#plugin-loaders):
-  _Set a loader for this meta path._
-* [sourceMap](creating-plugins.md):
-  _For plugin transpilers to set the source map of their transpilation._
-* `nonce`: _The [nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
-  This should correspond to the "nonce-" attribute set in the Content-Security-Policy header._
-* `integrity`: _The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
-  For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash._
+    Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats.
+* `[loader](overview.md#plugin-loaders)`:
+  Set a loader for this meta path.
+* `[sourceMap](creating-plugins.md)`:
+  For plugin transpilers to set the source map of their transpilation.
+* `nonce`: The [nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
+  This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
+* `integrity`: The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
+  For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
 
 #### packages
 Type: `Object`
