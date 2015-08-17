@@ -175,20 +175,20 @@ System.config({
 });
 ```
 
-* `[format](module-formats.md)`:
+* [`format`](module-formats.md):
   Sets in what format the module is loaded.
-* `[exports](module-formats.md#exports)`:
+* [`exports`](module-formats.md#exports):
   For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
   This tells the loader what global name to use as the module's export value.
-* `[deps](module-formats.md#shim-dependencies)`: 
+* [`deps`](module-formats.md#shim-dependencies): 
   Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats.
-* `[globals](module-formats.md#custom-globals)`:
+* [`globals`](module-formats.md#custom-globals):
   A map of global names to module names that should be defined only for the execution of this module. 
     Enables use of legacy code that expects certain globals to be present. 
     Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats.
-* `[loader](overview.md#plugin-loaders)`:
+* [`loader`](overview.md#plugin-loaders):
   Set a loader for this meta path.
-* `[sourceMap](creating-plugins.md)`:
+* [`sourceMap`](creating-plugins.md):
   For plugin transpilers to set the source map of their transpilation.
 * `nonce`: The [nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
   This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
