@@ -15,7 +15,7 @@ Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global sc
 
 Built on top of the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
 
-~12KB minified and gzipped, runs in IE8+ and NodeJS.
+~14KB minified and gzipped, runs in IE8+ and NodeJS.
 
 For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
 

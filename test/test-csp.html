@@ -197,14 +197,14 @@
         System.config({
           meta: {
             'tests/csp/integrity.js': {
-              integrity: 'sha256-Mqlafeai37CqaOaqrc3_vWRwh7iQLyXxu-UyjtI_BGk='
+              integrity: 'sha256-_AfZ2eZSJyVU4HFktUpbsTEoSJF1hL5eGKjgdXZnNTw='
             }
           }
         });
         System['import']('tests/csp/integrity.js').then(function(m) {
           ok(m.integrity === 'integrity');
           start();
-        });
+        }, err);
       });
     </script>
   </body>
