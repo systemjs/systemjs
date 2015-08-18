@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.10
+ * SystemJS v0.18.11
  */
 (function(__global) {
 
@@ -1129,6 +1129,9 @@ function extendMeta(a, b, prepend) {
 
   function webWorkerImport(loader, load) {
     return new Promise(function(resolve, reject) {
+      if (load.metadata.integrity)
+        reject(new Error('Subresource integrity checking is not supported in web workers.'));
+
       try {
         importScripts(load.address);
       }
@@ -1193,6 +1196,10 @@ function extendMeta(a, b, prepend) {
         curSystem = __global.System;
         __global.System = loader;
         s.src = load.address;
+
+        if (load.metadata.integrity)
+          s.setAttribute('integrity', load.metadata.integrity);
+
         head.appendChild(s);
 
         function cleanup() {
@@ -1738,7 +1745,7 @@ hook('onScriptLoad', function(onScriptLoad) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
+        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && load.source.match(registerRegEx))
           load.metadata.format = 'register';
         return source;
       });
@@ -1776,7 +1783,8 @@ hook('onScriptLoad', function(onScriptLoad) {
         anonRegister = null;
         calledRegister = false;
 
-        __exec.call(loader, load);
+        if (typeof __exec != 'undefined')
+          __exec.call(loader, load);
 
         if (!calledRegister && !load.metadata.registered)
           throw new TypeError(load.name + ' detected as System.register but didn\'t execute.');

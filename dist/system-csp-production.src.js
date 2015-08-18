@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.10
+ * SystemJS v0.18.11
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1323,6 +1323,9 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   function webWorkerImport(loader, load) {
     return new Promise(function(resolve, reject) {
+      if (load.metadata.integrity)
+        reject(new Error('Subresource integrity checking is not supported in web workers.'));
+
       try {
         importScripts(load.address);
       }
@@ -1387,6 +1390,10 @@ SystemJSLoader.prototype.config = function(cfg) {
         curSystem = __global.System;
         __global.System = loader;
         s.src = load.address;
+
+        if (load.metadata.integrity)
+          s.setAttribute('integrity', load.metadata.integrity);
+
         head.appendChild(s);
 
         function cleanup() {
@@ -1932,7 +1939,7 @@ hook('onScriptLoad', function(onScriptLoad) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
+        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && load.source.match(registerRegEx))
           load.metadata.format = 'register';
         return source;
       });
@@ -1970,7 +1977,8 @@ hook('onScriptLoad', function(onScriptLoad) {
         anonRegister = null;
         calledRegister = false;
 
-        __exec.call(loader, load);
+        if (typeof __exec != 'undefined')
+          __exec.call(loader, load);
 
         if (!calledRegister && !load.metadata.registered)
           throw new TypeError(load.name + ' detected as System.register but didn\'t execute.');
@@ -2883,7 +2891,6 @@ hook('normalize', function(normalize) {
         .then(function(loaderModule) {
           // store the plugin module itself on the metadata
           load.metadata.loaderModule = loaderModule;
-          load.metadata.loaderArgument = name;
 
           load.address = address;
           if (loaderModule.locate)
@@ -3196,7 +3203,7 @@ hook('normalize', function(normalize) {
   hook('fetch', function(fetch) {
     return function(load) {
       var loader = this;
-      if (loader.trace)
+      if (loader.trace || loader.builder)
         return fetch.call(loader, load);
       
       // if already defined, no need to load a bundle

@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.10
+ * SystemJS v0.18.11
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1200,6 +1200,8 @@ var __exec;
   // this may lead to some global module execution differences (eg var not defining onto global)
   if (isWorker || isBrowser && window.chrome && window.chrome.extension) {
     __exec = function(load) {
+      if (load.metadata.integrity)
+        throw new Error('Subresource integrity checking is not supported in Web Workers or Chrome Extensions.');
       try {
         preExec(this);
         new Function(getSource(load)).call(__global);
@@ -1230,6 +1232,12 @@ var __exec;
         e = addToError(_e, 'Evaluating ' + load.address);
       }
       preExec(this);
+
+      if (load.metadata.integrity)
+        script.setAttribute('integrity', load.metadata.integrity);
+      if (load.metadata.nonce)
+        script.setAttribute('nonce', load.metadata.nonce);
+
       head.appendChild(script);
       head.removeChild(script);
       postExec();
@@ -1243,6 +1251,8 @@ var __exec;
     var vmModule = 'vm';
     var vm = require(vmModule);
     __exec = function(load) {
+      if (load.metadata.integrity)
+        throw new Error('Subresource integrity checking is unavailable in Node.');
       try {
         preExec(this);
         vm.runInThisContext(getSource(load));
@@ -1580,6 +1590,9 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   function webWorkerImport(loader, load) {
     return new Promise(function(resolve, reject) {
+      if (load.metadata.integrity)
+        reject(new Error('Subresource integrity checking is not supported in web workers.'));
+
       try {
         importScripts(load.address);
       }
@@ -1644,6 +1657,10 @@ SystemJSLoader.prototype.config = function(cfg) {
         curSystem = __global.System;
         __global.System = loader;
         s.src = load.address;
+
+        if (load.metadata.integrity)
+          s.setAttribute('integrity', load.metadata.integrity);
+
         head.appendChild(s);
 
         function cleanup() {
@@ -2154,7 +2171,7 @@ SystemJSLoader.prototype.config = function(cfg) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || !load.metadata.format && load.source.match(registerRegEx))
+        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && load.source.match(registerRegEx))
           load.metadata.format = 'register';
         return source;
       });
@@ -2192,7 +2209,8 @@ SystemJSLoader.prototype.config = function(cfg) {
         anonRegister = null;
         calledRegister = false;
 
-        __exec.call(loader, load);
+        if (typeof __exec != 'undefined')
+          __exec.call(loader, load);
 
         if (!calledRegister && !load.metadata.registered)
           throw new TypeError(load.name + ' detected as System.register but didn\'t execute.');
@@ -3482,7 +3500,6 @@ hook('normalize', function(normalize) {
         .then(function(loaderModule) {
           // store the plugin module itself on the metadata
           load.metadata.loaderModule = loaderModule;
-          load.metadata.loaderArgument = name;
 
           load.address = address;
           if (loaderModule.locate)
@@ -3795,7 +3812,7 @@ hook('normalize', function(normalize) {
   hook('fetch', function(fetch) {
     return function(load) {
       var loader = this;
-      if (loader.trace)
+      if (loader.trace || loader.builder)
         return fetch.call(loader, load);
       
       // if already defined, no need to load a bundle
