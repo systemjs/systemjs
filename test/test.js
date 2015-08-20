@@ -967,4 +967,12 @@ asyncTest('Importing a script with wrong integrity fails', function() {
   });
 });
 
+if (typeof process != 'undefined')
+asyncTest('Loading Node core modules', function() {
+  System['import']('@node/fs').then(function(m) {
+    ok(m.writeFile);
+    start();
+  });
+});
+
 })(typeof window == 'undefined' ? global : window);
