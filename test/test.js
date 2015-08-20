@@ -888,6 +888,9 @@ asyncTest('Package configuration CommonJS config example', function() {
     packages: {
       'tests/testpkg': {
         main: './noext',
+        map: {
+          "testpkg": "."
+        },
         asdf: 'asdf'
       }
     }
@@ -899,7 +902,8 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/dir/test'),
     System['import']('tests/testpkg/dir2'),
     System['import']('tests/testpkg/dir/'),
-    System['import']('tests/testpkg/env-module')
+    System['import']('tests/testpkg/env-module'),
+    System['import']('tests/testpkg/self')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
@@ -907,6 +911,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     ok(m[3].json == 'index');
     ok(m[4] == 'dirindex');
     ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
+    ok(m[6].prop == 'value');
     start();
   }, err);
 });
