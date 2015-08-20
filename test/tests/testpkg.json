@@ -1,5 +1,5 @@
 {
-  "main": "./noext",
+  "main": "wrong-main",
   "format": "cjs",
   "defaultExtension": "js",
   "meta": {

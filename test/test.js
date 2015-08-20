@@ -887,6 +887,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     packagePaths: ['tests/testpk*'],
     packages: {
       'tests/testpkg': {
+        main: './noext',
         asdf: 'asdf'
       }
     }
