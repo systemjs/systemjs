@@ -884,24 +884,10 @@ asyncTest('Wildcard meta', function() {
 
 asyncTest('Package configuration CommonJS config example', function() {
   System.config({
+    packagePaths: ['tests/testpk*'],
     packages: {
       'tests/testpkg': {
         main: './noext',
-        format: 'cjs',
-        defaultExtension: 'js',
-        meta: {
-          '*.json': { loader: './json.js' },
-          'noext': { alias: './json.json' },
-        },
-        map: {
-          './json': './json.json',
-          './dir/': './dir/index.js',
-          './dir2': './dir2/index.json',
-          './dir/test': './test.ts',
-          './env-module': {
-            'browser': './env-module-browser.js'
-          }
-        },
         asdf: 'asdf'
       }
     }
