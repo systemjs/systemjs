@@ -1,5 +1,6 @@
 {
   "main": "wrong-main",
+  "basePath": "lib",
   "format": "cjs",
   "defaultExtension": "js",
   "meta": {
