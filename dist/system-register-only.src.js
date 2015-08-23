@@ -1086,6 +1086,40 @@ function group(deps) {
   return { names: names, indices: indices };
 }
 
+var getOwnPropertyDescriptor = true;
+try {
+  Object.getOwnPropertyDescriptor({ a: 0 }, 'a');
+}
+catch(e) {
+  getOwnPropertyDescriptor = false;
+}
+
+// converts any module.exports object into an object ready for System.newModule
+function getESModule(exports) {
+  var esModule = {};
+  // don't trigger getters/setters in environments that support them
+  if (typeof exports == 'object' || typeof exports == 'function') {
+    if (getOwnPropertyDescriptor) {
+      var d;
+      for (var p in exports)
+        if (d = Object.getOwnPropertyDescriptor(exports, p))
+          defineProperty(esModule, p, d);
+    }
+    else {
+      var hasOwnProperty = exports && exports.hasOwnProperty;
+      for (var p in exports) {
+        if (!hasOwnProperty || exports.hasOwnProperty(p))
+          esModule[p] = exports[p];
+      }
+    }
+  }
+  esModule['default'] = exports;
+  defineProperty(esModule, '__useDefault', {
+    value: true
+  });
+  return esModule;
+}
+
 function extend(a, b, prepend) {
   for (var p in b) {
     if (!prepend || !(p in a))
@@ -1267,14 +1301,6 @@ hook('onScriptLoad', function(onScriptLoad) {
  *
  */
 (function() {
-
-  var getOwnPropertyDescriptor = true;
-  try {
-    Object.getOwnPropertyDescriptor({ a: 0 }, 'a');
-  }
-  catch(e) {
-    getOwnPropertyDescriptor = false;
-  }
 
   /*
    * There are two variations of System.register:
@@ -1637,33 +1663,10 @@ hook('onScriptLoad', function(onScriptLoad) {
     // create the esModule object, which allows ES6 named imports of dynamics
     exports = module.exports;
 
-    if (exports && exports.__esModule) {
+    if (exports && exports.__esModule)
       entry.esModule = exports;
-    }
-    else {
-      entry.esModule = {};
-
-      // don't trigger getters/setters in environments that support them
-      if (typeof exports == 'object' || typeof exports == 'function') {
-        if (getOwnPropertyDescriptor) {
-          var d;
-          for (var p in exports)
-            if (d = Object.getOwnPropertyDescriptor(exports, p))
-              defineProperty(entry.esModule, p, d);
-        }
-        else {
-          var hasOwnProperty = exports && exports.hasOwnProperty;
-          for (var p in exports) {
-            if (!hasOwnProperty || exports.hasOwnProperty(p))
-              entry.esModule[p] = exports[p];
-          }
-        }
-      }
-      entry.esModule['default'] = exports;
-      defineProperty(entry.esModule, '__useDefault', {
-        value: true
-      });
-    }
+    else
+      entry.esModule = getESModule(exports);
   }
 
   /*
