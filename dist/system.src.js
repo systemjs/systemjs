@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.11
+ * SystemJS v0.18.12
  */
 (function() {
 function bootstrap() {(function(__global) {
