@@ -884,6 +884,9 @@ asyncTest('Wildcard meta', function() {
 
 asyncTest('Package configuration CommonJS config example', function() {
   System.config({
+    map: {
+      'global-test': 'tests/testpkg/test.ts'
+    },
     packagePaths: ['tests/testpk*'],
     packages: {
       'tests/testpkg': {

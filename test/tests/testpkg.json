@@ -11,7 +11,7 @@
     "./json": "./json.json",
     "./dir/": "./dir/index.js",
     "./dir2": "./dir2/index.json",
-    "./dir/test": "./test.ts",
+    "./dir/test": "global-test",
     "./env-module": {
       "browser": "./env-module-browser.js"
     }
