@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.13
+ * SystemJS v0.18.14
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -3275,6 +3275,10 @@ hook('normalize', function(normalize) {
     if (pkgName === normalized && pkg.main)
       normalized += '/' + (pkg.main.substr(0, 2) == './' ? pkg.main.substr(2) : pkg.main);
 
+    // allow for direct package name normalization with trailling "/" (no main)
+    if (normalized.length == pkgName.length + 1 && normalized[pkgName.length] == '/')
+      return normalized + (defaultJSExtension && normalized.substr(normalized.length - 3, 3) != '.js' ? '.js' : '');
+
     // defaultExtension & defaultJSExtension
     // if we have meta for this package, don't do defaultExtensions
     var defaultExtension = '';
@@ -3294,10 +3298,6 @@ hook('normalize', function(normalize) {
     // no submap if name is package itself
     if (normalized.length == pkgName.length)
       return normalized + defaultExtension;
-
-    // allow for direct package name normalization with trailling "/" (no main)
-    if (normalized.length == pkgName.length + 1 && normalized[pkgName.length] == '/')
-      return normalized;
 
     // sync normalize does not apply package map
     if (sync || !pkg.map)
