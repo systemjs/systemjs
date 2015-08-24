@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.12
+ * SystemJS v0.18.13
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1563,18 +1563,20 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   if (cfg.packages) {
     for (var p in cfg.packages) {
-      var prop = this.normalizeSync(p);
+      // request with trailing "/" to get package name exactly
+      var prop = this.normalizeSync(p + '/');
+      prop = prop.substr(0, prop.length - 1);
 
       // if doing default js extensions, undo to get package name
       if (this.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js')
         prop = prop.substr(0, prop.length - 3);
 
       this.packages[prop]= this.packages[prop] || {};
-      for (var q in cfg.packages[p]) {
+      for (var q in cfg.packages[p])
         if (indexOf.call(packageProperties, q) == -1 && typeof console != 'undefined' && console.warn)
           console.warn('"' + q + '" is not a valid package configuration option in package ' + p);
-        this.packages[prop][q] = cfg.packages[p][q];
-      }
+
+      extendMeta(this.packages[prop], cfg.packages[p]);
     }
   }
 
@@ -3292,6 +3294,10 @@ hook('normalize', function(normalize) {
     // no submap if name is package itself
     if (normalized.length == pkgName.length)
       return normalized + defaultExtension;
+
+    // allow for direct package name normalization with trailling "/" (no main)
+    if (normalized.length == pkgName.length + 1 && normalized[pkgName.length] == '/')
+      return normalized;
 
     // sync normalize does not apply package map
     if (sync || !pkg.map)
