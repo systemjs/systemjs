@@ -2658,8 +2658,8 @@ hook('normalize', function(normalize) {
     if (!pkg.meta || !(pkg.meta[normalized.substr(pkgName.length + 1)] || pkg.meta['./' + normalized.substr(pkgName.length + 1)])) {
       // apply defaultExtension
 
-      if ('defaultExtension' in pkg) {
-        if (pkg.defaultExtension !== false && normalized.split('/').pop().lastIndexOf('.') == -1)
+      if ('defaultExtension' in pkg && pkgName !== normalized) {
+        if (pkg.defaultExtension !== false && (normalized.split('/').pop().lastIndexOf('.') == -1))
           defaultExtension = '.' + pkg.defaultExtension;
       }
       // apply defaultJSExtensions if defaultExtension not set
