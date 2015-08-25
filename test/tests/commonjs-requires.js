@@ -5,6 +5,8 @@ exports.d1 = require(
 exports.d2 = (require
 ("./commonjs-d.js"));
 
+var regex = /  \/* /;
+
 exports.d3 = "require('not a dep')";
 
 exports.d4 = "text/* require('still not a dep') text";
