@@ -126,6 +126,7 @@ Additional Plugins:
 
 * [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
 * [Jade](https://github.com/johnsoftek/plugin-jade)
+* [Jade VirtualDOM](https://github.com/WorldMaker/system-jade-virtualdom)
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md').then(function(html) {})`
 * [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
