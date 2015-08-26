@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.14
+ * SystemJS v0.18.15
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2697,17 +2697,16 @@ hook('normalize', function(normalize) {
       if (mapped) {
         // '.' as a target is the package itself (with package main check)
         if (mapped == '.')
-          normalized = loader.normalizeSync(pkgName);
+          return loader.normalizeSync(pkgName);
         // internal package map
         else if (mapped.substr(0, 2) == './')
-          normalized = pkgName + '/' + basePath + mapped.substr(2);
+          return pkgName + '/' + basePath + mapped.substr(2);
         // global package map
         else
-          normalized = normalize.call(loader, mapped); 
+          return loader.normalize.call(loader, mapped); 
       }
       else
-        normalized = pkgName + '/' + basePath + normalized.substr(pkgName.length + 1) + defaultExtension;
-      return normalized;
+        return pkgName + '/' + basePath + normalized.substr(pkgName.length + 1) + defaultExtension;
     });
   }
 

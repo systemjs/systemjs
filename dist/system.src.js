@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.14
+ * SystemJS v0.18.15
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2593,18 +2593,29 @@ hookConstructor(function(constructor) {
   var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
   function getCJSDeps(source) {
-    cjsRequireRegEx.lastIndex = 0;
+    cjsRequireRegEx.lastIndex = commentRegEx.lastIndex = 0;
 
     var deps = [];
 
-    // remove comments from the source first, if not minified
-    if (source.length / source.split('\n').length < 200)
-      source = source.replace(commentRegEx, '');
-
+    // track comments in the source
     var match;
+    
+    var commentLocations = [];
+    if (source.length / source.split('\n').length < 200) {
+      while (match = commentRegEx.exec(source))
+        commentLocations.push([match.index, match.index + match[0].length]);
+    }
 
-    while (match = cjsRequireRegEx.exec(source))
-      deps.push(match[1].substr(1, match[1].length - 2));
+    while (match = cjsRequireRegEx.exec(source)) {
+      // ensure we're not in a comment location
+      var inComment = false;
+      for (var i = 0; i < commentLocations.length; i++) {
+        if (commentLocations[i][0] < match.index && commentLocations[i][1] > match.index + match[0].length)
+          inComment = true;
+      }
+      if (!inComment)
+        deps.push(match[1].substr(1, match[1].length - 2));
+    }
 
     return deps;
   }
@@ -3318,17 +3329,16 @@ hook('normalize', function(normalize) {
       if (mapped) {
         // '.' as a target is the package itself (with package main check)
         if (mapped == '.')
-          normalized = loader.normalizeSync(pkgName);
+          return loader.normalizeSync(pkgName);
         // internal package map
         else if (mapped.substr(0, 2) == './')
-          normalized = pkgName + '/' + basePath + mapped.substr(2);
+          return pkgName + '/' + basePath + mapped.substr(2);
         // global package map
         else
-          normalized = normalize.call(loader, mapped); 
+          return loader.normalize.call(loader, mapped); 
       }
       else
-        normalized = pkgName + '/' + basePath + normalized.substr(pkgName.length + 1) + defaultExtension;
-      return normalized;
+        return pkgName + '/' + basePath + normalized.substr(pkgName.length + 1) + defaultExtension;
     });
   }
 
