@@ -91,6 +91,20 @@
 			    }, err);
 			  }, err);
 			});
+
+			System.config({
+				packages: {
+					'tests/no-default-ext': {
+						defaultExtension: false
+					}
+				}
+			});
+			asyncTest('No default extension', function(err) {
+				System['import']('tests/no-default-ext/file.ext').then(function(m) {
+					ok(m.ext == 'ext');
+					start();
+				}, err);
+			});
 		</script>
 	</body>
 </html>
