@@ -1,1 +1,1 @@
-export var ext = 'ext';
+exports.ext = 'ext';

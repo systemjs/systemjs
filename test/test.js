@@ -887,7 +887,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     map: {
       'global-test': 'tests/testpkg/test.ts'
     },
-    packagePaths: ['tests/testpk*'],
+    packagePaths: ['tests/testpkg'],
     packages: {
       'tests/testpkg': {
         main: './noext',
@@ -973,7 +973,8 @@ asyncTest('Package edge cases', function() {
   // ensure trailing "/" is equivalent to "tests/testpkg"
   System.config({
     packages: {
-      'tests/testpkg/': {
+      'tests/testpkg2/': {
+        basePath: '.',
         defaultExtension: 'js'
       }
     }
@@ -982,8 +983,15 @@ asyncTest('Package edge cases', function() {
   // we now have nested packages:
   // testpkg/ within test/ within / root://
   // we're testing that we always select the rules of the inner package
-  System.import('tests/testpkg/asdf').then(function(m) {
+  System['import']('tests/testpkg2/asdf').then(function(m) {
     ok(m.asdf == 'asdf');
+
+    var revertPkg = { defaultExtension: false };
+    System.config({
+      '.': revertPkg,
+      '/': revertPkg,
+      '../': revertPkg
+    });
     start();
   }, err);
 });
