@@ -919,6 +919,74 @@ asyncTest('Package configuration CommonJS config example', function() {
   }, err);
 });
 
+asyncTest('Package edge cases', function() {
+
+  var pkgCfg = { defaultExtension: 'asdf' };
+
+  try {
+    System.config({
+      packages: {
+        '//': pkgCfg
+      }
+    });
+    ok(false);
+  }
+  catch(e) {
+    ok(e.toString().indexOf('not a valid package name') != -1);
+  }
+
+  try {
+    System.config({
+      packages: {
+        'https://': pkgCfg
+      }
+    });
+    ok(false);
+  }
+  catch(e) {
+    ok(e.toString().indexOf('not a valid package name') != -1);
+  }
+
+  System.config({
+    packages: {
+      'https://cdn.jquery.com': pkgCfg,
+      '//cdn.jquery.com': pkgCfg
+    }
+  });
+
+  System.config({
+    packages: {
+      // both equivalent:
+      '.': pkgCfg,
+      './': pkgCfg,
+
+      // both equivalent:
+      '/': pkgCfg,
+
+      // this is now a nested package
+      // but our trailling / should avoid extension rules
+      '../': pkgCfg
+    }
+  });
+
+  // ensure trailing "/" is equivalent to "tests/testpkg"
+  System.config({
+    packages: {
+      'tests/testpkg/': {
+        defaultExtension: 'js'
+      }
+    }
+  });
+
+  // we now have nested packages:
+  // testpkg/ within test/ within / root://
+  // we're testing that we always select the rules of the inner package
+  System.import('tests/testpkg/asdf').then(function(m) {
+    ok(m.asdf == 'asdf');
+    start();
+  }, err);
+});
+
 if (!ie8)
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
