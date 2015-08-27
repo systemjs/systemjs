@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.15
+ * SystemJS v0.18.17
  */
 (function(__global) {
 
@@ -1391,6 +1391,7 @@ hook('onScriptLoad', function(onScriptLoad) {
    *
    *    For dynamic we track the es module with:
    *    - esModule actual es module value
+   *    - esmExports whether to extend the esModule with named exports
    *      
    *    Then for declarative only we track dynamic bindings with the 'module' records:
    *      - name
@@ -1663,10 +1664,15 @@ hook('onScriptLoad', function(onScriptLoad) {
     // create the esModule object, which allows ES6 named imports of dynamics
     exports = module.exports;
 
+    // __esModule flag treats as already-named
     if (exports && exports.__esModule)
       entry.esModule = exports;
-    else
+    // set module as 'default' export, then fake named exports by iterating properties
+    else if (entry.esmExports)
       entry.esModule = getESModule(exports);
+    // just use the 'default' export
+    else
+      entry.esModule = { 'default': exports };
   }
 
   /*
@@ -1822,6 +1828,7 @@ hook('onScriptLoad', function(onScriptLoad) {
       entry.deps = grouped.names;
       entry.originalIndices = grouped.indices;
       entry.name = load.name;
+      entry.esmExports = load.metadata.esmExports !== false;
 
       // first, normalize all dependencies
       var normalizePromises = [];

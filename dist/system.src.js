@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.15
+ * SystemJS v0.18.17
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1489,7 +1489,7 @@ hook('import', function(systemImport) {
   For easy normalization canonicalization with latest URL support.
 
 */
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map'];
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
 SystemJSLoader.prototype.config = function(cfg) {
 
   // always configure baseURL first
@@ -1563,8 +1563,11 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   if (cfg.packages) {
     for (var p in cfg.packages) {
+      if (p.match(/^([^\/]+:)?\/\/$/))
+        throw new TypeError('"' + p + '" is not a valid package name.');
+
       // request with trailing "/" to get package name exactly
-      var prop = this.normalizeSync(p + '/');
+      var prop = this.normalizeSync(p + (p[p.length - 1] != '/' ? '/' : ''));
       prop = prop.substr(0, prop.length - 1);
 
       // if doing default js extensions, undo to get package name
@@ -1829,6 +1832,7 @@ SystemJSLoader.prototype.config = function(cfg) {
    *
    *    For dynamic we track the es module with:
    *    - esModule actual es module value
+   *    - esmExports whether to extend the esModule with named exports
    *      
    *    Then for declarative only we track dynamic bindings with the 'module' records:
    *      - name
@@ -2101,10 +2105,15 @@ SystemJSLoader.prototype.config = function(cfg) {
     // create the esModule object, which allows ES6 named imports of dynamics
     exports = module.exports;
 
+    // __esModule flag treats as already-named
     if (exports && exports.__esModule)
       entry.esModule = exports;
-    else
+    // set module as 'default' export, then fake named exports by iterating properties
+    else if (entry.esmExports)
       entry.esModule = getESModule(exports);
+    // just use the 'default' export
+    else
+      entry.esModule = { 'default': exports };
   }
 
   /*
@@ -2260,6 +2269,7 @@ SystemJSLoader.prototype.config = function(cfg) {
       entry.deps = grouped.names;
       entry.originalIndices = grouped.indices;
       entry.name = load.name;
+      entry.esmExports = load.metadata.esmExports !== false;
 
       // first, normalize all dependencies
       var normalizePromises = [];
@@ -3215,10 +3225,18 @@ hook('normalize', function(normalize) {
   });
 
   function getPackage(name) {
+    // use most specific package
+    var curPkg, curPkgLen = 0, pkgLen;
     for (var p in this.packages) {
-      if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/'))
-        return p;
+      if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/')) {
+        pkgLen = p.split('/').length;
+        if (pkgLen > curPkgLen) {
+          curPkg = p;
+          curPkgLen = pkgLen;
+        }
+      }
     }
+    return curPkg;
   }
 
   function applyMap(map, name) {
@@ -3295,8 +3313,7 @@ hook('normalize', function(normalize) {
     var defaultExtension = '';
     if (!pkg.meta || !(pkg.meta[normalized.substr(pkgName.length + 1)] || pkg.meta['./' + normalized.substr(pkgName.length + 1)])) {
       // apply defaultExtension
-
-      if ('defaultExtension' in pkg && pkgName !== normalized) {
+      if ('defaultExtension' in pkg && pkgName !== normalized && normalized[normalized.length - 1] != '/') {
         if (pkg.defaultExtension !== false && (normalized.split('/').pop().lastIndexOf('.') == -1))
           defaultExtension = '.' + pkg.defaultExtension;
       }
@@ -3389,9 +3406,9 @@ hook('normalize', function(normalize) {
         var pkgPath;
         for (var i = 0; i < this.packagePaths.length; i++) {
           var match = normalized.match(packagePathsRegExps[this.packagePaths[i]] || 
-              (packagePathsRegExps[this.packagePaths[i]] = new RegExp('^' + this.packagePaths[i].replace(/\*/g, '[^\\/]+'))));
+              (packagePathsRegExps[this.packagePaths[i]] = new RegExp('^(' + this.packagePaths[i].replace(/\*/g, '[^\\/]+') + ')(\/|$)')));
           if (match) {
-            pkgPath = match[0];
+            pkgPath = match[1];
             break;
           }
         }
