@@ -887,7 +887,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     map: {
       'global-test': 'tests/testpkg/test.ts'
     },
-    packagePaths: ['tests/testpkg'],
+    packageConfigPaths: ['tests/testpkg'],
     packages: {
       'tests/testpkg': {
         main: './noext',
