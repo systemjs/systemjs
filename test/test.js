@@ -960,12 +960,13 @@ asyncTest('Package edge cases', function() {
       '.': pkgCfg,
       './': pkgCfg,
 
-      // both equivalent:
       '/': pkgCfg,
 
       // this is now a nested package
       // but our trailling / should avoid extension rules
-      '../': pkgCfg
+      // both equivalent:
+      '../': pkgCfg,
+      '..': pkgCfg
     }
   });
 
