@@ -57,7 +57,7 @@ in the baseURL path, then set the transpiler:
 <script>
   System.config({
     // or 'traceur' or 'typescript'
-    transpiler: 'babel'
+    transpiler: 'babel',
     // or traceurOptions or typescriptOptions
     babelOptions: {
 
