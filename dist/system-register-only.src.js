@@ -986,7 +986,7 @@ function applyPaths(paths, name) {
   }
 
   var outPath = paths[pathMatch] || name;
-  if (typeof wildcard == 'string')
+  if (wildcard)
     outPath = outPath.replace('*', wildcard);
 
   return outPath;
