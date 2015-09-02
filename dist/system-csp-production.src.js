@@ -987,7 +987,7 @@ function applyPaths(paths, name) {
   }
 
   var outPath = paths[pathMatch] || name;
-  if (typeof wildcard == 'string')
+  if (wildcard)
     outPath = outPath.replace('*', wildcard);
 
   return outPath;
@@ -1252,6 +1252,15 @@ SystemJSLoader.prototype.config = function(cfg) {
       this.paths[p] = cfg.paths[p];
   }
 
+  if (cfg.basicAuth) {
+    if (typeof this.basicAuth === 'undefined') {
+      this.basicAuth = {};
+    }
+    for (var a in cfg.basicAuth) {
+      this.basicAuth[a] = cfg.basicAuth[a];
+    }
+  }
+
   if (cfg.map) {
     for (var p in cfg.map) {
       var v = cfg.map[p];
@@ -1284,13 +1293,13 @@ SystemJSLoader.prototype.config = function(cfg) {
     }
   }
 
-  if (cfg.packagePaths) {
-    for (var i = 0; i < cfg.packagePaths.length; i++) {
-      var path = cfg.packagePaths[i];
+  if (cfg.packageConfigPaths) {
+    for (var i = 0; i < cfg.packageConfigPaths.length; i++) {
+      var path = cfg.packageConfigPaths[i];
       var normalized = this.normalizeSync(path);
       if (this.defaultJSExtensions && path.substr(path.length - 3, 3) != '.js')
         normalized = normalized.substr(0, normalized.length - 3);
-      cfg.packagePaths[i] = normalized;
+      cfg.packageConfigPaths[i] = normalized;
     }
   }
 
@@ -2561,25 +2570,25 @@ hook('normalize', function(normalize) {
  * Package Configuration Loading
  * 
  * Not all packages may already have their configuration present in the System config
- * For these cases, a list of packagePaths can be provided, which when matched against
+ * For these cases, a list of packageConfigPaths can be provided, which when matched against
  * a request, will first request a ".json" file by the package name to derive the package
  * configuration from. This allows dynamic loading of non-predetermined code, a key use
  * case in SystemJS.
  *
  * Example:
  * 
- *   System.packagePaths = ['packages/*'];
+ *   System.packageConfigPaths = ['packages/*'];
  *
  *   // will first request 'packages/new-package.json' for the package config
  *   // before completing the package request to 'packages/new-package/path'
  *   System.import('packages/new-package/path');
  *
- * When a package matches packagePaths, it will always send a config request for
+ * When a package matches packageConfigPaths, it will always send a config request for
  * the package configuration.
  * Any existing package configurations for the package will deeply merge with the 
  * package config, with the existing package configurations taking preference.
  * To opt-out of the package configuration request for a package that matches
- * packagePaths, use the { loadConfig: false } package config option.
+ * packageConfigPaths, use the { loadConfig: false } package config option.
  * 
  */
 (function() {
@@ -2588,7 +2597,7 @@ hook('normalize', function(normalize) {
     return function() {
       constructor.call(this);
       this.packages = {};
-      this.packagePaths = {};
+      this.packageConfigPaths = {};
     };
   });
 
@@ -2727,7 +2736,7 @@ hook('normalize', function(normalize) {
     });
   }
 
-  var packagePathsRegExps = {};
+  var packageConfigPathsRegExps = {};
   var pkgConfigPromises = {};
   function createPackageNormalize(normalize, sync) {
     return function(name, parentName) {
@@ -2769,12 +2778,12 @@ hook('normalize', function(normalize) {
 
       var loader = this;
       
-      // check if we match a packagePaths
+      // check if we match a packageConfigPaths
       if (!sync) {
         var pkgPath;
-        for (var i = 0; i < this.packagePaths.length; i++) {
-          var match = normalized.match(packagePathsRegExps[this.packagePaths[i]] || 
-              (packagePathsRegExps[this.packagePaths[i]] = new RegExp('^(' + this.packagePaths[i].replace(/\*/g, '[^\\/]+') + ')(\/|$)')));
+        for (var i = 0; i < this.packageConfigPaths.length; i++) {
+          var match = normalized.match(packageConfigPathsRegExps[this.packageConfigPaths[i]] || 
+              (packageConfigPathsRegExps[this.packageConfigPaths[i]] = new RegExp('^(' + this.packageConfigPaths[i].replace(/\*/g, '[^\\/]+') + ')(\/|$)')));
           if (match) {
             pkgPath = match[1];
             break;
