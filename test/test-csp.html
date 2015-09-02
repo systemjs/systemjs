@@ -28,6 +28,11 @@
         });  
       }
 
+      asyncTest('System version', function() {
+        ok(System.version.match(/^\d+\.\d+\.\d+ CSP$/));
+        start();
+      });
+
       asyncTest('Loading an AMD module', function() {
         System['import']('tests/amd-module.js').then(function(m) {
           ok(m.amd == true);

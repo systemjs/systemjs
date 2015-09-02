@@ -26,7 +26,12 @@
           throw e.stack || e;
           start();
         });  
-      }      
+      }
+
+      asyncTest('System version', function() {
+        ok(System.version.match(/^\d+\.\d+\.\d+ Register Only$/));
+        start();
+      });
 
       asyncTest('System.register Circular', function() {
         System['import']('tests/register-circular1.js').then(function(m) {

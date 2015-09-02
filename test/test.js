@@ -21,6 +21,11 @@ function err(e) {
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
 
+asyncTest('System version', function() {
+  ok(System.version.match(/^\d+\.\d+\.\d+ Standard$/));
+  start();
+});
+
 asyncTest('new Module().toString() == "Module"', function() {
   System['import']('tests/global.js').then(function() {
     var m = System.get(System.normalizeSync('tests/global.js'));
