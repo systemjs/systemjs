@@ -3,6 +3,8 @@ if (typeof Promise === 'undefined')
 if (typeof URL === 'undefined')
   require('es6-module-loader/src/url-polyfill');
 
+var version = require('./package.json').version;
+
 var isWindows = process.platform.match(/^win/);
 
 // set transpiler paths in Node
@@ -41,4 +43,8 @@ function SystemJSNodeLoader() {
 SystemJSNodeLoader.prototype = new SystemJSNodeLoaderProto();
 SystemJSNodeLoader.prototype.constructor = SystemJSNodeLoader;
 
-module.exports = global.System = new SystemJSNodeLoader();
+var System = new SystemJSNodeLoader();
+
+System.version = version + ' Node';
+
+module.exports = global.System = System;
