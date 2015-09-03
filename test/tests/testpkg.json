@@ -5,7 +5,8 @@
   "defaultExtension": "js",
   "meta": {
     "*.json": { "loader": "./json.js" },
-    "noext": { "alias": "./json.json" }
+    "noext": { "alias": "./json.json" },
+    "test.ts": true
   },
   "map": {
     "./json": "./json.json",

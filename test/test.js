@@ -988,7 +988,7 @@ asyncTest('Package edge cases', function() {
   // we now have nested packages:
   // testpkg/ within test/ within / root://
   // we're testing that we always select the rules of the inner package
-  System['import']('tests/testpkg2/asdf').then(function(m) {
+  System['import']('tests/testpkg2/asdf.asdf').then(function(m) {
     ok(m.asdf == 'asdf');
 
     var revertPkg = { defaultExtension: false };
