@@ -14,7 +14,7 @@ function err(e) {
     if (typeof window == 'undefined')
       console.log(e.stack || e);
     else
-      throw e.stack || e;
+      throw e;
     start();
   });
 }
