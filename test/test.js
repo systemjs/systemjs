@@ -926,10 +926,12 @@ asyncTest('Package configuration CommonJS config example', function() {
 
 asyncTest('Package edge cases', function() {
 
+  var clonedSystem = new System.constructor();
+
   var pkgCfg = { defaultExtension: 'asdf' };
 
   try {
-    System.config({
+    clonedSystem.config({
       packages: {
         '//': pkgCfg
       }
@@ -941,7 +943,7 @@ asyncTest('Package edge cases', function() {
   }
 
   try {
-    System.config({
+    clonedSystem.config({
       packages: {
         'https://': pkgCfg
       }
@@ -952,14 +954,14 @@ asyncTest('Package edge cases', function() {
     ok(e.toString().indexOf('not a valid package name') != -1);
   }
 
-  System.config({
+  clonedSystem.config({
     packages: {
       'https://cdn.jquery.com': pkgCfg,
       '//cdn.jquery.com': pkgCfg
     }
   });
 
-  System.config({
+  clonedSystem.config({
     packages: {
       // both equivalent:
       '.': pkgCfg,
@@ -976,7 +978,7 @@ asyncTest('Package edge cases', function() {
   });
 
   // ensure trailing "/" is equivalent to "tests/testpkg"
-  System.config({
+  clonedSystem.config({
     packages: {
       'tests/testpkg2/': {
         basePath: '.',
@@ -988,15 +990,8 @@ asyncTest('Package edge cases', function() {
   // we now have nested packages:
   // testpkg/ within test/ within / root://
   // we're testing that we always select the rules of the inner package
-  System['import']('tests/testpkg2/asdf.asdf').then(function(m) {
+  clonedSystem['import']('tests/testpkg2/asdf.asdf').then(function(m) {
     ok(m.asdf == 'asdf');
-
-    var revertPkg = { defaultExtension: false };
-    System.config({
-      '.': revertPkg,
-      '/': revertPkg,
-      '../': revertPkg
-    });
     start();
   }, err);
 });
