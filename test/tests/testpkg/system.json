@@ -1,4 +1,6 @@
 {
+  "README": "This is not encouraging a system.json, which is a bad idea.",
+
   "main": "wrong-main",
   "basePath": "lib",
   "format": "cjs",
