@@ -980,6 +980,7 @@ asyncTest('Package edge cases', function() {
 
   // ensure trailing "/" is equivalent to "tests/testpkg"
   clonedSystem.config({
+    packageConfigPaths: ['tests/*.json/'],
     packages: {
       'tests/testpkg2/': {
         basePath: '.',
@@ -994,7 +995,10 @@ asyncTest('Package edge cases', function() {
   clonedSystem['import']('tests/testpkg2/asdf.asdf').then(function(m) {
     ok(m.asdf == 'asdf');
     start();
-  }, err);
+  }, function() {
+    console.log(clonedSystem.packages);
+    err();
+  });
 });
 
 if (!ie8)
