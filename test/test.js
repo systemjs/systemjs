@@ -12,7 +12,7 @@ if (typeof window == 'undefined')
 function err(e) {
   setTimeout(function() {
     if (typeof window == 'undefined')
-      console.log(e.stack || e);
+      console.log(e && e.stack || e);
     else
       throw e;
     start();
@@ -995,10 +995,7 @@ asyncTest('Package edge cases', function() {
   clonedSystem['import']('tests/testpkg2/asdf.asdf').then(function(m) {
     ok(m.asdf == 'asdf');
     start();
-  }, function() {
-    console.log(clonedSystem.packages);
-    err();
-  });
+  }, err);
 });
 
 if (!ie8)
