@@ -499,6 +499,13 @@ asyncTest('System.register Circular', function() {
   }, err);
 });
 
+asyncTest('System.register regex test', function() {
+  System['import']('tests/register-regex.js').then(function(m) {
+    ok(m);
+    start();
+  }, err);
+});
+
 asyncTest('System.register group linking test', function() {
   System.config({
     bundles: {
