@@ -28,7 +28,9 @@
 
       QUnit.module("SystemJS JS Extensions");
 
-      System.defaultJSExtensions = true;
+      System.config({
+      	defaultJSExtensions: true
+      });
 			
 			asyncTest('Error handling', function() {
 			  System['import']('tests/main').then(function(m) {
