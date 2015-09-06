@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.17
+ * SystemJS v0.19.0-dev
  */
 (function(__global) {
 
@@ -1128,6 +1128,9 @@ function extend(a, b, prepend) {
   return a;
 }
 
+// package configuration options
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
+
 // meta first-level extends where:
 // array + array appends
 // object + object extends
@@ -1144,6 +1147,11 @@ function extendMeta(a, b, prepend) {
     else if (!prepend)
       a[p] = val;
   }
+}
+
+function dWarn(msg) {
+  if (this.deprecationWarnings && typeof console != 'undefined' && console.warn)
+    console.warn(msg + '\n\tDisable this message via System.config({ deprecationWarnings: false }).');
 }/*
  * Script tag fetch
  *
@@ -1721,7 +1729,11 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
+  var leadingCommentAndMetaRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*/;
+  function detectRegisterFormat(source) {
+    var leadingCommentAndMeta = source.match(leadingCommentAndMetaRegEx);
+    return leadingCommentAndMeta && source.substr(leadingCommentAndMeta[0].length, 15) == 'System.register';
+  }
 
   hook('fetch', function(fetch) {
     return function(load) {
@@ -1734,7 +1746,7 @@ hook('onScriptLoad', function(onScriptLoad) {
       anonRegister = null;
       calledRegister = false;
       
-      if (load.metadata.format == 'register')
+      if (load.metadata.format == 'register' && !load.metadata.authorization)
         load.metadata.scriptLoad = true;
 
       // NB remove when "deps " is deprecated
@@ -1754,7 +1766,7 @@ hook('onScriptLoad', function(onScriptLoad) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && load.source.match(registerRegEx))
+        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && detectRegisterFormat(load.source))
           load.metadata.format = 'register';
         return source;
       });
@@ -1861,7 +1873,9 @@ hook('onScriptLoad', function(onScriptLoad) {
   });
 })();
 System = new SystemJSLoader();
-System.constructor = SystemJSLoader;  // -- exporting --
+System.constructor = SystemJSLoader;
+System.version = '0.19.0-dev Register Only';
+  // -- exporting --
 
   if (typeof exports === 'object')
     module.exports = Loader;

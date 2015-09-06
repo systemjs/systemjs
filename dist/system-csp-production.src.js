@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.17
+ * SystemJS v0.19.0-dev
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1085,6 +1085,9 @@ function extend(a, b, prepend) {
   return a;
 }
 
+// package configuration options
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
+
 // meta first-level extends where:
 // array + array appends
 // object + object extends
@@ -1101,6 +1104,11 @@ function extendMeta(a, b, prepend) {
     else if (!prepend)
       a[p] = val;
   }
+}
+
+function dWarn(msg) {
+  if (this.deprecationWarnings && typeof console != 'undefined' && console.warn)
+    console.warn(msg + '\n\tDisable this message via System.config({ deprecationWarnings: false }).');
 }var absURLRegEx = /^[^\/]+:\/\//;
 
 function readMemberExpression(p, value) {
@@ -1167,6 +1175,17 @@ hook('normalize', function() {
 });
 
 /*
+ * Fetch with authorization
+ */
+hook('fetch', function() {
+  return function(load) {
+    return new Promise(function(resolve, reject) {
+      fetchTextFromURL(load.address, load.metadata.authorization, resolve, reject);
+    });
+  };
+});
+
+/*
   __useDefault
   
   When a module object looks like:
@@ -1222,8 +1241,10 @@ hook('import', function(systemImport) {
   For easy normalization canonicalization with latest URL support.
 
 */
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
+SystemJSLoader.prototype.deprecationWarnings = true;
 SystemJSLoader.prototype.config = function(cfg) {
+  if ('deprecationWarnings' in cfg)
+    this.deprecationWarnings = cfg.deprecationWarnings;
 
   // always configure baseURL first
   if (cfg.baseURL) {
@@ -1241,8 +1262,10 @@ SystemJSLoader.prototype.config = function(cfg) {
     getBaseURLObj.call(this);
   }
 
-  if (cfg.defaultJSExtensions)
+  if (cfg.defaultJSExtensions) {
     this.defaultJSExtensions = cfg.defaultJSExtensions;
+    dWarn.call(this, 'The defaultJSExtensions configuration option is deprecated, use packages configuration instead.');
+  }
 
   if (cfg.pluginFirst)
     this.pluginFirst = cfg.pluginFirst;
@@ -1258,6 +1281,7 @@ SystemJSLoader.prototype.config = function(cfg) {
 
       // object map backwards-compat into packages configuration
       if (typeof v !== 'string') {
+        dWarn.call(this, 'The map configuration for "' + p + '" is an object, which is deprecated in global map.\nUpdate this to use package contextual map with System.config({ packages: { "' + p + '": { map: {...} } } }).');
         var normalized = this.normalizeSync(p);
 
         // if doing default js extensions, undo to get package name
@@ -1284,13 +1308,14 @@ SystemJSLoader.prototype.config = function(cfg) {
     }
   }
 
-  if (cfg.packagePaths) {
-    for (var i = 0; i < cfg.packagePaths.length; i++) {
-      var path = cfg.packagePaths[i];
-      var normalized = this.normalizeSync(path);
+  if (cfg.packageConfigPaths) {
+    for (var i = 0; i < cfg.packageConfigPaths.length; i++) {
+      var path = cfg.packageConfigPaths[i];
+      var packageLength = Math.max(path.lastIndexOf('*') + 1, path.lastIndexOf('/'));
+      var normalized = this.normalizeSync(path.substr(0, packageLength) + '/');
       if (this.defaultJSExtensions && path.substr(path.length - 3, 3) != '.js')
         normalized = normalized.substr(0, normalized.length - 3);
-      cfg.packagePaths[i] = normalized;
+      cfg.packageConfigPaths[i] = normalized.substr(0, normalized.length - 1) + path.substr(packageLength);
     }
   }
 
@@ -1329,7 +1354,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     var v = cfg[c];
     var normalizeProp = false, normalizeValArray = false;
 
-    if (c == 'baseURL' || c == 'map' || c == 'packages' || c == 'bundles' || c == 'paths')
+    if (c == 'baseURL' || c == 'map' || c == 'packages' || c == 'bundles' || c == 'paths' || c == 'deprecationWarnings')
       continue;
 
     if (typeof v != 'object' || v instanceof Array) {
@@ -1930,7 +1955,11 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
+  var leadingCommentAndMetaRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*/;
+  function detectRegisterFormat(source) {
+    var leadingCommentAndMeta = source.match(leadingCommentAndMetaRegEx);
+    return leadingCommentAndMeta && source.substr(leadingCommentAndMeta[0].length, 15) == 'System.register';
+  }
 
   hook('fetch', function(fetch) {
     return function(load) {
@@ -1943,7 +1972,7 @@ hook('onScriptLoad', function(onScriptLoad) {
       anonRegister = null;
       calledRegister = false;
       
-      if (load.metadata.format == 'register')
+      if (load.metadata.format == 'register' && !load.metadata.authorization)
         load.metadata.scriptLoad = true;
 
       // NB remove when "deps " is deprecated
@@ -1963,7 +1992,7 @@ hook('onScriptLoad', function(onScriptLoad) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && load.source.match(registerRegEx))
+        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && detectRegisterFormat(load.source))
           load.metadata.format = 'register';
         return source;
       });
@@ -2440,7 +2469,7 @@ hookConstructor(function(constructor) {
 });
 
 hook('normalize', function(normalize) {
-  return function(name, parentName, parentAddress) {
+  return function(name, parentName) {
     if (name.substr(0, 1) != '.' && name.substr(0, 1) != '/' && !name.match(absURLRegEx)) {
       var bestMatch, bestMatchLength = 0;
 
@@ -2459,7 +2488,7 @@ hook('normalize', function(normalize) {
         name = this.map[bestMatch] + name.substr(bestMatch.length);
     }
     
-    return normalize.call(this, name, parentName, parentAddress);
+    return normalize.apply(this, arguments);
   };
 });
 /*
@@ -2470,7 +2499,7 @@ hook('normalize', function(normalize) {
 hook('normalize', function(normalize) {
 
   return function(name, parentName) {
-    var normalized = normalize.call(this, name, parentName);
+    var normalized = normalize.apply(this, arguments);
 
     // if the module is in the registry already, use that
     if (this.has(normalized))
@@ -2511,7 +2540,7 @@ hook('normalize', function(normalize) {
  *     basePath: 'lib', // optionally only use a subdirectory within the package
  *     main: 'index.js', // when not set, package name is requested directly
  *     format: 'amd',
- *     defaultExtension: 'js',
+ *     defaultExtension: 'ts', // defaults to 'js', can be set to false
  *     meta: {
  *       '*.ts': {
  *         loader: 'typescript'
@@ -2561,25 +2590,31 @@ hook('normalize', function(normalize) {
  * Package Configuration Loading
  * 
  * Not all packages may already have their configuration present in the System config
- * For these cases, a list of packagePaths can be provided, which when matched against
+ * For these cases, a list of packageConfigPaths can be provided, which when matched against
  * a request, will first request a ".json" file by the package name to derive the package
  * configuration from. This allows dynamic loading of non-predetermined code, a key use
  * case in SystemJS.
  *
  * Example:
  * 
- *   System.packagePaths = ['packages/*'];
+ *   System.packageConfigPaths = ['packages/test/package.json', 'packages/*.json'];
  *
- *   // will first request 'packages/new-package.json' for the package config
+ *   // will first request 'packages/new-package/package.json' for the package config
  *   // before completing the package request to 'packages/new-package/path'
  *   System.import('packages/new-package/path');
  *
- * When a package matches packagePaths, it will always send a config request for
+ *   // will first request 'packages/test/package.json' before the main
+ *   System.import('packages/test');
+ *
+ * When a package matches packageConfigPaths, it will always send a config request for
  * the package configuration.
+ * The package name itself is taken to be the match up to and including the last wildcard
+ * or trailing slash.
+ * Package config paths are ordered - matching is done based on the first match found.
  * Any existing package configurations for the package will deeply merge with the 
  * package config, with the existing package configurations taking preference.
  * To opt-out of the package configuration request for a package that matches
- * packagePaths, use the { loadConfig: false } package config option.
+ * packageConfigPaths, use the { loadConfig: false } package config option.
  * 
  */
 (function() {
@@ -2588,7 +2623,7 @@ hook('normalize', function(normalize) {
     return function() {
       constructor.call(this);
       this.packages = {};
-      this.packagePaths = {};
+      this.packageConfigPaths = {};
     };
   });
 
@@ -2662,7 +2697,35 @@ hook('normalize', function(normalize) {
     return basePath;
   }
 
-  function applyPackageConfig(normalized, pkgName, sync, defaultJSExtension) {
+  // given the package subpath, return the resultant combined path
+  // defaultExtension is only added if the path does not have 
+  // loader package meta or exact package meta
+  function toPackagePath(pkgName, pkg, basePath, subPath, isPlugin) {
+    var normalized = pkgName + '/' + basePath + subPath;
+
+    var hasExtensionMeta = isPlugin;
+    if (pkg.meta)
+      getMetaMatches(pkg.meta, basePath, pkgName, normalized, function(metaPattern, matchMeta, matchDepth) {
+        // exact meta or meta with any content after the last wildcard skips extension
+        if (matchDepth == 0 || metaPattern.lastIndexOf('*') != metaPattern.length - 1)
+          hasExtensionMeta = true;
+      });
+
+    return normalized + (hasExtensionMeta ? '' : getDefaultExtension(pkg, subPath));
+  }
+
+  function getDefaultExtension(pkg, subPath) {
+    // don't apply extensions to folders or if defaultExtension = false
+    if (subPath[subPath.length - 1] != '/' && pkg.defaultExtension !== false) {
+      // work out what the defaultExtension is and add if not there already
+      var defaultExtension = '.' + (pkg.defaultExtension || 'js');
+      if (subPath.substr(subPath.length - defaultExtension.length) != defaultExtension)
+        return defaultExtension;
+    }
+    return '';
+  }
+
+  function applyPackageConfig(normalized, pkgName, sync, isPlugin) {
     var loader = this;
     var pkg = loader.packages[pkgName];
 
@@ -2674,30 +2737,15 @@ hook('normalize', function(normalize) {
 
     // allow for direct package name normalization with trailling "/" (no main)
     if (normalized.length == pkgName.length + 1 && normalized[pkgName.length] == '/')
-      return normalized + (defaultJSExtension && normalized.substr(normalized.length - 3, 3) != '.js' ? '.js' : '');
-
-    // defaultExtension & defaultJSExtension
-    // if we have meta for this package, don't do defaultExtensions
-    var defaultExtension = '';
-    if (!pkg.meta || !(pkg.meta[normalized.substr(pkgName.length + 1)] || pkg.meta['./' + normalized.substr(pkgName.length + 1)])) {
-      // apply defaultExtension
-      if ('defaultExtension' in pkg && pkgName !== normalized && normalized[normalized.length - 1] != '/') {
-        if (pkg.defaultExtension !== false && (normalized.split('/').pop().lastIndexOf('.') == -1))
-          defaultExtension = '.' + pkg.defaultExtension;
-      }
-      // apply defaultJSExtensions if defaultExtension not set
-      else if (defaultJSExtension) {
-        defaultExtension = '.js';
-      }
-    }
+      return normalized;
 
     // no submap if name is package itself
     if (normalized.length == pkgName.length)
-      return normalized + defaultExtension;
+      return normalized + (loader.defaultJSExtensions && normalized.substr(normalized.length - 3, 3) != '.js' ? '.js' : '');
 
     // sync normalize does not apply package map
     if (sync || !pkg.map)
-      return pkgName + '/' + basePath + normalized.substr(pkgName.length + 1) + defaultExtension;
+      return toPackagePath(pkgName, pkg, basePath, normalized.substr(pkgName.length + 1));
 
     var subPath = '.' + normalized.substr(pkgName.length);
 
@@ -2707,6 +2755,7 @@ hook('normalize', function(normalize) {
       if (mapped)
         return mapped;
 
+      var defaultExtension = isPlugin && getDefaultExtension(pkg, subPath.substr(2));
       if (defaultExtension)
         return envMap(loader, pkgName, pkg.map, subPath + defaultExtension);
     })
@@ -2717,20 +2766,21 @@ hook('normalize', function(normalize) {
           return loader.normalizeSync(pkgName);
         // internal package map
         else if (mapped.substr(0, 2) == './')
-          return pkgName + '/' + basePath + mapped.substr(2);
+          return toPackagePath(pkgName, pkg, basePath, mapped.substr(2), isPlugin);
         // global package map
         else
           return loader.normalize.call(loader, mapped); 
       }
-      else
-        return pkgName + '/' + basePath + normalized.substr(pkgName.length + 1) + defaultExtension;
+      else {
+        return toPackagePath(pkgName, pkg, basePath, normalized.substr(pkgName.length + 1), isPlugin);
+      }
     });
   }
 
-  var packagePathsRegExps = {};
+  var packageConfigPathsRegExps = {};
   var pkgConfigPromises = {};
   function createPackageNormalize(normalize, sync) {
-    return function(name, parentName) {
+    return function(name, parentName, isPlugin) {
       // apply contextual package map first
       if (parentName) {
         var parentPackage = getPackage.call(this, parentName) || 
@@ -2759,7 +2809,7 @@ hook('normalize', function(normalize) {
       var normalized = normalize.call(this, name, parentName);
 
       // undo defaultJSExtension
-      if (normalized.substr(normalized.length - 3, 3) != '.js')
+      if (defaultJSExtension && normalized.substr(normalized.length - 3, 3) != '.js')
         defaultJSExtension = false;
       if (defaultJSExtension)
         normalized = normalized.substr(0, normalized.length - 3);
@@ -2769,14 +2819,17 @@ hook('normalize', function(normalize) {
 
       var loader = this;
       
-      // check if we match a packagePaths
+      // check if we match a packageConfigPaths
       if (!sync) {
-        var pkgPath;
-        for (var i = 0; i < this.packagePaths.length; i++) {
-          var match = normalized.match(packagePathsRegExps[this.packagePaths[i]] || 
-              (packagePathsRegExps[this.packagePaths[i]] = new RegExp('^(' + this.packagePaths[i].replace(/\*/g, '[^\\/]+') + ')(\/|$)')));
+        var pkgPath, pkgConfigPath;
+        for (var i = 0; i < this.packageConfigPaths.length; i++) {
+          var p = this.packageConfigPaths[i];
+          var pPkgLen = Math.max(p.lastIndexOf('*') + 1, p.lastIndexOf('/'));
+          var match = normalized.match(packageConfigPathsRegExps[p] || 
+              (packageConfigPathsRegExps[p] = new RegExp('^(' + p.substr(0, pPkgLen).replace(/\*/g, '[^\\/]+') + ')(\/|$)')));
           if (match) {
             pkgPath = match[1];
+            pkgConfigPath = pkgPath + p.substr(pPkgLen);
             break;
           }
         }
@@ -2784,7 +2837,7 @@ hook('normalize', function(normalize) {
         if (pkgPath && (!pkgName || pkgName != pkgPath || loader.packages[pkgName].loadConfig !== false)) {
           return (pkgConfigPromises[pkgPath] || 
             (pkgConfigPromises[pkgPath] = 
-              loader['fetch']({ name: pkgPath + '.json', address: pkgPath + '.json', metadata: {} })
+              loader['fetch']({ name: pkgConfigPath, address: pkgConfigPath, metadata: {} })
               .then(function(source) {
                 try {
                   return JSON.parse(source);
@@ -2794,6 +2847,20 @@ hook('normalize', function(normalize) {
                 }
               })
               .then(function(cfg) {
+                // support "systemjs" prefixing
+                if (cfg.systemjs)
+                  cfg = cfg.systemjs;
+
+                // remove any non-system properties if generic config file (eg package.json)
+                for (var p in cfg) {
+                  if (indexOf.call(packageProperties, p) == -1)
+                    delete cfg[p];
+                }
+
+                // support main array
+                if (cfg.main instanceof Array)
+                  cfg.main = cfg.main[0];
+
                 // deeply-merge (to first level) config with any existing package config
                 if (pkgName && pkgName == pkgPath)
                   extendMeta(cfg, loader.packages[pkgPath]);
@@ -2804,13 +2871,13 @@ hook('normalize', function(normalize) {
           )
           .then(function() {
             // finally apply the package config we just created to the current request
-            return applyPackageConfig.call(loader, normalized, pkgPath, sync, defaultJSExtension);
+            return applyPackageConfig.call(loader, normalized, pkgPath, sync, isPlugin);
           });
         }
       }
 
       if (pkgName)
-        return applyPackageConfig.call(loader, normalized, pkgName, sync, defaultJSExtension);
+        return applyPackageConfig.call(loader, normalized, pkgName, sync, isPlugin);
       
       // add back defaultJSExtension if not a package
       if (defaultJSExtension)
@@ -2830,6 +2897,32 @@ hook('normalize', function(normalize) {
     return createPackageNormalize(normalize, false);
   });
 
+  function getMetaMatches(pkgMeta, basePath, pkgName, normalized, matchFn) {
+    // wildcard meta
+    var meta = {};
+    var wildcardIndex;
+    for (var module in pkgMeta) {
+      // allow meta to start with ./ for flexibility
+      var dotRel = module.substr(0, 2) == './' ? './' : '';
+      if (dotRel)
+        module = module.substr(2);
+
+      wildcardIndex = module.indexOf('*');
+      if (wildcardIndex === -1)
+        continue;
+
+      if (basePath + module.substr(0, wildcardIndex) === normalized.substr(pkgName.length + 1, wildcardIndex + basePath.length)
+          && module.substr(wildcardIndex + 1) === normalized.substr(normalized.length - module.length + wildcardIndex + 1)) {
+        matchFn(module, pkgMeta[dotRel + module], module.split('/').length);
+      }
+    }
+    // exact meta
+    var metaName = normalized.substr(pkgName.length + basePath.length + 1);
+    var exactMeta = pkgMeta[metaName] || pkgMeta['./' + metaName];
+    if (exactMeta && normalized.substr(pkgName.length + 1, basePath.length) == basePath)
+      matchFn(exactMeta, exactMeta, 0);
+  }
+
   hook('locate', function(locate) {
     return function(load) {
       var loader = this;
@@ -2845,45 +2938,20 @@ hook('normalize', function(normalize) {
           if (pkg.format)
             load.metadata.format = load.metadata.format || pkg.format;
 
-          // loader
-          if (pkg.loader)
-            load.metadata.loader = load.metadata.loader || pkg.loader;
-
+          var meta = {};
           if (pkg.meta) {
-            // wildcard meta
-            var meta = {};
             var bestDepth = 0;
-            var wildcardIndex;
-            for (var module in pkg.meta) {
-              // allow meta to start with ./ for flexibility
-              var dotRel = module.substr(0, 2) == './' ? './' : '';
-              if (dotRel)
-                module = module.substr(2);
-
-              wildcardIndex = module.indexOf('*');
-              if (wildcardIndex === -1)
-                continue;
-
-              if (basePath + module.substr(0, wildcardIndex) === load.name.substr(pkgName.length + 1, wildcardIndex + basePath.length)
-                  && module.substr(wildcardIndex + 1) === load.name.substr(load.name.length - module.length + wildcardIndex + 1)) {
-                var depth = module.split('/').length;
-                if (depth > bestDepth)
-                  bestDetph = depth;
-                extendMeta(meta, pkg.meta[dotRel + module], bestDepth != depth);
-              }
-            }
-            // exact meta
-            var metaName = load.name.substr(pkgName.length + basePath.length + 1);
-            var exactMeta = pkg.meta[metaName] || pkg.meta['./' + metaName];
-            if (exactMeta && load.name.substr(pkgName.length + 1, basePath.length) == basePath)
-              extendMeta(meta, exactMeta);
+            getMetaMatches(pkg.meta, basePath, pkgName, load.name, function(metaPattern, matchMeta, matchDepth) {
+              if (matchDepth > bestDepth)
+                bestDepth = matchDepth;
+              extendMeta(meta, matchMeta, matchDepth && bestDepth > matchDepth);
+            });
 
             // allow alias and loader to be package-relative
             if (meta.alias && meta.alias.substr(0, 2) == './')
               meta.alias = pkgName + meta.alias.substr(1);
             if (meta.loader && meta.loader.substr(0, 2) == './')
               meta.loader = pkgName + meta.loader.substr(1);
-            
             extendMeta(load.metadata, meta);
           }
         }
@@ -2904,7 +2972,7 @@ hook('normalize', function(normalize) {
 (function() {
 
   // sync or async plugin normalize function
-  function normalizePlugin(normalize, name, parentName, sync) {
+  function normalizePlugin(normalize, name, parentName, isPlugin, sync) {
     var loader = this;
     // if parent is a plugin, normalize against the parent plugin argument only
     if (parentName) {
@@ -2959,9 +3027,11 @@ hook('normalize', function(normalize) {
         return normalizePluginParts(argumentName, pluginName);
       }
       else {
+        // third argument represents that this is a plugin call
+        // which in turn will skip default extension adding within packages
         return Promise.all([
-          loader.normalize(argumentName, parentName),
-          loader.normalize(pluginName, parentName)
+          loader.normalize(argumentName, parentName, true),
+          loader.normalize(pluginName, parentName, true)
         ])
         .then(function(normalized) {
           return normalizePluginParts(normalized[0], normalized[1]);
@@ -2969,20 +3039,20 @@ hook('normalize', function(normalize) {
       }
     }
     else {
-      return normalize.call(loader, name, parentName);
+      return normalize.call(loader, name, parentName, isPlugin);
     }
   }
 
   // async plugin normalize
   hook('normalize', function(normalize) {
-    return function(name, parentName) {
-      return normalizePlugin.call(this, normalize, name, parentName, false);
+    return function(name, parentName, isPlugin) {
+      return normalizePlugin.call(this, normalize, name, parentName, isPlugin, false);
     };
   });
 
   hook('normalizeSync', function(normalizeSync) {
-    return function(name, parentName) {
-      return normalizePlugin.call(this, normalizeSync, name, parentName, true);
+    return function(name, parentName, isPlugin) {
+      return normalizePlugin.call(this, normalizeSync, name, parentName, isPlugin, true);
     };
   });
 
@@ -3266,13 +3336,16 @@ hook('normalize', function(normalize) {
             if (metaName.substr(metaName.length - 2, 2) == '[]') {
               metaName = metaName.substr(0, metaName.length - 2);
               load.metadata[metaName] = load.metadata[metaName] || [];
-            }
-
-            // temporary backwards compat for previous "deps" syntax
-            if (load.metadata[metaName] instanceof Array)
               load.metadata[metaName].push(metaValue);
-            else
+            }
+            else if (load.metadata[metaName] instanceof Array) {
+              // temporary backwards compat for previous "deps" syntax
+              dWarn.call(this, 'Module ' + load.name + ' contains deprecated "deps ' + metaValue + '" meta syntax.\nThis should be updated to "deps[] ' + metaValue + '" for pushing to array meta.');
+              load.metadata[metaName].push(metaValue);
+            }
+            else {
               setMetaProperty(load.metadata, metaName, metaValue);
+            }
           }
           else {
             load.metadata[metaString] = true;
@@ -3458,7 +3531,8 @@ hook('normalize', function(normalize) {
   });
 
   hook('normalize', function(normalize) {
-    return function(name, parentName, parentAddress) {
+    return function(name, parentName) {
+      var args = arguments;
       var loader = this;
       var conditionalMatch = name.match(conditionalRegEx);
       if (conditionalMatch) {
@@ -3482,7 +3556,7 @@ hook('normalize', function(normalize) {
 
         var pluginLoader = loader.pluginLoader || loader;
         
-        return pluginLoader['import'](conditionModule, parentName, parentAddress)
+        return pluginLoader['import'](conditionModule, parentName)
         .then(function(m) {
           if (conditionExport === undefined) {
             // CommonJS case
@@ -3510,16 +3584,18 @@ hook('normalize', function(normalize) {
             else
               name = name.replace(conditionalRegEx, '');
           }
-          return normalize.call(loader, name, parentName, parentAddress);
+          return normalize.apply(loader, args);
         });
       }
 
-      return Promise.resolve(normalize.call(loader, name, parentName, parentAddress));
+      return Promise.resolve(normalize.apply(loader, args));
     };
   });
 
 })();System = new SystemJSLoader();
-System.constructor = SystemJSLoader;  // -- exporting --
+System.constructor = SystemJSLoader;
+System.version = '0.19.0-dev CSP';
+  // -- exporting --
 
   if (typeof exports === 'object')
     module.exports = Loader;
