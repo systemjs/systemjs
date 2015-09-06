@@ -22,7 +22,7 @@ function err(e) {
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
 
 asyncTest('System version', function() {
-  ok(System.version.match(/^\d+\.\d+\.\d+ (Standard|Node)$/));
+  ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)? (Standard|Node)$/));
   start();
 });
 
