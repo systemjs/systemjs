@@ -1040,7 +1040,7 @@ SystemLoader.prototype = new LoaderProto();
       xhr.open("GET", url, true);
 
       if (xhr.setRequestHeader)
-        xhr.setRequestHeader('Accept', 'application/x-es-module */*');
+        xhr.setRequestHeader('Accept', 'application/x-es-module, */*');
 
       if (doTimeout)
         setTimeout(function() {
