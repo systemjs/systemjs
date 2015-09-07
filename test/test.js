@@ -900,7 +900,7 @@ asyncTest('Package configuration CommonJS config example', function() {
       'global-test': 'tests/testpkg/test.ts'
     },
     //packageConfigPaths: ['tests/testpk*.json'],
-    packageConfigPaths: ['tests/testpkg/system.json'],
+    packageConfigPaths: ['tests/testpkg/system.json', 'tests/testpkg/depcache.json'],
     packages: {
       'tests/testpkg': {
         main: './noext',
