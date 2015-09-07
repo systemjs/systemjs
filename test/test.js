@@ -928,6 +928,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     ok(m[4] == 'dirindex');
     ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
     ok(m[6].prop == 'value');
+    ok(global.depCacheTest == 'passed');
     start();
   }, err);
 });

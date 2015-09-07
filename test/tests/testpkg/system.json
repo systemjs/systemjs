@@ -18,5 +18,8 @@
     "./env-module": {
       "browser": "./env-module-browser.js"
     }
+  },
+  "depCache": {
+    "./dir2/index.json": ["./depcache-test"]
   }
 }
