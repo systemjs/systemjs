@@ -26,4 +26,4 @@ In order to ensure this registry uses unique names, we normalize all modules usi
 
 Changing the baseURL after loading modules is not permitted because it would stop any existing modules in the registry from being reusable anymore.
 
-Rather [create a new SystemJS loader instance](system-api.md#constructor) if you're looking to start a new registry with different configuration rules.
+Rather [create a new SystemJS loader instance](system-api.md#systemconstructor) if you're looking to start a new registry with different configuration rules.
