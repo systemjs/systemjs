@@ -25,7 +25,7 @@ This represents the System base class, which can be extended or reinstantiated t
 Example:
 
 ```javascript
-  var clonedSystem = System.constructor();
+  var clonedSystem = new System.constructor();
   clonedSystem.baseURL = System.baseURL;
   clonedSystem.import('x'); // imports in a custom context
 ```

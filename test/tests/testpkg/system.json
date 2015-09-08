@@ -1,16 +1,20 @@
 {
-  "main": "wrong-main",
+  "README": "This is not encouraging a system.json, which is a bad idea.",
+
+  "main": ["wrong-main"],
+  "basePath": "lib",
   "format": "cjs",
   "defaultExtension": "js",
   "meta": {
     "*.json": { "loader": "./json.js" },
-    "noext": { "alias": "./json.json" }
+    "noext": { "alias": "./json.json" },
+    "test.ts": true
   },
   "map": {
     "./json": "./json.json",
     "./dir/": "./dir/index.js",
     "./dir2": "./dir2/index.json",
-    "./dir/test": "./test.ts",
+    "./dir/test": "global-test",
     "./env-module": {
       "browser": "./env-module-browser.js"
     }

@@ -12,14 +12,19 @@ if (typeof window == 'undefined')
 function err(e) {
   setTimeout(function() {
     if (typeof window == 'undefined')
-      console.log(e.stack || e);
+      console.log(e && e.stack || e);
     else
-      throw e.stack || e;
+      throw e;
     start();
   });
 }
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
+
+asyncTest('System version', function() {
+  ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)? (Standard|Node)$/));
+  start();
+});
 
 asyncTest('new Module().toString() == "Module"', function() {
   System['import']('tests/global.js').then(function() {
@@ -494,6 +499,13 @@ asyncTest('System.register Circular', function() {
   }, err);
 });
 
+asyncTest('System.register regex test', function() {
+  System['import']('tests/register-regex.js').then(function(m) {
+    ok(m);
+    start();
+  }, err);
+});
+
 asyncTest('System.register group linking test', function() {
   System.config({
     bundles: {
@@ -884,7 +896,11 @@ asyncTest('Wildcard meta', function() {
 
 asyncTest('Package configuration CommonJS config example', function() {
   System.config({
-    packagePaths: ['tests/testpk*'],
+    map: {
+      'global-test': 'tests/testpkg/test.ts'
+    },
+    //packageConfigPaths: ['tests/testpk*.json'],
+    packageConfigPaths: ['tests/testpkg/system.json', 'tests/testpkg/depcache.json'],
     packages: {
       'tests/testpkg': {
         main: './noext',
@@ -912,6 +928,80 @@ asyncTest('Package configuration CommonJS config example', function() {
     ok(m[4] == 'dirindex');
     ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
     ok(m[6].prop == 'value');
+    ok(global.depCacheTest == 'passed');
+    start();
+  }, err);
+});
+
+asyncTest('Package edge cases', function() {
+
+  var clonedSystem = new System.constructor();
+
+  var pkgCfg = { defaultExtension: 'asdf' };
+
+  try {
+    clonedSystem.config({
+      packages: {
+        '//': pkgCfg
+      }
+    });
+    ok(false);
+  }
+  catch(e) {
+    ok(e.toString().indexOf('not a valid package name') != -1);
+  }
+
+  try {
+    clonedSystem.config({
+      packages: {
+        'https://': pkgCfg
+      }
+    });
+    ok(false);
+  }
+  catch(e) {
+    ok(e.toString().indexOf('not a valid package name') != -1);
+  }
+
+  clonedSystem.config({
+    packages: {
+      'https://cdn.jquery.com': pkgCfg,
+      '//cdn.jquery.com': pkgCfg
+    }
+  });
+
+  clonedSystem.config({
+    packages: {
+      // both equivalent:
+      '.': pkgCfg,
+      './': pkgCfg,
+
+      '/': pkgCfg,
+
+      // this is now a nested package
+      // but our trailling / should avoid extension rules
+      // both equivalent:
+      '../': pkgCfg,
+      '..': pkgCfg
+    }
+  });
+
+  // ensure trailing "/" is equivalent to "tests/testpkg"
+  clonedSystem.config({
+    packageConfigPaths: ['tests/*.json/'],
+    packages: {
+      'tests/testpkg2/': {
+        basePath: '.',
+        defaultExtension: 'js'
+      }
+    }
+  });
+
+  // we now have nested packages:
+  // testpkg/ within test/ within / root://
+  // we're testing that we always select the rules of the inner package
+  clonedSystem['import']('tests/testpkg2/asdf.asdf').then(function(m) {
+    ok(m.asdf == 'asdf');
     start();
   }, err);
 });

@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.18.11
+ * SystemJS v0.19.0-dev
  */
 (function(__global) {
 
@@ -986,7 +986,7 @@ function applyPaths(paths, name) {
   }
 
   var outPath = paths[pathMatch] || name;
-  if (wildcard)
+  if (typeof wildcard == 'string')
     outPath = outPath.replace('*', wildcard);
 
   return outPath;
@@ -1086,6 +1086,40 @@ function group(deps) {
   return { names: names, indices: indices };
 }
 
+var getOwnPropertyDescriptor = true;
+try {
+  Object.getOwnPropertyDescriptor({ a: 0 }, 'a');
+}
+catch(e) {
+  getOwnPropertyDescriptor = false;
+}
+
+// converts any module.exports object into an object ready for System.newModule
+function getESModule(exports) {
+  var esModule = {};
+  // don't trigger getters/setters in environments that support them
+  if (typeof exports == 'object' || typeof exports == 'function') {
+    if (getOwnPropertyDescriptor) {
+      var d;
+      for (var p in exports)
+        if (d = Object.getOwnPropertyDescriptor(exports, p))
+          defineProperty(esModule, p, d);
+    }
+    else {
+      var hasOwnProperty = exports && exports.hasOwnProperty;
+      for (var p in exports) {
+        if (!hasOwnProperty || exports.hasOwnProperty(p))
+          esModule[p] = exports[p];
+      }
+    }
+  }
+  esModule['default'] = exports;
+  defineProperty(esModule, '__useDefault', {
+    value: true
+  });
+  return esModule;
+}
+
 function extend(a, b, prepend) {
   for (var p in b) {
     if (!prepend || !(p in a))
@@ -1093,6 +1127,9 @@ function extend(a, b, prepend) {
   }
   return a;
 }
+
+// package configuration options
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
 
 // meta first-level extends where:
 // array + array appends
@@ -1110,6 +1147,11 @@ function extendMeta(a, b, prepend) {
     else if (!prepend)
       a[p] = val;
   }
+}
+
+function dWarn(msg) {
+  if (this.deprecationWarnings && typeof console != 'undefined' && console.warn)
+    console.warn(msg + '\n\tDisable this message via System.config({ deprecationWarnings: false }).');
 }/*
  * Script tag fetch
  *
@@ -1268,14 +1310,6 @@ hook('onScriptLoad', function(onScriptLoad) {
  */
 (function() {
 
-  var getOwnPropertyDescriptor = true;
-  try {
-    Object.getOwnPropertyDescriptor({ a: 0 }, 'a');
-  }
-  catch(e) {
-    getOwnPropertyDescriptor = false;
-  }
-
   /*
    * There are two variations of System.register:
    * 1. System.register for ES6 conversion (2-3 params) - System.register([name, ]deps, declare)
@@ -1365,6 +1399,7 @@ hook('onScriptLoad', function(onScriptLoad) {
    *
    *    For dynamic we track the es module with:
    *    - esModule actual es module value
+   *    - esmExports whether to extend the esModule with named exports
    *      
    *    Then for declarative only we track dynamic bindings with the 'module' records:
    *      - name
@@ -1637,33 +1672,15 @@ hook('onScriptLoad', function(onScriptLoad) {
     // create the esModule object, which allows ES6 named imports of dynamics
     exports = module.exports;
 
-    if (exports && exports.__esModule) {
+    // __esModule flag treats as already-named
+    if (exports && exports.__esModule)
       entry.esModule = exports;
-    }
-    else {
-      entry.esModule = {};
-
-      // don't trigger getters/setters in environments that support them
-      if (typeof exports == 'object' || typeof exports == 'function') {
-        if (getOwnPropertyDescriptor) {
-          var d;
-          for (var p in exports)
-            if (d = Object.getOwnPropertyDescriptor(exports, p))
-              defineProperty(entry.esModule, p, d);
-        }
-        else {
-          var hasOwnProperty = exports && exports.hasOwnProperty;
-          for (var p in exports) {
-            if (!hasOwnProperty || exports.hasOwnProperty(p))
-              entry.esModule[p] = exports[p];
-          }
-        }
-      }
-      entry.esModule['default'] = exports;
-      defineProperty(entry.esModule, '__useDefault', {
-        value: true
-      });
-    }
+    // set module as 'default' export, then fake named exports by iterating properties
+    else if (entry.esmExports)
+      entry.esModule = getESModule(exports);
+    // just use the 'default' export
+    else
+      entry.esModule = { 'default': exports };
   }
 
   /*
@@ -1712,7 +1729,11 @@ hook('onScriptLoad', function(onScriptLoad) {
     };
   });
 
-  var registerRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*System\.register(Dynamic)?\s*\(/;
+  var leadingCommentAndMetaRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*/;
+  function detectRegisterFormat(source) {
+    var leadingCommentAndMeta = source.match(leadingCommentAndMetaRegEx);
+    return leadingCommentAndMeta && source.substr(leadingCommentAndMeta[0].length, 15) == 'System.register';
+  }
 
   hook('fetch', function(fetch) {
     return function(load) {
@@ -1725,7 +1746,7 @@ hook('onScriptLoad', function(onScriptLoad) {
       anonRegister = null;
       calledRegister = false;
       
-      if (load.metadata.format == 'register')
+      if (load.metadata.format == 'register' && !load.metadata.authorization)
         load.metadata.scriptLoad = true;
 
       // NB remove when "deps " is deprecated
@@ -1745,7 +1766,7 @@ hook('onScriptLoad', function(onScriptLoad) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && load.source.match(registerRegEx))
+        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && detectRegisterFormat(load.source))
           load.metadata.format = 'register';
         return source;
       });
@@ -1819,6 +1840,7 @@ hook('onScriptLoad', function(onScriptLoad) {
       entry.deps = grouped.names;
       entry.originalIndices = grouped.indices;
       entry.name = load.name;
+      entry.esmExports = load.metadata.esmExports !== false;
 
       // first, normalize all dependencies
       var normalizePromises = [];
@@ -1851,7 +1873,9 @@ hook('onScriptLoad', function(onScriptLoad) {
   });
 })();
 System = new SystemJSLoader();
-System.constructor = SystemJSLoader;  // -- exporting --
+System.constructor = SystemJSLoader;
+System.version = '0.19.0-dev Register Only';
+  // -- exporting --
 
   if (typeof exports === 'object')
     module.exports = Loader;
