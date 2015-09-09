@@ -17,6 +17,8 @@
     "./dir/test": "global-test",
     "./env-module": {
       "browser": "./env-module-browser.js"
-    }
+    },
+    "p": "./polate.js",
+    "./conditional": "./inter#{p}.js"
   }
 }

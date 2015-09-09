@@ -919,7 +919,8 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/dir2'),
     System['import']('tests/testpkg/dir/'),
     System['import']('tests/testpkg/env-module'),
-    System['import']('tests/testpkg/self')
+    System['import']('tests/testpkg/self'),
+    System['import']('tests/testpkg/conditional')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
@@ -928,6 +929,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     ok(m[4] == 'dirindex');
     ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
     ok(m[6].prop == 'value');
+    ok(m[7] == 'interpolated!');
     ok(global.depCacheTest == 'passed');
     start();
   }, err);
@@ -1010,7 +1012,7 @@ if (!ie8)
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
 
-  System['import']('tests/branch-#{env.browser}.js').then(function(m) {
+  System['import']('tests/branch-#{env|browser}.js').then(function(m) {
     ok(m.branch == 'ie');
     start();
   }, err);
@@ -1019,7 +1021,7 @@ asyncTest('Conditional loading', function() {
 asyncTest('Boolean conditional false', function() {
   System.set('env', System.newModule({ 'js': { 'es5': false } }));
 
-  System['import']('tests/branch-boolean.js#?env.js.es5').then(function(m) {
+  System['import']('tests/branch-boolean.js#?env|js.es5').then(function(m) {
     ok(m === System.get('@empty'));
     start();
   }, err);
@@ -1029,7 +1031,13 @@ if (!ie8)
 asyncTest('Boolean conditional true', function() {
   System.set('env', System.newModule({ 'js': { 'es5': true } }));
 
-  System['import']('tests/branch-boolean.js#?env.js.es5').then(function(m) {
+  System.config({
+    paths: {
+      'branch-boolean.js': 'tests/branch-boolean.js'
+    }
+  });
+
+  System['import']('branch-boolean.js#?env|js.es5').then(function(m) {
     ok(m['default'] === true);
     start();
   }, err);
