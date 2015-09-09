@@ -80,7 +80,10 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				$(ESML)/transpiler.js \
 					lib/global-eval.js \
 					lib/proto.js \
+					lib/map.js \
 					lib/core.js \
+					lib/paths.js \
+					lib/package.js \
 					lib/scriptLoader.js \
 					lib/register.js \
 					lib/esm.js \
@@ -89,15 +92,12 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 					lib/cjs.js \
 					lib/amd-helpers.js \
 					lib/amd.js \
-					lib/map.js \
-					lib/paths.js \
-					lib/package.js \
+					lib/conditionals.js \
 					lib/plugins.js \
 					lib/alias.js \
 					lib/meta.js \
 					lib/bundles.js \
 					lib/depCache.js \
-					lib/conditionals.js \
 					lib/createSystem.js \
 					; echo "$$STANDARD_VERSION" ; cat \
 			$(ESML)/wrapper-end.js \
@@ -113,21 +113,21 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 				$(ESML)/dynamic-only.js \
 				$(ESML)/system.js \
 					lib/proto.js \
+					lib/map.js \
 					lib/core.js \
+					lib/paths.js \
+					lib/package.js \
 					lib/scriptLoader.js \
 					lib/scriptOnly.js \
 					lib/register.js \
 					lib/global-helpers.js \
 					lib/amd-helpers.js \
-					lib/map.js \
-					lib/paths.js \
-					lib/package.js \
+					lib/conditionals.js \
 					lib/plugins.js \
 					lib/alias.js \
 					lib/meta.js \
 					lib/bundles.js \
 					lib/depCache.js \
-					lib/conditionals.js \
 					lib/createSystem.js \
 					; echo "$$CSP_VERSION" ; cat \
 			$(ESML)/wrapper-end.js \
