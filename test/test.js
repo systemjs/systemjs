@@ -1019,9 +1019,9 @@ asyncTest('Conditional loading', function() {
 });
 
 asyncTest('Boolean conditional false', function() {
-  System.set('env', System.newModule({ 'js': { 'es5': false } }));
+  System.set('env', System.newModule({ 'js': { 'es5': true } }));
 
-  System['import']('tests/branch-boolean.js#?env|js.es5').then(function(m) {
+  System['import']('tests/branch-boolean.js#?env|~js.es5').then(function(m) {
     ok(m === System.get('@empty'));
     start();
   }, err);

@@ -19,6 +19,6 @@
       "browser": "./env-module-browser.js"
     },
     "p": "./polate.js",
-    "./conditional": "./inter#{p}.js"
+    "./conditional": "./interpolate.js#?p"
   }
 }
