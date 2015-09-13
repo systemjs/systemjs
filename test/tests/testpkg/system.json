@@ -12,7 +12,7 @@
   },
   "map": {
     "./json": "./json.json",
-    "./dir/": "./dir/index.js",
+    "./dir/": "./dir/index",
     "./dir2": "./dir2/index.json",
     "./dir/test": "global-test",
     "./env-module": {
