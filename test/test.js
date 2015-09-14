@@ -922,7 +922,8 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/self'),
     System['import']('tests/testpkg/conditional1'),
     System['import']('tests/testpkg/conditional2'),
-    System['import']('tests/testpkg/self-load.js')
+    System['import']('tests/testpkg/self-load.js'),
+    System['import']('tests/testpkg/dir/self-load.js')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
@@ -934,6 +935,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     ok(m[7] == 'interpolated!');
     ok(m[8] == 'interpolated!');
     ok(m[9].a.prop == 'value' && m[9].b.prop == 'value');
+    ok(m[10].a.prop == 'value' && m[10].b.prop == 'value');
     ok(global.depCacheTest == 'passed');
     start();
   }, err);
