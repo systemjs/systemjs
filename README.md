@@ -2,7 +2,7 @@ SystemJS
 ========
 
 [![Build Status][travis-image]][travis-url]
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 _For upgrading to SystemJS 0.17 / 0.18, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
 
@@ -50,7 +50,7 @@ Basic Use
 </script>
 ```
 
-To load ES6, locate a transpiler ([`traceur.js`](https://github.com/jmcriffey/bower-traceur), ['browser.js' from Babel](https://github.com/babel/babel), or ['typescript.js' from TypeScript](https://github.com/Microsoft/TypeScript)) 
+To load ES6, locate a transpiler ([`traceur.js`](https://github.com/jmcriffey/bower-traceur), ['browser.js' from Babel](https://github.com/babel/babel), or ['typescript.js' from TypeScript](https://github.com/Microsoft/TypeScript))
 in the baseURL path, then set the transpiler:
 
 ```html
@@ -95,7 +95,7 @@ To load modules in NodeJS, install SystemJS with:
 If transpiling ES6, also install the transpiler:
 
 ```
-  npm install traceur babel typescript 
+  npm install traceur babel typescript
 ```
 
 We can then load modules equivalently to in the browser:
@@ -134,6 +134,7 @@ Additional Plugins:
 * [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
 * [raw](https://github.com/matthewbauer/plugin-raw) `System.import('file.bin!raw').then(function(data) {})`
 * [jst](https://github.com/podio/plugin-jst) Underscore templates
+* [SASS](https://github.com/screendriver/plugin-sass) `System.import('style.scss!')`
 
 [Read about using plugins here](docs/overview.md#plugin-loaders)
 [Read the guide here on creating plugins](docs/creating-plugins.md).
