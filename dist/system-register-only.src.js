@@ -1129,7 +1129,7 @@ function extend(a, b, prepend) {
 }
 
 // package configuration options
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath', 'depCache'];
 
 // meta first-level extends where:
 // array + array appends
@@ -1149,9 +1149,9 @@ function extendMeta(a, b, prepend) {
   }
 }
 
-function dWarn(msg) {
-  if (this.deprecationWarnings && typeof console != 'undefined' && console.warn)
-    console.warn(msg + '\n\tDisable this message via System.config({ deprecationWarnings: false }).');
+function warn(msg) {
+  if (this.warnings && typeof console != 'undefined' && console.warn)
+    console.warn(msg);
 }/*
  * Script tag fetch
  *
@@ -1766,7 +1766,7 @@ hook('onScriptLoad', function(onScriptLoad) {
         load.metadata.deps = load.metadata.deps || [];
 
         // run detection for register format
-        if (load.metadata.format == 'register' || load.metadata.bundle || !load.metadata.format && detectRegisterFormat(load.source))
+        if (load.metadata.format == 'register' || !load.metadata.format && detectRegisterFormat(load.source))
           load.metadata.format = 'register';
         return source;
       });
@@ -1800,7 +1800,9 @@ hook('onScriptLoad', function(onScriptLoad) {
       }
 
       // Contains System.register calls
-      else if (load.metadata.format == 'register' || load.metadata.format == 'esm' || load.metadata.format == 'es6') {
+      // (dont run bundles in the builder)
+      else if (!(loader.builder && load.metadata.bundle) 
+          && (load.metadata.format == 'register' || load.metadata.format == 'esm' || load.metadata.format == 'es6')) {
         anonRegister = null;
         calledRegister = false;
 
