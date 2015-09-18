@@ -29,7 +29,7 @@
       }
 
       asyncTest('System version', function() {
-        ok(System.version.match(/^\d+\.\d+\.\d+ Register Only$/));
+        ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)? Register Only$/));
         start();
       });
 

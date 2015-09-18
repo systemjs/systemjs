@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.0-dev
+ * SystemJS v0.19.0
  */
 (function(__global) {
 
@@ -1052,6 +1052,7 @@ function SystemJSLoader() {
 function SystemProto() {};
 SystemProto.prototype = SystemLoader.prototype;
 SystemJSLoader.prototype = new SystemProto();
+SystemJSLoader.prototype.constructor = SystemJSLoader;
 
 var systemJSConstructor;
 
@@ -1875,8 +1876,7 @@ hook('onScriptLoad', function(onScriptLoad) {
   });
 })();
 System = new SystemJSLoader();
-System.constructor = SystemJSLoader;
-System.version = '0.19.0-dev Register Only';
+System.version = '0.19.0 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')

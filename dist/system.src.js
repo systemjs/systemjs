@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.0-dev
+ * SystemJS v0.19.0
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1283,6 +1283,7 @@ function SystemJSLoader() {
 function SystemProto() {};
 SystemProto.prototype = SystemLoader.prototype;
 SystemJSLoader.prototype = new SystemProto();
+SystemJSLoader.prototype.constructor = SystemJSLoader;
 
 var systemJSConstructor;
 
@@ -4330,20 +4331,6 @@ function getBundleFor(loader, name) {
       return locate.call(this, load);
     };
   });
-
-  hook('fetch', function(fetch) {
-    return function(load) {
-      var loader = this;
-      if (loader.builder)
-        return fetch.call(loader, load);
-      
-      // if already defined, no need to load a bundle
-      if (load.name in loader.defined)
-        return '';
-
-      return fetch.call(loader, load);
-    };
-  });
 })();
 /*
  * Dependency Tree Cache
@@ -4389,8 +4376,7 @@ function getBundleFor(loader, name) {
 })();
   
 System = new SystemJSLoader();
-System.constructor = SystemJSLoader;
-System.version = '0.19.0-dev Standard';
+System.version = '0.19.0 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
