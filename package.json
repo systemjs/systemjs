@@ -1,7 +1,7 @@
 {
   "name": "systemjs",
   "version": "0.19.0",
-  "description": "System loader extension for flexible AMD & CommonJS support",
+  "description": "Universal dynamic module loader",
   "repository": {
     "type": "git",
     "url": "git://github.com/systemjs/systemjs"
