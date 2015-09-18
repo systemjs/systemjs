@@ -134,6 +134,7 @@ Additional Plugins:
 * [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
 * [raw](https://github.com/matthewbauer/plugin-raw) `System.import('file.bin!raw').then(function(data) {})`
 * [jst](https://github.com/podio/plugin-jst) Underscore templates
+* [SASS](https://github.com/screendriver/plugin-sass) `System.import('style.scss!')`
 
 [Read about using plugins here](docs/overview.md#plugin-loaders)
 [Read the guide here on creating plugins](docs/creating-plugins.md).
