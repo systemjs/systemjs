@@ -1129,7 +1129,7 @@ function extend(a, b, prepend) {
 }
 
 // package configuration options
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath', 'depCache'];
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath'];
 
 // meta first-level extends where:
 // array + array appends
@@ -1149,9 +1149,9 @@ function extendMeta(a, b, prepend) {
   }
 }
 
-function warn(msg) {
-  if (this.warnings && typeof console != 'undefined' && console.warn)
-    console.warn(msg);
+function dWarn(msg) {
+  if (this.deprecationWarnings && typeof console != 'undefined' && console.warn)
+    console.warn(msg + '\n\tDisable this message via System.config({ deprecationWarnings: false }).');
 }/*
  * Script tag fetch
  *
