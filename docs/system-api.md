@@ -66,7 +66,15 @@ Loads a module by name taking an optional normalized parent name argument.
 
 Promise resolves to the module value.
 
-When a module has an export value of `__useDefault` set to `true`, the `default` export is provided directly.
+For loading relative to the current module, ES Modules define a `__moduleName` binding, so that:
+
+```javascript
+System.import('./local', __moduleName);
+```
+
+In CommonJS modules the above would be `module.id` instead.
+
+This is non-standard, but coverse a use case that will be provided by the spec.
 
 #### System.newModule(Object) -> Module
 Type: `Function`
