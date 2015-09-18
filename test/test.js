@@ -266,13 +266,12 @@ asyncTest('AMD with dynamic require callback', function() {
   });
 });
 
-System.config({
-  bundles: {
-    'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
-  }
-});
-
 asyncTest('Loading an AMD bundle', function() {
+  System.config({
+    bundles: {
+      'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
+    }
+  });
   System['import']('bundle-1').then(function(m) {
     ok(m.defined == true);
     start();
@@ -531,11 +530,6 @@ asyncTest('Loading AMD from a bundle', function() {
   }, err);
 });
 
-System.config({
-  bundles: {
-    'tests/mixed-bundle.js': ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first']
-  }
-});
 asyncTest('Loading CommonJS from a bundle', function() {
   System['import']('tree/cjs').then(function(m) {
     ok(m.cjs === true);
@@ -557,6 +551,13 @@ asyncTest('Loading named System.register', function() {
   }, err);
 });
 asyncTest('Loading System.register from ES6', function() {
+  System.config({
+    meta: {
+      'tree/first': {
+        format: 'esm'
+      }
+    }
+  });
   System['import']('tree/first').then(function(m) {
     ok(m.p == 5);
     start();
