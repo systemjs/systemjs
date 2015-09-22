@@ -78,8 +78,8 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 				$(ESML)/system.js \
 				$(ESML)/system-fetch.js \
 				$(ESML)/transpiler.js \
-					lib/global-eval.js \
 					lib/proto.js \
+					lib/global-eval.js \
 					lib/map.js \
 					lib/core.js \
 					lib/paths.js \
@@ -118,7 +118,6 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 					lib/paths.js \
 					lib/package.js \
 					lib/scriptLoader.js \
-					lib/scriptOnly.js \
 					lib/register.js \
 					lib/global-helpers.js \
 					lib/amd-helpers.js \
@@ -128,6 +127,7 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 					lib/meta.js \
 					lib/bundles.js \
 					lib/depCache.js \
+					lib/scriptOnly.js \
 					lib/createSystem.js \
 					; echo "$$CSP_VERSION" ; cat \
 			$(ESML)/wrapper-end.js \
@@ -144,8 +144,8 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 				$(ESML)/system-resolve.js \
 					lib/proto.js \
 					lib/scriptLoader.js \
-					lib/scriptOnly.js \
 					lib/register.js \
+					lib/scriptOnly.js \
 					lib/createSystem.js \
 					; echo "$$REGISTER_VERSION" ; cat \
 			$(ESML)/wrapper-end.js \
