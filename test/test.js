@@ -424,6 +424,13 @@ asyncTest('Versions', function() {
   }, err);
 });
 
+asyncTest('Loading a module with # in the name', function() {
+  System['import']('tests/#.js').then(function(m) {
+    ok(m == '#');
+    start();
+  }, err);
+});
+
 asyncTest('Simple compiler Plugin', function() {
   System.map['coffee'] = 'tests/compiler-plugin.js';
   System['import']('tests/compiler-test.coffee!').then(function(m) {
