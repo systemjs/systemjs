@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.1
+ * SystemJS v0.19.2
  */
 (function(__global) {
 
@@ -1195,6 +1195,7 @@ function warn(msg) {
   // we then run the reduceRegister_ collection function either immediately
   // if we are in IE and know the currently executing script (interactive)
   // or later if we need to wait for the synchronous load callback to know the script
+  var loadingCnt = 0;
   var registerQueue = [];
   hook('pushRegister_', function(pushRegister) {
     return function(register) {
@@ -1213,8 +1214,14 @@ function warn(msg) {
 
       // otherwise, add to our execution queue
       // to call reduceRegister on sync script load event
-      else
+      else if (loadingCnt)
         registerQueue.push(register);
+
+      // if we're not currently loading anything though
+      // then do the reduction against a null load
+      // (out of band named define or named register)
+      else
+        this.reduceRegister_(null, register);
 
       return true;
     };
@@ -1274,6 +1281,8 @@ function warn(msg) {
           s.addEventListener('error', error, false);
         }
 
+        loadingCnt++;
+
         curSystem = __global.System;
 
         s.src = load.address;
@@ -1282,6 +1291,8 @@ function warn(msg) {
         function complete(evt) {
           if (s.readyState && s.readyState != 'loaded' && s.readyState != 'complete')
             return;
+
+          loadingCnt--;
 
           // complete call is sync on execution finish
           // (in ie already done reductions)
@@ -1466,21 +1477,25 @@ function createEntry() {
         return;
 
       var entry = register.entry;
+      var curMeta = load && load.metadata;
 
       // named register
       if (entry.name) {
         if (!(entry.name in this.defined))
           this.defined[entry.name] = entry;
 
-        load.metadata.bundle = true;
+        if (curMeta)
+          curMeta.bundle = true;
       }
       // anonymous register
-      if (!entry.name || entry.name == load.name) {
-        if (load.metadata.entry)
+      if (!entry.name || load && entry.name == load.name) {
+        if (!curMeta)
+          throw new TypeError('Unexpected anonymous System.register call.');
+        if (curMeta.entry)
           throw new Error('Multiple anonymous System.register calls in module ' + load.name + '. If loading a bundle, ensure all the System.register calls are named.');
-        if (!load.metadata.format)
-          load.metadata.format = 'register';
-        load.metadata.entry = entry;
+        if (!curMeta.format)
+          curMeta.format = 'register';
+        curMeta.entry = entry;
       }
     };
   });
@@ -1919,7 +1934,7 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
-System.version = '0.19.1 Register Only';
+System.version = '0.19.2 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
