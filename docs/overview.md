@@ -46,7 +46,7 @@ ES6 modules define named exports, provided as getters on a special immutable `Mo
 
 * [Read more about ES6 modules and syntax](es6-modules-overview.md).
 * To build for production, see the [production workflows](production-workflows.md).
-* [Read more about SystemJS module format support](module-format-support.md).
+* [Read more about SystemJS module format support](module-formats.md).
 
 ### Loader Configuration
 

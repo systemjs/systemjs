@@ -12,14 +12,27 @@ if (typeof window == 'undefined')
 function err(e) {
   setTimeout(function() {
     if (typeof window == 'undefined')
-      console.log(e.stack || e);
+      console.log(e && e.stack || e);
     else
-      throw e.stack || e;
+      throw e;
     start();
   });
 }
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
+
+asyncTest('System version', function() {
+  ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)? (Standard|Node)$/));
+  start();
+});
+
+asyncTest('new Module().toString() == "Module"', function() {
+  System['import']('tests/global.js').then(function() {
+    var m = System.get(System.normalizeSync('tests/global.js'));
+    ok(m == 'Module');
+    start();
+  });
+});
 
 asyncTest('Error handling', function() {
   System['import']('tests/error-loader.js').then(err, function(e) {
@@ -30,7 +43,8 @@ asyncTest('Error handling', function() {
 
 asyncTest('Error handling2', function() {
   System['import']('tests/error-loader2.js').then(err, function(e) {
-    console.error(e);
+    if (typeof console != 'undefined' && console.error)
+      console.error(e);
     ok(true);
     start();
   });
@@ -252,13 +266,12 @@ asyncTest('AMD with dynamic require callback', function() {
   });
 });
 
-System.config({
-  bundles: {
-    'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
-  }
-});
-
 asyncTest('Loading an AMD bundle', function() {
+  System.config({
+    bundles: {
+      'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
+    }
+  });
   System['import']('bundle-1').then(function(m) {
     ok(m.defined == true);
     start();
@@ -411,6 +424,13 @@ asyncTest('Versions', function() {
   }, err);
 });
 
+asyncTest('Loading a module with # in the name', function() {
+  System['import']('tests/#.js').then(function(m) {
+    ok(m == '#');
+    start();
+  }, err);
+});
+
 asyncTest('Simple compiler Plugin', function() {
   System.map['coffee'] = 'tests/compiler-plugin.js';
   System['import']('tests/compiler-test.coffee!').then(function(m) {
@@ -425,6 +445,17 @@ asyncTest('Mapping a plugin argument', function() {
   System.map['coffee'] = 'tests/compiler-plugin.js';
   System['import']('bootstrap/test.coffee!coffee').then(function(m) {
     ok(m.extra == 'yay!', 'not working');
+    start();
+  }, err);
+});
+
+asyncTest('Using pluginFirst config', function() {
+  System.pluginFirst = true;
+  System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
+  System.map['coffee'] = 'tests/compiler-plugin.js';
+  System['import']('coffee!bootstrap/test.coffee').then(function(m) {
+    ok(m.extra == 'yay!', 'not working');
+    System.pluginFirst = false;
     start();
   }, err);
 });
@@ -474,6 +505,13 @@ asyncTest('System.register Circular', function() {
   }, err);
 });
 
+asyncTest('System.register regex test', function() {
+  System['import']('tests/register-regex.js').then(function(m) {
+    ok(m);
+    start();
+  }, err);
+});
+
 asyncTest('System.register group linking test', function() {
   System.config({
     bundles: {
@@ -499,11 +537,6 @@ asyncTest('Loading AMD from a bundle', function() {
   }, err);
 });
 
-System.config({
-  bundles: {
-    'tests/mixed-bundle.js': ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first']
-  }
-});
 asyncTest('Loading CommonJS from a bundle', function() {
   System['import']('tree/cjs').then(function(m) {
     ok(m.cjs === true);
@@ -525,6 +558,13 @@ asyncTest('Loading named System.register', function() {
   }, err);
 });
 asyncTest('Loading System.register from ES6', function() {
+  System.config({
+    meta: {
+      'tree/first': {
+        format: 'esm'
+      }
+    }
+  });
   System['import']('tree/first').then(function(m) {
     ok(m.p == 5);
     start();
@@ -549,9 +589,7 @@ asyncTest('Loading dynamic modules with __esModule flag set', function() {
   }, err);
 });
 
-if (ie8)
-  return;
-
+if (!ie8) {
 asyncTest('ES6 named export loading of CJS', function() {
   System['import']('tests/es-named-import-cjs.js').then(function(m) {
     ok(m.cjsFuncValue === 'named export');
@@ -770,6 +808,7 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
     }, err);
   }, err);
 });
+}
 
 asyncTest("System clone", function() {
   var clonedSystem = new System.constructor();
@@ -783,7 +822,7 @@ asyncTest("System clone", function() {
   Promise.all([System['import']('maptest'), clonedSystem['import']('maptest')]).then(function(modules) {
     var m = modules[0];
     var mClone = modules[1];
-    
+
     ok(m.maptest == 'maptest', 'Mapped module not loaded');
     ok(mClone.dep == 'maptest', 'Mapped module not loaded');
     ok(mClone !== m, "different modules");
@@ -803,8 +842,16 @@ if(typeof window !== 'undefined' && window.Worker) {
   });
 }
 
-// new features!!
+asyncTest("Duplicate entries", function() {
+  System["import"]('tests/duplicateDeps/m1.js').then(function(m) {
+    var r = m.foo() + ":" + m.f3();
+    ok(r === "3:3", "duplicate entries in dependency list not handled correctly");
+    start();
+  })
+});
 
+// new features!!
+if (!ie8)
 asyncTest('Named imports for non-es6', function() {
   System['import']('tests/es6-cjs-named-export.js').then(function(m) {
     ok(m.someExport == 'asdf');
@@ -837,6 +884,7 @@ asyncTest('Multi-format deps meta', function() {
   }, err);
 });
 
+
 asyncTest('Wildcard meta', function() {
   System.config({
     meta: {
@@ -856,28 +904,18 @@ asyncTest('Wildcard meta', function() {
 
 asyncTest('Package configuration CommonJS config example', function() {
   System.config({
+    map: {
+      'global-test': 'tests/testpkg/test.ts'
+    },
+    //packageConfigPaths: ['tests/testpk*.json'],
+    packageConfigPaths: ['tests/testpkg/system.json', 'tests/testpkg/depcache.json'],
     packages: {
       'tests/testpkg': {
         main: './noext',
-        format: 'cjs',
-        defaultExtension: 'js',
-        meta: {
-          '*.json': { loader: './json.js' },
-          'noext': { alias: './json.json' },
-        },
         map: {
-          './json': './json.json',
-          './dir/': './dir/index.js',
-          './dir2': './dir2/index.json',
-          './dir/test': './test.ts'
+          "testpkg": "."
         },
-        env: {
-          browser: {
-            map: {
-              './env-module': './env-module-browser.js'
-            }
-          }
-        }
+        asdf: 'asdf'
       }
     }
   });
@@ -888,43 +926,170 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/dir/test'),
     System['import']('tests/testpkg/dir2'),
     System['import']('tests/testpkg/dir/'),
-    System['import']('tests/testpkg/env-module')
+    System['import']('tests/testpkg/env-module'),
+    System['import']('tests/testpkg/self'),
+    System['import']('tests/testpkg/conditional1'),
+    System['import']('tests/testpkg/conditional2'),
+    System['import']('tests/testpkg/self-load.js'),
+    System['import']('tests/testpkg/dir/self-load.js')
   ]).then(function(m) {
     ok(m[0].prop == 'value');
     ok(m[1].prop == 'value');
     ok(m[2] == 'ts');
     ok(m[3].json == 'index');
     ok(m[4] == 'dirindex');
-    ok(m[5] == typeof window != 'undefined' ? 'browser' : 'not browser');
+    ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
+    ok(m[6].prop == 'value');
+    ok(m[7] == 'interpolated!');
+    ok(m[8] == 'interpolated!');
+    ok(m[9].a.prop == 'value' && m[9].b.prop == 'value');
+    ok(m[10].a.prop == 'value' && m[10].b.prop == 'value');
+    ok(global.depCacheTest == 'passed');
     start();
   }, err);
 });
 
+asyncTest('Package edge cases', function() {
+
+  var clonedSystem = new System.constructor();
+
+  var pkgCfg = { defaultExtension: 'asdf' };
+
+  try {
+    clonedSystem.config({
+      packages: {
+        '//': pkgCfg
+      }
+    });
+    ok(false);
+  }
+  catch(e) {
+    ok(e.toString().indexOf('not a valid package name') != -1);
+  }
+
+  try {
+    clonedSystem.config({
+      packages: {
+        'https://': pkgCfg
+      }
+    });
+    ok(false);
+  }
+  catch(e) {
+    ok(e.toString().indexOf('not a valid package name') != -1);
+  }
+
+  clonedSystem.config({
+    packages: {
+      'https://cdn.jquery.com': pkgCfg,
+      '//cdn.jquery.com': pkgCfg
+    }
+  });
+
+  clonedSystem.config({
+    packages: {
+      // both equivalent:
+      '.': pkgCfg,
+      './': pkgCfg,
+
+      '/': pkgCfg,
+
+      // this is now a nested package
+      // but our trailling / should avoid extension rules
+      // both equivalent:
+      '../': pkgCfg,
+      '..': pkgCfg
+    }
+  });
+
+  // ensure trailing "/" is equivalent to "tests/testpkg"
+  clonedSystem.config({
+    packageConfigPaths: ['tests/*.json/'],
+    packages: {
+      'tests/testpkg2/': {
+        basePath: '.',
+        defaultExtension: 'js'
+      }
+    }
+  });
+
+  // we now have nested packages:
+  // testpkg/ within test/ within / root://
+  // we're testing that we always select the rules of the inner package
+  clonedSystem['import']('tests/testpkg2/asdf.asdf').then(function(m) {
+    ok(m.asdf == 'asdf');
+    start();
+  }, err);
+});
+
+if (!ie8)
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
 
-  System['import']('tests/branch-#{env.browser}.js').then(function(m) {
+  System['import']('tests/branch-#{env|browser}.js').then(function(m) {
     ok(m.branch == 'ie');
     start();
   }, err);
 });
 
 asyncTest('Boolean conditional false', function() {
-  System.set('env', System.newModule({ 'js': { 'es5': false } }));
+  System.set('env', System.newModule({ 'js': { 'es5': true } }));
 
-  System['import']('tests/branch-boolean.js#?env.js.es5').then(function(m) {
+  System['import']('tests/branch-boolean.js#?~env|js.es5').then(function(m) {
     ok(m === System.get('@empty'));
     start();
   }, err);
 });
 
+if (!ie8)
 asyncTest('Boolean conditional true', function() {
   System.set('env', System.newModule({ 'js': { 'es5': true } }));
 
-  System['import']('tests/branch-boolean.js#?env.js.es5').then(function(m) {
+  System.config({
+    paths: {
+      'branch-boolean.js': 'tests/branch-boolean.js'
+    }
+  });
+
+  System['import']('branch-boolean.js#?env|js.es5').then(function(m) {
     ok(m['default'] === true);
     start();
   }, err);
+});
+
+asyncTest('Loading a System.registerdynamic module (not bundled)', function() {
+  System['import']('tests/registerdynamic-main.js').then(function(m) {
+    ok(typeof m.dependency === 'function');
+    ok(m.dependency() === 'ok');
+    start();
+  }).then(null, err);
+});
+
+asyncTest('Importing a script with wrong integrity fails', function() {
+  System.config({
+    meta: {
+      'tests/csp/integrity.js': {
+        format: 'amd',
+        integrity: 'sha256-abc'
+      }
+    }
+  });
+  System['import']('tests/csp/integrity.js').then(function(m) {
+    ok(true);
+    console.log('SRI not supported in this browser');
+    start();
+  }, function(e) {
+    ok(typeof e !== 'undefined');
+    start();
+  });
+});
+
+if (typeof process != 'undefined')
+asyncTest('Loading Node core modules', function() {
+  System['import']('@node/fs').then(function(m) {
+    ok(m.writeFile);
+    start();
+  });
 });
 
 })(typeof window == 'undefined' ? global : window);

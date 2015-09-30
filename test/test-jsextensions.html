@@ -28,7 +28,9 @@
 
       QUnit.module("SystemJS JS Extensions");
 
-      System.defaultJSExtensions = true;
+      System.config({
+      	defaultJSExtensions: true
+      });
 			
 			asyncTest('Error handling', function() {
 			  System['import']('tests/main').then(function(m) {
@@ -44,6 +46,7 @@
 			  	},
 			  	packages: {
 			  		'tests/testpkg': {
+			  			basePath: 'lib',
 			  			defaultExtension: 'ts',
 			  			map: {
 			  				'./asdf': './test.ts'
@@ -73,6 +76,36 @@
 			  	ok(mods[3] == mods[4]);
 			  	start();
 			  })
+			});
+
+			System.config({
+				packages: {
+					'custom': {
+						defaultExtension: 'ext'
+					}
+				}
+			});
+			asyncTest('Register extensions', function(err) {
+			  System['import']('tests/register-default-extension.js').then(function() {
+			    System['import']('custom/file.ext').then(function(m) {
+			      ok(m.custom == 'ext');
+			      start();
+			    }, err);
+			  }, err);
+			});
+
+			System.config({
+				packages: {
+					'tests/no-default-ext': {
+						defaultExtension: false
+					}
+				}
+			});
+			asyncTest('No default extension', function(err) {
+				System['import']('tests/no-default-ext/file.ext').then(function(m) {
+					ok(m.ext == 'ext');
+					start();
+				}, err);
 			});
 		</script>
 	</body>

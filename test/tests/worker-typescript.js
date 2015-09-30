@@ -1,6 +1,6 @@
 importScripts('../../dist/system.src.js');
 
-System.paths['typescript'] = '../../node_modules/typescript/bin/typescript.js';
+System.paths['typescript'] = '../../node_modules/typescript/lib/typescript.js';
 System.meta['typescript'] = { format: 'global', exports: 'ts' };
 System.transpiler = 'typescript';
 
