@@ -113,6 +113,16 @@ System.import('./app').then(function(m) {
 
 If using TypeScript, set `global.ts = require('typescript')` before importing to ensure it is loaded correctly.
 
+If you are using jspm as a package manager you will also need to load the generated `config.js`. The best way to do this in node is to get your `System` instance through jspm, which wil automatically load your config correctly for you:
+
+```js
+var System = require('jspm').Loader();
+
+System.import('lodash').then(function (_) {
+ console.log(_);
+});
+```
+
 ### Plugins
 
 Supported loader plugins:
