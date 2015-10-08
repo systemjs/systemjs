@@ -153,8 +153,11 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 
 dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js
 	( echo "$$POLYFILLS_BANNER"; \
+		echo "(function(define) {"; \
+		echo ""; \
 		cat \
 			$(ESML)/url-polyfill.js \
 			node_modules/when/es6-shim/Promise.js \
-			lib/polyfills-bootstrap.js \
+			lib/polyfills-bootstrap.js; \
+		echo "})();" \
 	) > $@;
