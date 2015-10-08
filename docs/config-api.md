@@ -25,7 +25,7 @@ For this reason it is usually advisable to use `System.config` instead of settin
 * [defaultJSExtensions](#defaultjsextensions)
 * [depCache](#depcache)
 * [map](#map)
-* [meta](#meta)
+* [modules](#modules)
 * [packages](#packages)
 * [paths](#paths)
 * [traceurOptions](#traceuroptions)
@@ -140,13 +140,16 @@ System.import('package/path.js');
 
 > Note map configuration used to support contextual submaps but this has been deprecated for package configuration.
 
-#### meta
+<a name="meta">
+#### modules
 Type: `Object`
 Default: `{}`
 
-Module meta provides an API for SystemJS to understand how to load modules correctly.
+_Previously called **meta**_
 
-Meta is how we set the module format of a module, or know how to shim dependencies of a global script.
+Package modules provides a meta API for SystemJS to understand how to load modules correctly.
+
+The module meta is how we set the module format of a module, or know how to shim dependencies of a global script.
 
 ```javascript
 System.config({
