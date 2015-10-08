@@ -1,6 +1,8 @@
 /*
  * SystemJS Polyfills for URL and Promise providing IE8+ Support
  */
+(function(define) {
+
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
 function URLPolyfill(url, baseURL) {
@@ -1340,4 +1342,4 @@ define(function() {
 (1)
 });
 ;if (typeof systemJSBootstrap !== 'undefined')
-  systemJSBootstrap();
+  systemJSBootstrap();})();

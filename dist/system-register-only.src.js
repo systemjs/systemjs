@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.3
+ * SystemJS v0.19.4
  */
 (function(__global) {
 
@@ -1130,7 +1130,7 @@ function extend(a, b, prepend) {
 }
 
 // package configuration options
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath', 'depCache'];
+var packageProperties = ['main', 'format', 'defaultExtension', 'modules', 'map', 'basePath', 'depCache'];
 
 // meta first-level extends where:
 // array + array appends
@@ -1327,7 +1327,7 @@ function warn(msg) {
             s.detachEvent('onreadystatechange', complete);
             for (var i = 0; i < interactiveLoadingScripts.length; i++)
               if (interactiveLoadingScripts[i].script == s) {
-                if (interactiveScript.script == s)
+                if (interactiveScript && interactiveScript.script == s)
                   interactiveScript = null;
                 interactiveLoadingScripts.splice(i, 1);
               }
@@ -1492,8 +1492,12 @@ function createEntry() {
       if (!entry.name || load && entry.name == load.name) {
         if (!curMeta)
           throw new TypeError('Unexpected anonymous System.register call.');
-        if (curMeta.entry)
-          throw new Error('Multiple anonymous System.register calls in module ' + load.name + '. If loading a bundle, ensure all the System.register calls are named.');
+        if (curMeta.entry) {
+          if (curMeta.format == 'register')
+            throw new Error('Multiple anonymous System.register calls in module ' + load.name + '. If loading a bundle, ensure all the System.register calls are named.');
+          else
+            throw new Error('Module ' + load.name + ' interpreted as ' + curMeta.format + ' module format, but called System.register.');
+        }
         if (!curMeta.format)
           curMeta.format = 'register';
         curMeta.entry = entry;
@@ -1866,6 +1870,10 @@ function createEntry() {
           throw new Error(load.name + ' detected as ' + load.metadata.format + ' but didn\'t execute.');
 
         entry = load.metadata.entry;
+
+        // support metadata deps for System.register
+        if (entry && load.metadata.deps)
+          entry.deps = entry.deps.concat(load.metadata.deps);
       }
 
       // named bundles are just an empty module
@@ -1935,7 +1943,7 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
-System.version = '0.19.3 Register Only';
+System.version = '0.19.4 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
