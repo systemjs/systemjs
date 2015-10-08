@@ -25,7 +25,7 @@ For this reason it is usually advisable to use `System.config` instead of settin
 * [defaultJSExtensions](#defaultjsextensions)
 * [depCache](#depcache)
 * [map](#map)
-* [meta](#modules)
+* [meta](#meta)
 * [packages](#packages)
 * [paths](#paths)
 * [traceurOptions](#traceuroptions)
