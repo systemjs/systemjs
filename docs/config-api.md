@@ -25,7 +25,7 @@ For this reason it is usually advisable to use `System.config` instead of settin
 * [defaultJSExtensions](#defaultjsextensions)
 * [depCache](#depcache)
 * [map](#map)
-* [modules](#modules)
+* [meta](#modules)
 * [packages](#packages)
 * [paths](#paths)
 * [traceurOptions](#traceuroptions)
@@ -140,16 +140,13 @@ System.import('package/path.js');
 
 > Note map configuration used to support contextual submaps but this has been deprecated for package configuration.
 
-<a name="meta">
-#### modules
+#### meta
 Type: `Object`
 Default: `{}`
 
-_Previously called **meta**_
+Module meta provides an API for SystemJS to understand how to load modules correctly.
 
-Package modules provides a meta API for SystemJS to understand how to load modules correctly.
-
-The module meta is how we set the module format of a module, or know how to shim dependencies of a global script.
+Meta is how we set the module format of a module, or know how to shim dependencies of a global script.
 
 ```javascript
 System.config({
@@ -225,8 +222,8 @@ System.config({
         // import '/local/package/custom-import' should route to '/local/package/local/import/file.js'
         './custom-import': './local/import/file.js'
       }
-      meta: {
-        // set meta for loading the local vendor files
+      modules: {
+        // sets meta for modules within the package
         'vendor/*': {
           'format': 'global'
         }
@@ -242,7 +239,7 @@ System.config({
   Takes preference over defaultJSExtensions. Any filename containing a `.` is considered to have an extension.
   Can be set to `defaultExtension: false` to optionally opt-out of extension-adding when `defaultJSExtensions` is enabled.
 * `map`: Local and relative map configurations scoped to the package. Apply for subpaths as well.
-* `meta`: Package-scoped meta configuration with wildcard support. Meta paths are subpaths within the package path.
+* `modules`: Package-scoped meta configuration with wildcard support. Modules are subpaths within the package path.
 
 #### paths
 Type: `Object`
