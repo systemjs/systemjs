@@ -82,7 +82,7 @@ SystemJS relies on `Promise` and `URL` being present in the environment. When th
 
 This is typically necessary in IE, so ensure to keep this file in the same folder as SystemJS.
 
-Alternatively the polyfills can be loaded manually or via other polyfill implementations as well.
+Alternatively these polyfills can be loaded with a script tag before SystemJS or via other polyfill implementations as well.
 
 ### NodeJS
 
