@@ -1092,4 +1092,9 @@ asyncTest('Loading Node core modules', function() {
   });
 });
 
+asyncTest('No global define leak', function() {
+  ok(typeof define == 'undefined');
+  start();
+});
+
 })(typeof window == 'undefined' ? global : window);
