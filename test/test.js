@@ -1084,17 +1084,19 @@ asyncTest('Importing a script with wrong integrity fails', function() {
   });
 });
 
-if (typeof process != 'undefined')
-asyncTest('Loading Node core modules', function() {
-  System['import']('@node/fs').then(function(m) {
-    ok(m.writeFile);
+if (typeof process != 'undefined') {
+  asyncTest('Loading Node core modules', function() {
+    System['import']('@node/fs').then(function(m) {
+      ok(m.writeFile);
+      start();
+    });
+  });
+
+
+  asyncTest('No global define leak in Node', function() {
+    ok(typeof define == 'undefined');
     start();
   });
-});
-
-asyncTest('No global define leak', function() {
-  ok(typeof define == 'undefined');
-  start();
-});
+}
 
 })(typeof window == 'undefined' ? global : window);
