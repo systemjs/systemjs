@@ -872,7 +872,7 @@ asyncTest('Globals', function() {
   System['import']('tests/with-global-deps.js').then(function(m) {
     for (var p in m)
       ok(false);
-    ok(true);
+    ok(!global.$$$);
     start();
   }, err);
 });
