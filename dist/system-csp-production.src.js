@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.4
+ * SystemJS v0.19.5
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -836,19 +836,14 @@ function logloads(loads) {
       if (typeof obj != 'object')
         throw new TypeError('Expected object');
 
-      // we do this to be able to tell if a module is a module privately in ES5
-      // by doing m instanceof Module
       var m = new Module();
 
-      var pNames;
-      if (Object.getOwnPropertyNames && obj != null) {
+      var pNames = [];
+      if (Object.getOwnPropertyNames && obj != null)
         pNames = Object.getOwnPropertyNames(obj);
-      }
-      else {
-        pNames = [];
+      else
         for (var key in obj)
           pNames.push(key);
-      }
 
       for (var i = 0; i < pNames.length; i++) (function(key) {
         defineProperty(m, key, {
@@ -859,9 +854,6 @@ function logloads(loads) {
           }
         });
       })(pNames[i]);
-
-      if (Object.preventExtensions)
-        Object.preventExtensions(m);
 
       return m;
     },
@@ -1189,6 +1181,19 @@ hookConstructor(function(constructor) {
     // support baseURL
     this.baseURL = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
 
+    // global behaviour flags
+    this.warnings = false;
+    this.defaultJSExtensions = false;
+    this.globalEvaluationScope = true;
+    this.pluginFirst = false;
+
+    // Default settings for globalEvaluationScope:
+    // Disabled for WebWorker, Chrome Extensions and jsdom
+    if (isWorker 
+        || isBrowser && window.chrome && window.chrome.extension 
+        || isBrowser && navigator.userAgent.match(/^Node\.js/))
+      this.globalEvaluationScope = false;
+
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
 
@@ -1319,15 +1324,18 @@ hook('import', function(systemImport) {
   For easy normalization canonicalization with latest URL support.
 
 */
-SystemJSLoader.prototype.warnings = false;
-SystemJSLoader.prototype._configured = false;
 SystemJSLoader.prototype.config = function(cfg) {
   if ('warnings' in cfg)
     this.warnings = cfg.warnings;
 
   // always configure baseURL first
   if (cfg.baseURL) {
-    if (this._configured)
+    var hasConfig = false;
+    function checkHasConfig(obj) {
+      for (var p in obj)
+        return true;
+    }
+    if (checkHasConfig(this.packages) || checkHasConfig(this.meta) || checkHasConfig(this.depCache) || checkHasConfig(this.bundles) || checkHasConfig(this.packageConfigPaths))
       throw new TypeError('baseURL should only be configured once and must be configured first.');
 
     this.baseURL = cfg.baseURL;
@@ -1335,8 +1343,6 @@ SystemJSLoader.prototype.config = function(cfg) {
     // sanitize baseURL
     getBaseURLObj.call(this);
   }
-
-  this._configured = true;
 
   if (cfg.defaultJSExtensions) {
     this.defaultJSExtensions = cfg.defaultJSExtensions;
@@ -2706,7 +2712,7 @@ function createEntry() {
         return '';
       }
       
-      if (load.metadata.format == 'register' && !load.metadata.authorization)
+      if (load.metadata.format == 'register' && !load.metadata.authorization && load.metadata.scriptLoad !== false)
         load.metadata.scriptLoad = true;
 
       load.metadata.deps = load.metadata.deps || [];
@@ -2864,7 +2870,7 @@ hookConstructor(function(constructor) {
         if (globals) {
           oldGlobals = {};
           for (var g in globals) {
-            oldGlobals[g] = globals[g];
+            oldGlobals[g] = __global[g];
             __global[g] = globals[g];
           }
         }
@@ -3856,7 +3862,7 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
-System.version = '0.19.4 CSP';
+System.version = '0.19.5 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')

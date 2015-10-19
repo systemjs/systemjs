@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.4
+ * SystemJS v0.19.5
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -836,19 +836,14 @@ function logloads(loads) {
       if (typeof obj != 'object')
         throw new TypeError('Expected object');
 
-      // we do this to be able to tell if a module is a module privately in ES5
-      // by doing m instanceof Module
       var m = new Module();
 
-      var pNames;
-      if (Object.getOwnPropertyNames && obj != null) {
+      var pNames = [];
+      if (Object.getOwnPropertyNames && obj != null)
         pNames = Object.getOwnPropertyNames(obj);
-      }
-      else {
-        pNames = [];
+      else
         for (var key in obj)
           pNames.push(key);
-      }
 
       for (var i = 0; i < pNames.length; i++) (function(key) {
         defineProperty(m, key, {
@@ -859,9 +854,6 @@ function logloads(loads) {
           }
         });
       })(pNames[i]);
-
-      if (Object.preventExtensions)
-        Object.preventExtensions(m);
 
       return m;
     },
@@ -1338,36 +1330,30 @@ var __exec;
           '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(load.metadata.sourceMap))) || '')
   }
 
-  if (typeof require != 'undefined' && typeof process != 'undefined' && process.versions && process.versions.node) {
-    // global scoped eval for node
-    var vmModule = 'vm';
+  function evalExec(load) {
+    if (load.metadata.integrity)
+      throw new TypeError('Subresource integrity checking is not supported in Web Workers or Chrome Extensions.');
     try {
-      var vm = require(vmModule);
+      preExec(this, load);
+      new Function(getSource(load)).call(__global);
+      postExec();
     }
-    catch(e) {}
-    __exec = function(load) {
-      if (load.metadata.integrity)
-        throw new TypeError('Subresource integrity checking is unavailable in Node.');
-      try {
-        preExec(this, load);
-        vm.runInThisContext(getSource(load));
-        postExec();
-      }
-      catch(e) {
-        postExec();
-        throw addToError(e.toString(), 'Evaluating ' + load.address);
-      }
-    };
+    catch(e) {
+      postExec();
+      throw addToError(e, 'Evaluating ' + load.address);
+    }
   }
 
   // use script injection eval to get identical global script behaviour
-  if (!__exec && typeof document != 'undefined' && !isWorker && !(isBrowser && window.chrome && window.chrome.extension)) {
+  if (typeof document != 'undefined' && document.getElementsByTagName) {
     var head;
 
     var scripts = document.getElementsByTagName('script');
     $__curScript = scripts[scripts.length - 1];
-
     __exec = function(load) {
+      if (!this.globalEvaluationScope)
+        return evalExec.call(this, load);
+
       if (!head)
         head = document.head || document.body || document.documentElement;
 
@@ -1391,25 +1377,32 @@ var __exec;
       window.onerror = onerror;
       if (e)
         throw e;
-    }
+    };
   }
 
-  // Web Worker and Chrome Extensions use original ESML eval
-  // this may lead to some global module execution differences (eg var not defining onto global)
-  else if (!__exec) {
-    __exec = function(load) {
+  // global scoped eval for node
+  else if (typeof require != 'undefined') {
+    var vmModule = 'vm';
+    var vm = require(vmModule);
+    __exec = function vmExec(load) {
+      if (!this.globalEvaluationScope)
+        return evalExec.call(this, load);
+
       if (load.metadata.integrity)
-        throw new TypeError('Subresource integrity checking is not supported in Web Workers or Chrome Extensions.');
+        throw new TypeError('Subresource integrity checking is unavailable in Node.');
       try {
         preExec(this, load);
-        new Function(getSource(load)).call(__global);
+        vm.runInThisContext(getSource(load));
         postExec();
       }
       catch(e) {
         postExec();
-        throw addToError(e, 'Evaluating ' + load.address);
+        throw addToError(e.toString(), 'Evaluating ' + load.address);
       }
     };
+  }
+  else {
+    __exec = evalExec;
   }
 
 })();/*
@@ -1490,6 +1483,19 @@ hookConstructor(function(constructor) {
 
     // support baseURL
     this.baseURL = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
+
+    // global behaviour flags
+    this.warnings = false;
+    this.defaultJSExtensions = false;
+    this.globalEvaluationScope = true;
+    this.pluginFirst = false;
+
+    // Default settings for globalEvaluationScope:
+    // Disabled for WebWorker, Chrome Extensions and jsdom
+    if (isWorker 
+        || isBrowser && window.chrome && window.chrome.extension 
+        || isBrowser && navigator.userAgent.match(/^Node\.js/))
+      this.globalEvaluationScope = false;
 
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
@@ -1621,15 +1627,18 @@ hook('import', function(systemImport) {
   For easy normalization canonicalization with latest URL support.
 
 */
-SystemJSLoader.prototype.warnings = false;
-SystemJSLoader.prototype._configured = false;
 SystemJSLoader.prototype.config = function(cfg) {
   if ('warnings' in cfg)
     this.warnings = cfg.warnings;
 
   // always configure baseURL first
   if (cfg.baseURL) {
-    if (this._configured)
+    var hasConfig = false;
+    function checkHasConfig(obj) {
+      for (var p in obj)
+        return true;
+    }
+    if (checkHasConfig(this.packages) || checkHasConfig(this.meta) || checkHasConfig(this.depCache) || checkHasConfig(this.bundles) || checkHasConfig(this.packageConfigPaths))
       throw new TypeError('baseURL should only be configured once and must be configured first.');
 
     this.baseURL = cfg.baseURL;
@@ -1637,8 +1646,6 @@ SystemJSLoader.prototype.config = function(cfg) {
     // sanitize baseURL
     getBaseURLObj.call(this);
   }
-
-  this._configured = true;
 
   if (cfg.defaultJSExtensions) {
     this.defaultJSExtensions = cfg.defaultJSExtensions;
@@ -3008,7 +3015,7 @@ function createEntry() {
         return '';
       }
       
-      if (load.metadata.format == 'register' && !load.metadata.authorization)
+      if (load.metadata.format == 'register' && !load.metadata.authorization && load.metadata.scriptLoad !== false)
         load.metadata.scriptLoad = true;
 
       load.metadata.deps = load.metadata.deps || [];
@@ -3233,14 +3240,15 @@ hook('reduceRegister_', function(reduceRegister) {
 
 hook('fetch', function(fetch) {
   return function(load) {
-    if (load.metadata.exports)
+    if (load.metadata.exports && !load.metadata.format)
       load.metadata.format = 'global';
 
     // A global with exports, no globals and no deps
     // can be loaded via a script tag
     if (load.metadata.format == 'global' && !load.metadata.authorization
         && load.metadata.exports && !load.metadata.globals 
-        && (!load.metadata.deps || load.metadata.deps.length == 0))
+        && (!load.metadata.deps || load.metadata.deps.length == 0)
+        && load.metadata.scriptLoad !== false)
       load.metadata.scriptLoad = true;
 
     return fetch.call(this, load);
@@ -3359,7 +3367,7 @@ hookConstructor(function(constructor) {
         if (globals) {
           oldGlobals = {};
           for (var g in globals) {
-            oldGlobals[g] = globals[g];
+            oldGlobals[g] = __global[g];
             __global[g] = globals[g];
           }
         }
@@ -3798,9 +3806,12 @@ hookConstructor(function(constructor) {
 
   hook('fetch', function(fetch) {
     return function(load) {
-      if (load.metadata.format === 'amd' && !load.metadata.authorization)
+      if (load.metadata.format === 'amd' 
+          && !load.metadata.authorization 
+          && load.metadata.scriptLoad !== false)
         load.metadata.scriptLoad = true;
-      if (load.metadata.scriptLoad)
+      // script load implies define global leak
+      if (load.metadata.scriptLoad && isBrowser)
         this.get('@@amd-helpers').createDefine();
       return fetch.call(this, load);
     };
@@ -3816,9 +3827,12 @@ hookConstructor(function(constructor) {
         if (!loader.builder && loader.execute !== false) {
           var removeDefine = this.get('@@amd-helpers').createDefine();
 
-          __exec.call(loader, load);
-
-          removeDefine();
+          try {
+            __exec.call(loader, load);
+          }
+          finally {
+            removeDefine();
+          }
 
           if (!load.metadata.entry && !load.metadata.bundle)
             throw new TypeError('AMD module ' + load.name + ' did not define');
@@ -4501,7 +4515,7 @@ function getBundleFor(loader, name) {
 })();
   
 System = new SystemJSLoader();
-System.version = '0.19.4 Standard';
+System.version = '0.19.5 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
