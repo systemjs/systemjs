@@ -3824,7 +3824,7 @@ hookConstructor(function(constructor) {
       if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
         load.metadata.format = 'amd';
         
-        if (!loader.builder && loader.execute !== false) {
+        if (load.source && !loader.builder && loader.execute !== false) {
           var removeDefine = this.get('@@amd-helpers').createDefine();
 
           try {
@@ -3965,7 +3965,7 @@ hookConstructor(function(constructor) {
         }
       }
 
-      return locate.call(loader, load)
+      return Promise.resolve(locate.call(loader, load))
       .then(function(address) {
         var plugin = load.metadata.loader;
 

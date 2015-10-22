@@ -3293,7 +3293,7 @@ hookConstructor(function(constructor) {
         }
       }
 
-      return locate.call(loader, load)
+      return Promise.resolve(locate.call(loader, load))
       .then(function(address) {
         var plugin = load.metadata.loader;
 
