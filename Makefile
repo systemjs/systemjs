@@ -145,6 +145,7 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 					lib/proto.js \
 					lib/scriptLoader.js \
 					lib/register.js \
+					lib/bundles.js \
 					lib/scriptOnly.js \
 					lib/createSystem.js \
 					; echo "$$REGISTER_VERSION" ; cat \
