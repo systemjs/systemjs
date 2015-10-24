@@ -15,8 +15,12 @@ The depcache extension allows specifying the dependencies of all modules upfront
 happen in parallel.
 
 ```javascript
-System.depCache['moduleA'] = ['moduleB']; // moduleA depends on moduleB
-System.depCache['moduleB'] = ['moduleC']; // moduleB depends on moduleC
+System.config({
+  depCache: {
+    'moduleA': ['moduleB'], // moduleA depends on moduleB
+    'moduleB': ['moduleC']  // moduleB depends on moduleC
+  }
+});
 
 // when we do this import, depCache knows we also need moduleB and moduleC,
 // it then directly requests those modules as well as soon as we request moduleA
@@ -35,7 +39,11 @@ The bundle extension will automatically download a bundle as soon as an attempt 
 
 ```javascript
   // the bundle at build/core.js contains these modules
-  System.bundles['build/core'] = ['jquery', 'app/app', 'app/dep', 'lib/third-party'];
+  System.config({
+    bundles: {
+      'build/core': ['jquery', 'app/app', 'app/dep', 'lib/third-party']
+    }
+  });
   
   // when we load 'app/app' the bundle extension interrupts the loading process
   // and ensures that build/core.js is loaded first
@@ -60,7 +68,11 @@ If we have compiled all our modules into a bundle we can then write:
 ```html
   <script src="system-csp-production.js"></script>
   <script>
-    System.bundles['bundle'] = ['app/main'];
+    System.config({
+      bundles: {
+        'bundle': ['app/main']
+      }
+    });
     System.import('app/main').then(function(m) { 
       // loads app/main from the app-built bundle
     });
