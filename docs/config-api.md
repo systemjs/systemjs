@@ -217,11 +217,11 @@ System.config({
       defaultExtension: 'js',
       map: {
         // use local jquery for all jquery requires in this package
-        'jquery': './vendor/local-jquery.js'
+        'jquery': './vendor/local-jquery.js',
 
         // import '/local/package/custom-import' should route to '/local/package/local/import/file.js'
         './custom-import': './local/import/file.js'
-      }
+      },
       modules: {
         // sets meta for modules within the package
         'vendor/*': {
