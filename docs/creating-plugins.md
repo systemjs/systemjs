@@ -71,6 +71,10 @@ js/css.js:
       link.onload = resolve;
 
       document.head.appendChild(link);
+    })
+    .then(function() {
+      // return an empty module in the module pipeline itself
+      return '';
     });
   }
 ```
