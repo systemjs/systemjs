@@ -130,6 +130,8 @@ Typically used along with `System.newModule` to create a valid `Module` object:
 System.set('custom-module', System.newModule({ prop: 'value' }));
 ```
 
+> Note SystemJS stores all module names in the registry as normalized URLs. To be able to properly use the registry with `System.set` it is usually necessary to run `System.set(System.normalizeSync('custom-module'), System.newModule({ prop: 'value' }));` to ensure that `System.import` behaves correctly.
+
 #### System._nodeRequire
 Type: `Function`
 
