@@ -1305,8 +1305,13 @@ var __exec;
   // if currently evalling code here, immediately reduce the registered entry against the load record
   hook('pushRegister_', function() {
     return function(register) {
-      if (!curLoad)
+      if (!curLoad) {
+        console.log('not immediately reducing');
+        console.log(register);
         return false;
+      }
+
+      console.log('reducing ' + curLoad.name);
 
       this.reduceRegister_(curLoad, register);
       return true;
@@ -1334,11 +1339,14 @@ var __exec;
     if (load.metadata.integrity)
       throw new TypeError('Subresource integrity checking is not supported in Web Workers or Chrome Extensions.');
     try {
+      console.log('eval start - ' + load.name);
       preExec(this, load);
       new Function(getSource(load)).call(__global);
       postExec();
+      console.log('eval finish - ' + load.name);
     }
     catch(e) {
+      console.log('eval error - ' + load.name);
       postExec();
       throw addToError(e, 'Evaluating ' + load.address);
     }
@@ -1860,7 +1868,7 @@ hook('normalize', function(normalize) {
  * Detailed Behaviours
  * - main can have a leading "./" can be added optionally
  * - map and defaultExtension are applied to the main
- * - defaultExtension adds the extension only if no other extension is present
+ * - defaultExtension adds the extension only if the exact extension is not present
  * - defaultJSExtensions applies after map when defaultExtension is not set
  * - if a modules value is available for a module, map and defaultExtension are skipped
  * - like global map, package map also applies to subpaths (sizzle/x, ./vendor/another/sub)
@@ -3619,6 +3627,7 @@ hookConstructor(function(constructor) {
     }
 
     function define(name, deps, factory) {
+      console.log('AMD Define');
       if (typeof name != 'string') {
         factory = deps;
         deps = name;

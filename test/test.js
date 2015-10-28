@@ -21,7 +21,7 @@ function err(e) {
 
 var ie8 = typeof navigator != 'undefined' && navigator.appVersion && navigator.appVersion.indexOf('MSIE 8') != -1;
 
-asyncTest('System version', function() {
+/* asyncTest('System version', function() {
   ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)? (Standard|Node)$/));
   start();
 });
@@ -718,7 +718,7 @@ asyncTest('Loading AMD with import *', function() {
     ok(m.g == true);
     start();
   }, err);
-});
+}); */
 
 asyncTest('Loading ES6 and AMD', function() {
   System['import']('tests/es6-and-amd.js').then(function(m) {
@@ -728,7 +728,7 @@ asyncTest('Loading ES6 and AMD', function() {
   }, err);
 });
 
-asyncTest('Module Name meta', function() {
+/* asyncTest('Module Name meta', function() {
   System['import']('tests/reflection.js').then(function(m) {
     ok(m.myname == System.normalizeSync('tests/reflection.js'), 'Module name not returned');
     start();
@@ -1097,6 +1097,6 @@ if (typeof process != 'undefined') {
     ok(typeof define == 'undefined');
     start();
   });
-}
+} */
 
 })(typeof window == 'undefined' ? global : window);

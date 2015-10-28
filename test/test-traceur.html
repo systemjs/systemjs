@@ -22,6 +22,7 @@
 		<script>
 			System.traceurOptions = { asyncFunctions: true };
 			System.paths.traceur = '../node_modules/traceur/bin/traceur.js';
+			System.globalEvaluationScope = false;
 			System['import']('test.js')['catch'](function(e) {
 				setTimeout(function() {
 					throw e.stack || e;
