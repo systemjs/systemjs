@@ -134,6 +134,7 @@ Supported loader plugins:
 
 Additional Plugins:
 
+* [Audio](https://github.com/ozsay/plugin-audio) `System.import('./beep.mp3!audio')`
 * [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
 * [Jade](https://github.com/johnsoftek/plugin-jade)
 * [Jade VirtualDOM](https://github.com/WorldMaker/system-jade-virtualdom)
