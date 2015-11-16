@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.5
+ * SystemJS v0.19.6
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1196,10 +1196,6 @@ hookConstructor(function(constructor) {
 
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
-
-    // include the node require since we're overriding it
-    if (typeof require != 'undefined' && require.resolve && typeof process != 'undefined')
-      this._nodeRequire = require;
   };
 });
 
@@ -1218,16 +1214,8 @@ hookConstructor(function(constructor) {
 
   The final normalization 
  */
-
 hook('normalize', function(normalize) {
   return function(name, parentName) {
-    // dynamically load node-core modules when requiring `@node/fs` for example
-    if (name.substr(0, 6) == '@node/') {
-      if (!this._nodeRequire)
-        throw new TypeError('Can only load node core modules in Node.');
-      this.set(name, this.newModule(getESModule(this._nodeRequire(name.substr(6)))));
-    }
-
     // first run map config
     name = normalize.apply(this, arguments);
     
@@ -1557,7 +1545,7 @@ hook('normalize', function(normalize) {
  * Detailed Behaviours
  * - main can have a leading "./" can be added optionally
  * - map and defaultExtension are applied to the main
- * - defaultExtension adds the extension only if no other extension is present
+ * - defaultExtension adds the extension only if the exact extension is not present
  * - defaultJSExtensions applies after map when defaultExtension is not set
  * - if a modules value is available for a module, map and defaultExtension are skipped
  * - like global map, package map also applies to subpaths (sizzle/x, ./vendor/another/sub)
@@ -2646,7 +2634,7 @@ function createEntry() {
     if (exports && exports.__esModule)
       entry.esModule = exports;
     // set module as 'default' export, then fake named exports by iterating properties
-    else if (entry.esmExports)
+    else if (entry.esmExports && exports !== __global)
       entry.esModule = getESModule(exports);
     // just use the 'default' export
     else
@@ -2826,7 +2814,7 @@ hookConstructor(function(constructor) {
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // bare minimum ignores for IE8
-    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
+    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
 
     var globalSnapshot;
 
@@ -3862,7 +3850,7 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
-System.version = '0.19.5 CSP';
+System.version = '0.19.6 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')

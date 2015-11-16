@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.5
+ * SystemJS v0.19.6
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1499,10 +1499,6 @@ hookConstructor(function(constructor) {
 
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
-
-    // include the node require since we're overriding it
-    if (typeof require != 'undefined' && require.resolve && typeof process != 'undefined')
-      this._nodeRequire = require;
   };
 });
 
@@ -1521,16 +1517,8 @@ hookConstructor(function(constructor) {
 
   The final normalization 
  */
-
 hook('normalize', function(normalize) {
   return function(name, parentName) {
-    // dynamically load node-core modules when requiring `@node/fs` for example
-    if (name.substr(0, 6) == '@node/') {
-      if (!this._nodeRequire)
-        throw new TypeError('Can only load node core modules in Node.');
-      this.set(name, this.newModule(getESModule(this._nodeRequire(name.substr(6)))));
-    }
-
     // first run map config
     name = normalize.apply(this, arguments);
     
@@ -1860,7 +1848,7 @@ hook('normalize', function(normalize) {
  * Detailed Behaviours
  * - main can have a leading "./" can be added optionally
  * - map and defaultExtension are applied to the main
- * - defaultExtension adds the extension only if no other extension is present
+ * - defaultExtension adds the extension only if the exact extension is not present
  * - defaultJSExtensions applies after map when defaultExtension is not set
  * - if a modules value is available for a module, map and defaultExtension are skipped
  * - like global map, package map also applies to subpaths (sizzle/x, ./vendor/another/sub)
@@ -2949,7 +2937,7 @@ function createEntry() {
     if (exports && exports.__esModule)
       entry.esModule = exports;
     // set module as 'default' export, then fake named exports by iterating properties
-    else if (entry.esmExports)
+    else if (entry.esmExports && exports !== __global)
       entry.esModule = getESModule(exports);
     // just use the 'default' export
     else
@@ -3166,6 +3154,8 @@ function createEntry() {
 
         // load the transpiler correctly
         if (loader.loadedTranspiler_ === false && load.name == loader.normalizeSync(loader.transpiler)) {
+          warn.call(loader, 'Note that internal transpilation via System.transpiler has been deprecated for transpiler plugins.');
+
           // always load transpiler as a global
           if (source.length > 100) {
             load.metadata.format = load.metadata.format || 'global';
@@ -3323,7 +3313,7 @@ hookConstructor(function(constructor) {
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // bare minimum ignores for IE8
-    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
+    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
 
     var globalSnapshot;
 
@@ -3433,30 +3423,42 @@ hookConstructor(function(constructor) {
   var cjsExportsRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF.]|module\.)exports\s*(\[['"]|\.)|(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF.])module\.exports\s*[=,]/;
   // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
   var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g;
-  var commentRegEx = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+  var commentRegEx = /(^|[^\\])(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+
+  var stringRegEx = /(?:"[^"\\\n\r]*(?:\\.[^"\\\n\r]*)*"|'[^'\\\n\r]*(?:\\.[^'\\\n\r]*)*')/g;
 
   function getCJSDeps(source) {
-    cjsRequireRegEx.lastIndex = commentRegEx.lastIndex = 0;
+    cjsRequireRegEx.lastIndex = commentRegEx.lastIndex = stringRegEx.lastIndex = 0;
 
     var deps = [];
 
-    // track comments in the source
     var match;
-    
-    var commentLocations = [];
+
+    // track string and comment locations for unminified source    
+    var stringLocations = [], commentLocations = [];
+
+    function inLocation(locations, match, starts) {
+      var inLocation = false;
+      for (var i = 0; i < locations.length; i++)
+        if (locations[i][0] < match.index && locations[i][1] > match.index + (!starts ? match[0].length : 0))
+          return true;
+      return false;
+    }
+
     if (source.length / source.split('\n').length < 200) {
-      while (match = commentRegEx.exec(source))
-        commentLocations.push([match.index, match.index + match[0].length]);
+      while (match = stringRegEx.exec(source))
+        stringLocations.push([match.index, match.index + match[0].length]);
+      
+      while (match = commentRegEx.exec(source)) {
+        // only track comments not starting in strings
+        if (!inLocation(stringLocations, match, true))
+          commentLocations.push([match.index, match.index + match[0].length]);
+      }
     }
 
     while (match = cjsRequireRegEx.exec(source)) {
-      // ensure we're not in a comment location
-      var inComment = false;
-      for (var i = 0; i < commentLocations.length; i++) {
-        if (commentLocations[i][0] < match.index && commentLocations[i][1] > match.index + match[0].length)
-          inComment = true;
-      }
-      if (!inComment)
+      // ensure we're not within a string or comment location
+      if (!inLocation(stringLocations, match) && !inLocation(commentLocations, match))
         deps.push(match[1].substr(1, match[1].length - 2));
     }
 
@@ -3465,6 +3467,28 @@ hookConstructor(function(constructor) {
 
   if (typeof window != 'undefined' && typeof document != 'undefined' && window.location)
     var windowOrigin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
+
+  // include the node require since we're overriding it
+  if (typeof require != 'undefined' && require.resolve && typeof process != 'undefined')
+    SystemJSLoader.prototype._nodeRequire = require;
+
+  var nodeCoreModules = ['assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 
+      'crypto', 'dgram', 'dns', 'domain', 'events', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 
+      'process', 'punycode', 'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'sys', 'timers', 
+      'tls', 'tty', 'url', 'util', 'vm', 'zlib'];
+
+  hook('normalize', function(normalize) {
+    return function(name, parentName) {
+      // dynamically load node-core modules when requiring `@node/fs` for example
+      if (name.substr(0, 6) == '@node/' && nodeCoreModules.indexOf(name.substr(6)) != -1) {
+        if (!this._nodeRequire)
+          throw new TypeError('Can only load node core modules in Node.');
+        this.set(name, this.newModule(getESModule(this._nodeRequire(name.substr(6)))));
+      }
+
+      return normalize.apply(this, arguments);
+    };
+  });
 
   hook('instantiate', function(instantiate) {
     return function(load) {
@@ -4515,7 +4539,7 @@ function getBundleFor(loader, name) {
 })();
   
 System = new SystemJSLoader();
-System.version = '0.19.5 Standard';
+System.version = '0.19.6 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')

@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.5
+ * SystemJS v0.19.6
  */
 (function(__global) {
 
@@ -1743,7 +1743,7 @@ function createEntry() {
     if (exports && exports.__esModule)
       entry.esModule = exports;
     // set module as 'default' export, then fake named exports by iterating properties
-    else if (entry.esmExports)
+    else if (entry.esmExports && exports !== __global)
       entry.esModule = getESModule(exports);
     // just use the 'default' export
     else
@@ -2004,7 +2004,7 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
-System.version = '0.19.5 Register Only';
+System.version = '0.19.6 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
