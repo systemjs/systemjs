@@ -144,7 +144,7 @@ var x = 'global'; // detected as a global
 y = 'global';     // detected as a global
 ```
 
-These two cases fail in IE8, so do need to have their [exports explicitly declared](#exports) if compatibility is desired.
+These two cases fail in IE8 and WebWorkers, so do need to have their [exports explicitly declared](#exports) if compatibility is desired.
 
 > Globals are not removed from the global object for shim compatibility, but this could become possible in future if all globals
 use the [globals](#globals) meta for shims instead of [deps](#shim-dependencies).
