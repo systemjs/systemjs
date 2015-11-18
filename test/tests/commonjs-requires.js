@@ -18,3 +18,6 @@ var regexWithString = /asdfasdf " /;
 exports.d6 = require('./commonjs-d2.js');
 
 var regexClose = /asdf " */;
+
+// This comment triggered SystemJS to do a require because of this -> require('')
+exports.d7 = 'export';

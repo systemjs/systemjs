@@ -338,13 +338,6 @@ asyncTest('CommonJS detection variation 1', function() {
   }, err);
 });
 
-asyncTest('CommonJS module with require at end of comment loads OK', function() {
-  System['import']('tests/commonjs-requires-in-comment.js').then(function(m) {
-    ok(m);
-    start();
-  }, err);
-});
-
 if (!ie8)
 asyncTest('CommonJS detection variation 2', function() {
   System['import']('tests/commonjs-variation2.js').then(function(m) {
@@ -375,6 +368,7 @@ asyncTest('CommonJS require variations', function() {
     ok(m.d4 == "text/* require('still not a dep') text");
     ok(m.d5 == 'text \'quote\' require("yet still not a dep")');
     ok(m.d6 == 'd6');
+    ok(m.d7 == 'export');
     start();
   }, err);
 });
