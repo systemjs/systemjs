@@ -338,6 +338,13 @@ asyncTest('CommonJS detection variation 1', function() {
   }, err);
 });
 
+asyncTest('CommonJS module with require at end of comment loads OK', function() {
+  System['import']('tests/commonjs-requires-in-comment.js').then(function(m) {
+    ok(m);
+    start();
+  }, err);
+});
+
 if (!ie8)
 asyncTest('CommonJS detection variation 2', function() {
   System['import']('tests/commonjs-variation2.js').then(function(m) {
