@@ -26,5 +26,6 @@
     "test:babel": "qunit -c s:./index.js -t ./test/test-babel.js",
     "test:traceur": "qunit -c s:./index.js -t ./test/test-traceur.js",
     "test:typescript": "qunit -c s:./index.js -t ./test/test-typescript.js"
-  }
+  },
+  "typings": "./dist/systemjs.d.ts"
 }
