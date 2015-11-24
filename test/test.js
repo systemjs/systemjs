@@ -1100,5 +1100,49 @@ if (typeof process != 'undefined') {
     start();
   });
 }
+  
+asyncTest('Package-local alias esm', function() {
+  System.config({
+    map: {
+      'package-local-alias': 'tests/package-local-alias'
+    },
+    packages: {
+      'package-local-alias': {
+        main: 'index-esm.js',
+        format: 'esm',
+        meta: {
+          './local': {alias: './local/index-esm.js'}
+        }
+      }
+    }
+  });
+  System['import']('package-local-alias').then(function(m) {
+    ok(m.q == 'q');
+    ok(m.fromLocal == 'x');
+    start();
+  });
+});
+
+asyncTest('Package-local alias cjs', function() {
+  System.config({
+    map: {
+      'package-local-alias': 'tests/package-local-alias'
+    },
+    packages: {
+      'package-local-alias': {
+        main: 'index-cjs.js',
+        format: 'cjs',
+        meta: {
+          './local': {alias: './local/index-cjs.js'}
+        }
+      }
+    }
+  });
+  System['import']('package-local-alias').then(function(m) {
+    ok(m.q == 'q');
+    ok(m.fromLocal == 'x');
+    start();
+  });
+});
 
 })(typeof window == 'undefined' ? global : window);
