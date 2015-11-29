@@ -1,5 +1,5 @@
 
-var local = require('./local');
+var local = require('./local-cjs');
 
 exports.q = 'q';
 
