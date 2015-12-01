@@ -1100,5 +1100,97 @@ if (typeof process != 'undefined') {
     start();
   });
 }
+  
+asyncTest('Package-local alias esm', function() {
+  System.config({
+    map: {
+      'package-local-alias-esm': 'tests/package-local-alias'
+    },
+    packages: {
+      'package-local-alias-esm': {
+        main: 'index-esm.js',
+        format: 'esm',
+        meta: {
+          './local-esm': {alias: './local/index-esm.js'}
+        }
+      }
+    }
+  });
+  System['import']('package-local-alias-esm').then(function(m) {
+    ok(m.q == 'q');
+    ok(m.fromLocal == 'x');
+    start();
+  });
+});
+
+asyncTest('Package-local alias cjs', function() {
+  System.config({
+    map: {
+      'package-local-alias-cjs': 'tests/package-local-alias'
+    },
+    packages: {
+      'package-local-alias-cjs': {
+        main: 'index-cjs.js',
+        format: 'cjs',
+        meta: {
+          './local-cjs': {alias: './local/index-cjs.js'}
+        }
+      }
+    }
+  });
+  System['import']('package-local-alias-cjs').then(function(m) {
+    ok(m.q == 'q');
+    ok(m.fromLocal == 'x');
+    start();
+  });
+});
+  
+asyncTest('Package-local alias esm default export', function() {
+  System.config({
+    map: {
+      'package-local-alias-default-esm': 'tests/package-local-alias'
+    },
+    packages: {
+      'package-local-alias-default-esm': {  // can't reuse package names from previous test
+        main: 'index-default-esm.js',   // because System.config() results persist across tests
+        format: 'esm',
+        meta: {
+          './local-default-esm': {alias: './local/index-default-esm.js'}
+        }
+      }
+    }
+  });
+  System['import']('package-local-alias-default-esm').then(function(m) {
+    ok(m.q == 'q');
+    ok(m.fromLocal == 'x');
+    ok(m.fromLocalDirect == 'x');
+    start();
+  });
+});
+
+asyncTest('Package-local alias cjs default export', function() {
+  System.config({
+    map: {
+      'package-local-alias-default-cjs': 'tests/package-local-alias'
+    },
+    packages: {
+      'package-local-alias-default-cjs': {
+        main: 'index-default-cjs.js',
+        format: 'cjs',
+        meta: {
+          './local-default-cjs': {alias: './local/index-default-cjs.js'}
+        }
+      }
+    }
+  });
+  System['import']('package-local-alias-default-cjs').then(function(m) {
+    ok(m.q == 'q');
+    ok(m.fromLocal == 'x'); 
+    ok(m.fromLocalDirect == 'x');
+    start();
+  });
+});
+
+
 
 })(typeof window == 'undefined' ? global : window);
