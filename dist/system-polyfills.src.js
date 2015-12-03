@@ -321,8 +321,8 @@ define(function(require) {
 	};
 
 	function isNode () {
-		return typeof process !== 'undefined' && process !== null &&
-			typeof process.nextTick === 'function';
+		return typeof process !== 'undefined' &&
+			Object.prototype.toString.call(process) === '[object process]';
 	}
 
 	function hasMutationObserver () {
@@ -373,7 +373,7 @@ define(function() {
 	 * @returns {String} formatted string, suitable for output to developers
 	 */
 	function formatError(e) {
-		var s = typeof e === 'object' && e !== null && e.stack ? e.stack : formatObject(e);
+		var s = typeof e === 'object' && e !== null && (e.stack || e.message) ? e.stack || e.message : formatObject(e);
 		return e instanceof Error ? s : s + ' (WARNING: non-Error used)';
 	}
 

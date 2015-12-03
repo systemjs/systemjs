@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.6
+ * SystemJS v0.19.7-dev
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1502,6 +1502,15 @@ hookConstructor(function(constructor) {
   };
 });
 
+// include the node require since we're overriding it
+if (typeof require != 'undefined' && typeof process != 'undefined' && !process.browser)
+  SystemJSLoader.prototype._nodeRequire = require;
+
+var nodeCoreModules = ['assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 
+    'crypto', 'dgram', 'dns', 'domain', 'events', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 
+    'process', 'punycode', 'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'sys', 'timers', 
+    'tls', 'tty', 'url', 'util', 'vm', 'zlib'];
+
 /*
   Normalization
 
@@ -1521,6 +1530,13 @@ hook('normalize', function(normalize) {
   return function(name, parentName) {
     // first run map config
     name = normalize.apply(this, arguments);
+
+    // dynamically load node-core modules when requiring `@node/fs` for example
+    if (name.substr(0, 6) == '@node/' && nodeCoreModules.indexOf(name.substr(6)) != -1) {
+      if (!this._nodeRequire)
+        throw new TypeError('Error loading ' + name + '. Can only load node core modules in Node.');
+      this.set(name, this.newModule(getESModule(this._nodeRequire(name.substr(6)))));
+    }
     
     // relative URL-normalization
     if (name[0] == '.' || name[0] == '/') {
@@ -1582,6 +1598,17 @@ hook('import', function(systemImport) {
 });
 
 /*
+ * Allow format: 'detect' meta to enable format detection
+ */
+hook('translate', function(systemTranslate) {
+  return function(load) {
+    if (load.metadata.format == 'detect')
+      load.metadata.format = undefined;
+    return systemTranslate.call(this, load);
+  };
+});
+
+/*
  Extend config merging one deep only
 
   loader.config({
@@ -1627,7 +1654,7 @@ SystemJSLoader.prototype.config = function(cfg) {
         return true;
     }
     if (checkHasConfig(this.packages) || checkHasConfig(this.meta) || checkHasConfig(this.depCache) || checkHasConfig(this.bundles) || checkHasConfig(this.packageConfigPaths))
-      throw new TypeError('baseURL should only be configured once and must be configured first.');
+      throw new TypeError('Incorrect configuration order. The baseURL must be configured with the first System.config call.');
 
     this.baseURL = cfg.baseURL;
 
@@ -1898,6 +1925,8 @@ hook('normalize', function(normalize) {
       constructor.call(this);
       this.packages = {};
       this.packageConfigPaths = {};
+      this._loader.pkgConfigPromises = {};
+      this._loader.pkgBundlePromises = {};
     };
   });
 
@@ -2073,6 +2102,8 @@ hook('normalize', function(normalize) {
           if (parentMap) {
             var map = applyMap(parentMap, name);
             if (map) {
+              if (typeof parentMap[map] != 'string')
+                throw new TypeError('Unable to map an external require condition while normalizing ' + name + ', pending https://github.com/systemjs/systemjs/issues/937.');
               name = parentMap[map] + name.substr(map.length);
               // relative maps are package-relative
               if (name[0] === '.')
@@ -2135,6 +2166,7 @@ hook('normalize', function(normalize) {
       // ensure that any bundles in this package are triggered, and
       // all that are triggered block any further loads in the package
       .then(function(bundle) {
+        var pkgBundlePromises = loader._loader.pkgBundlePromises;
         if (bundle || pkgBundlePromises[pkgConfigMatch.pkgName]) {
           var pkgBundleLoads = pkgBundlePromises[pkgConfigMatch.pkgName] = pkgBundlePromises[pkgConfigMatch.pkgName] || { bundles: [], promise: Promise.resolve() };
           if (bundle && indexOf.call(pkgBundleLoads.bundles, bundle) == -1) {
@@ -2165,12 +2197,9 @@ hook('normalize', function(normalize) {
     };
   }
 
-  var pkgBundlePromises = {};
-
   // check if the given normalized name matches a packageConfigPath
   // if so, loads the config
   var packageConfigPathsRegExps = {};
-  var pkgConfigPromises = {};
 
   function pkgConfigPathMatch(loader, normalized) {
     var pkgPath, pkgConfigPaths = [];
@@ -2196,8 +2225,8 @@ hook('normalize', function(normalize) {
     if (curPkgConfig && curPkgConfig.configured)
       return Promise.resolve();
 
-    return pkgConfigPromises[pkgConfigMatch.pkgName] || (
-      pkgConfigPromises[pkgConfigMatch.pkgName] = Promise.resolve()
+    return loader._loader.pkgConfigPromises[pkgConfigMatch.pkgName] || (
+      loader._loader.pkgConfigPromises[pkgConfigMatch.pkgName] = Promise.resolve()
       .then(function() {
         var pkgConfigPromises = [];
         for (var i = 0; i < pkgConfigMatch.configPaths.length; i++) (function(pkgConfigPath) {
@@ -3128,10 +3157,15 @@ function createEntry() {
         if (load.metadata.format == 'esm' || load.metadata.format == 'es6' || !load.metadata.format && source.match(esmRegEx)) {
           if (load.metadata.format == 'es6')
             warn.call(loader, 'Module ' + load.name + ' has metadata setting its format to "es6", which is deprecated.\nThis should be updated to "esm".');
+
           load.metadata.format = 'esm';
 
-          if (loader.transpiler === false)
+          if (loader.transpiler === false) {
+            // we accept translation to esm for builds though to enable eg rollup optimizations
+            if (loader.builder)
+              return source;
             throw new TypeError('Unable to dynamically transpile ES module as System.transpiler set to false.');
+          }
 
           // setting loadedTranspiler_ = false tells the next block to
           // do checks for setting transpiler metadata
@@ -3151,6 +3185,10 @@ function createEntry() {
             return source;
           });
         }
+
+        // skip transpiler and transpiler runtime loading when transpiler is disabled
+        if (loader.transpiler === false)
+          return source;
 
         // load the transpiler correctly
         if (loader.loadedTranspiler_ === false && load.name == loader.normalizeSync(loader.transpiler)) {
@@ -3425,7 +3463,7 @@ hookConstructor(function(constructor) {
   var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g;
   var commentRegEx = /(^|[^\\])(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
-  var stringRegEx = /(?:"[^"\\\n\r]*(?:\\.[^"\\\n\r]*)*"|'[^'\\\n\r]*(?:\\.[^'\\\n\r]*)*')/g;
+  var stringRegEx = /("[^"\\\n\r]*(\\.[^"\\\n\r]*)*"|'[^'\\\n\r]*(\\.[^'\\\n\r]*)*')/g;
 
   function getCJSDeps(source) {
     cjsRequireRegEx.lastIndex = commentRegEx.lastIndex = stringRegEx.lastIndex = 0;
@@ -3437,10 +3475,9 @@ hookConstructor(function(constructor) {
     // track string and comment locations for unminified source    
     var stringLocations = [], commentLocations = [];
 
-    function inLocation(locations, match, starts) {
-      var inLocation = false;
+    function inLocation(locations, match) {
       for (var i = 0; i < locations.length; i++)
-        if (locations[i][0] < match.index && locations[i][1] > match.index + (!starts ? match[0].length : 0))
+        if (locations[i][0] < match.index && locations[i][1] > match.index)
           return true;
       return false;
     }
@@ -3451,15 +3488,23 @@ hookConstructor(function(constructor) {
       
       while (match = commentRegEx.exec(source)) {
         // only track comments not starting in strings
-        if (!inLocation(stringLocations, match, true))
+        if (!inLocation(stringLocations, match))
           commentLocations.push([match.index, match.index + match[0].length]);
       }
     }
 
     while (match = cjsRequireRegEx.exec(source)) {
       // ensure we're not within a string or comment location
-      if (!inLocation(stringLocations, match) && !inLocation(commentLocations, match))
-        deps.push(match[1].substr(1, match[1].length - 2));
+      if (!inLocation(stringLocations, match) && !inLocation(commentLocations, match)) {
+        var dep = match[1].substr(1, match[1].length - 2);
+        // skip cases like require('" + file + "')
+        if (dep.match(/"|'/))
+          continue;
+        // trailing slash requires are removed as they don't map mains in SystemJS
+        if (dep[dep.length - 1] == '/')
+          dep = dep.substr(0, dep.length - 1);
+        deps.push(dep);
+      }
     }
 
     return deps;
@@ -3468,24 +3513,8 @@ hookConstructor(function(constructor) {
   if (typeof window != 'undefined' && typeof document != 'undefined' && window.location)
     var windowOrigin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
 
-  // include the node require since we're overriding it
-  if (typeof require != 'undefined' && require.resolve && typeof process != 'undefined')
-    SystemJSLoader.prototype._nodeRequire = require;
-
-  var nodeCoreModules = ['assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 
-      'crypto', 'dgram', 'dns', 'domain', 'events', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 
-      'process', 'punycode', 'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'sys', 'timers', 
-      'tls', 'tty', 'url', 'util', 'vm', 'zlib'];
-
   hook('normalize', function(normalize) {
     return function(name, parentName) {
-      // dynamically load node-core modules when requiring `@node/fs` for example
-      if (name.substr(0, 6) == '@node/' && nodeCoreModules.indexOf(name.substr(6)) != -1) {
-        if (!this._nodeRequire)
-          throw new TypeError('Can only load node core modules in Node.');
-        this.set(name, this.newModule(getESModule(this._nodeRequire(name.substr(6)))));
-      }
-
       return normalize.apply(this, arguments);
     };
   });
@@ -3502,7 +3531,7 @@ hookConstructor(function(constructor) {
 
       if (load.metadata.format == 'cjs') {
         var metaDeps = load.metadata.deps;
-        var deps = getCJSDeps(load.source);
+        var deps = load.metadata.cjsRequireDetection === false ? [] : getCJSDeps(load.source);
 
         for (var g in load.metadata.globals)
           deps.push(load.metadata.globals[g]);
@@ -3513,7 +3542,13 @@ hookConstructor(function(constructor) {
 
         entry.deps = deps;
         entry.executingRequire = true;
-        entry.execute = function(require, exports, module) {
+        entry.execute = function(_require, exports, module) {
+          function require(name) {
+            if (name[name.length - 1] == '/')
+              name = name.substr(0, name.length - 1);
+            return _require.apply(this, arguments);
+          }
+
           // ensure meta deps execute first
           for (var i = 0; i < metaDeps.length; i++)
             require(metaDeps[i]);
@@ -4071,7 +4106,7 @@ hookConstructor(function(constructor) {
         load.metadata.sourceMap = JSON.stringify(sourceMap);
       }
 
-      if (load.metadata.loaderModule && load.metadata.loaderModule.instantiate)
+      if (load.metadata.loaderModule && load.metadata.loaderModule.instantiate && !loader.builder)
         return Promise.resolve(load.metadata.loaderModule.instantiate.call(loader, load)).then(function(result) {
           load.metadata.entry = createEntry();
           load.metadata.entry.execute = function() {
@@ -4258,18 +4293,20 @@ hookConstructor(function(constructor) {
       var aliasDeps = load.metadata.deps || [];
       if (alias) {
         load.metadata.format = 'defined';
-        this.defined[load.name] = {
-          declarative: true,
-          deps: aliasDeps.concat([alias]),
-          declare: function(_export) {
-            return {
-              setters: [function(module) {
-                for (var p in module)
-                  _export(p, module[p]);
-              }],
-              execute: function() {}
-            };
-          }
+        var entry = createEntry();
+        this.defined[load.name] = entry;
+        entry.declarative = true;
+        entry.deps = aliasDeps.concat([alias]);
+        entry.declare = function(_export) {
+          return {
+            setters: [function(module) {
+              for (var p in module)
+                _export(p, module[p]);
+              if (module.__useDefault)
+                entry.module.exports.__useDefault = true;
+            }],
+            execute: function() {}
+          };
         };
         return '';
       }
@@ -4539,7 +4576,7 @@ function getBundleFor(loader, name) {
 })();
   
 System = new SystemJSLoader();
-System.version = '0.19.6 Standard';
+System.version = '0.19.7-dev Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
