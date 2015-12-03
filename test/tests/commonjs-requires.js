@@ -21,3 +21,5 @@ var regexClose = /asdf " */;
 
 // This comment triggered SystemJS to do a require because of this -> require('')
 exports.d7 = 'export';
+
+var p = "require('" + "test" + "');"
