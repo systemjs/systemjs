@@ -222,7 +222,7 @@ System.config({
         // import '/local/package/custom-import' should route to '/local/package/local/import/file.js'
         './custom-import': './local/import/file.js'
       },
-      modules: {
+      meta: {
         // sets meta for modules within the package
         'vendor/*': {
           'format': 'global'
@@ -239,7 +239,7 @@ System.config({
   Takes preference over defaultJSExtensions.
   Can be set to `defaultExtension: false` to optionally opt-out of extension-adding when `defaultJSExtensions` is enabled.
 * `map`: Local and relative map configurations scoped to the package. Apply for subpaths as well.
-* `modules`: Package-scoped meta configuration with wildcard support. Modules are subpaths within the package path.
+* `meta`: Package-scoped meta configuration with wildcard support. Modules are subpaths within the package path.
   This also provides an opt-out mechanism for `defaultExtension`, by adding modules here that should skip extension adding.
 
 #### paths
