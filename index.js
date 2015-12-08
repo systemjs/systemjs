@@ -26,9 +26,6 @@ function configNodePath(loader, module, nodeModule, wildcard) {
 var SystemJSLoader = require('./dist/system.src').constructor;
 
 // standard class extend SystemJSLoader to SystemJSNodeLoader
-function SystemJSNodeLoaderProto() {}
-SystemJSNodeLoaderProto.prototype = SystemJSLoader.prototype;
-
 function SystemJSNodeLoader() {
   SystemJSLoader.call(this);
 
@@ -40,7 +37,7 @@ function SystemJSNodeLoader() {
     configNodePath(this, 'babel-runtime/*', 'babel-runtime', true);
   }
 }
-SystemJSNodeLoader.prototype = new SystemJSNodeLoaderProto();
+SystemJSNodeLoader.prototype = Object.create(SystemJSLoader.prototype);
 SystemJSNodeLoader.prototype.constructor = SystemJSNodeLoader;
 
 var System = new SystemJSNodeLoader();
