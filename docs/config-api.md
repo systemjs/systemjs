@@ -190,7 +190,7 @@ System.config({
   Set a loader for this meta path.
 * [`sourceMap`](creating-plugins.md):
   For plugin transpilers to set the source map of their transpilation.
-* `nonce`: The [nonce](https://www.w3c.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
+* `nonce`: The [nonce](https://www.w3.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
   This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
 * `integrity`: The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
   For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
