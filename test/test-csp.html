@@ -182,6 +182,20 @@
           ok(e.toString().indexOf('did not call System.register or AMD define') != -1);
           start();
         });
+      });
+
+      asyncTest('Loading a global with exports defined', function() {
+        System.config({
+          meta: {
+            'tests/global-single.js': {
+              exports: 'foo'
+            }
+          }
+        });
+        System['import']('tests/global-single.js').then(function(m) {
+          ok(m == 'bar');
+          start();
+        });
       })
       
       asyncTest('Importing a script with wrong integrity fails', function() {
