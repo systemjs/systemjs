@@ -90,6 +90,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 					lib/global.js \
 					lib/global-helpers.js \
 					lib/cjs.js \
+					lib/cjs-helpers.js \
 					lib/amd-helpers.js \
 					lib/amd.js \
 					lib/plugins.js \
@@ -120,6 +121,7 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 					lib/scriptLoader.js \
 					lib/register.js \
 					lib/global-helpers.js \
+					lib/cjs-helpers.js \
 					lib/amd-helpers.js \
 					lib/plugins.js \
 					lib/conditionals.js \
