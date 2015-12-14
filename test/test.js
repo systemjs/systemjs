@@ -514,6 +514,13 @@ asyncTest('System.register regex test', function() {
   }, err);
 });
 
+asyncTest('System.register module name arg', function() {
+  System['import']('tests/module-name.js').then(function(m) {
+    ok(m.name == System.baseURL + 'tests/module-name.js');
+    start();
+  }, err);
+});
+
 asyncTest('System.register group linking test', function() {
   System.config({
     bundles: {
