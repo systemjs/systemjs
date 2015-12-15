@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.7
+ * SystemJS v0.19.8
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -3617,8 +3617,9 @@ hookConstructor(function(constructor) {
       getPathVars: function(moduleId) {
         // remove any plugin syntax
         var pluginIndex = moduleId.lastIndexOf('!');
+        var filename;
         if (pluginIndex != -1)
-          filename = filename.substr(0, pluginIndex);
+          filename = moduleId.substr(0, pluginIndex);
         else
           filename = moduleId;
 
@@ -4622,7 +4623,7 @@ function getBundleFor(loader, name) {
 })();
   
 System = new SystemJSLoader();
-System.version = '0.19.7 Standard';
+System.version = '0.19.8 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
