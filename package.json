@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.19.7-dev",
+  "version": "0.19.7",
   "description": "Universal dynamic module loader",
   "repository": {
     "type": "git",
@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "es6-module-loader": "^0.17.4",
-    "when": "^3.7.2"
+    "when": "^3.7.5"
   },
   "devDependencies": {
     "babel-core": "^5.8.22",

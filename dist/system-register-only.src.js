@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.7-dev
+ * SystemJS v0.19.7
  */
 (function(__global) {
 
@@ -1122,7 +1122,7 @@ function extend(a, b, prepend) {
 }
 
 // package configuration options
-var packageProperties = ['main', 'format', 'defaultExtension', 'modules', 'map', 'basePath', 'depCache'];
+var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath', 'depCache'];
 
 // meta first-level extends where:
 // array + array appends
@@ -1135,7 +1135,7 @@ function extendMeta(a, b, prepend) {
       a[p] = val;
     else if (val instanceof Array && a[p] instanceof Array)
       a[p] = [].concat(prepend ? val : a[p]).concat(prepend ? a[p] : val);
-    else if (typeof val == 'object' && typeof a[p] == 'object')
+    else if (typeof val == 'object' && val !== null && typeof a[p] == 'object')
       a[p] = extend(extend({}, a[p]), val, prepend);
     else if (!prepend)
       a[p] = val;
@@ -1302,7 +1302,7 @@ function warn(msg) {
 
           // if nothing registered, then something went wrong
           if (!load.metadata.entry && !load.metadata.bundle)
-            reject(new Error(load.name + ' did not call System.register or AMD define'));
+            reject(new Error(load.name + ' did not call System.register or AMD define. If loading a global module configure the global name via the meta exports property for script injection support.'));
 
           resolve('');
         }
@@ -1620,7 +1620,7 @@ function createEntry() {
 
       module.locked = false;
       return value;
-    });
+    }, entry.name);
     
     module.setters = declaration.setters;
     module.execute = declaration.execute;
@@ -2004,7 +2004,7 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
-System.version = '0.19.7-dev Register Only';
+System.version = '0.19.7 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
