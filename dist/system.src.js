@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.8
+ * SystemJS v0.19.9
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -462,13 +462,14 @@ function logloads(loads) {
         if (loader.loads[i].name == name) {
           existingLoad = loader.loads[i];
 
-          if(step == 'translate' && !existingLoad.source) {
+          if (step == 'translate' && !existingLoad.source) {
             existingLoad.address = stepState.moduleAddress;
             proceedToTranslate(loader, existingLoad, Promise.resolve(stepState.moduleSource));
           }
 
-          // a primary load -> use that existing linkset
-          if (existingLoad.linkSets.length)
+          // a primary load -> use that existing linkset if it is for the direct load here
+          // otherwise create a new linkset unit
+          if (existingLoad.linkSets.length && existingLoad.linkSets[0].loads[0].name == existingLoad.name)
             return existingLoad.linkSets[0].done.then(function() {
               resolve(existingLoad);
             });
@@ -1022,9 +1023,22 @@ SystemLoader.prototype = new LoaderProto();
 
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-          if (xhr.status === 200 || (xhr.status == 0 && xhr.responseText)) {
+          // in Chrome on file:/// URLs, status is 0
+          if (xhr.status == 0) {
+            if (xhr.responseText) {
+              load();
+            }
+            else {
+              // when responseText is empty, wait for load or error event
+              // to inform if it is a 404 or empty file
+              xhr.addEventListener('error', error);
+              xhr.addEventListener('load', load);
+            }
+          }
+          else if (xhr.status === 200) {
             load();
-          } else {
+          }
+          else {
             error();
           }
         }
@@ -1501,6 +1515,16 @@ function getBaseURLObj() {
   return (baseURLCache[this.baseURL] = baseURL);
 }
 
+function setConditional(mode) {
+  this.set('@system-env', this.newModule({
+    browser: isBrowser,
+    node: !!this._nodeRequire,
+    env: mode,
+    production: mode == 'production',
+    development: mode == 'development'
+  }));
+}
+
 var baseURIObj = new URL(baseURI);
 
 hookConstructor(function(constructor) {
@@ -1525,6 +1549,8 @@ hookConstructor(function(constructor) {
 
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
+
+    setConditional.call(this, 'development');
   };
 });
 
@@ -1668,6 +1694,8 @@ hook('translate', function(systemTranslate) {
   For easy normalization canonicalization with latest URL support.
 
 */
+SystemJSLoader.prototype.env = 'development';
+
 SystemJSLoader.prototype.config = function(cfg) {
   if ('warnings' in cfg)
     this.warnings = cfg.warnings;
@@ -1695,6 +1723,12 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   if (cfg.pluginFirst)
     this.pluginFirst = cfg.pluginFirst;
+
+  if (cfg.env) {
+    if (cfg.env != 'production' && cfg.env != 'development')
+      throw new TypeError('The config environment must be set to "production" or "development".');
+    setConditional.call(this, cfg.env);
+  }
 
   if (cfg.paths) {
     for (var p in cfg.paths)
@@ -4299,18 +4333,6 @@ hookConstructor(function(constructor) {
     });
   }
 
-  hookConstructor(function(constructor) {
-    return function() {
-      constructor.call(this);
-
-      // standard environment module, starting small as backwards-compat matters!
-      this.set('@system-env', this.newModule({
-        browser: isBrowser,
-        node: !!this._nodeRequire
-      }));
-    };
-  });
-
   // no normalizeSync
   hook('normalize', function(normalize) {
     return function(name, parentName, parentAddress) {
@@ -4623,7 +4645,7 @@ function getBundleFor(loader, name) {
 })();
   
 System = new SystemJSLoader();
-System.version = '0.19.8 Standard';
+System.version = '0.19.9 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
