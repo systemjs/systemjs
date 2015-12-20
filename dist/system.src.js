@@ -6,7 +6,7 @@ function bootstrap() {(function(__global) {
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
-  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
+  var isWindows = typeof process != 'undefined' && typeof process.platform != 'undefined' && !!process.platform.match(/^win/);
 
   if (!__global.console)
     __global.console = { assert: function() {} };
