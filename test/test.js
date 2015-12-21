@@ -822,7 +822,6 @@ asyncTest('Loading two bundles that have a shared dependency', function() {
 asyncTest("System clone", function() {
   var clonedSystem = new System.constructor();
 
-  clonedSystem.paths['*'] = System.paths['*'];
   clonedSystem.baseURL = System.baseURL;
 
   System.map['maptest'] = 'tests/map-test.js';
