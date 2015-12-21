@@ -82,7 +82,6 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 					lib/global-eval.js \
 					lib/map.js \
 					lib/core.js \
-					lib/paths.js \
 					lib/package.js \
 					lib/scriptLoader.js \
 					lib/register.js \
@@ -116,7 +115,6 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 					lib/proto.js \
 					lib/map.js \
 					lib/core.js \
-					lib/paths.js \
 					lib/package.js \
 					lib/scriptLoader.js \
 					lib/register.js \
