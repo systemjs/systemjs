@@ -148,8 +148,10 @@ Additional Plugins:
 * [jst](https://github.com/podio/plugin-jst) Underscore templates
 * [SASS](https://github.com/screendriver/plugin-sass) `System.import('style.scss!')`
 
-[Read about using plugins here](docs/overview.md#plugin-loaders)
-[Read the guide here on creating plugins](docs/creating-plugins.md).
+Guides:
+
+* [Using plugins](docs/overview.md#plugin-loaders)
+* [Creating plugins](docs/creating-plugins.md)
 
 #### Running the tests
 
