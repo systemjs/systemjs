@@ -5,7 +5,7 @@ if (typeof URL === 'undefined')
 
 var version = require('./package.json').version;
 
-var isWindows = process.platform.match(/^win/);
+var isWindows = typeof process.platform != 'undefined' && process.platform.match(/^win/);
 
 // set transpiler paths in Node
 var nodeResolver = typeof process != 'undefined' && typeof require != 'undefined' && require.resolve;
@@ -44,4 +44,6 @@ var System = new SystemJSNodeLoader();
 
 System.version = version + ' Node';
 
-module.exports = global.System = System;
+if(typeof global != 'undefined')
+  global.System = System;
+module.exports = System;
