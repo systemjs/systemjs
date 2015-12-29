@@ -13,13 +13,17 @@
   "map": {
     "./json": "./json.json",
     "./dir/": "./dir/index",
-    "./dir2": "./dir2/index.json",
+    "NOTE": "the below case should be illegal -> relative requires end up breaking",
+    "./dir2": "./dir2/index.json", 
     "./dir/test": "global-test",
     "./env-module": {
       "browser": "./env-module-browser.js"
     },
     "p": "./polate.js",
-    "./conditional1": "./interpolate.js#?p",
+    "./conditional1": "./interpolate.js",
     "./conditional2": "./inter#{p}.js"
+  },
+  "depCache": {
+    "./dir2/index.json": ["../depcache-test"]
   }
 }
