@@ -39,7 +39,7 @@
   function addToError(err, msg) {
     var newErr;
     if (err instanceof Error) {
-      var newErr = new Error(err.message, err.fileName, err.lineNumber);
+      newErr = new Error(err.message, err.fileName, err.lineNumber);
       if (isBrowser) {
         newErr.message = err.message + '\n\t' + msg;
         newErr.stack = err.stack;
@@ -805,18 +805,21 @@ function logloads(loads) {
     },
     // 26.3.3.9 keys not implemented
     // 26.3.3.10
-    load: function(name, options) {
+    load: function(name) {
       var loader = this._loader;
-      if (loader.modules[name]) {
-        doEnsureEvaluated(loader.modules[name], [], loader);
-        return Promise.resolve(loader.modules[name].module);
-      }
-      return loader.importPromises[name] || createImportPromise(this, name,
-        loadModule(loader, name, {})
-        .then(function(load) {
-          delete loader.importPromises[name];
-          return evaluateLoadedModule(loader, load);
-        }));
+      if (loader.modules[name])
+        return Promise.resolve();
+      return loader.importPromises[name] || createImportPromise(this, name, new Promise(asyncStartLoadPartwayThrough({
+        step: 'locate',
+        loader: loader,
+        moduleName: name,
+        moduleMetadata: {},
+        moduleSource: undefined,
+        moduleAddress: undefined
+      }))
+      .then(function() {
+        delete loader.importPromises[name];
+      }));
     },
     // 26.3.3.11
     module: function(source, options) {
@@ -978,7 +981,7 @@ function applyPaths(paths, name) {
     }
   }
 
-  var outPath = paths[pathMatch] || name;
+  var outPath = paths[pathMatch];
   if (typeof wildcard == 'string')
     outPath = outPath.replace('*', wildcard);
 
@@ -999,7 +1002,7 @@ SystemLoader.prototype.normalize = function(name, parentName, parentAddress) {
 
   // not absolute or relative -> apply paths (what will be sites)
   if (!name.match(absURLRegEx) && name[0] != '.')
-    name = new URL(applyPaths(this.paths, name), baseURI).href;
+    name = new URL(applyPaths(this.paths, name) || name, baseURI).href;
   // apply parent-relative normalization, parentAddress is already normalized
   else
     name = new URL(name, parentName || baseURI).href;
@@ -1088,7 +1091,7 @@ catch(e) {
   getOwnPropertyDescriptor = false;
 }
 
-// converts any module.exports object into an object ready for System.newModule
+// converts any module.exports object into an object ready for SystemJS.newModule
 function getESModule(exports) {
   var esModule = {};
   // don't trigger getters/setters in environments that support them
@@ -1364,7 +1367,7 @@ function warn(msg) {
  *    - executingRequire indicates require drives execution for circularity of dynamic modules
  *    - declarative optional boolean indicating which of the above
  *
- * Can preload modules directly on System.defined['my/module'] = { deps, execute, executingRequire }
+ * Can preload modules directly on SystemJS.defined['my/module'] = { deps, execute, executingRequire }
  *
  * Then the entry gets populated with derived information during processing:
  *    - normalizedDeps derived from deps, created in instantiate
@@ -1388,10 +1391,18 @@ function warn(msg) {
  * module binding table
  *
  */
+
+var leadingCommentAndMetaRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*/;
+function detectRegisterFormat(source) {
+  var leadingCommentAndMeta = source.match(leadingCommentAndMetaRegEx);
+  return leadingCommentAndMeta && source.substr(leadingCommentAndMeta[0].length, 15) == 'System.register';
+}
+
 function createEntry() {
   return {
     name: null,
     deps: null,
+    originalIndices: null,
     declare: null,
     execute: null,
     executingRequire: false,
@@ -1435,7 +1446,7 @@ function createEntry() {
     // ideally wouldn't apply map config to bundle names but 
     // dependencies go through map regardless so we can't restrict
     // could reconsider in shift to new spec
-    entry.name = name && (this.normalizeSync || this.normalize).call(this, name);
+    entry.name = name && (this.decanonicalize || this.normalize).call(this, name);
     entry.declarative = true;
     entry.deps = deps;
     entry.declare = declare;
@@ -1455,7 +1466,7 @@ function createEntry() {
 
     // dynamic
     var entry = createEntry();
-    entry.name = name && (this.normalizeSync || this.normalize).call(this, name);
+    entry.name = name && (this.decanonicalize || this.normalize).call(this, name);
     entry.deps = deps;
     entry.execute = execute;
     entry.executingRequire = declare;
@@ -1797,12 +1808,6 @@ function createEntry() {
     };
   });
 
-  var leadingCommentAndMetaRegEx = /^\s*(\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*/;
-  function detectRegisterFormat(source) {
-    var leadingCommentAndMeta = source.match(leadingCommentAndMetaRegEx);
-    return leadingCommentAndMeta && source.substr(leadingCommentAndMeta[0].length, 15) == 'System.register';
-  }
-
   hook('fetch', function(fetch) {
     return function(load) {
       if (this.defined[load.name]) {
@@ -1834,6 +1839,13 @@ function createEntry() {
 
   hook('instantiate', function(instantiate) {
     return function(load) {
+      if (load.metadata.format == 'detect')
+        load.metadata.format = undefined;
+
+      // assumes previous instantiate is sync
+      // (core json support)
+      instantiate.call(this, load);
+
       var loader = this;
 
       var entry;
@@ -1841,7 +1853,9 @@ function createEntry() {
       // first we check if this module has already been defined in the registry
       if (loader.defined[load.name]) {
         entry = loader.defined[load.name];
-        entry.deps = entry.deps.concat(load.metadata.deps);
+        // don't support deps for ES modules
+        if (!entry.declarative)
+          entry.deps = entry.deps.concat(load.metadata.deps);
       }
 
       // picked up already by an anonymous System.register script injection
@@ -1923,43 +1937,25 @@ function createEntry() {
   loaded before trying to load a given module.
 
   For example:
-  System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
+  SystemJS.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
 
   Will result in a load to "mybundle" whenever a load to "jquery"
   or "bootstrap/js/bootstrap" is made.
 
   In this way, the bundle becomes the request that provides the module
 */
-function getBundleFor(loader, name) {
-  // check if it is in an already-loaded bundle
-  for (var b in loader.loadedBundles_)
-    if (indexOf.call(loader.bundles[b], name) != -1)
-      return Promise.resolve(b);
-
-  // check if it is a new bundle
-  for (var b in loader.bundles)
-    if (indexOf.call(loader.bundles[b], name) != -1)
-      return loader.normalize(b)
-      .then(function(normalized) {
-        loader.bundles[normalized] = loader.bundles[b];
-        loader.loadedBundles_[normalized] = true;
-        return normalized;
-      });
-
-  return Promise.resolve();
-}
 
 (function() {
   // bundles support (just like RequireJS)
   // bundle name is module name of bundle itself
   // bundle is array of modules defined by the bundle
   // when a module in the bundle is requested, the bundle is loaded instead
-  // of the form System.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
+  // of the form SystemJS.bundles['mybundle'] = ['jquery', 'bootstrap/js/bootstrap']
   hookConstructor(function(constructor) {
     return function() {
       constructor.call(this);
       this.bundles = {};
-      this.loadedBundles_ = {};
+      this._loader.loadedBundles = {};
     };
   });
 
@@ -1967,21 +1963,17 @@ function getBundleFor(loader, name) {
   hook('locate', function(locate) {
     return function(load) {
       var loader = this;
-      if (load.name in loader.loadedBundles_ || load.name in loader.bundles)
-        load.metadata.bundle = true;
 
-      // if not already defined, check if we need to load a bundle
       if (!(load.name in loader.defined))
-        return getBundleFor(loader, load.name)
-        .then(function(bundleName) {
-          if (bundleName)
-            return loader.load(bundleName);
-        })
-        .then(function() {
-          return locate.call(loader, load);
-        });
+        for (var b in loader.bundles) {
+          if (loader.bundles[b].indexOf(load.name) != -1)
+            return loader['import'](b)
+            .then(function() {
+              return locate.call(loader, load);
+            });
+        }
 
-      return locate.call(this, load);
+      return locate.call(loader, load);
     };
   });
 })();
@@ -2005,6 +1997,8 @@ hook('fetch', function(fetch) {
     return fetch.call(this, load);
   };
 });System = new SystemJSLoader();
+
+__global.SystemJS = System;
 System.version = '0.19.9 Register Only';
   // -- exporting --
 
