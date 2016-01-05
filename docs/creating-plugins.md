@@ -6,7 +6,7 @@ The hooks plugins can override are `locate`, `fetch`, `translate` and `instantia
 
 Read more about loader extensions and hooks at the [ES6 Module Loader polyfill wiki](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/loader-extensions.md).
 
-The behavior of the hooks is:
+The behaviors of the hooks are:
 
 * Locate: Overrides the location of the plugin resource
 * Fetch: Called with third argument representing default fetch function, has full control of fetch output.
