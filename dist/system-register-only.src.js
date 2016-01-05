@@ -1,11 +1,11 @@
 /*
- * SystemJS v0.19.9
+ * SystemJS v0.19.10
  */
 (function(__global) {
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
-  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
+  var isWindows = typeof process != 'undefined' && typeof process.platform != 'undefined' && !!process.platform.match(/^win/);
 
   if (!__global.console)
     __global.console = { assert: function() {} };
@@ -1050,6 +1050,9 @@ SystemProto.prototype = SystemLoader.prototype;
 SystemJSLoader.prototype = new SystemProto();
 SystemJSLoader.prototype.constructor = SystemJSLoader;
 
+// remove ESML instantiate
+SystemJSLoader.prototype.instantiate = function() {};
+
 var systemJSConstructor;
 
 function hook(name, hook) {
@@ -1999,7 +2002,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.9 Register Only';
+System.version = '0.19.10 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')

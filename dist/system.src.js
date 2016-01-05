@@ -1,12 +1,12 @@
 /*
- * SystemJS v0.19.9
+ * SystemJS v0.19.10
  */
 (function() {
 function bootstrap() {(function(__global) {
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
-  var isWindows = typeof process != 'undefined' && !!process.platform.match(/^win/);
+  var isWindows = typeof process != 'undefined' && typeof process.platform != 'undefined' && !!process.platform.match(/^win/);
 
   if (!__global.console)
     __global.console = { assert: function() {} };
@@ -1224,6 +1224,9 @@ SystemProto.prototype = SystemLoader.prototype;
 SystemJSLoader.prototype = new SystemProto();
 SystemJSLoader.prototype.constructor = SystemJSLoader;
 
+// remove ESML instantiate
+SystemJSLoader.prototype.instantiate = function() {};
+
 var systemJSConstructor;
 
 function hook(name, hook) {
@@ -1798,10 +1801,6 @@ SystemJSLoader.prototype.config = function(cfg) {
         objMaps += (objMaps.length ? ', ' : '') + '"' + p + '"';
         var normalized = loader.decanonicalize(p);
 
-        // if doing default js extensions, undo to get package name
-        if (loader.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js')
-          normalized = normalized.substr(0, normalized.length - 3);
-
         // if a package main, revert it
         var pkgMatch = '';
         for (var pkg in loader.packages) {
@@ -1856,11 +1855,6 @@ SystemJSLoader.prototype.config = function(cfg) {
       // allow trailing '/' in package config
       if (prop[prop.length - 1] == '/')
         prop = prop.substr(0, prop.length - 1);
-
-      // if doing default js extensions, undo to get package name
-      // (unless already a package which would have skipped extension)
-      if (!loader.packages[prop] && loader.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js')
-        prop = prop.substr(0, prop.length - 3);
 
       loader.packages[prop] = loader.packages[prop] || {};
 
@@ -2042,7 +2036,7 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   function addDefaultExtension(loader, pkg, pkgName, basePath, subPath, skipExtensions) {
     // don't apply extensions to folders or if defaultExtension = false
-    if (!subPath || subPath[subPath.length - 1] == '/' || skipExtensions)
+    if (!subPath || subPath[subPath.length - 1] == '/' || skipExtensions || pkg.defaultExtension === false)
       return subPath;
 
     // NB are you sure about this?
@@ -2222,6 +2216,22 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   // normalizeSync = decanonicalize + package resolution
   SystemJSLoader.prototype.normalizeSync = SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalize;
+
+  // decanonicalize skips extensions
+  hook('decanonicalize', function(decanonicalize) {
+    return function(name, parentName) {
+      var defaultJSExtension = this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js';
+
+      var normalized = decanonicalize.call(this, name, parentName);
+
+      // undo defaultJSExtension
+      if (defaultJSExtension && normalized.substr(normalized.length - 3, 3) == '.js')
+        normalized = normalized.substr(0, normalized.length - 3);
+
+      return normalized;
+    };
+  });
+
   hook('normalizeSync', function(normalizeSync) {
     return function(name, parentName, isPlugin) {
       warn.call(this, 'SystemJS.normalizeSync has been deprecated for SystemJS.decanonicalize.');
@@ -4754,7 +4764,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.9 Standard';
+System.version = '0.19.10 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
