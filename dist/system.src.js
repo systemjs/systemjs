@@ -1832,8 +1832,6 @@ SystemJSLoader.prototype.config = function(cfg) {
       var packageLength = Math.max(path.lastIndexOf('*') + 1, path.lastIndexOf('/'));
       var normalized = loader.decanonicalize(path.substr(0, packageLength) + '/');
       normalized = normalized.substr(0, normalized.length - 1) + path.substr(packageLength);
-      if (loader.defaultJSExtensions && path.substr(path.length - 3, 3) != '.js')
-        normalized = normalized.substr(0, normalized.length - 3);
       packageConfigPaths[i] = normalized;
     }
     loader.packageConfigPaths = packageConfigPaths;
