@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.11
+ * SystemJS v0.19.12
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1595,7 +1595,7 @@ hook('normalize', function(normalize) {
 
     if (name.match(absURLRegEx)) {
       // defaultJSExtensions backwards compatibility
-      if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js')
+      if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !this.defined[name])
         name += '.js';
       return name;
     }
@@ -1603,16 +1603,18 @@ hook('normalize', function(normalize) {
     // applyPaths implementation provided from ModuleLoader system.js source
     name = applyPaths(this.paths, name) || name;
 
-    // defaultJSExtensions backwards compatibility
-    if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js')
-      name += '.js';
-
     // ./x, /x -> page-relative
     if (name[0] == '.' || name[0] == '/')
-      return new URL(name, baseURIObj).href;
+      name = new URL(name, baseURIObj).href;
     // x -> baseURL-relative
     else
-      return new URL(name, getBaseURLObj.call(this)).href;
+      name = new URL(name, getBaseURLObj.call(this)).href;
+
+    // defaultJSExtensions backwards compatibility
+    if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !this.defined[name])
+      name += '.js';
+
+    return name;
   };
 });
 
@@ -1829,9 +1831,10 @@ SystemJSLoader.prototype.config = function(cfg) {
       var path = cfg.packageConfigPaths[i];
       var packageLength = Math.max(path.lastIndexOf('*') + 1, path.lastIndexOf('/'));
       var normalized = loader.decanonicalize(path.substr(0, packageLength) + '/');
+      normalized = normalized.substr(0, normalized.length - 1) + path.substr(packageLength);
       if (loader.defaultJSExtensions && path.substr(path.length - 3, 3) != '.js')
         normalized = normalized.substr(0, normalized.length - 3);
-      packageConfigPaths[i] = normalized.substr(0, normalized.length - 1) + path.substr(packageLength);
+      packageConfigPaths[i] = normalized;
     }
     loader.packageConfigPaths = packageConfigPaths;
   }
@@ -4764,7 +4767,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.11 Standard';
+System.version = '0.19.12 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
