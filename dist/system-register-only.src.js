@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.10
+ * SystemJS v0.19.11
  */
 (function(__global) {
 
@@ -2002,7 +2002,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.10 Register Only';
+System.version = '0.19.11 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')

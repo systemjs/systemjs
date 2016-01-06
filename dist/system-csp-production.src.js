@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.10
+ * SystemJS v0.19.11
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -3446,8 +3446,8 @@ hookConstructor(function(constructor) {
   // note if normalize will add a default js extension
   // if so, remove for backwards compat
   // this is strange and sucks, but will be deprecated
-  function checkDefaultExtension(loader, name) {
-    return loader.defaultJSExtensions && parsed.argument.substr(parsed.argument.length - 3, 3) != '.js'; 
+  function checkDefaultExtension(loader, arg) {
+    return loader.defaultJSExtensions && arg.substr(arg.length - 3, 3) != '.js'; 
   }
 
   function createNormalizeSync(normalizeSync) {
@@ -4058,7 +4058,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.10 CSP';
+System.version = '0.19.11 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')
