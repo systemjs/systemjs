@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.12
+ * SystemJS v0.19.13
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1249,7 +1249,7 @@ hook('normalize', function(normalize) {
 
     if (name.match(absURLRegEx)) {
       // defaultJSExtensions backwards compatibility
-      if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !this.defined[name])
+      if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js')
         name += '.js';
       return name;
     }
@@ -1257,18 +1257,16 @@ hook('normalize', function(normalize) {
     // applyPaths implementation provided from ModuleLoader system.js source
     name = applyPaths(this.paths, name) || name;
 
-    // ./x, /x -> page-relative
-    if (name[0] == '.' || name[0] == '/')
-      name = new URL(name, baseURIObj).href;
-    // x -> baseURL-relative
-    else
-      name = new URL(name, getBaseURLObj.call(this)).href;
-
     // defaultJSExtensions backwards compatibility
-    if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !this.defined[name])
+    if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js')
       name += '.js';
 
-    return name;
+    // ./x, /x -> page-relative
+    if (name[0] == '.' || name[0] == '/')
+      return new URL(name, baseURIObj).href;
+    // x -> baseURL-relative
+    else
+      return new URL(name, getBaseURLObj.call(this)).href;
   };
 });
 
@@ -1447,6 +1445,13 @@ SystemJSLoader.prototype.config = function(cfg) {
       loader.paths[p] = cfg.paths[p];
   }
 
+  function noJSDecanonicalize(name) {
+    var normalized = loader.decanonicalize(name);
+    if (loader.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && normalized.substr(normalized.length - 3, 3) == '.js')
+      return normalized.substr(0, normalized.length - 3);
+    return normalized;
+  }
+
   if (cfg.map) {
     var objMaps = '';
     for (var p in cfg.map) {
@@ -1455,7 +1460,8 @@ SystemJSLoader.prototype.config = function(cfg) {
       // object map backwards-compat into packages configuration
       if (typeof v !== 'string') {
         objMaps += (objMaps.length ? ', ' : '') + '"' + p + '"';
-        var normalized = loader.decanonicalize(p);
+
+        var normalized = noJSDecanonicalize(p);
 
         // if a package main, revert it
         var pkgMatch = '';
@@ -1484,10 +1490,8 @@ SystemJSLoader.prototype.config = function(cfg) {
     for (var i = 0; i < cfg.packageConfigPaths.length; i++) {
       var path = cfg.packageConfigPaths[i];
       var packageLength = Math.max(path.lastIndexOf('*') + 1, path.lastIndexOf('/'));
-      var normalized = loader.decanonicalize(path.substr(0, packageLength) + '/');
+      var normalized = noJSDecanonicalize(path.substr(0, packageLength) + '/');
       normalized = normalized.substr(0, normalized.length - 1) + path.substr(packageLength);
-      if (loader.defaultJSExtensions && path.substr(path.length - 3, 3) != '.js')
-        normalized = normalized.substr(0, normalized.length - 3);
       packageConfigPaths[i] = normalized;
     }
     loader.packageConfigPaths = packageConfigPaths;
@@ -1497,7 +1501,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     for (var p in cfg.bundles) {
       var bundle = [];
       for (var i = 0; i < cfg.bundles[p].length; i++)
-        bundle.push(loader.decanonicalize(cfg.bundles[p][i]));
+        bundle.push(noJSDecanonicalize(cfg.bundles[p][i]));
       loader.bundles[p] = bundle;
     }
   }
@@ -1507,7 +1511,8 @@ SystemJSLoader.prototype.config = function(cfg) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var prop = loader.decanonicalize(p);
+      // trailing slash allows paths matches here
+      var prop = noJSDecanonicalize(p + (p[p.length - 1] != '/' ? '/' : ''));
 
       // allow trailing '/' in package config
       if (prop[prop.length - 1] == '/')
@@ -1551,7 +1556,7 @@ SystemJSLoader.prototype.config = function(cfg) {
         if (c == 'meta' && p[0] == '*')
           loader[c][p] = v[p];
         else if (normalizeProp)
-          loader[c][loader.decanonicalize(p)] = v[p];
+          loader[c][noJSDecanonicalize(p)] = v[p];
         else
           loader[c][p] = v[p];
       }
@@ -1874,18 +1879,23 @@ SystemJSLoader.prototype.config = function(cfg) {
   // normalizeSync = decanonicalize + package resolution
   SystemJSLoader.prototype.normalizeSync = SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalize;
 
-  // decanonicalize skips extensions
+  // decanonicalize must JUST handle package defaultExtension: false case when defaultJSExtensions is set
+  // to be deprecated!
   hook('decanonicalize', function(decanonicalize) {
     return function(name, parentName) {
-      var defaultJSExtension = this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js';
+      var decanonicalized = decanonicalize.call(this, name, parentName);
 
-      var normalized = decanonicalize.call(this, name, parentName);
+      if (!this.defaultJSExtensions)
+        return decanonicalized;
+    
+      var pkgName = getPackage(this, decanonicalized);
 
-      // undo defaultJSExtension
-      if (defaultJSExtension && normalized.substr(normalized.length - 3, 3) == '.js')
-        normalized = normalized.substr(0, normalized.length - 3);
+      var defaultExtension = pkgName && this.packages[pkgName].defaultExtension;
+      
+      if (defaultExtension && (defaultExtension === false || defaultExtension != '.js') && name.substr(name.length - 3, 3) != '.js' && decanonicalized.substr(decanonicalized.length - 3, 3) == '.js')
+        decanonicalized = decanonicalized.substr(0, decanonicalized.length - 3);
 
-      return normalized;
+      return decanonicalized;
     };
   });
 
@@ -4061,7 +4071,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.12 CSP';
+System.version = '0.19.13 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')
