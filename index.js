@@ -44,7 +44,7 @@ var System = new SystemJSNodeLoader();
 
 System.version = version + ' Node';
 
-
 if (typeof global != 'undefined')
   global.System = global.SystemJS = System;
+
 module.exports = System;
