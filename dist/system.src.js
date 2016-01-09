@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.13
+ * SystemJS v0.19.14
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1339,12 +1339,12 @@ var __exec;
   function preExec(loader, load) {
     if (callCounter++ == 0)
       curSystem = __global.System;
-    __global.System = loader;
+    __global.System = __global.SystemJS = loader;
     curLoad = load;
   }
   function postExec() {
     if (--callCounter == 0)
-      __global.System = curSystem;
+      __global.System = __global.SystemJS = curSystem;
     curLoad = undefined;
   }
 
@@ -1755,6 +1755,10 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   if ('warnings' in cfg)
     loader.warnings = cfg.warnings;
+
+  // transpiler deprecation path
+  if (cfg.transpilerRuntime === false)
+    loader._loader.loadedTranspilerRuntime = true;
 
   // always configure baseURL first
   if (cfg.baseURL) {
@@ -3544,7 +3548,8 @@ hookConstructor(function(constructor) {
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // bare minimum ignores for IE8
-    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
+    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 
+      'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
 
     var globalSnapshot;
 
@@ -4777,7 +4782,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.13 Standard';
+System.version = '0.19.14 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')

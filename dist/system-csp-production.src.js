@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.13
+ * SystemJS v0.19.14
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1409,6 +1409,10 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   if ('warnings' in cfg)
     loader.warnings = cfg.warnings;
+
+  // transpiler deprecation path
+  if (cfg.transpilerRuntime === false)
+    loader._loader.loadedTranspilerRuntime = true;
 
   // always configure baseURL first
   if (cfg.baseURL) {
@@ -2997,7 +3001,8 @@ hookConstructor(function(constructor) {
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // bare minimum ignores for IE8
-    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB'];
+    var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external', 
+      'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
 
     var globalSnapshot;
 
@@ -4071,7 +4076,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.13 CSP';
+System.version = '0.19.14 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')
