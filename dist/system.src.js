@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.14
+ * SystemJS v0.19.15
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -2242,7 +2242,7 @@ SystemJSLoader.prototype.config = function(cfg) {
 
       var defaultExtension = pkgName && this.packages[pkgName].defaultExtension;
       
-      if (defaultExtension && (defaultExtension === false || defaultExtension != '.js') && name.substr(name.length - 3, 3) != '.js' && decanonicalized.substr(decanonicalized.length - 3, 3) == '.js')
+      if ((defaultExtension === false || defaultExtension && defaultExtension != '.js') && name.substr(name.length - 3, 3) != '.js' && decanonicalized.substr(decanonicalized.length - 3, 3) == '.js')
         decanonicalized = decanonicalized.substr(0, decanonicalized.length - 3);
 
       return decanonicalized;
@@ -4782,7 +4782,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.14 Standard';
+System.version = '0.19.15 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
