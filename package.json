@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.19.15",
+  "version": "0.19.16",
   "description": "Universal dynamic module loader",
   "repository": {
     "type": "git",
