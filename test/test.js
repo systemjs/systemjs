@@ -269,7 +269,7 @@ asyncTest('AMD with dynamic require callback', function() {
 asyncTest('Loading an AMD bundle', function() {
   System.config({
     bundles: {
-      'tests/amd-bundle.js': ['bundle-1', 'bundle-2']
+      'tests/amd-bundle.js': ['bundle-*']
     }
   });
   System['import']('bundle-1').then(function(m) {
