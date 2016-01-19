@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.16
+ * SystemJS v0.19.17
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -964,10 +964,12 @@ function applyPaths(paths, name) {
 
     // exact path match
     if (pathParts.length == 1) {
-      if (name == p) {
-        pathMatch = p;
-        break;
-      }
+      if (name == p)
+        return paths[p];
+      
+      // support trailing / in paths rules
+      else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && paths[p][paths[p].length - 1] == '/')
+        return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? '/' + name.substr(p.length) : '');
     }
     // wildcard path match
     else {
@@ -1150,13 +1152,11 @@ function getMapMatch(map, name) {
   return bestMatch;
 }
 
-function setConditional(mode) {
+function setProduction(isProduction) {
   this.set('@system-env', this.newModule({
     browser: isBrowser,
     node: !!this._nodeRequire,
-    env: mode,
-    production: mode == 'production',
-    development: mode == 'development'
+    production: isProduction
   }));
 }
 
@@ -1193,7 +1193,7 @@ hookConstructor(function(constructor) {
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
 
-    setConditional.call(this, 'development');
+    setProduction.call(this, false);
   };
 });
 
@@ -1438,11 +1438,8 @@ SystemJSLoader.prototype.config = function(cfg) {
   if (cfg.pluginFirst)
     loader.pluginFirst = cfg.pluginFirst;
 
-  if (cfg.env) {
-    if (cfg.env != 'production' && cfg.env != 'development')
-      throw new TypeError('The config environment must be set to "production" or "development".');
-    setConditional.call(loader, cfg.env);
-  }
+  if (cfg.production)
+    setProduction.call(loader, true);
 
   if (cfg.paths) {
     for (var p in cfg.paths)
@@ -1513,6 +1510,9 @@ SystemJSLoader.prototype.config = function(cfg) {
         throw new TypeError('"' + p + '" is not a valid package name.');
 
       // trailing slash allows paths matches here
+      // NB deprecate this to just remove trailing / 
+      //    as decanonicalize doesn't respond to trailing / 
+      //    and paths wildcards should deprecate
       var prop = loader.decanonicalize(p + (p[p.length - 1] != '/' ? '/' : ''));
 
       // allow trailing '/' in package config
@@ -1951,11 +1951,6 @@ SystemJSLoader.prototype.config = function(cfg) {
 
       var subPath = normalized.substr(pkgName.length + 1);
 
-      // allow for direct package name normalization with trailling "/" (no main)
-      // that is normalize('pkg/') does not apply main, while normalize('./', 'pkg/') does
-      if (!subPath && normalized.length == pkgName.length + 1 && name[0] != '.')
-        return pkgName + subPath;
-
       return applyPackageConfigSync(loader, loader.packages[pkgName] || {}, pkgName, subPath, isPlugin);
     };
   });
@@ -2022,11 +2017,6 @@ SystemJSLoader.prototype.config = function(cfg) {
         return (isConfigured ? Promise.resolve(pkg) : loadPackageConfigPath(loader, pkgName, pkgConfigMatch.configPath))
         .then(function(pkg) {
           var subPath = normalized.substr(pkgName.length + 1);
-
-          // allow for direct package name normalization with trailling "/" (no main)
-          // that is normalize('pkg/') does not apply main, while normalize('./', 'pkg/') does
-          if (!subPath && normalized.length == pkgName.length + 1 && name[0] != '.')
-            return Promise.resolve(pkgName + subPath);
 
           return applyPackageConfig(loader, pkg, pkgName, subPath, isPlugin);
         });
@@ -3993,10 +3983,36 @@ hookConstructor(function(constructor) {
   hook('locate', function(locate) {
     return function(load) {
       var loader = this;
+      var matched = false;
 
       if (!(load.name in loader.defined))
         for (var b in loader.bundles) {
-          if (loader.bundles[b].indexOf(load.name) != -1)
+          for (var i = 0; i < loader.bundles[b].length; i++) {
+            var curModule = loader.bundles[b][i];
+
+            if (curModule == load.name) {
+              matched = true;
+              break;
+            }
+
+            // wildcard in bundles does not include / boundaries
+            if (curModule.indexOf('*') != -1) {
+              var parts = curModule.split('*');
+              if (parts.length != 2) {
+                loader.bundles[b].splice(i--, 1);
+                continue;
+              }
+              
+              if (load.name.substring(0, parts[0].length) == parts[0] &&
+                  load.name.substr(load.name.length - parts[1].length, parts[1].length) == parts[1] &&
+                  load.name.substr(parts[0].length, load.name.length - parts[1].length - parts[0].length).indexOf('/') == -1) {
+                matched = true;
+                break;
+              }
+            }
+          }
+
+          if (matched)
             return loader['import'](b)
             .then(function() {
               return locate.call(loader, load);
@@ -4073,7 +4089,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.16 CSP';
+System.version = '0.19.17 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')
