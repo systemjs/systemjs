@@ -281,7 +281,7 @@ Default: `[]`
 Instead of providing package configuration information in the `packages` argument for `System.config()`
 it may be desired to load package configuration from a separate configuration file.
  
-Using `packageConfigPaths` a list of package configuration *paths* may be provided, which when matched
+Using `packageConfigPaths` a list of package configuration paths may be provided, which when matched
 against a request, will request a corresponding ".json" configuration file. This allows dynamic loading
 of non-predetermined code, a key use case in SystemJS.
 
