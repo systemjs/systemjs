@@ -278,12 +278,20 @@ System.config({
 Type: `Array`
 Default: `[]`
 
-Instead of providing package configuration information in the `packages` argument for `System.config`
+Instead of providing package configuration information in the `packages` argument for `System.config()`
 it may be desired to load package configuration from a separate configuration file.
  
 Using `packageConfigPaths` a list of package configuration *paths* may be provided, which when matched
 against a request, will request a corresponding ".json" configuration file. This allows dynamic loading
 of non-predetermined code, a key use case in SystemJS.
+
+When a package matches `packageConfigPaths`, SystemJS will send a request for the package
+configuration before sending a request for the package itself.
+
+The package name itself is taken to be the match up to and including the last wildcard
+or trailing slash.
+
+The most specific package config path will be used:
 
 ```js
   SystemJS.config({
@@ -318,14 +326,6 @@ of non-predetermined code, a key use case in SystemJS.
   SystemJS.import('packages');
 
 ```
-
-When a package matches `packageConfigPaths`, SystemJS will send a request for the package
-configuration before sind a request for the package itself.
-
-The package name itself is taken to be the match up to and including the last wildcard
-or trailing slash.
-
-The most specific package config path will be used.
 
 A package configuration file may contain any of the [`packages`](#packages) configuration
 properties:
