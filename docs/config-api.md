@@ -21,16 +21,22 @@ For this reason it is usually advisable to use `System.config` instead of settin
 ### Configuration Options
 
 * [babelOptions](#babeloptions)
-* [bundle](#bundle)
+* [baseURL](#baseURL)
+* [bundles](#bundles)
 * [defaultJSExtensions](#defaultjsextensions)
 * [depCache](#depcache)
 * [map](#map)
 * [meta](#meta)
 * [packages](#packages)
+* [packageConfigPaths](#packageConfigPaths)
 * [paths](#paths)
+* [pluginFirst](#pluginFirst)
+* [production](#production)
 * [traceurOptions](#traceuroptions)
 * [transpiler](#transpiler)
+* [transpilerRuntime](#transpilerRuntime)
 * [typescriptOptions](#typescriptoptions)
+* [warnings](#warnings)
 
 #### babelOptions
 Type: `Object`
@@ -48,8 +54,32 @@ System.config({
 
 A list of options is available in the [Babel project documentation](https://babeljs.io/docs/usage/options/).
 
-#### bundle
+#### baseURL
+Type: `String`
+Default: `""`
+
+The *baseURL* provides a special mechanism for loading modules relative to a standard reference URL.
+
+This can be useful for being able to refer to the same module from many different page URLs or environments:
+
+```javascript
+System.config({
+  baseURL: '/modules'
+});
+
+
+// loads /modules/jquery.js
+System.import('jquery.js');
+```
+
+Module names of the above form are referred to as _plain names_ and are always loaded baseURL-relative instead of
+parentURL relative like one would expect with ordinary URLs.
+
+> Note we always run the `System.config` function instead of setting instance properties directly as this will set the correct normalized baseURL in the process.
+
+#### bundles
 Type: `Object`
+Default: `{}`
 
 Bundles allow a collection of modules to be downloaded together as a package whenever any module from that collection is requested.
 Useful for splitting an application into sub-modules for production. Use with the [SystemJS Builder](https://github.com/systemjs/builder).
@@ -85,6 +115,7 @@ Note that this is a compatibility property for transitioning to using explicit e
 
 #### depCache
 Type: `Object`
+Default: `{}`
 
 An alternative to bundling providing a solution to the latency issue of progressively loading dependencies.
 When a module specified in depCache is loaded, asynchronous loading of its pre-cached dependency list begins in parallel.
@@ -106,6 +137,7 @@ Over HTTP/2 this approach may be preferable as it allows files to be individuall
 
 #### map
 Type: `Object`
+Default: `{}`
 
 The map option is similar to paths, but acts very early in the normalization process. It allows you to map a module alias to a
 location or package:
@@ -180,11 +212,11 @@ System.config({
 * [`exports`](module-formats.md#exports):
   For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
   This tells the loader what global name to use as the module's export value.
-* [`deps`](module-formats.md#shim-dependencies): 
+* [`deps`](module-formats.md#shim-dependencies):
   Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats.
 * [`globals`](module-formats.md#custom-globals):
-  A map of global names to module names that should be defined only for the execution of this module. 
-    Enables use of legacy code that expects certain globals to be present. 
+  A map of global names to module names that should be defined only for the execution of this module.
+    Enables use of legacy code that expects certain globals to be present.
     Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats.
 * [`loader`](overview.md#plugin-loaders):
   Set a loader for this meta path.
@@ -194,7 +226,7 @@ System.config({
   This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
 * `integrity`: The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
   For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
-* `esmExports`: When loading a module that is not an ECMAScript Module, we set the module as the `default` export, but then also 
+* `esmExports`: When loading a module that is not an ECMAScript Module, we set the module as the `default` export, but then also
   iterate the module object and copy named exports for it a well. Use this option to disable this iteration and copying of the exports.
 
 #### packages
@@ -242,12 +274,111 @@ System.config({
 * `meta`: Package-scoped meta configuration with wildcard support. Modules are subpaths within the package path.
   This also provides an opt-out mechanism for `defaultExtension`, by adding modules here that should skip extension adding.
 
+#### packageConfigPaths
+Type: `Array`
+Default: `[]`
+
+Instead of providing package configuration information in the `packages` argument for `System.config`
+it may be desired to load package configuration from a separate configuration file.
+ 
+Using `packageConfigPaths` a list of package configuration *paths* may be provided, which when matched
+against a request, will request a corresponding ".json" configuration file. This allows dynamic loading
+of non-predetermined code, a key use case in SystemJS.
+
+```js
+  SystemJS.config({
+		packageConfigPaths = [ 'packages/*.json'
+                             , 'packages/abc/*/package.json'
+                             , 'packages/abc/def/*/config.json'
+                             ]
+		});
+
+  // will request and process 'packages/abc/def/xyz/config.json' config file
+  // before issuing the request to 'packages/abc/def/xyz' package.
+  SystemJS.import('packages/abc/def/xyz');
+
+  // will request and process 'packages/abc/def/xyz/config.json' config file
+  // before issuing the request to 'packages/abc/def/xyz' package.
+  SystemJS.import('packages/abc/def/xyz/uvw');
+
+  // will request and process 'packages/abc/def/package.json' config file
+  // before issuing the request to 'packages/abc/def' package.
+  SystemJS.import('packages/abc/def');
+
+  // will request and process 'packages/abc.json' config file
+  // before issuing the request to 'packages/abc' package.
+  SystemJS.import('packages/abc');
+
+  // trailing slashes are ignored. So 'packages/abc/' will
+  // request and process 'packages/abc.json' config file
+  // before issuing the request to 'packages/abc' package.
+  SystemJS.import('packages/abc/');
+
+  // no match - will request 'packages' package alone. (default)
+  SystemJS.import('packages');
+
+```
+
+When a package matches `packageConfigPaths`, SystemJS will send a request for the package
+configuration before sind a request for the package itself.
+
+The package name itself is taken to be the match up to and including the last wildcard
+or trailing slash.
+
+The most specific package config path will be used.
+
+A package configuration file may contain any of the [`packages`](#packages) configuration
+properties:
+
+```js
+{ format: 'cjs'
+, defaultExtension: 'js'
+, map: { 'jquery': './vendor/local-jquery.js'
+       , './custom-import': './local/import/file.js'
+       }
+}
+```
+
+
+Any existing package configurations for the package will deeply merge with the
+package config, with the existing package configurations taking preference.
+
+To opt-out of the package configuration request for a package that matches
+packageConfigPaths, use the `{ configured: true }` package config option.
+
 #### paths
 Type: `Object`
+Default: `{}`
 
 The [ES6 Module Loader](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md) paths implementation, applied after normalization and supporting subpaths via wildcards.
 
 _It is usually advisable to use map configuration over paths unless you need strict control over normalized module names._
+
+#### pluginFirst
+Type: `Boolean`
+Default: `false`
+
+Plug-ins can be loaded by using a special *plug-in syntax*:
+
+```js
+// using the Text plug-in to load 'some/file.txt' 
+System.import('some/file.txt!text');
+```
+
+AMD, however, specifies a different plug-in syntax, which is reverse to *SystemJS*:
+
+```js
+// using the Text plug-in to load 'some/file.txt' 
+System.import('text!some/file.txt');
+```
+Setting the `pluginFirst` property to `true` will have *SystemJS* read plug-in syntax
+according to AMD specification.
+
+#### production
+Type: `Boolean`
+Default: `false`
+
+Set to `true` to indicate a production environment. 
 
 #### traceurOptions
 Type: `Object`
@@ -266,13 +397,20 @@ A list of options is available in the [Traceur project documentation](https://gi
 
 #### transpiler
 Type: `String`
-Default: `traceur`
+Default: `"traceur"`
 
 Sets the module name of the transpiler to be used for loading ES6 modules.
 
 Represents a module name for `System.import` that must resolve to either Traceur, Babel or TypeScript.
 
 When set to `traceur`, `babel` or `typescript`, loading will be automatically configured as far as possible.
+
+#### transpilerRuntime
+Type: `Boolean`
+Default: `true`
+
+If set to `false`, *SystemJS* will not load `tracour` and `babel` runtimes. If any of the two transpilers is
+used, it must be loaded manually.
 
 #### typescriptOptions
 Type: `Object`
@@ -281,3 +419,9 @@ Default: `{}`
 Sets the TypeScript transpiler options.
 
 A list of options is available in the [TypeScript project documentation](https://github.com/Microsoft/TypeScript/wiki/Compiler%20Options).
+
+#### warnings
+Type: `Boolean`
+Default: `false`
+
+Enables output of loader warning messages.
