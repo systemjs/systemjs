@@ -288,7 +288,7 @@ of non-predetermined code, a key use case in SystemJS.
 When a package matches `packageConfigPaths`, SystemJS will send a request for the package
 configuration before sending a request for the package itself.
 
-The package name itself is taken to be the match up to and including the last wildcard
+The package name itself is taken to be matched up to and including the last wildcard ("`*`")
 or trailing slash.
 
 The most specific package config path will be used:
