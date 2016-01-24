@@ -250,6 +250,8 @@ System.config({
   (type: `Object`, default: `{}`):
   For plug-in transpilers to set the source map of their transpilation.
 
+> Note: more details on how to apply `meta` may be found [here](module-formats.md).
+
 #### packages
 Type: `Object`
 Default: `{}`
