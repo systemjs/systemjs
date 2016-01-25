@@ -315,7 +315,7 @@ System.config({
   Prelusive path information like `"./"`, `"../"` or `"/"` may be used (in contrast to global
   [map](#map) configuration option) and is advised.
 
-* `meta`:
+* [`meta`](#meta):
   (type: `Object`, default: `{}`):
   Package-scoped meta configuration with wildcard support. Modules are subpaths within the
   package path. This also provides an opt-out mechanism for `defaultExtension`, by adding modules
