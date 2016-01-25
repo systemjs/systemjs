@@ -74,7 +74,7 @@ System.import('./local', __moduleName);
 
 In CommonJS modules the above would be `module.id` instead.
 
-This is non-standard, but coverse a use case that will be provided by the spec.
+This is non-standard, but covers a use case that will be provided by the spec.
 
 #### System.newModule(Object) -> Module
 Type: `Function`
