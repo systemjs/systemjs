@@ -151,7 +151,7 @@ Over HTTP/2 this approach may be preferable as it allows files to be individuall
 Type: `Object`
 Default: `{}`
 
-The `map` option maps paths to tokens, thereby easing the use module references.
+The `map` option maps paths to tokens, thereby easing the use of module references.
 
 A token may not begin with path information, i.e. `"./"`, `"../"` or `"/"`, nor with server information,
 like `protocol://server`. Yet, path separators within tokens are allowed and add to the token's
@@ -402,7 +402,7 @@ Default: `{}`
 The [ES6 Module Loader](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md)
 paths implementation, applied after normalization and supporting subpaths via wildcards.
 
-The `paths` option maps paths to tokens, thereby easing the use module references.
+The `paths` option maps paths to tokens, thereby easing the use of module references.
 
 A token may not begin with path information, i.e. `"./"`, `"../"` or `"/"`, nor with server information,
 like `protocol://server`. Yet, path separators within tokens are allowed and add to the token's
