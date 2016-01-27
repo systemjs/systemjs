@@ -147,7 +147,9 @@ Additional Plugins:
 * [raw](https://github.com/matthewbauer/plugin-raw) `System.import('file.bin!raw').then(function(data) {})`
 * [jst](https://github.com/podio/plugin-jst) Underscore templates
 * [SASS](https://github.com/screendriver/plugin-sass) `System.import('style.scss!')`
+* [SVG](https://github.com/vuzonp/systemjs-plugin-svg)
 * [HTML](https://github.com/Hypercubed/systemjs-plugin-html/) HTML imports
+* [YAML](https://github.com/tb/plugin-yaml)
 
 Guides:
 
