@@ -137,6 +137,7 @@ Additional Plugins:
 
 * [Audio](https://github.com/ozsay/plugin-audio) `System.import('./beep.mp3!audio')`
 * [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
+* [Image (lazy)](https://github.com/laurentgoudet/plugin-lazyimage) Async plugin-image
 * [Jade](https://github.com/johnsoftek/plugin-jade)
 * [Jade VirtualDOM](https://github.com/WorldMaker/system-jade-virtualdom)
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx')`
