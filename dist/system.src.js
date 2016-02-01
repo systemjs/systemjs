@@ -2655,7 +2655,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     return function(load) {
       var loader = this;
 
-      if (!load.metadata.scriptLoad || (!isBrowser && !isWorker))
+      if (load.metadata.format == 'json' || !load.metadata.scriptLoad || (!isBrowser && !isWorker))
         return fetch.call(this, load);
 
       if (isWorker)
