@@ -111,6 +111,7 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 				$(ESML)/loader.js \
 				$(ESML)/dynamic-only.js \
 				$(ESML)/system.js \
+				$(ESML)/system-fetch.js \
 					lib/proto.js \
 					lib/core.js \
 					lib/package.js \

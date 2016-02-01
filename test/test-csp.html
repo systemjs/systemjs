@@ -232,6 +232,17 @@
           start();
         });
       });
+
+      asyncTest('Loading package configuration json', function() {
+        System.config({
+          packageConfigPaths: ['tests/testpkg*.json']
+        });
+        System.import('tests/testpkg2')
+        .then(function(m) {
+          ok(m.asdf == 'asdf');
+          start();
+        }, err);
+      })
     </script>
   </body>
 </html>

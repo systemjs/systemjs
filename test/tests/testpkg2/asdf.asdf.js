@@ -1,1 +1,3 @@
-exports.asdf = 'asdf';
+define({
+  asdf: 'asdf'
+});
