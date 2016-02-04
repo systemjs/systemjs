@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.18
+ * SystemJS v0.19.20
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1901,7 +1901,6 @@ SystemJSLoader.prototype.config = function(cfg) {
 
   for (var c in cfg) {
     var v = cfg[c];
-    var normalizeProp = false;
 
     if (c == 'baseURL' || c == 'map' || c == 'packages' || c == 'bundles' || c == 'paths' || c == 'warnings' || c == 'packageConfigPaths')
       continue;
@@ -1912,15 +1911,15 @@ SystemJSLoader.prototype.config = function(cfg) {
     else {
       loader[c] = loader[c] || {};
 
-      if (c == 'meta' || c == 'depCache')
-        normalizeProp = true;
-
       for (var p in v) {
         // base-level wildcard meta does not normalize to retain catch-all quality
         if (c == 'meta' && p[0] == '*') {
           loader[c][p] = v[p];
         }
-        else if (normalizeProp) {
+        else if (c == 'meta') {
+          loader[c][loader.decanonicalize(p)] = v[p];
+        }
+        else if (c == 'depCache') {
           var defaultJSExtension = loader.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js';
           var prop = loader.decanonicalize(p);
           if (defaultJSExtension && prop.substr(prop.length - 3, 3) == '.js')
@@ -4834,7 +4833,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.18 Standard';
+System.version = '0.19.20 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
