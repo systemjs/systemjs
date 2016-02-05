@@ -43,7 +43,14 @@
         });
       });
 
-      asyncTest('Importing a script without a nonce', function() {
+      asyncTest('Importing a script with a bad nonce', function() {
+        System.config({
+          meta: {
+            'tests/csp/nonce2.js': {
+              nonce: 'asdf'
+            }
+          }
+        });
         System['import']('tests/csp/nonce2.js').then(function(m) {
           ok(m.nonce !== 'ab');
           start();
