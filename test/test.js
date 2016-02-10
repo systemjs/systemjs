@@ -1090,11 +1090,11 @@ asyncTest('Importing a script with wrong integrity fails', function() {
     }
   });
   System['import']('tests/csp/integrity.js').then(function(m) {
-    ok(true);
-    console.log('SRI not supported in this browser');
+    ok(m.integrity == 'integrity');
     start();
   }, function(e) {
     ok(typeof e !== 'undefined');
+    console.log('SRI not supported in this browser');
     start();
   });
 });
