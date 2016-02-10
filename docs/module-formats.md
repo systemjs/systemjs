@@ -2,7 +2,7 @@
 
 The following module formats are supported:
 
-* `esm`: ECMAScript Module (previously referred to as `es6`)
+* `esm`: [ECMAScript Module](#es-modules)
 * `cjs`: [CommonJS](#commonjs)
 * `amd`: [Asynchronous Module Definition](#amd)
 * `global`: [Global shim module format](#globals)
@@ -27,17 +27,18 @@ This module format detection is never completely accurate, but caters well for t
 
 The module format detection happens in the following order:
 * _System.register / System.registerDynamic_
-  If the source code starts with a number of comments, followed by `System.register` or `System.registerDynamic` as the first line of code.
+  If the source code starts with any number of comments, followed by `System.register` or `System.registerDynamic` as the first line of code.
 * _ES modules_
   The source is only detected as an ES module if it contains explicit module syntax - valid `import` or `export` statements.
+  This detection does not do comment removal, so commons in the code containing valid ES module syntax will trigger this detection.
 * _AMD modules_
-  The presence of a valid AMD `define` statement in the code.
+  The presence of a valid AMD `define` statement in the code, with all forms of the define statement supported.
 * _CommonJS modules_
-  The presence of `require(...)` or `exports` / `module.exports` assigments
+  The presence of `require(...)` or `exports` / `module.exports` assigments.
 * _Global_
   This is the fallback module format after all the above fail.
 
-> Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
+Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
 
 #### Inter-Format Dependencies
 
@@ -56,7 +57,7 @@ import _ from './underscore.js';
 import {map} from './underscore.js';
 ```
 
-### ES6
+### ES Modules
 
 ES6 modules are automatically transpiled as they are loaded, using the loader [transpiler option](config-api.md#transpiler) set.
 
@@ -72,7 +73,8 @@ System.import('./local-module', __moduleName);
 
 In due course this will be entirely replaced by the contextual loader once this has been specified.
 
-_ES6 is loaded via XHR making it non-[CSP](http://www.html5rocks.com/en/tutorials/security/content-security-policy/) compatible. ES6 should always be built for production to avoid transpiler costs, making this a development-only feature._
+_ES modules are loaded via XHR making it non-[CSP](http://www.html5rocks.com/en/tutorials/security/content-security-policy/) compatible.
+ES modules should always be built for production to avoid transpiler costs, making this a development-only feature._
 
 ### CommonJS
 
