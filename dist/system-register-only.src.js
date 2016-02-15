@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.20
+ * SystemJS v0.19.21
  */
 (function(__global) {
 
@@ -37,24 +37,11 @@
   })();
 
   function addToError(err, msg) {
-    var newErr;
-    if (err instanceof Error) {
-      newErr = new Error(err.message, err.fileName, err.lineNumber);
-      if (isBrowser) {
-        newErr.message = err.message + '\n\t' + msg;
-        newErr.stack = err.stack;
-      }
-      else {
-        // node errors only look correct with the stack modified
-        newErr.message = err.message;
-        newErr.stack = err.stack + '\n\t' + msg;
-      }
-    }
-    else {
-      newErr = err + '\n\t' + msg;
-    }
-      
-    return newErr;
+    if (err instanceof Error)
+      err.message = err.message + '\n\t' + msg;
+    else
+      err += '\n\t' + msg;
+    return err;
   }
 
   function __eval(source, debugName, context) {
@@ -854,9 +841,15 @@ function logloads(loads) {
           enumerable: true,
           get: function () {
             return obj[key];
+          },
+          set: function() {
+            throw new Error('Module exports cannot be changed externally.');
           }
         });
       })(pNames[i]);
+
+      if (Object.freeze)
+        Object.freeze(m);
 
       return m;
     },
@@ -2027,7 +2020,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.20 Register Only';
+System.version = '0.19.21 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')

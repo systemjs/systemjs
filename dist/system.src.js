@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.20
+ * SystemJS v0.19.21
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -38,24 +38,11 @@ function bootstrap() {(function(__global) {
   })();
 
   function addToError(err, msg) {
-    var newErr;
-    if (err instanceof Error) {
-      newErr = new Error(err.message, err.fileName, err.lineNumber);
-      if (isBrowser) {
-        newErr.message = err.message + '\n\t' + msg;
-        newErr.stack = err.stack;
-      }
-      else {
-        // node errors only look correct with the stack modified
-        newErr.message = err.message;
-        newErr.stack = err.stack + '\n\t' + msg;
-      }
-    }
-    else {
-      newErr = err + '\n\t' + msg;
-    }
-      
-    return newErr;
+    if (err instanceof Error)
+      err.message = err.message + '\n\t' + msg;
+    else
+      err += '\n\t' + msg;
+    return err;
   }
 
   function __eval(source, debugName, context) {
@@ -855,9 +842,15 @@ function logloads(loads) {
           enumerable: true,
           get: function () {
             return obj[key];
+          },
+          set: function() {
+            throw new Error('Module exports cannot be changed externally.');
           }
         });
       })(pNames[i]);
+
+      if (Object.freeze)
+        Object.freeze(m);
 
       return m;
     },
@@ -1334,21 +1327,37 @@ var __exec;
 
 (function() {
 
-  // System clobbering protection (mostly for Traceur)
-  var curSystem;
-  var callCounter = 0;
+  var hasBtoa = typeof btoa != 'undefined';
+
+  // used to support leading #!/usr/bin/env in scripts as supported in Node
+  var hashBangRegEx = /^\#\!.*/;
+
+  function getSource(load) {
+    var lastLineIndex = load.source.lastIndexOf('\n');
+
+    // wrap ES formats with a System closure for System global encapsulation
+    var wrap = load.metadata.format == 'esm' || load.metadata.format == 'register' || load.metadata.bundle;
+
+    var sourceMap = load.metadata.sourceMap;
+    if (sourceMap) {
+      if (typeof sourceMap != 'object')
+        throw new TypeError('load.metadata.sourceMap must be set to an object.');
+
+      if (sourceMap.mappings)
+        sourceMap.mappings = ';' + sourceMap.mappings;
+    }
+    
+    sourceMap = JSON.stringify(sourceMap);
+
+    return (wrap ? '(function(System, SystemJS) {' : '') + (load.metadata.format == 'cjs' ? load.source.replace(hashBangRegEx, '') : load.source) + (wrap ? '\n})(System, System);' : '')
+        // adds the sourceURL comment if not already present
+        + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
+          ? '\n//# sourceURL=' + load.address + (sourceMap ? '!transpiled' : '') : '')
+        // add sourceMappingURL if load.metadata.sourceMap is set
+        + (sourceMap && hasBtoa && '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) || '');
+  }
+
   var curLoad;
-  function preExec(loader, load) {
-    if (callCounter++ == 0)
-      curSystem = __global.System;
-    __global.System = __global.SystemJS = loader;
-    curLoad = load;
-  }
-  function postExec() {
-    if (--callCounter == 0)
-      __global.System = __global.SystemJS = curSystem;
-    curLoad = undefined;
-  }
 
   // System.register, System.registerDynamic, AMD define pipeline
   // if currently evalling code here, immediately reduce the registered entry against the load record
@@ -1362,109 +1371,72 @@ var __exec;
     };
   });
 
-  var hasBtoa = typeof btoa != 'undefined';
-
-  // used to support leading #!/usr/bin/env in scripts as supported in Node
-  var hashBangRegEx = /^\#\!.*/;
-
-  function getSource(load, sourceMapOffset) {
-    var lastLineIndex = load.source.lastIndexOf('\n');
-
-    // wrap ES formats with a System closure for System global encapsulation
-    var wrap = load.metadata.format == 'esm' || load.metadata.format == 'register' || load.metadata.bundle;
-
-    var sourceMap = load.metadata.sourceMap;
-    if (sourceMap) {
-      if (typeof sourceMap != 'object')
-        throw new TypeError('load.metadata.sourceMap must be set to an object.');
-
-      if (sourceMapOffset && sourceMap.mappings)
-        sourceMap.mappings = ';' + sourceMap.mappings;
-    }
-    
-    sourceMap = JSON.stringify(sourceMap);
-
-    return (wrap ? '(function(System) {' : '') + (load.metadata.format == 'cjs' ? load.source.replace(hashBangRegEx, '') : load.source) + (wrap ? '\n})(System);' : '')
-        // adds the sourceURL comment if not already present
-        + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
-          ? '\n//# sourceURL=' + load.address + (sourceMap ? '!transpiled' : '') : '')
-        // add sourceMappingURL if load.metadata.sourceMap is set
-        + (sourceMap && hasBtoa && '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) || '');
+  // System clobbering protection (mostly for Traceur)
+  var curSystem;
+  var callCounter = 0;
+  function preExec(loader, load) {
+    curLoad = load;
+    if (callCounter++ == 0)
+      curSystem = __global.System;
+    __global.System = __global.SystemJS = loader; 
+  }
+  function postExec() {
+    if (--callCounter == 0)
+      __global.System = __global.SystemJS = curSystem;
+    curLoad = undefined;
   }
 
-  function evalExec(load) {
-    if (load.metadata.integrity)
-      throw new TypeError('Subresource integrity checking is not supported in Web Workers or Chrome Extensions.');
+  __exec = function(load) {
+    if ((load.metadata.integrity || load.metadata.nonce) && supportsScriptExec)
+      return scriptExec.call(this, load);
     try {
       preExec(this, load);
-      new Function(getSource(load, true)).call(__global);
+      curLoad = load;
+      (0, eval)(getSource(load));
       postExec();
     }
     catch(e) {
-      postExec();
+      postExec(); 
       throw addToError(e, 'Evaluating ' + load.address);
     }
-  }
+  };
 
-  // use script injection eval to get identical global script behaviour
-  if (typeof document != 'undefined' && document.getElementsByTagName) {
-    var head;
-
+  var supportsScriptExec = false;
+  if (isBrowser && typeof document != 'undefined' && document.getElementsByTagName) {
     var scripts = document.getElementsByTagName('script');
     $__curScript = scripts[scripts.length - 1];
-    __exec = function(load) {
-      if (!this.globalEvaluationScope)
-        return evalExec.call(this, load);
 
-      if (!head)
-        head = document.head || document.body || document.documentElement;
-
-      var script = document.createElement('script');
-      script.text = getSource(load, false);
-      var onerror = window.onerror;
-      var e;
-      window.onerror = function(_e) {
-        e = addToError(_e, 'Evaluating ' + load.address);
-      }
-      preExec(this, load);
-
-      if (load.metadata.integrity)
-        script.setAttribute('integrity', load.metadata.integrity);
-      if (load.metadata.nonce)
-        script.setAttribute('nonce', load.metadata.nonce);
-
-      head.appendChild(script);
-      head.removeChild(script);
-      postExec();
-      window.onerror = onerror;
-      if (e)
-        throw e;
-    };
+    if (!(window.chrome && window.chrome.extension || navigator.userAgent.match(/^Node\.js/)))
+      supportsScriptExec = true;
   }
 
-  // global scoped eval for node
-  else if (typeof require != 'undefined') {
-    var vmModule = 'vm';
-    var vm = require(vmModule);
-    __exec = function vmExec(load) {
-      if (!this.globalEvaluationScope)
-        return evalExec.call(this, load);
+  // script execution via injecting a script tag into the page
+  // this allows CSP integrity and nonce to be set for CSP environments
+  var head;
+  function scriptExec(load) {
+    if (!head)
+      head = document.head || document.body || document.documentElement;
 
-      if (load.metadata.integrity)
-        throw new TypeError('Subresource integrity checking is unavailable in Node.');
-      try {
-        preExec(this, load);
-        vm.runInThisContext(getSource(load, false));
-        postExec();
-      }
-      catch(e) {
-        postExec();
-        throw addToError(e.toString(), 'Evaluating ' + load.address);
-      }
-    };
-  }
-  else {
-    __exec = evalExec;
+    var script = document.createElement('script');
+    script.text = getSource(load, false);
+    var onerror = window.onerror;
+    var e;
+    window.onerror = function(_e) {
+      e = addToError(_e, 'Evaluating ' + load.address);
+    }
+    preExec(this, load);
+
+    if (load.metadata.integrity)
+      script.setAttribute('integrity', load.metadata.integrity);
+    if (load.metadata.nonce)
+      script.setAttribute('nonce', load.metadata.nonce);
+
+    head.appendChild(script);
+    head.removeChild(script);
+    postExec();
+    window.onerror = onerror;
+    if (e)
+      throw e;
   }
 
 })();var absURLRegEx = /^[^\/]+:\/\//;
@@ -1532,20 +1504,12 @@ hookConstructor(function(constructor) {
     // global behaviour flags
     this.warnings = false;
     this.defaultJSExtensions = false;
-    this.globalEvaluationScope = true;
     this.pluginFirst = false;
 
     // by default load ".json" files as json
     // leading * meta doesn't need normalization
     // NB add this in next breaking release
     // this.meta['*.json'] = { format: 'json' };
-
-    // Default settings for globalEvaluationScope:
-    // Disabled for WebWorker, Chrome Extensions and jsdom
-    if (isWorker 
-        || isBrowser && window.chrome && window.chrome.extension 
-        || isBrowser && navigator.userAgent.match(/^Node\.js/))
-      this.globalEvaluationScope = false;
 
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
@@ -1576,14 +1540,20 @@ var nodeCoreModules = ['assert', 'buffer', 'child_process', 'cluster', 'console'
   defines the `decanonicalize` function and normalizes everything into
   a URL.
  */
+
+function applyMap(name) {
+  // first run map config
+  if (name[0] != '.' && name[0] != '/' && !name.match(absURLRegEx)) {
+    var mapMatch = getMapMatch(this.map, name);
+    if (mapMatch)
+      return this.map[mapMatch] + name.substr(mapMatch.length);
+  }
+  return name;
+}
+
 hook('normalize', function(normalize) {
   return function(name, parentName) {
-    // first run map config
-    if (name[0] != '.' && name[0] != '/' && !name.match(absURLRegEx)) {
-      var mapMatch = getMapMatch(this.map, name);
-      if (mapMatch)
-        name = this.map[mapMatch] + name.substr(mapMatch.length);
-    }
+    name = applyMap.call(this, name);
 
     // dynamically load node-core modules when requiring `@node/fs` for example
     if (name.substr(0, 6) == '@node/' && nodeCoreModules.indexOf(name.substr(6)) != -1) {
@@ -1874,7 +1844,7 @@ SystemJSLoader.prototype.config = function(cfg) {
         throw new TypeError('"' + p + '" is not a valid package name.');
 
       var defaultJSExtension = loader.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js';
-      var prop = loader.decanonicalize(p);
+      var prop = loader.decanonicalize(applyMap(p));
       if (defaultJSExtension && prop.substr(prop.length - 3, 3) == '.js')
         prop = prop.substr(0, prop.length - 3);
 
@@ -1917,7 +1887,8 @@ SystemJSLoader.prototype.config = function(cfg) {
           loader[c][p] = v[p];
         }
         else if (c == 'meta') {
-          loader[c][loader.decanonicalize(p)] = v[p];
+          // meta can go through global map
+          loader[c][loader.decanonicalize(applyMap(p))] = v[p];
         }
         else if (c == 'depCache') {
           var defaultJSExtension = loader.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js';
@@ -2255,7 +2226,7 @@ SystemJSLoader.prototype.config = function(cfg) {
     return function(name, parentName) {
       var decanonicalized = decanonicalize.call(this, name, parentName);
 
-      if (!this.defaultJSExtensions)
+      if (!this.defaultJSExtensions || this.builder)
         return decanonicalized;
     
       var pkgName = getPackage(this, decanonicalized);
@@ -4253,7 +4224,7 @@ hookConstructor(function(constructor) {
 
       return Promise.all([
         loader.normalize(parsed.argument, parentName, true),
-        loader.normalize(parsed.plugin, parentName, true)
+        loader.normalize(parsed.plugin, parentName)
       ])
       .then(function(normalized) {
         return combinePluginParts(loader, normalized[0], normalized[1], checkDefaultExtension(loader, parsed.argument));
@@ -4456,6 +4427,9 @@ hookConstructor(function(constructor) {
         m = readMemberExpression(conditionObj.prop, m);
       else if (typeof m == 'object' && m + '' == 'Module')
         m = m['default'];
+
+      if (bool && typeof m != 'boolean')
+        throw new TypeError('Condition ' + serializeCondition(conditionObj) + ' did not resolve to a boolean.');
 
       return conditionObj.negate ? !m : m;
     });
@@ -4833,7 +4807,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.20 Standard';
+System.version = '0.19.21 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
