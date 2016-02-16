@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.21
+ * SystemJS v0.19.22
  */
 (function() {
 function bootstrap() {(function(__global) {
@@ -1552,7 +1552,7 @@ function applyMap(name) {
 }
 
 hook('normalize', function(normalize) {
-  return function(name, parentName) {
+  return function(name, parentName, skipExt) {
     name = applyMap.call(this, name);
 
     // dynamically load node-core modules when requiring `@node/fs` for example
@@ -1576,7 +1576,7 @@ hook('normalize', function(normalize) {
 
     if (name.match(absURLRegEx)) {
       // defaultJSExtensions backwards compatibility
-      if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js')
+      if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !skipExt)
         name += '.js';
       return name;
     }
@@ -1585,7 +1585,7 @@ hook('normalize', function(normalize) {
     name = applyPaths(this.paths, name) || name;
 
     // defaultJSExtensions backwards compatibility
-    if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js')
+    if (this.defaultJSExtensions && name.substr(name.length - 3, 3) != '.js' && !skipExt)
       name += '.js';
 
     // ./x, /x -> page-relative
@@ -2224,9 +2224,12 @@ SystemJSLoader.prototype.config = function(cfg) {
   // to be deprecated!
   hook('decanonicalize', function(decanonicalize) {
     return function(name, parentName) {
+      if (this.builder)
+        return decanonicalize.call(this, name, parentName, true);
+
       var decanonicalized = decanonicalize.call(this, name, parentName);
 
-      if (!this.defaultJSExtensions || this.builder)
+      if (!this.defaultJSExtensions)
         return decanonicalized;
     
       var pkgName = getPackage(this, decanonicalized);
@@ -4807,7 +4810,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.21 Standard';
+System.version = '0.19.22 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
