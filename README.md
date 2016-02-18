@@ -3,7 +3,7 @@ SystemJS
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
-[![Tips](https://tips.60devs.com/images/button-black.svg)](https://tips.60devs.com/tip/33df4abbec4d39260f49015d2457eafe)
+[![Support](https://supporter.60devs.com/api/b/33df4abbec4d39260f49015d2457eafe/SystemJS)](https://supporter.60devs.com/support/33df4abbec4d39260f49015d2457eafe/SystemJS)
 
 _For upgrading to SystemJS 0.17-0.19, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
 
