@@ -37,10 +37,13 @@
   })();
 
   function addToError(err, msg) {
-    if (err instanceof Error)
-      err.message = err.message + '\n\t' + msg;
-    else
-      err += '\n\t' + msg;
+    if (err instanceof Error) {
+      err.message = msg + '\n\t' + err.message;
+      Error.call(err, err.message);
+    }
+    else {
+      err = msg + '\n\t' + err;
+    }
     return err;
   }
 
@@ -1740,7 +1743,12 @@ function createEntry() {
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-      throw new Error('Module ' + name + ' not declared as a dependency.');
+      // try and normalize the dependency to see if we have another form
+      var nameNormalized = loader.normalizeSync(name, entry.name);
+      if (indexOf.call(entry.normalizedDeps, nameNormalized) != -1)
+        return getModule(nameNormalized, loader);
+
+      throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
     }, exports, module);
     
     if (output)

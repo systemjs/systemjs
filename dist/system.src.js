@@ -38,10 +38,13 @@ function bootstrap() {(function(__global) {
   })();
 
   function addToError(err, msg) {
-    if (err instanceof Error)
-      err.message = err.message + '\n\t' + msg;
-    else
-      err += '\n\t' + msg;
+    if (err instanceof Error) {
+      err.message = msg + '\n\t' + err.message;
+      Error.call(err, err.message);
+    }
+    else {
+      err = msg + '\n\t' + err;
+    }
     return err;
   }
 
@@ -3129,7 +3132,12 @@ function createEntry() {
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-      throw new Error('Module ' + name + ' not declared as a dependency.');
+      // try and normalize the dependency to see if we have another form
+      var nameNormalized = loader.normalizeSync(name, entry.name);
+      if (indexOf.call(entry.normalizedDeps, nameNormalized) != -1)
+        return getModule(nameNormalized, loader);
+
+      throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
     }, exports, module);
     
     if (output)
@@ -3319,7 +3327,7 @@ function createEntry() {
  */
 (function() {
   // good enough ES6 module detection regex - format detections not designed to be accurate, but to handle the 99% use case
-  var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+  var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s*(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s*from\s*['"]|\{)|export\s+\*\s+from\s+["']|export\s*(\{|default|function|class|var|const|let|async\s+function))/;
 
   var traceurRuntimeRegEx = /\$traceurRuntime\s*\./;
   var babelHelpersRegEx = /babelHelpers\s*\./;
@@ -3663,6 +3671,8 @@ hookConstructor(function(constructor) {
   var commentRegEx = /(^|[^\\])(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
 
   var stringRegEx = /("[^"\\\n\r]*(\\.[^"\\\n\r]*)*"|'[^'\\\n\r]*(\\.[^'\\\n\r]*)*')/g;
+  // match "use strict" as long as it isn't after a function declaration
+  var strictRegEx = /(?:('use strict'|"use strict");?\s*\n)(?=[^]*function[^]*)/g;
 
   function getCJSDeps(source) {
     cjsRequireRegEx.lastIndex = commentRegEx.lastIndex = stringRegEx.lastIndex = 0;
@@ -3741,8 +3751,9 @@ hookConstructor(function(constructor) {
           }
 
           // ensure meta deps execute first
-          for (var i = 0; i < metaDeps.length; i++)
-            require(metaDeps[i]);
+          if (!load.metadata.cjsDeferDepsExecute)
+            for (var i = 0; i < metaDeps.length; i++)
+              require(metaDeps[i]);
 
           // disable AMD detection
           var define = __global.define;
@@ -3760,8 +3771,11 @@ hookConstructor(function(constructor) {
             for (var g in load.metadata.globals)
               globals += 'var ' + g + ' = require("' + load.metadata.globals[g] + '");';
           }
-
-          load.source = "(function(require, exports, module, __filename, __dirname, global, GLOBAL) {" + globals
+          var strict = '';
+          if (strictRegEx.exec(load.source)) {
+            strict = '"use strict";';
+          }
+          load.source = "(function(require, exports, module, __filename, __dirname, global, GLOBAL) {" + strict + globals
               + load.source + "\n}).apply(__cjsWrapper.exports, __cjsWrapper.args);";
 
           __exec.call(loader, load);
