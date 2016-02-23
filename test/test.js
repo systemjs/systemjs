@@ -301,6 +301,16 @@ asyncTest('Loading an AMD bundle with an anonymous define', function() {
   }, err);
 });
 
+asyncTest('Loading an AMD bundle with multiple anonymous defines', function() {
+  System['import']('tests/multiple-anonymous.js').then(function(m) {
+    ok(false);
+    start();
+  }, function(e) {
+    ok(e.toString().indexOf('Multiple anonymous') != -1)
+    start();
+  });
+})
+
 asyncTest('Loading AMD CommonJS form', function() {
   System['import']('tests/amd-cjs-module.js').then(function(m) {
     ok(m.test == 'hi', 'Not defined');
