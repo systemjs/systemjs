@@ -294,6 +294,13 @@ asyncTest('Loading an AMD named define', function() {
   }, err);
 });
 
+asyncTest('Loading an AMD bundle with an anonymous define', function() {
+  System['import']('tests/anon-named.js').then(function(m) {
+    ok(m.anon == true);
+    start();
+  }, err);
+});
+
 asyncTest('Loading AMD CommonJS form', function() {
   System['import']('tests/amd-cjs-module.js').then(function(m) {
     ok(m.test == 'hi', 'Not defined');
