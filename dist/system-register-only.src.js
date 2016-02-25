@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.22
+ * SystemJS v0.19.23
  */
 (function(__global) {
 
@@ -37,11 +37,16 @@
   })();
 
   function addToError(err, msg) {
-    if (err instanceof Error)
-      err.message = err.message + '\n\t' + msg;
-    else
-      err += '\n\t' + msg;
-    return err;
+    var newErr = new Error((err.message || err) + '\n\t' + msg, err.fileName, err.lineNumber);
+    
+    // Node needs stack adjustment for throw to show message
+    if (!isBrowser)
+      newErr.stack = (err.stack || err.message || err) + '\n\t' + msg;
+    
+    // track the original error
+    newErr.originalErr = err.originalErr || err;
+
+    return newErr;
   }
 
   function __eval(source, debugName, context) {
@@ -1740,7 +1745,12 @@ function createEntry() {
           continue;
         return getModule(entry.normalizedDeps[i], loader);
       }
-      throw new Error('Module ' + name + ' not declared as a dependency.');
+      // try and normalize the dependency to see if we have another form
+      var nameNormalized = loader.normalizeSync(name, entry.name);
+      if (indexOf.call(entry.normalizedDeps, nameNormalized) != -1)
+        return getModule(nameNormalized, loader);
+
+      throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
     }, exports, module);
     
     if (output)
@@ -2005,10 +2015,6 @@ function createEntry() {
 hookConstructor(function(constructor) {
   return function() {
     constructor.apply(this, arguments);
-
-    // prepare amd define
-    if (this.has('@@amd-helpers'))
-      this.get('@@amd-helpers').createDefine();
   };
 });
 
@@ -2020,7 +2026,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.22 Register Only';
+System.version = '0.19.23 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
