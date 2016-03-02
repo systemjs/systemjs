@@ -12,7 +12,7 @@
   "map": {
     "json": "./json.js",
     "./json": "./json.json",
-    "./dir.js": "./dir/index",
+    "./dir/": "./dir/index",
     "./dir2.js": "./dir2/index.json",
     "./dir/test": "global-test",
     "./env-module": {
