@@ -957,7 +957,7 @@ asyncTest('Package configuration CommonJS config example', function() {
     System['import']('tests/testpkg/json'),
     System['import']('tests/testpkg/dir/test'),
     System['import']('tests/testpkg/dir2'),
-    System['import']('tests/testpkg/dir/'),
+    System['import']('tests/testpkg/dir'),
     System['import']('tests/testpkg/env-module'),
     System['import']('tests/testpkg/self'),
     System['import']('tests/testpkg/conditional1'),
@@ -1039,7 +1039,6 @@ asyncTest('Package edge cases', function() {
     packageConfigPaths: ['tests/*.json/'],
     packages: {
       'tests/testpkg2/': {
-        basePath: '.',
         defaultExtension: 'js'
       }
     }

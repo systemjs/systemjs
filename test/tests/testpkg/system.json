@@ -2,19 +2,18 @@
   "README": "This is not encouraging a system.json, which is a bad idea.",
 
   "main": ["wrong-main"],
-  "basePath": "lib",
   "format": "cjs",
   "defaultExtension": "js",
   "meta": {
-    "*.json": { "loader": "./json.js" },
+    "*.json": { "loader": "json" },
     "noext": { "alias": "./json.json" },
     "test.ts": true
   },
   "map": {
+    "json": "./json.js",
     "./json": "./json.json",
-    "./dir/": "./dir/index",
-    "NOTE": "the below case should be illegal -> relative requires end up breaking",
-    "./dir2": "./dir2/index.json", 
+    "./dir.js": "./dir/index",
+    "./dir2.js": "./dir2/index.json",
     "./dir/test": "global-test",
     "./env-module": {
       "browser": "./env-module-browser.js"
