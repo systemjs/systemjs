@@ -427,7 +427,8 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
   or destination mapping which is package-relative, and secondly, package maps can use conditional
   objects to allow conditional package resolutions. When package maps map to a plain name,
   that name itself will run through the full resolution algorithm so that package map can
-  chain with global map. Double mapping of package map itself is impossible.
+  chain with global map. A "." target in package map is allowed to reference the package
+  itself.
 
 1. Let _packageMap_ be the value of _SystemJS.packages[packageURL].map_
 1. If _packageMap_ is _undefined_ then,
@@ -460,13 +461,16 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
     1. Return _undefined_
 1. Assert _mapValue_ is a string
 1. Call _VALIDATE_PACKAGE_MAP(mapMatch, mapValue)_, rejecting with any error on abrupt completion
+1. Let _mapSubPath_ be equal to _request.substr(request.length - mapMatch.length))_
 1. If _IS_PLAIN_NAME(mapValue)_ then,
-  1. Return _NAME_RESOLVE(mapValue)_
+  1. Return _CORE_RESOLVE(mapValue + mapSubPath)_
 1. Else,
-  1. If _mapValue_ starts with the string _"./"_ and _mapValue.length > 2_ then,
-    1. Let _subPath_ be the string _mapValue.substr(2)_
+  1. If _mapValue_ is equal to _"."_ then,
+    1. Return _RESOLVE_PACKAGE_SUBPATH(packageURL, mapSubPath.substr(1))_
+  1. If _mapValue_ starts with the string _"./"_ then,
+    1. Let _subPath_ be the string _mapValue.substr(2) + mapSubPath_
     1. Return _packageURL + '/' + subPath + GET_DEFAULT_PACKAGE_EXTENSION(packageURL, subPath)_
-  1. Return _URL_RESOLVE(mapValue, packageURL + _"/"_)_
+  1. Return _URL_RESOLVE(mapValue + mapSubPath, packageURL + _"/"_)_
 
 ##### 2.12.8 VALIDATE_PACKAGE_MAP(mapMatch, mapValue)
 
