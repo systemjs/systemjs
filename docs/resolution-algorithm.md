@@ -461,12 +461,12 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
 1. Assert _mapValue_ is a string
 1. Call _VALIDATE_PACKAGE_MAP(mapMatch, mapValue)_, rejecting with any error on abrupt completion
 1. If _IS_PLAIN_NAME(mapValue)_ then,
-  1. Return _RESOLVE(mapValue)_
+  1. Return _NAME_RESOLVE(mapValue)_
 1. Else,
   1. If _mapValue_ starts with the string _"./"_ and _mapValue.length > 2_ then,
     1. Let _subPath_ be the string _mapValue.substr(2)_
     1. Return _packageURL + '/' + subPath + GET_DEFAULT_PACKAGE_EXTENSION(packageURL, subPath)_
-  1. Return _URL_RESOLVE(mapValue, packageURL)_
+  1. Return _URL_RESOLVE(mapValue, packageURL + _"/"_)_
 
 ##### 2.12.8 VALIDATE_PACKAGE_MAP(mapMatch, mapValue)
 
