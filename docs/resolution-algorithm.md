@@ -122,7 +122,7 @@ _"@system-env"_ (`new Module({ production: true/false, node: true/false, browser
 
 #### 2.1. IS_PLAIN_NAME(request)
 
-1. If _request_ begins with the string _"./"_, _"/"_ or _"*://"_, 
+1. If _request_ is equal to _"."_ or begins with the string _"./"_, _"/"_ or _"*://"_, 
   where `*` consists of any valid URI protocol characters, _return false_
 1. Otherwise, return _true_
 
@@ -371,6 +371,7 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
 1. Assert _packageConfig_ is an object
 1. If _subPath_ is an empty string then,
   1. If _packageConfig.main_ is not undefined then,
+    1. Assert _packageConfig.main_ does not start with _"."_ or _"/"_
     1. Set _subPath_ to _packageConfig.main_
   1. Else return _packageURL_
 1. Let _mapResolution_ be the value of _RESOLVE_PACKAGE_MAP("./" + subPath, packageURL)_
@@ -459,15 +460,18 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
     1. Return _undefined_
 1. Assert _mapValue_ is a string
 1. Call _VALIDATE_PACKAGE_MAP(mapMatch, mapValue)_, rejecting with any error on abrupt completion
-1. If _map_ starts with the string _"./"_ then,
-  1. Let _subPath_ be the string _map.substr(2)_
-  1. Return _packageURL + '/' + subPath + GET_DEFAULT_PACKAGE_EXTENSION(packageURL, subPath)_
-1. Return _RESOLVE(map)_
+1. If _IS_PLAIN_NAME(mapValue)_ then,
+  1. Return _RESOLVE(mapValue)_
+1. Else,
+  1. If _mapValue_ starts with the string _"./"_ and _mapValue.length > 2_ then,
+    1. Let _subPath_ be the string _mapValue.substr(2)_
+    1. Return _packageURL + '/' + subPath + GET_DEFAULT_PACKAGE_EXTENSION(packageURL, subPath)_
+  1. Return _URL_RESOLVE(mapValue, packageURL)_
 
 ##### 2.12.8 VALIDATE_PACKAGE_MAP(mapMatch, mapValue)
 
 > We disallow recursive relative package map of the form "./x" -> "./x/y"
-  by throwing an error in these cases.
+  by throwing an error in these cases. We also disallow "." as a key in map config.
 
 1. If _mapMatch_ is equal to the string _"."_ then,
   1. Throw a new _Error_
