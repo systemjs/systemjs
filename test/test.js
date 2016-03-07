@@ -1036,7 +1036,7 @@ asyncTest('Package edge cases', function() {
 
   // ensure trailing "/" is equivalent to "tests/testpkg"
   clonedSystem.config({
-    packageConfigPaths: ['tests/*.json/'],
+    packageConfigPaths: ['tests/*.json'],
     packages: {
       'tests/testpkg2/': {
         defaultExtension: 'js'
@@ -1047,7 +1047,7 @@ asyncTest('Package edge cases', function() {
   // we now have nested packages:
   // testpkg/ within test/ within / root://
   // we're testing that we always select the rules of the inner package
-  clonedSystem['import']('tests/testpkg2/asdf.asdf').then(function(m) {
+  clonedSystem['import']('tests/testpkg2/').then(function(m) {
     ok(m.asdf == 'asdf');
     start();
   }, err);

@@ -1,3 +1,6 @@
 {
-  "main": "asdf.asdf"
+  "main": {
+    "browser": "./asdf.asdf",
+    "~browser": "./asdf.asdf"
+  }
 }
