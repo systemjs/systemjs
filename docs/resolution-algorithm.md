@@ -373,7 +373,7 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
   1. If _packageConfig.main_ is not undefined then,
     1. Assert _packageConfig.main_ does not start with _"."_ or _"/"_
     1. Set _subPath_ to _packageConfig.main_
-  1. Else return _packageURL_
+  1. Else return _packageURL + "/"_
 1. Let _mapResolution_ be the value of _RESOLVE_PACKAGE_MAP("./" + subPath, packageURL)_
 1. If _mapResolution_ is _undefined then,
   1. Let _defaultExtension_ be _GET_DEFAULT_PACKAGE_EXTENSION(packageURL, subPath)_
