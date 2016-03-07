@@ -122,9 +122,9 @@ _"@system-env"_ (`new Module({ production: true/false, node: true/false, browser
 
 #### 2.1. IS_PLAIN_NAME(request)
 
-1. If _request_ is equal to _"."_ or begins with the string _"./"_, _"/"_ or _"*://"_, 
+1. If _request_ is equal to _"."_ or _".."_, or begins with the string _"./"_, _"../", _"/"_ or _"*://"_, 
   where `*` consists of any valid URI protocol characters, _return false_
-1. Otherwise, return _true_
+1. Else, return _true_
 
 #### 2.2 URL_RESOLVE(request, parent)
 
