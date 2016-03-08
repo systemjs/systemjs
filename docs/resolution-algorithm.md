@@ -427,8 +427,8 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
   or destination mapping which is package-relative, and secondly, package maps can use conditional
   objects to allow conditional package resolutions. When package maps map to a plain name,
   that name itself will run through the full resolution algorithm so that package map can
-  chain with global map. A "." target in package map is allowed to reference the package
-  itself.
+  chain for these plain names only.
+  A "." target in package map is allowed to reference the package itself.
 
 1. Let _packageMap_ be the value of _SystemJS.packages[packageURL].map_
 1. If _packageMap_ is _undefined_ then,
@@ -463,7 +463,7 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
 1. Call _VALIDATE_PACKAGE_MAP(mapMatch, mapValue)_, rejecting with any error on abrupt completion
 1. Let _mapSubPath_ be equal to _request.substr(request.length - mapMatch.length))_
 1. If _IS_PLAIN_NAME(mapValue)_ then,
-  1. Return _CORE_RESOLVE(mapValue + mapSubPath)_
+  1. Return _CORE_RESOLVE(mapValue + mapSubPath, packageURL + _"/"_)_
 1. Else,
   1. If _mapValue_ is equal to _"."_ then,
     1. Return _RESOLVE_PACKAGE_SUBPATH(packageURL, mapSubPath.substr(1))_
@@ -474,12 +474,12 @@ _SystemJS.load is a variation of SystemJS.import that assumes an already-normali
 
 ##### 2.12.8 VALIDATE_PACKAGE_MAP(mapMatch, mapValue)
 
-> We disallow recursive relative package map of the form "./x" -> "./x/y"
+> We disallow recursive package map of the form "x" - > "x/y"
   by throwing an error in these cases. We also disallow "." as a key in map config.
 
 1. If _mapMatch_ is equal to the string _"."_ then,
   1. Throw a new _Error_
-1. If _mapMatch_ starts with the string _"./"_ and does not end with the string _"/"_ then,
+1. If _mapMatch_ does not end with the string _"/"_ then,
   1. If _mapValue_ is equal to the string _mapMatch_ then,
     1. Throw a new _Error_
   1. If _mapValue[mapMatch.length]_ is equal to _"/"_ then,
