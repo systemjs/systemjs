@@ -406,6 +406,13 @@ asyncTest('CommonJS globals', function() {
   }, err);
 });
 
+asyncTest('CommonJS require.resolve', function() {
+  System['import']('tests/cjs-resolve.js').then(function(m) {
+    ok(m.substr(m.length - 12, 12) == 'test/tests/a');
+    start();
+  }, err);
+})
+
 asyncTest('Loading a UMD module', function() {
   System['import']('tests/umd.js').then(function(m) {
     ok(m.d == 'hi', 'module value not defined');
