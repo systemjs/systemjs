@@ -14,7 +14,7 @@ The module format can be set via meta configuration:
 System.config({
   meta: {
     './module/path.js': {
-      format: 'es6'
+      format: 'esm'
     }
   }
 });
