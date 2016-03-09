@@ -141,6 +141,24 @@ asyncTest('Global script loading that detects as AMD with shim config', function
   }, err);
 });
 
+asyncTest('Global script with exports as an array', function() {
+  System.config({
+    meta: {
+      'tests/global-exports-array.js': {
+        exports: ['A', 'B']
+      }
+    }
+  });
+
+  System['import']('tests/global-exports-array.js').then(function(m) {
+    ok(m.A == 'A');
+    ok(m.B == 'B');
+    ok(!m.C);
+    ok(m['default'] == 'A');
+    start();
+  }, err);
+});
+
 if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
   System.meta[System.normalizeSync('tests/meta-override.js')] = { format: 'esm' };
