@@ -137,19 +137,20 @@ Additional Plugins:
 
 * [Audio](https://github.com/ozsay/plugin-audio) `System.import('./beep.mp3!audio')`
 * [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
+* [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
+* [Handlebars](https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
+* [HTML](https://github.com/Hypercubed/systemjs-plugin-html/) HTML imports
 * [Image (lazy)](https://github.com/laurentgoudet/plugin-lazyimage) Async plugin-image
 * [Jade](https://github.com/johnsoftek/plugin-jade)
 * [Jade VirtualDOM](https://github.com/WorldMaker/system-jade-virtualdom)
+* [jst](https://github.com/podio/plugin-jst) Underscore templates
 * [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx')`
 * [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md').then(function(html) {})`
-* [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
-* [Handlebars](https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
-* [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
 * [raw](https://github.com/matthewbauer/plugin-raw) `System.import('file.bin!raw').then(function(data) {})`
-* [jst](https://github.com/podio/plugin-jst) Underscore templates
 * [SASS](https://github.com/screendriver/plugin-sass) `System.import('style.scss!')`
+* [sofe](https://github.com/CanopyTax/sofe) `System.import('lodash!sofe')`
 * [SVG](https://github.com/vuzonp/systemjs-plugin-svg)
-* [HTML](https://github.com/Hypercubed/systemjs-plugin-html/) HTML imports
+* [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
 * [YAML](https://github.com/tb/plugin-yaml)
 
 Guides:
