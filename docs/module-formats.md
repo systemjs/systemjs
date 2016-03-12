@@ -38,7 +38,9 @@ The module format detection happens in the following order:
 * _Global_
   This is the fallback module format after all the above fail.
 
-Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
+Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all.
+This is because the transpilation applies to the module format specifically, not the language.
+When browsers eventually support the native module loader, this transpilation layer in SystemJS will be deprecated.
 
 #### Inter-Format Dependencies
 
@@ -73,19 +75,21 @@ System.import('./local-module', __moduleName);
 
 In due course this will be entirely replaced by the contextual loader once this has been specified.
 
-_ES modules are loaded via XHR making it non-[CSP](http://www.html5rocks.com/en/tutorials/security/content-security-policy/) compatible.
+_ES modules are loaded via XHR making it incompatible with `scriptLoad: true`.
 ES modules should always be built for production to avoid transpiler costs, making this a development-only feature._
 
 ### CommonJS
 
-* The `module`, `exports`, `require`, `global`, `__dirname` and `__filename` variables are all provided.
+* The `module`, `exports`, `require`, `global`, `GLOBAL`, `__dirname` and `__filename` variables are all declared in scope.
 * `module.id` is set.
+* `require.resolve` is provided.
 
-When executing CommonJS any global `define` is temporarily removed.
+When executing CommonJS any global `define` is temporarily removed from the global object, before being reverted after synchronous module 
+execution has completed. This ensures that any UMD patterns trigger the CommonJS path.
 
 For comprehensive handling of NodeJS modules, a conversion process is needed to make them SystemJS-compatible, such as the one used by jspm.
 
-_CommonJS is loaded via XHR making it non-[CSP](http://www.html5rocks.com/en/tutorials/security/content-security-policy/) compatible._
+_CommonJS is loaded via XHR making it incompatible with `scriptLoad: true` unless pre-compiling with SystemJS Builder._
 
 ### AMD
 

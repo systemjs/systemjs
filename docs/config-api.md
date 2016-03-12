@@ -195,14 +195,9 @@ System.config({
   This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
 * `integrity`: The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
   For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
-* `crossOrigin`: When scripts are loaded from a different domain (e.g. CDN) the global error handler (`window.onerror`)
-  has very limited information about errors to [prevent unintended leaking]
-  (https://developer.mozilla.org/en/docs/Web/API/GlobalEventHandlers/onerror#Notes).
-  In order to mitigate this, the `<script>` tags need to set [`crossorigin` attribute]
-  (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-crossorigin) and the server needs to
-  [enable CORS](http://enable-cors.org/).
-  The [valid values](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_settings_attributes) are 
-  `"anonymous"` and `"use-credentials"`.
+* [`authorization`]: This can be a custom authorization header string for XHR requests.
+* [`withCredentials`]: This indicates whether to use credentials when doing a cross-domain XHR request.
+  In addition when using `scriptLoad`, this will set the `crossOrigin: "use-credentials"` attribute.
 * `esmExports`: When loading a module that is not an ECMAScript Module, we set the module as the `default` export, but then also 
   iterate the module object and copy named exports for it a well. Use this option to disable this iteration and copying of the exports.
 

@@ -46,13 +46,13 @@ after the initial page load (avoiding having to manually inject a `<script type=
 But more importantly, the module loader provides an API to hook into the registry, resolution and loading pipeline of modules.
 
 The module loader is based on the principles of the [Extensible Web Manifesto](https://extensiblewebmanifesto.org/).
-By opening up the module loading primitives to allow developers deeper control over the module loading process, provides developers with
+By opening up the module loading primitives to allow developers deeper control over the module loading process, it provides developers with
 the full flexibility to solve the difficult problems that come up as part of handling dynamic module loading in the browser, and enables
 the creation of truly modular applications.
 
-If all we had was the ability to load modules from URLs, we would need to hard-code versioned paths into our URLs, we wouldn't be able to 
-hook into the loading lifecycle to load other resources or module formats through the module pipeline including CommonJS, AMD or existing global modules,
-code from bundles, or provide hints for network optimizations.
+If all we had was the ability to load modules from URLs, we would need to hard-code full URLs into our modules, unable to use simpler names like `import 'jquery'`,
+and we wouldn't be able to hook into the loading lifecycle to load other resources or module formats through the module pipeline like CommonJS, AMD, 
+existing global modules or code from bundles, templates custom network transports.
 
 SystemJS is a project providing an end-user solution based on the possibilities of these new module loader primitives.
 
@@ -76,21 +76,23 @@ Whenever any new chunk of code is loaded after the initial page load, this is al
 The important point to bear in mind is that when loading new code into the page, we don't want to reload any code we've already loaded. That is, shared modules like Lodash
 should not have to be loaded again when our second route in the app also requires it.
 
-The module loader provides us with a shared registry that will store Lodash for use by all future code within the current page, and it will also allow us to 
-load the new code through the dynamic loading API.
+The module loader provides us with a shared registry that provides the interface through which this sharing of code should happen.
+In future, the idea is that this will be through the specified native module loader registry in the browser.
+So then shared modules like Lodash can be shared between different pieces of code on the page, which can be loaded independently.
 
-Current code-splitting techniques use exactly the same principle, but do not utilize the concept of a shared module loader registry to manage the code splitting.
-It really comes down to the difference between using a standards-based approach of a module loader registry, or using a custom registry here. Either way you're effectively
-using a registry and loader.
+Current code-splitting techniques use exactly the same principle, but do not utilize the concept of a shared module loader registry API 
+to manage the code splitting. It really comes down to the difference between using a standards-based approach of a module loader registry, 
+or using a custom registry here. Either way you're effectively using a registry and loader.
 
 SystemJS aims to provide a path to standardized module workflows around these techniques, in order to build modular apps on a standardized future.
 
 _Why use a dynamic module loader if you don't expect to need any dynamic module loading?_
 
-The stance of SystemJS is that dynamic loading of modules forms the general case for code linking in the browser.
+The stance of SystemJS is that dynamic loading of modules forms the most general case for code linking in the browser.
 
 If we can write our code based on this general workflow, and solve the many scenarios and use cases for module loading based on this general case, then we can always
-optimize our code later for upfront loading through bundling or even building through [Rollup](http://rollupjs.org) naturally in SystemJS Builder at any point later on.
+optimize our code later for upfront loading through bundling or even building through [Rollup](http://rollupjs.org) naturally in SystemJS Builder 
+(provided by `builder.buildStatic`) at any point later on.
 
 By writing our code based on standards and conventions for the most general linking scenario, we allow the greatest flexibility.
 It ensures that any module loading problem solved for this scenario can be solved in all scenarios.
@@ -98,7 +100,7 @@ You never know when a piece of code from that simple demo might evolve into some
 
 The additional benefit of this approach is that when all modules in the workflow support dynamic loading,
 it is possible to move the entire development workflow itself into the browser.
-This can be useful for easy prototyping workflows and to help lower the barriers to entry into web development as well.
+This can be useful for easy prototyping workflows and to help lower the barriers of entry into web development as well.
 
 ## Module Registry
 
@@ -143,10 +145,10 @@ will not clash and conflict with the native loader when it is implemented on the
 
 _Everything described up until this point relates to the native module loader specification. Now we can explain the design decisions in SystemJS itself._
 
-The core of SystemJS its [resolution algorithm](resolution-algorithm.md). Previously we noted that the module specifiers as resolved like URLs, 
+The core of SystemJS is its [resolution algorithm](resolution-algorithm.md). Previously we noted that the module specifiers are resolved like URLs, 
 so how can SystemJS have its own resolution algorithm on top of this existing URL resolution?
 
-The resolution algorithm can be considered an extension of URL resolution. The module specification is designed to enable this.
+The SystemJS resolution algorithm can be considered an extension of URL resolution. The module specification is designed to enable this.
 For example, the `<script type="module">` tag currently treats names without any URL syntax
 (`./x`, `/x`, `//x` and `https://x` can all be considered to use URL syntax), as special _plain names_.
 
@@ -157,7 +159,9 @@ normalization that can cater to a wide variety of module resolution use cases.
 
 Unlike running traditional module resolution on a filesystem, module resolution in the browser is constrained by latency. The standard technique
 for looking up a custom name like `import _ from 'lodash'` would be to run through a series of local folder paths which may contain the module, or to
-run through a hierarchy of folders. In the browser this would result in many requests back and fourth which would not be good for user experience due to the delay.
+run through a hierarchy of folders.
+In the browser this would result in many requests back and forth which would not be good for user experience due to the delay.
+Because SystemJS is built from the browser loading perspective first, this is the concern that defines the resolution process.
 
 AMD loaders solved this problem by using a feature called map configuration. It involves providing configuration to the loader at startup that
 tells the loader where to find the module:
@@ -194,12 +198,12 @@ how to load a given module once it has been resolved to a URL.
 The goals here in designing SystemJS were:
 
 1. As far as possible SystemJS should be able to automatically determine the correct configuration to load a given module,
-   and this configuration should be fully exposed to the user for manually specifying how to load the module.
+   while also exposing these same options as manual configuration to the user to retain full control in how to load a module.
 2. It should be possible to load any existing module through SystemJS without having to modify the original source code.
-3. Any custom resource should be possible to load through SystemJS via a plugin system.
+3. Any custom resource should be possible to load through SystemJS via the plugin system.
 4. SystemJS should work as a performant production loader, supporting configuration of
-   the optimimum network profile and loading code from bundles.
-5. SystemJS should enable modular package configuration o avoid the complexity that comes
+   the optimum network profile in HTTP/2 and loading code from bundles.
+5. SystemJS should enable modular package configuration to avoid the complexity that comes
    with scaling the loader configuration for large code-bases and shared libraries.
 
 ### 1. Module Configuration
@@ -223,7 +227,8 @@ SystemJS.config({
 In the above, we say that all modules within an import path of `import 'app/...'` should be loaded as CommonJS modules.
 
 When setting the configuration, SystemJS normalizes this meta configuration into URLs like in the module registry, so that the configuration
-SystemJS stores becomes `'https://site.com/base/app/*': { 'format': 'cjs' }`.
+SystemJS stores becomes `'https://site.com/base/app/*': { 'format': 'cjs' }`. This was all configuration matching is done in the same
+namespace as the module registry, making it a well-defined process.
 
 The default module format for all modules in SystemJS is `format: 'detect'` which does source-based detection of the module.
 
@@ -244,7 +249,7 @@ If every module loaded by SystemJS required the user to first indicate which of 
 friction to the development process so the first problem is to create a simple detection approach that is both performant and useful.
 
 Module format detection is not possible to be perfectly accurate, but SystemJS applies a detection algorithm that works as a 
-good heuristic and reliably matches the user intent in the majority of cases. This exact process is is based on regular expression detections
+good heuristic and reliably matches the user intent in the majority of cases. This exact process is based on regular expression detections
 of the source code itself and is described in more detail in the [module formats section](module-formats.md#module-format-detection).
 
 Module format detection does not actually need to be used at all though, ideally setting the module format through SystemJS configuration 
@@ -279,7 +284,7 @@ There are certain features that are lost when using XHR and eval over script tag
 
 From a conceptual viewpoint, the above are given allowance by virtue of the fact that the module loader specification itself
 effectively makes these assumptions. The ability to set a translate hook in the loader as provided by the specification
-is already equivalent to inline eval permissions.
+is already equivalent to accepting inline eval permissions.
 
 For practical purposes, SystemJS provides configuration options to support all of the above features:
 
@@ -289,7 +294,7 @@ For practical purposes, SystemJS provides configuration options to support all o
 * SystemJS comes with a build variation, System-CSP-Production, which is effectively a version of the loader with `scriptLoad: true`
   as the only loading option and all the source modification features removed for a slightly smaller build size.
 * Setting `nonce: 'asdf'` metadata for modules allows the use of CSP nonces. SystemJS will then use XHR with `<script>` tag source text injection setting 
-  allowing for CSP support while still supporting source text rewriting.
+  allowing for CSP support while still supporting source text rewriting (and hence CommonJS loading).
 * When setting `integrity: 'sha384-...'` SystemJS will use `<script>` tag source text injection like with nonces above, but supporting Sub-Resource Integrity verification.
   The integrity hash is based on the modified source, not the original source (if there was modification) for this to validate correctly.
 
@@ -300,7 +305,7 @@ supports the `scriptLoad: true` feature directly or for loading through the Syst
 The output of compilation is anonymous modules of the form:
 
 ```javascript
-System.register([], function(_export) {
+System.register(['dep'], function(_export) {
   ...
 });
 ```
@@ -308,7 +313,7 @@ System.register([], function(_export) {
 for ES modules, or for CommonJS and globals,
 
 ```javascript
-System.registerDynamic([], true, function(require, exports, module) {
+System.registerDynamic(['dep'], true, function(require, exports, module) {
   ...
 });
 ```
@@ -380,10 +385,13 @@ SystemJS.config({
 })
 ```
 
-The loader reference references the Handlebars plugin, which is itself imported via `SystemJS.import('handlebars')` just like any other module.
+The loader references the Handlebars plugin, which is itself imported via `SystemJS.import('handlebars')` just like any other module.
 
-Because the metadata for a module is extensible, plugins can also define their own metadata options for compiling modules. Plugins also build through
+Because the metadata for a module is extensible, plugins can also define their own metadata options for compiling modules. Plugins build through
 SystemJS builder just like any other module, providing their compilation as part of bundling.
+
+A standard template plugin will be as simple as a source transformation from a template language to a JS module, allowing the plugin to support
+all the bundling and static building features (including Rollup support) provided by the build system.
 
 To read about the [plugin API for creating plugins at the documentation page](creating-plugins.md).
 
@@ -392,7 +400,7 @@ To read about the [plugin API for creating plugins at the documentation page](cr
 With all of the configuration options SystemJS provides, the final problem is that this configuration system itself does not scale.
 
 If I want to load packages from many different third-party sources, coupled with my own code, adding a separate `meta` configuration entry
-for each change quickly turns into a maintenance problem.
+for each package quickly turns into a configuration maintenance problem.
 
 The problem here is that we really need a configuration system that is itself modular and portable.
 
@@ -429,8 +437,8 @@ third-party packages.
 If we don't want to manually be copying and pasting and maintaining these configurations in a single configuration file, 
 we can load these package configurations themselves as JSON module files.
 
-This package configuration for my app can then be stored in its own JSON file at `app/systemjs.json`, and we use the `packageConfigPaths` configuration
-option to load this package configuration on-demand:
+This package configuration for my app can be stored in its own JSON file say at `app/systemjs.json` (as an example here, the exact convention to use
+is not specified by SystemJS), and we can then use the `packageConfigPaths` configuration option to load this package configuration on-demand:
 
 ```javascript
 SystemJS.config({
@@ -438,11 +446,11 @@ SystemJS.config({
 });
 ```
 
-With the above an import to `SystemJS.import('app')` or `SystemJS.import('app/template.hbs') will detect this is a request into the package, 
+With the above an import to `SystemJS.import('app')` or `SystemJS.import('app/template.hbs')` will detect this is a request into the package, 
 and first dynamically load the package configuration itself,
 before continuing the module resolution and loading process. When using SystemJS builder, this package configuration then builds correctly into the bundle like another module.
 
-This provides support for modular configuration through package management workflows, 
-without needing to store all packages configurations in the central configuration file, as is used by [jspm](http://jspm.io/).
+This `packageConfigPaths` feature thus provides support for modular configuration package management workflows, and is
+used by [jspm](http://jspm.io/) to load `package.json` files for packages and read their package config `main`, `format` etc configurations from there.
 
 Read more on [packages configuration](config-api.md#packages) or [packageConfigPaths configuration](config-api.md#packageconfigpaths) at the config API documentation page.
