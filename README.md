@@ -128,29 +128,30 @@ System.import('lodash').then(function (_) {
 
 Supported loader plugins:
 
-* [CSS](https://github.com/systemjs/plugin-css) `System.import('my/file.css')`
-* [Image](https://github.com/systemjs/plugin-image) `System.import('some/image.png!image')`
-* [JSON](https://github.com/systemjs/plugin-json) `System.import('some/data.json')`
-* [Text](https://github.com/systemjs/plugin-text) `System.import('some/text.txt!text')`
+* [CSS](https://github.com/systemjs/plugin-css)
+* [Image](https://github.com/systemjs/plugin-image)
+* [JSON](https://github.com/systemjs/plugin-json)
+* [Text](https://github.com/systemjs/plugin-text)
+* [Node Binary](https://github.com/systemjs/plugin-node-binary)
 
 Additional Plugins:
 
-* [Audio](https://github.com/ozsay/plugin-audio) `System.import('./beep.mp3!audio')`
-* [CoffeeScript](https://github.com/forresto/plugin-coffee) `System.import('./test.coffee')`
-* [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs) `System.import('template.hbs!')`
-* [Handlebars](https://github.com/davis/plugin-hbs) `System.import('template.hbs!')`
-* [HTML](https://github.com/Hypercubed/systemjs-plugin-html/) HTML imports
-* [Image (lazy)](https://github.com/laurentgoudet/plugin-lazyimage) Async plugin-image
+* [Audio](https://github.com/ozsay/plugin-audio)
+* [CoffeeScript](https://github.com/forresto/plugin-coffee)
+* [Ember Handlebars](https://github.com/n-fuse/plugin-ember-hbs)
+* [Handlebars](https://github.com/davis/plugin-hbs)
+* [HTML](https://github.com/Hypercubed/systemjs-plugin-html/)
+* [Image (lazy)](https://github.com/laurentgoudet/plugin-lazyimage)
 * [Jade](https://github.com/johnsoftek/plugin-jade)
 * [Jade VirtualDOM](https://github.com/WorldMaker/system-jade-virtualdom)
-* [jst](https://github.com/podio/plugin-jst) Underscore templates
-* [JSX](https://github.com/floatdrop/plugin-jsx) `System.import('template.jsx')`
-* [Markdown](https://github.com/guybedford/plugin-md) `System.import('app/some/project/README.md').then(function(html) {})`
-* [raw](https://github.com/matthewbauer/plugin-raw) `System.import('file.bin!raw').then(function(data) {})`
-* [SASS](https://github.com/screendriver/plugin-sass) `System.import('style.scss!')`
-* [sofe](https://github.com/CanopyTax/sofe) `System.import('lodash!sofe')`
+* [jst](https://github.com/podio/plugin-jst)
+* [JSX](https://github.com/floatdrop/plugin-jsx)
+* [Markdown](https://github.com/guybedford/plugin-md)
+* [raw](https://github.com/matthewbauer/plugin-raw)
+* [SASS](https://github.com/screendriver/plugin-sass)
+* [sofe](https://github.com/CanopyTax/sofe)
 * [SVG](https://github.com/vuzonp/systemjs-plugin-svg)
-* [WebFont](https://github.com/guybedford/plugin-font) `System.import('google Port Lligat Slab, Droid Sans !font')`
+* [WebFont](https://github.com/guybedford/plugin-font)
 * [YAML](https://github.com/tb/plugin-yaml)
 
 Guides:
