@@ -107,36 +107,7 @@ Over HTTP/2 this approach may be preferable as it allows files to be individuall
 #### map
 Type: `Object`
 
-The map option is similar to paths, but acts very early in the normalization process. It allows you to map a module alias to a
-location or package:
 
-```javascript
-System.config({
-  map: {
-    jquery: '//code.jquery.com/jquery-2.1.4.min.js'
-  }
-});
-```
-
-```javascript
-import $ from 'jquery';
-
-```
-
-In addition, a map also applies to any subpaths, making it suitable for package folders as well:
-
-```javascript
-System.config({
-  map: {
-    package: 'local/package'
-  }
-});
-```
-
-```javascript
-// loads /local/package/path.js
-System.import('package/path.js');
-```
 
 > Note map configuration used to support contextual submaps but this has been deprecated for package configuration.
 

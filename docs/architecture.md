@@ -393,7 +393,7 @@ SystemJS builder just like any other module, providing their compilation as part
 A standard template plugin will be as simple as a source transformation from a template language to a JS module, allowing the plugin to support
 all the bundling and static building features (including Rollup support) provided by the build system.
 
-To read about the [plugin API for creating plugins at the documentation page](creating-plugins.md).
+To read about the [plugin API for creating plugins at the documentation page](plugins.md).
 
 ### 5. Package Configuration
 
