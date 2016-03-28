@@ -72,6 +72,7 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 	( echo "$$BANNER"; \
 		cat \
 			lib/wrapper-start.js \
+			$(ESML)/url-polyfill.js \
 			$(ESML)/wrapper-start.js \
 				$(ESML)/loader.js \
 				$(ESML)/dynamic-only.js \
@@ -107,6 +108,7 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 	( echo "$$BANNER"; \
 		cat \
 			lib/wrapper-start.js \
+			$(ESML)/url-polyfill.js \
 			$(ESML)/wrapper-start.js \
 				$(ESML)/loader.js \
 				$(ESML)/dynamic-only.js \
@@ -136,6 +138,7 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 	( echo "$$BANNER"; \
 		cat \
+			$(ESML)/url-polyfill.js \
 			$(ESML)/wrapper-start.js \
 				$(ESML)/loader.js \
 				$(ESML)/dynamic-only.js \
@@ -156,7 +159,6 @@ dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js
 		echo "(function(define) {"; \
 		echo ""; \
 		cat \
-			$(ESML)/url-polyfill.js \
 			node_modules/when/es6-shim/Promise.js \
 			lib/polyfills-bootstrap.js; \
 		echo "})();" \
