@@ -289,4 +289,4 @@ Default: `{}`
 
 Sets the TypeScript transpiler options.
 
-A list of options is available in the [TypeScript project documentation](https://github.com/Microsoft/TypeScript/wiki/Compiler%20Options).
+A list of options is available in the [TypeScript project documentation](https://www.typescriptlang.org/docs/handbook/compiler-options.html).
