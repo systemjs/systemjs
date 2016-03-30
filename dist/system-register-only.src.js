@@ -1,7 +1,71 @@
 /*
- * SystemJS v0.19.24
+ * SystemJS v0.19.25
  */
-(function(__global) {
+// from https://gist.github.com/Yaffle/1088850
+(function(global) {
+function URLPolyfill(url, baseURL) {
+  if (typeof url != 'string')
+    throw new TypeError('URL must be a string');
+  var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+  if (!m)
+    throw new RangeError('Invalid URL format');
+  var protocol = m[1] || "";
+  var username = m[2] || "";
+  var password = m[3] || "";
+  var host = m[4] || "";
+  var hostname = m[5] || "";
+  var port = m[6] || "";
+  var pathname = m[7] || "";
+  var search = m[8] || "";
+  var hash = m[9] || "";
+  if (baseURL !== undefined) {
+    var base = baseURL instanceof URLPolyfill ? baseURL : new URLPolyfill(baseURL);
+    var flag = !protocol && !host && !username;
+    if (flag && !pathname && !search)
+      search = base.search;
+    if (flag && pathname[0] !== "/")
+      pathname = (pathname ? (((base.host || base.username) && !base.pathname ? "/" : "") + base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1) + pathname) : base.pathname);
+    // dot segments removal
+    var output = [];
+    pathname.replace(/^(\.\.?(\/|$))+/, "")
+      .replace(/\/(\.(\/|$))+/g, "/")
+      .replace(/\/\.\.$/, "/../")
+      .replace(/\/?[^\/]*/g, function (p) {
+        if (p === "/..")
+          output.pop();
+        else
+          output.push(p);
+      });
+    pathname = output.join("").replace(/^\//, pathname[0] === "/" ? "/" : "");
+    if (flag) {
+      port = base.port;
+      hostname = base.hostname;
+      host = base.host;
+      password = base.password;
+      username = base.username;
+    }
+    if (!protocol)
+      protocol = base.protocol;
+  }
+
+  // convert windows file URLs to use /
+  if (protocol == 'file:')
+    pathname = pathname.replace(/\\/g, '/');
+
+  this.origin = host ? protocol + (protocol !== "" || host !== "" ? "//" : "") + host : "";
+  this.href = protocol + (protocol && host || protocol == "file:" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
+  this.protocol = protocol;
+  this.username = username;
+  this.password = password;
+  this.host = host;
+  this.hostname = hostname;
+  this.port = port;
+  this.pathname = pathname;
+  this.search = search;
+  this.hash = hash;
+}
+global.URLPolyfill = URLPolyfill;
+})(typeof self != 'undefined' ? self : global);(function(__global) {
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
@@ -103,7 +167,12 @@
     throw new TypeError('No environment baseURI');
   }
 
-  var URL = __global.URLPolyfill || __global.URL;
+  try {
+    var nativeURL = new __global.URL('test:///').protocol == 'test:';
+  }
+  catch(e) {}
+
+  var URL = nativeURL ? __global.URL : __global.URLPolyfill;
 /*
 *********************************************************************************************
 
@@ -1182,6 +1251,7 @@ function warn(msg) {
     var head = document.getElementsByTagName('head')[0];
 
   var curSystem;
+  var curRequire;
 
   // if doing worker executing, this is set to the load record being executed
   var workerLoad = null;
@@ -1306,6 +1376,7 @@ function warn(msg) {
         loadingCnt++;
 
         curSystem = __global.System;
+        curRequire = __global.require;
 
         s.src = load.address;
         head.appendChild(s);
@@ -1343,6 +1414,7 @@ function warn(msg) {
 
         function cleanup() {
           __global.System = curSystem;
+          __global.require = curRequire;
 
           if (s.detachEvent) {
             s.detachEvent('onreadystatechange', complete);
@@ -1520,7 +1592,7 @@ function createEntry() {
       // anonymous register
       if (!entry.name || load && entry.name == load.name) {
         if (!curMeta)
-          throw new TypeError('Unexpected anonymous System.register call.');
+          throw new TypeError('Invalid System.register call. Anonymous System.register calls can only be made by modules loaded by SystemJS.import and not via script tags.');
         if (curMeta.entry) {
           if (curMeta.format == 'register')
             throw new Error('Multiple anonymous System.register calls in module ' + load.name + '. If loading a bundle, ensure all the System.register calls are named.');
@@ -2049,7 +2121,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.24 Register Only';
+System.version = '0.19.25 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
