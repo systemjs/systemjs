@@ -149,6 +149,7 @@ Additional Plugins:
 * [Markdown](https://github.com/guybedford/plugin-md)
 * [raw](https://github.com/matthewbauer/plugin-raw)
 * [SASS](https://github.com/screendriver/plugin-sass)
+* [SCSS](https://github.com/kevcjones/plugin-scss)
 * [sofe](https://github.com/CanopyTax/sofe)
 * [SVG](https://github.com/vuzonp/systemjs-plugin-svg)
 * [WebFont](https://github.com/guybedford/plugin-font)
