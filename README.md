@@ -79,9 +79,11 @@ System.config({
 
 ### Promise Polyfill
 
-SystemJS relies on `Promise` being present in the environment. When this is not available it will send a request out to the `system-polyfills.js` file located in the dist folder which contains when.js.
+SystemJS relies on `Promise` being present in the environment.
 
-Alternatively load your own Promise polyfill before SystemJS.
+For the best performance in IE and older browsers, it is advisable to load [Bluebird](https://github.com/petkaantonov/bluebird) or [es6-promise](https://github.com/stefanpenner/es6-promise) before SystemJS.
+
+Otherwise, when Promise is not available, SystemJS will attempt to load the `system-polyfills.js` file located in the dist folder which contains the when.js Promise polyfill.
 
 ### NodeJS
 
