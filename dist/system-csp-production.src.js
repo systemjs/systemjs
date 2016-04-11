@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.25
+ * SystemJS v0.19.26
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -1275,18 +1275,16 @@ function getESModule(exports) {
   var esModule = {};
   // don't trigger getters/setters in environments that support them
   if (typeof exports == 'object' || typeof exports == 'function') {
+    var hasOwnProperty = exports && exports.hasOwnProperty;
     if (getOwnPropertyDescriptor) {
-      var d;
-      for (var p in exports)
-        if (d = Object.getOwnPropertyDescriptor(exports, p))
-          defineProperty(esModule, p, d);
+      for (var p in exports) {
+        if (!trySilentDefineProperty(esModule, exports, p))
+          setPropertyIfHasOwnProperty(esModule, exports, p, hasOwnProperty);
+      }
     }
     else {
-      var hasOwnProperty = exports && exports.hasOwnProperty;
-      for (var p in exports) {
-        if (!hasOwnProperty || exports.hasOwnProperty(p))
-          esModule[p] = exports[p];
-      }
+      for (var p in exports)
+        setPropertyIfHasOwnProperty(esModule, exports, p, hasOwnProperty);
     }
   }
   esModule['default'] = exports;
@@ -1294,6 +1292,24 @@ function getESModule(exports) {
     value: true
   });
   return esModule;
+}
+
+function setPropertyIfHasOwnProperty(targetObj, sourceObj, propName, hasOwnProperty) {
+  if (!hasOwnProperty || sourceObj.hasOwnProperty(propName))
+    targetObj[propName] = sourceObj[propName];
+}
+
+function trySilentDefineProperty(targetObj, sourceObj, propName) {
+  try {
+    var d;
+    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName))
+      defineProperty(targetObj, propName, d);
+
+    return true;
+  } catch (ex) {
+    // Object.getOwnPropertyDescriptor threw an exception, fall back to normal set property.
+    return false;
+  }
 }
 
 function extend(a, b, prepend) {
@@ -1328,7 +1344,8 @@ function extendMeta(a, b, prepend) {
 function warn(msg) {
   if (this.warnings && typeof console != 'undefined' && console.warn)
     console.warn(msg);
-}var absURLRegEx = /^[^\/]+:\/\//;
+}
+var absURLRegEx = /^[^\/]+:\/\//;
 
 function readMemberExpression(p, value) {
   var pParts = p.split('.');
@@ -3600,8 +3617,12 @@ hookConstructor(function(constructor) {
         var curMeta = load && load.metadata;
         var entry = register.entry;
 
-        if (curMeta)
-          curMeta.format = 'amd';
+        if (curMeta) {
+          if (!curMeta.format || curMeta.format == 'detect')
+            curMeta.format = 'amd';
+          else if (!entry.name && curMeta.format != 'amd')
+            throw new Error('AMD define called while executing ' + curMeta.format + ' module ' + load.name);
+        }
 
         // anonymous define
         if (!entry.name) {
@@ -4370,7 +4391,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.25 CSP';
+System.version = '0.19.26 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')

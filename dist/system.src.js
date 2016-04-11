@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.25
+ * SystemJS v0.19.26
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -1361,18 +1361,16 @@ function getESModule(exports) {
   var esModule = {};
   // don't trigger getters/setters in environments that support them
   if (typeof exports == 'object' || typeof exports == 'function') {
+    var hasOwnProperty = exports && exports.hasOwnProperty;
     if (getOwnPropertyDescriptor) {
-      var d;
-      for (var p in exports)
-        if (d = Object.getOwnPropertyDescriptor(exports, p))
-          defineProperty(esModule, p, d);
+      for (var p in exports) {
+        if (!trySilentDefineProperty(esModule, exports, p))
+          setPropertyIfHasOwnProperty(esModule, exports, p, hasOwnProperty);
+      }
     }
     else {
-      var hasOwnProperty = exports && exports.hasOwnProperty;
-      for (var p in exports) {
-        if (!hasOwnProperty || exports.hasOwnProperty(p))
-          esModule[p] = exports[p];
-      }
+      for (var p in exports)
+        setPropertyIfHasOwnProperty(esModule, exports, p, hasOwnProperty);
     }
   }
   esModule['default'] = exports;
@@ -1380,6 +1378,24 @@ function getESModule(exports) {
     value: true
   });
   return esModule;
+}
+
+function setPropertyIfHasOwnProperty(targetObj, sourceObj, propName, hasOwnProperty) {
+  if (!hasOwnProperty || sourceObj.hasOwnProperty(propName))
+    targetObj[propName] = sourceObj[propName];
+}
+
+function trySilentDefineProperty(targetObj, sourceObj, propName) {
+  try {
+    var d;
+    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName))
+      defineProperty(targetObj, propName, d);
+
+    return true;
+  } catch (ex) {
+    // Object.getOwnPropertyDescriptor threw an exception, fall back to normal set property.
+    return false;
+  }
 }
 
 function extend(a, b, prepend) {
@@ -1414,7 +1430,8 @@ function extendMeta(a, b, prepend) {
 function warn(msg) {
   if (this.warnings && typeof console != 'undefined' && console.warn)
     console.warn(msg);
-}// we define a __exec for globally-scoped execution
+}
+// we define a __exec for globally-scoped execution
 // used by module format implementations
 var __exec;
 
@@ -1436,7 +1453,7 @@ var __exec;
       sourceMap = JSON.stringify(sourceMap);
     }
 
-    return (wrap ? '(function(System, SystemJS, require) {' : '') + load.source + (wrap ? '\n})(System, System);' : '')
+    return (wrap ? '(function(System, SystemJS) {' : '') + load.source + (wrap ? '\n})(System, System);' : '')
         // adds the sourceURL comment if not already present
         + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
           ? '\n//# sourceURL=' + load.address + (sourceMap ? '!transpiled' : '') : '')
@@ -1473,13 +1490,21 @@ var __exec;
     curLoad = undefined;
   }
 
+  var vm;
   __exec = function(load) {
     if ((load.metadata.integrity || load.metadata.nonce) && supportsScriptExec)
       return scriptExec.call(this, load);
     try {
       preExec(this, load);
       curLoad = load;
-      (0, eval)(getSource(load));
+      // global scoped eval for node (avoids require scope leak)
+      if (this._nodeRequire) {
+        vm = vm || this._nodeRequire('vm');
+        vm.runInThisContext(getSource(load));
+      }
+      else {
+        (0, eval)(getSource(load));
+      }
       postExec();
     }
     catch(e) {
@@ -4144,8 +4169,12 @@ hookConstructor(function(constructor) {
         var curMeta = load && load.metadata;
         var entry = register.entry;
 
-        if (curMeta)
-          curMeta.format = 'amd';
+        if (curMeta) {
+          if (!curMeta.format || curMeta.format == 'detect')
+            curMeta.format = 'amd';
+          else if (!entry.name && curMeta.format != 'amd')
+            throw new Error('AMD define called while executing ' + curMeta.format + ' module ' + load.name);
+        }
 
         // anonymous define
         if (!entry.name) {
@@ -4940,7 +4969,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.25 Standard';
+System.version = '0.19.26 Standard';
   // -- exporting --
 
   if (typeof exports === 'object')
