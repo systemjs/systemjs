@@ -8,6 +8,10 @@
   },
   "author": "Guy Bedford",
   "license": "MIT",
+  "files": [
+    "index.js",
+    "dist"
+  ],
   "dependencies": {
     "when": "^3.7.5"
   },
