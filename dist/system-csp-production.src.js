@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.26
+ * SystemJS v0.19.27
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -101,6 +101,8 @@ global.URLPolyfill = URLPolyfill;
     }
   })();
 
+  var errArgs = new Error(0, '_').fileName == '_';
+
   function addToError(err, msg) {
     // parse the stack removing loader code lines for simplification
     if (!err.originalErr) {
@@ -118,7 +120,7 @@ global.URLPolyfill = URLPolyfill;
     if (!isBrowser)
       newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
-    var newErr = new Error(newMsg, err.fileName, err.lineNumber);
+    var newErr = errArgs ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
     
     // Node needs stack adjustment for throw to show message
     if (!isBrowser)
@@ -2331,6 +2333,7 @@ SystemJSLoader.prototype.config = function(cfg) {
 
     // NB remove this when json is default
     (configLoader.meta[pkgConfigPath] = configLoader.meta[pkgConfigPath] || {}).format = 'json';
+    configLoader.meta[pkgConfigPath].loader = null;
 
     return configLoader.load(pkgConfigPath)
     .then(function() {
@@ -4391,7 +4394,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.26 CSP';
+System.version = '0.19.27 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')
