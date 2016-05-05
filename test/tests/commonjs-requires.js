@@ -27,3 +27,14 @@ var p = false && require('" + "test" + "');
 
 // this line shouldn't be detected
 " = require(", "),\n        ";
+
+
+/*
+
+Unsolved breaking cases:
+
+var regex = /  "  /; var string = "  /* " // one line;
+require('asdf') // <- this will now be skipped as it will be in the '/*' comment
+*//*
+
+*/
