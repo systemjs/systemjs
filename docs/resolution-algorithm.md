@@ -346,20 +346,23 @@ by the non-sync normalization.
 
 #### 2.10 RESOLVE_CONDITION(condition, parent, sync)
 
-> Conditions are of the general form "~conditionModule|conditionExport", where "~" indicates
-  optional boolean condition negation and "|conditionExport" indicates a specific export of the 
-  conditional module. When no export is specified (eg "conditionModule"), the default export is used.
+> Conditions are of the general form "~conditionModule|conditionExport", where "conditionModule"
+  is the unnormalized module name to the condition, ~" indicates optional boolean condition negation 
+  and "conditionExport" indicates which export from the module to use as the condition. 
+  "conditionModule" is sugar indicating the default export, and is equivalent to "conditionModule|default".
+  System conditions "browser", "node", "dev", "production" and "default" are provided which are treated
+  as exceptions if the "conditionModule" matches one of these names so that "browser" becomes "@system-env|browser".
 
-1. Let _negation_ be _false_
-1. If _condition_ starts with the string _"~"_ then,
-  1. Set _negation_ to _true_
-  1. Set _condition_ to _condition.substr(1)_
+1. If _condition_ is equal to "browser", "node", "dev", "production" or "default" then,
+  1. Set _condition_ to the value of _"@system-env|" + condition_
+1. If _condition_ does note contain the string _"|"_,
+  1. Let _condition_ be the value of _condition + "|default"_
 1. Let _conditionExport_ be the substring after the last instance of _"|"_ in _condition_
+1. Let _negation_ be _false_
+1. If the first character in _conditionExport_ is _"~"_ then,
+  1. Let _negation_ be _true_
+  1. Set _conditionExport_ to the value of _conditionExport.substr(1)_
 1. Set _condition_ to the substring before the last instance of _"|"_ in _condition_
-1. If _condition_ is an empty string then,
-  1. Set _condition_ to _"@system-env"_
-1. If _conditionExport_ is an empty string then,
-  1. Set _conditionExport_ to _"default"_
 1. Let _resolvedCondition_ be the result of _CORE_RESOLVE(condition, parent, sync)_, throwing any rejection or error
 1. If _sync_ is _true_,
   1. Let _conditionModule_ be the result of _SystemJS.get(resolvedCondition)_
@@ -541,20 +544,8 @@ by the non-sync normalization.
 1. Assert _mapMatch_ is a string
 1. Let _mapValue_ be the value of _packageMap[mapMatch]_
 1. If _mapValue_ is of type _object_ then,
-  1. Let _packageCondition_ be "@system-env"
-  1. If _packageMap.@env_ is a value of type string then,
-    1. Set _packageCondition_ to _packageMap.@env_
   1. For each key _condition_ in _mapValue_,
-    1. Let _negate_ be equal to _false_
-    1. If _condition[0]_ is equal to _"~"_ then,
-      1. Set _negate_ to _true_
-    1. Let _conditionExport_ be equal to _condition_
-    1. If _negate_ is equal to _true then,
-      1. Set _conditionExport_ to _condition.substr(1)_
-    1. Let _fullCondition_ be the string _packageCondition + "|" + conditionExport_
-    1. If _negate_ is equal to _true_ then,
-      1. Set _fullCondition_ to _"~" + fullCondition_
-    1. Let _conditionValue_ be the result of _RESOLVE_CONDITION(fullCondition, packageURL + '/', sync)_
+    1. Let _conditionValue_ be the result of _RESOLVE_CONDITION(condition, packageURL + '/', sync)_
     1. If _conditionValue_ is not of type _boolean_, reject with a new _Error_
     1. If _conditionValue_ is equal to _true_ then,
       1. Set _mapValue_ to the value of _mapValue[condition]_
