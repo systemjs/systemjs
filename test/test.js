@@ -802,6 +802,21 @@ asyncTest('Loading ES6 and AMD', function() {
   }, err);
 });
 
+asyncTest('ES module deps support', function() {
+  System.config({
+    meta: {
+      'tests/esm-with-deps.js': {
+        deps: ['tests/esm-dep.js']
+      }
+    }
+  });
+  System['import']('tests/esm-with-deps.js').then(function(m) {
+    ok(m.p == 5);
+    ok(global.esmDep == 'esm-dep');
+    start();
+  });
+});
+
 asyncTest('Module Name meta', function() {
   System['import']('tests/reflection.js').then(function(m) {
     ok(m.myname == System.normalizeSync('tests/reflection.js'), 'Module name not returned');
