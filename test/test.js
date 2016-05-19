@@ -919,6 +919,18 @@ asyncTest("System clone", function() {
   }, err);
 });
 
+asyncTest('Custom loader instance System scoped', function() {
+  var customSystem = new System.constructor();
+
+  customSystem.baseURL = System.baseURL;
+  customSystem.paths = System.paths;
+  customSystem['import']('tests/loader-scoping.js')
+  .then(function(m) {
+    ok(m.loader == customSystem);
+    start();
+  }, err);;
+});
+
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
     var worker = new Worker('./tests/worker-' + System.transpiler + '.js');
