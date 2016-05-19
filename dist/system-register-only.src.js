@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.27
+ * SystemJS v0.19.28
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -1045,6 +1045,9 @@ function applyPaths(paths, name) {
 
   // check to see if we have a paths entry
   for (var p in paths) {
+    if (paths.hasOwnProperty && !paths.hasOwnProperty(p))
+      continue;
+
     var pathParts = p.split('*');
     if (pathParts.length > 2)
       throw new TypeError('Only one wildcard in a path is permitted');
@@ -1055,8 +1058,9 @@ function applyPaths(paths, name) {
         return paths[p];
       
       // support trailing / in paths rules
-      else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && paths[p][paths[p].length - 1] == '/')
-        return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? '/' + name.substr(p.length) : '');
+      else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && (paths[p][paths[p].length - 1] == '/' || paths[p] == '')) {
+        return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? (paths[p] && '/' || '') + name.substr(p.length) : '');
+      }
     }
     // wildcard path match
     else {
@@ -1188,18 +1192,18 @@ catch(e) {
 function getESModule(exports) {
   var esModule = {};
   // don't trigger getters/setters in environments that support them
-  if (typeof exports == 'object' || typeof exports == 'function') {
-    var hasOwnProperty = exports && exports.hasOwnProperty;
-    if (getOwnPropertyDescriptor) {
-      for (var p in exports) {
-        if (!trySilentDefineProperty(esModule, exports, p))
-          setPropertyIfHasOwnProperty(esModule, exports, p, hasOwnProperty);
+  if ((typeof exports == 'object' || typeof exports == 'function') && exports !== __global) {
+      if (getOwnPropertyDescriptor) {
+        for (var p in exports) {
+          // The default property is copied to esModule later on
+          if (p === 'default')
+            continue;
+          defineOrCopyProperty(esModule, exports, p);
+        }
       }
-    }
-    else {
-      for (var p in exports)
-        setPropertyIfHasOwnProperty(esModule, exports, p, hasOwnProperty);
-    }
+      else {
+        extend(esModule, exports);
+      }
   }
   esModule['default'] = exports;
   defineProperty(esModule, '__useDefault', {
@@ -1208,26 +1212,25 @@ function getESModule(exports) {
   return esModule;
 }
 
-function setPropertyIfHasOwnProperty(targetObj, sourceObj, propName, hasOwnProperty) {
-  if (!hasOwnProperty || sourceObj.hasOwnProperty(propName))
-    targetObj[propName] = sourceObj[propName];
-}
-
-function trySilentDefineProperty(targetObj, sourceObj, propName) {
+function defineOrCopyProperty(targetObj, sourceObj, propName) {
   try {
     var d;
     if (d = Object.getOwnPropertyDescriptor(sourceObj, propName))
       defineProperty(targetObj, propName, d);
-
-    return true;
-  } catch (ex) {
-    // Object.getOwnPropertyDescriptor threw an exception, fall back to normal set property.
+  }
+  catch (ex) {
+    // Object.getOwnPropertyDescriptor threw an exception, fall back to normal set property
+    // we dont need hasOwnProperty here because getOwnPropertyDescriptor would have returned undefined above
+    targetObj[propName] = sourceObj[propName];
     return false;
   }
 }
 
 function extend(a, b, prepend) {
+  var hasOwnProperty = b && b.hasOwnProperty;
   for (var p in b) {
+    if (hasOwnProperty && !b.hasOwnProperty(p))
+      continue;
     if (!prepend || !(p in a))
       a[p] = b[p];
   }
@@ -1242,7 +1245,10 @@ var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'b
 // object + object extends
 // other properties replace
 function extendMeta(a, b, prepend) {
+  var hasOwnProperty = b && b.hasOwnProperty;
   for (var p in b) {
+    if (hasOwnProperty && !b.hasOwnProperty(p))
+      continue;
     var val = b[p];
     if (!(p in a))
       a[p] = val;
@@ -1609,7 +1615,7 @@ function createEntry() {
           curMeta.bundle = true;
       }
       // anonymous register
-      if (!entry.name || load && entry.name == load.name) {
+      if (!entry.name || load && !curMeta.entry && entry.name == load.name) {
         if (!curMeta)
           throw new TypeError('Invalid System.register call. Anonymous System.register calls can only be made by modules loaded by SystemJS.import and not via script tags.');
         if (curMeta.entry) {
@@ -1974,6 +1980,7 @@ function createEntry() {
         // don't support deps for ES modules
         if (!entry.declarative)
           entry.deps = entry.deps.concat(load.metadata.deps);
+        entry.deps = entry.deps.concat(load.metadata.deps);
       }
 
       // picked up already by an anonymous System.register script injection
@@ -2140,7 +2147,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.27 Register Only';
+System.version = '0.19.28 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
