@@ -159,6 +159,22 @@ asyncTest('Global script with exports as an array', function() {
   }, err);
 });
 
+asyncTest('Global with encapsulated execution', function() {
+  System.config({
+    meta: {
+      'tests/global-encapsulation.js': {
+        encapsulateGlobal: true
+      }
+    }
+  });
+
+  System['import']('tests/global-encapsulation.js').then(function(m) {
+    ok(m == 'encapsulated global');
+    ok(global.globalName === undefined);
+    start();
+  }, err);
+});
+
 if (!ie8)
 asyncTest('Meta should override meta syntax', function() {
   System.meta[System.normalizeSync('tests/meta-override.js')] = { format: 'esm' };
