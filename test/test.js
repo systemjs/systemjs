@@ -1241,7 +1241,7 @@ asyncTest('Package-local alias cjs', function() {
     start();
   });
 });
-  
+
 asyncTest('Package-local alias esm default export', function() {
   System.config({
     map: {
