@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.28
+ * SystemJS v0.19.29
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -106,7 +106,7 @@ global.URLPolyfill = URLPolyfill;
   function addToError(err, msg) {
     // parse the stack removing loader code lines for simplification
     if (!err.originalErr) {
-      var stack = (err.stack || err.message || err).split('\n');
+      var stack = (err.stack || err.message || err).toString().split('\n');
       var newStack = [];
       for (var i = 0; i < stack.length; i++) {
         if (typeof $__curScript == 'undefined' || stack[i].indexOf($__curScript.src) == -1)
@@ -370,7 +370,6 @@ function logloads(loads) {
         load = loader.loads[i];
         if (load.name != name)
           continue;
-        console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded');
         return load;
       }
 
@@ -606,8 +605,6 @@ function logloads(loads) {
   function addLoadToLinkSet(linkSet, load) {
     if (load.status == 'failed')
       return;
-
-    console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded on link set');
 
     for (var i = 0, l = linkSet.loads.length; i < l; i++)
       if (linkSet.loads[i] == load)
@@ -1325,9 +1322,6 @@ function extend(a, b, prepend) {
   return a;
 }
 
-// package configuration options
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath', 'depCache'];
-
 // meta first-level extends where:
 // array + array appends
 // object + object extends
@@ -1347,6 +1341,54 @@ function extendMeta(a, b, prepend) {
     else if (!prepend)
       a[p] = val;
   }
+}
+
+// deeply-merge (to first level) config with any existing package config
+function setPkgConfig(loader, pkgName, cfg, prependConfig, warnInvalidProperties) {
+  var curPkg = loader.packages[pkgName] = loader.packages[pkgName] || {};
+
+  // dynamic config does not override existing System.config package configurations
+  var pkg = prependConfig ? (loader.packages[pkgName] = {}) : curPkg;
+
+  for (var prop in cfg) {
+    if (['main', 'format', 'defaultExtension', 'basePath'].indexOf(prop) != -1) {
+      pkg[prop] = cfg[prop];
+    }
+    else if (prop == 'map') {
+      extend(pkg.map = pkg.map || {}, cfg.map);
+    }
+    else if (prop == 'meta') {
+      extend(pkg.meta = pkg.meta || {}, cfg.meta);
+    }
+    else if (prop == 'depCache') {
+      for (var d in cfg.depCache) {
+        var dNormalized;
+
+        if (d.substr(0, 2) == './')
+          dNormalized = pkgName + '/' + d.substr(2);
+        else
+          dNormalized = coreResolve.call(loader, d);
+        loader.depCache[dNormalized] = (loader.depCache[dNormalized] || []).concat(cfg.depCache[d]);
+      }
+    }
+    else if (warnInvalidProperties && ['browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'].indexOf(prop) == -1) {
+      warn.call(loader, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
+    }
+  }
+
+  // main object becomes main map
+  if (typeof pkg.main == 'object') {
+    pkg.map = pkg.map || {};
+    pkg.map['./@main'] = pkg.main;
+    pkg.main['default'] = pkg.main['default'] || './';
+    pkg.main = '@main';
+  }
+
+  // prepend config becomes package config, then extended with original package config
+  if (prependConfig)
+    setPkgConfig(loader, pkgName, curPkg, false, false);
+
+  return pkg;
 }
 
 function warn(msg) {
@@ -1647,6 +1689,30 @@ hook('instantiate', function(instantiate) {
 */
 SystemJSLoader.prototype.env = 'dev';
 
+function envSet(loader, cfg, envCallback) {
+  if (envModule.browser && cfg.browserConfig)
+    envCallback(cfg.browserConfig);
+  if (envModule.node && cfg.nodeConfig)
+    envCallback(cfg.nodeConfig);
+  if (envModule.dev && cfg.devConfig)
+    envCallback(cfg.devConfig);
+  if (envModule.production && cfg.productionConfig)
+    envCallback(cfg.productionConfig);
+}
+
+SystemJSLoader.prototype.getConfig = function(name) {
+  var cfg = {};
+  var loader = this;
+  for (var p in loader) {
+    if (loader.hasOwnProperty && !loader.hasOwnProperty(p) || p in SystemJSLoader.prototype)
+      continue;
+    if (['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version'].indexOf(p) == -1)
+      cfg[p] = loader[p];
+  }
+  cfg.production = envModule.production;
+  return cfg;
+};
+
 var curCurScript;
 SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
   var loader = this;
@@ -1672,11 +1738,11 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
   if (!isEnvConfig) {
     // if using nodeConfig / browserConfig / productionConfig, take baseURL from there
     // these exceptions will be unnecessary when we can properly implement config queuings
-    var baseURL = cfg.devConfig && envModule.dev && cfg.devConfig.baseURL ||
-        cfg.productionConfig && envModule.production && cfg.productionConfig.baseURL ||
-        cfg.nodeConfig && envModule.node && cfg.nodeConfig.baseURL ||
-        cfg.browserConfig && envModule.browser && cfg.browserConfig.baseURL ||
-        cfg.baseURL;
+    var baseURL;
+    envSet(loader, cfg, function(cfg) {
+      baseURL = baseURL || cfg.baseURL;
+    });
+    baseURL = baseURL || cfg.baseURL;
 
     // always configure baseURL first
     if (baseURL) {
@@ -1696,10 +1762,10 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
     }
 
     extend(loader.paths, cfg.paths);
-    extend(loader.paths, cfg.browserConfig && envModule.browser && cfg.browserConfig.paths);
-    extend(loader.paths, cfg.nodeConfig && envModule.node && cfg.nodeConfig.paths);
-    extend(loader.paths, cfg.productionConfig && envModule.production && cfg.productionConfig.paths);
-    extend(loader.paths, cfg.devConfig && envModule.dev && cfg.devConfig.paths);
+
+    envSet(loader, cfg, function(cfg) {
+      extend(loader.paths, cfg.paths);
+    });
 
     // warn on wildcard path deprecations
     if (this.warnings) {
@@ -1792,29 +1858,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
       if (prop[prop.length - 1] == '/')
         prop = prop.substr(0, prop.length - 1);
 
-      loader.packages[prop] = loader.packages[prop] || {};
-
-      var pkg = cfg.packages[p];
-
-      // meta backwards compatibility
-      if (pkg.modules) {
-        warn.call(loader, 'Package ' + p + ' is configured with "modules", which is deprecated as it has been renamed to "meta".');
-        pkg.meta = pkg.modules;
-        delete pkg.modules;
-      }
-
-      if (typeof pkg.main == 'object') {
-        pkg.map = pkg.map || {};
-        pkg.map['./@main'] = pkg.main;
-        pkg.main['default'] = pkg.main['default'] || './';
-        pkg.main = '@main';
-      }
-
-      for (var q in pkg)
-        if (indexOf.call(packageProperties, q) == -1)
-          warn.call(loader, '"' + q + '" is not a valid package configuration option in package ' + p);
-
-      extendMeta(loader.packages[prop], pkg);
+      setPkgConfig(loader, prop, cfg.packages[p], false, true);
     }
   }
 
@@ -1822,7 +1866,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
     var v = cfg[c];
 
     if (['baseURL', 'map', 'packages', 'bundles', 'paths', 'warnings', 'packageConfigPaths', 
-          'loaderErrorStack', 'browserConfig', 'nodeConfig', 'productionConfig'].indexOf(c) != -1)
+          'loaderErrorStack', 'browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'].indexOf(c) != -1)
       continue;
 
     if (typeof v != 'object' || v instanceof Array) {
@@ -1834,21 +1878,21 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
       for (var p in v) {
         // base-level wildcard meta does not normalize to retain catch-all quality
         if (c == 'meta' && p[0] == '*') {
-          loader[c][p] = v[p];
+          extend(loader[c][p] = loader[c][p] || {}, v[p]);
         }
         else if (c == 'meta') {
           // meta can go through global map, with defaultJSExtensions adding
           var resolved = coreResolve.call(loader, p);
           if (loader.defaultJSExtensions && resolved.substr(resolved.length - 3, 3) != '.js' && !isPlain(resolved))
             resolved += '.js';
-          loader[c][resolved] = v[p];
+          extend(loader[c][resolved] = loader[c][resolved] || {}, v[p]);
         }
         else if (c == 'depCache') {
           var defaultJSExtension = loader.defaultJSExtensions && p.substr(p.length - 3, 3) != '.js';
           var prop = loader.decanonicalize(p);
           if (defaultJSExtension && prop.substr(prop.length - 3, 3) == '.js')
             prop = prop.substr(0, prop.length - 3);
-          loader[c][prop] = v[p];
+          loader[c][prop] = [].concat(v[p]);
         }
         else {
           loader[c][p] = v[p];
@@ -1857,14 +1901,9 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
     }
   }
 
-  if (cfg.browserConfig && envModule.browser)
-    this.config(cfg.browserConfig, true);
-  if (cfg.nodeConfig && envModule.node)
-    this.config(cfg.nodeConfig, true);
-  if (cfg.devConfig && envModule.dev)
-    this.config(cfg.devConfig, true);
-  if (cfg.productionConfig && envModule.production)
-    this.config(cfg.productionConfig, true);
+  envSet(loader, cfg, function(cfg) {
+    loader.config(cfg, true);
+  });
 };/*
  * Package Configuration Extension
  *
@@ -2386,39 +2425,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
         warn.call(loader, 'Package config file ' + pkgConfigPath + ' is configured with "modules", which is deprecated as it has been renamed to "meta".');
       }
 
-      // remove any non-system properties if generic config file (eg package.json)
-      for (var p in cfg) {
-        if (indexOf.call(packageProperties, p) == -1)
-          delete cfg[p];
-      }
-
-      // deeply-merge (to first level) config with any existing package config
-      var pkg = loader.packages[pkgName] = loader.packages[pkgName] || {};
-      extendMeta(pkg, cfg, true);
-
-      // support external depCache
-      if (cfg.depCache) {
-        for (var d in cfg.depCache) {
-          var dNormalized;
-
-          if (d.substr(0, 2) == './')
-            dNormalized = pkgName + '/' + d.substr(2);
-          else
-            dNormalized = coreResolve.call(loader, d);
-          loader.depCache[dNormalized] = (loader.depCache[dNormalized] || []).concat(cfg.depCache[d]);
-        }
-        delete cfg.depCache;
-      }
-
-      // main object becomes main map
-      if (typeof pkg.main == 'object') {
-        pkg.map = pkg.map || {};
-        pkg.map['./@main'] = pkg.main;
-        pkg.main['default'] = pkg.main['default'] || './';
-        pkg.main = '@main';
-      }
-
-      return pkg;
+      return setPkgConfig(loader, pkgName, cfg, true, false);
     });
   }
 
@@ -3847,7 +3854,7 @@ hookConstructor(function(constructor) {
 
         // normalize plugin relative to parent in locate here when
         // using plugin via loader metadata
-        return loader.normalize(load.metadata.loader, load.name)
+        return (loader.pluginLoader || loader).normalize(load.metadata.loader, load.name)
         .then(function(loaderNormalized) {
           load.metadata.loader = loaderNormalized;
           return address;
@@ -4451,7 +4458,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.28 CSP';
+System.version = '0.19.29 CSP';
   // -- exporting --
 
   if (typeof exports === 'object')

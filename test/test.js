@@ -924,6 +924,7 @@ asyncTest('Custom loader instance System scoped', function() {
 
   customSystem.baseURL = System.baseURL;
   customSystem.paths = System.paths;
+  customSystem.transpiler = System.transpiler;
   customSystem['import']('tests/loader-scoping.js')
   .then(function(m) {
     ok(m.loader == customSystem);

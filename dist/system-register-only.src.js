@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.28
+ * SystemJS v0.19.29
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -105,7 +105,7 @@ global.URLPolyfill = URLPolyfill;
   function addToError(err, msg) {
     // parse the stack removing loader code lines for simplification
     if (!err.originalErr) {
-      var stack = (err.stack || err.message || err).split('\n');
+      var stack = (err.stack || err.message || err).toString().split('\n');
       var newStack = [];
       for (var i = 0; i < stack.length; i++) {
         if (typeof $__curScript == 'undefined' || stack[i].indexOf($__curScript.src) == -1)
@@ -369,7 +369,6 @@ function logloads(loads) {
         load = loader.loads[i];
         if (load.name != name)
           continue;
-        console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded');
         return load;
       }
 
@@ -605,8 +604,6 @@ function logloads(loads) {
   function addLoadToLinkSet(linkSet, load) {
     if (load.status == 'failed')
       return;
-
-    console.assert(load.status == 'loading' || load.status == 'loaded', 'loading or loaded on link set');
 
     for (var i = 0, l = linkSet.loads.length; i < l; i++)
       if (linkSet.loads[i] == load)
@@ -1237,9 +1234,6 @@ function extend(a, b, prepend) {
   return a;
 }
 
-// package configuration options
-var packageProperties = ['main', 'format', 'defaultExtension', 'meta', 'map', 'basePath', 'depCache'];
-
 // meta first-level extends where:
 // array + array appends
 // object + object extends
@@ -1259,6 +1253,54 @@ function extendMeta(a, b, prepend) {
     else if (!prepend)
       a[p] = val;
   }
+}
+
+// deeply-merge (to first level) config with any existing package config
+function setPkgConfig(loader, pkgName, cfg, prependConfig, warnInvalidProperties) {
+  var curPkg = loader.packages[pkgName] = loader.packages[pkgName] || {};
+
+  // dynamic config does not override existing System.config package configurations
+  var pkg = prependConfig ? (loader.packages[pkgName] = {}) : curPkg;
+
+  for (var prop in cfg) {
+    if (['main', 'format', 'defaultExtension', 'basePath'].indexOf(prop) != -1) {
+      pkg[prop] = cfg[prop];
+    }
+    else if (prop == 'map') {
+      extend(pkg.map = pkg.map || {}, cfg.map);
+    }
+    else if (prop == 'meta') {
+      extend(pkg.meta = pkg.meta || {}, cfg.meta);
+    }
+    else if (prop == 'depCache') {
+      for (var d in cfg.depCache) {
+        var dNormalized;
+
+        if (d.substr(0, 2) == './')
+          dNormalized = pkgName + '/' + d.substr(2);
+        else
+          dNormalized = coreResolve.call(loader, d);
+        loader.depCache[dNormalized] = (loader.depCache[dNormalized] || []).concat(cfg.depCache[d]);
+      }
+    }
+    else if (warnInvalidProperties && ['browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'].indexOf(prop) == -1) {
+      warn.call(loader, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
+    }
+  }
+
+  // main object becomes main map
+  if (typeof pkg.main == 'object') {
+    pkg.map = pkg.map || {};
+    pkg.map['./@main'] = pkg.main;
+    pkg.main['default'] = pkg.main['default'] || './';
+    pkg.main = '@main';
+  }
+
+  // prepend config becomes package config, then extended with original package config
+  if (prependConfig)
+    setPkgConfig(loader, pkgName, curPkg, false, false);
+
+  return pkg;
 }
 
 function warn(msg) {
@@ -2147,7 +2189,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.28 Register Only';
+System.version = '0.19.29 Register Only';
   // -- exporting --
 
   if (typeof exports === 'object')
