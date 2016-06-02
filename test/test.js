@@ -983,14 +983,15 @@ asyncTest('Scriptload precompiled global with exports still defined', function()
     meta: {
       'tests/global-single-compiled.js': {
         scriptLoad: true,
-        exports: 'foobar'
+        exports: 'foobar',
+        format: typeof global != 'undefined' ? 'register' : 'global'
       }
     }
   });
   System['import']('tests/global-single-compiled.js').then(function(m) {
     ok(m == 'foo');
     start();
-  });
+  }, err);
 });
 
 asyncTest('Multi-format deps meta', function() {
