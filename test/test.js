@@ -978,6 +978,21 @@ asyncTest('Globals', function() {
   }, err);
 });
 
+asyncTest('Scriptload precompiled global with exports still defined', function() {
+  System.config({
+    meta: {
+      'tests/global-single-compiled.js': {
+        scriptLoad: true,
+        exports: 'foobar'
+      }
+    }
+  });
+  System['import']('tests/global-single-compiled.js').then(function(m) {
+    ok(m == 'foo');
+    start();
+  });
+});
+
 asyncTest('Multi-format deps meta', function() {
   System['import']('tests/amd-extra-deps.js').then(function(m) {
     ok(m.join(',') == '10,5');

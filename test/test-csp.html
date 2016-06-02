@@ -214,7 +214,21 @@
           ok(m == 'bar');
           start();
         });
-      })
+      });
+
+      asyncTest('Loading a precompiled global with exports still defined', function() {
+        System.config({
+          meta: {
+            'tests/global-single-compiled.js': {
+              exports: 'foobar'
+            }
+          }
+        });
+        System['import']('tests/global-single-compiled.js').then(function(m) {
+          ok(m == 'foo');
+          start();
+        });
+      });
       
       asyncTest('Importing a script with wrong integrity fails', function() {
         System.config({
