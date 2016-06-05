@@ -33,8 +33,8 @@ System.version = '$(VERSION) CSP';
 endef
 export CSP_VERSION
 
-compile: clean-compile dist/system.src.js dist/system-csp-production.src.js dist/system-register-only.src.js
-build: clean dist/system.js dist/system-csp-production.js dist/system-register-only.js dist/system-polyfills.js
+compile: clean-compile dist/system.src.js dist/system-csp-production.src.js dist/system-register-only.src.js dist/systemjs.d.ts
+build: clean dist/system.js dist/system-csp-production.js dist/system-register-only.js dist/system-polyfills.js dist/systemjs.d.ts
 
 version:
 	@echo $(VERSION)
@@ -162,4 +162,9 @@ dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js
 			node_modules/when/es6-shim/Promise.js \
 			lib/polyfills-bootstrap.js; \
 		echo "})();" \
+	) > $@;
+
+dist/systemjs.d.ts: typings/systemjs.d.ts
+	( echo "$$BANNER"; \
+		cat $< \
 	) > $@;
