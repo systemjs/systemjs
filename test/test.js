@@ -1148,7 +1148,9 @@ asyncTest('Package map circular cases', function() {
         map: {
           './lib': './lib/asdf.js',
           './lib/': './lib/index.js',
-          './lib/p': './lib/q.js'
+          './lib/p': './lib/q.js',
+          './src/': './src/index.js',
+          './bin': './bin/index.js'
         }
       }
     }
@@ -1176,7 +1178,25 @@ asyncTest('Package map circular cases', function() {
 
     System.normalize('../lib/', System.baseURL + 'tests/testpkg3/lib/x.js'),
     System.normalize('../lib/x', System.baseURL + 'tests/testpkg3/lib/x.js'),
-    System.normalize('tp3/lib/q', System.baseURL + 'tests/testpkg3/lib/x.js')
+    System.normalize('tp3/lib/q', System.baseURL + 'tests/testpkg3/lib/x.js'),
+
+    System.normalize('./src', System.baseURL + 'tests/testpkg3/'),
+    System.normalize('./src/', System.baseURL + 'tests/testpkg3/'),
+    System.normalize('./src/x', System.baseURL + 'tests/testpkg3/'),
+
+    System.normalize('tp3/src'),
+    System.normalize('tp3/src/'),
+    System.normalize('tp3/src/x'),
+
+    System.normalize('./bin', System.baseURL + 'tests/testpkg3/'),
+    System.normalize('./bin/', System.baseURL + 'tests/testpkg3/'),
+    System.normalize('./bin/x', System.baseURL + 'tests/testpkg3/'),
+
+    System.normalize('tp3/bin'),
+    System.normalize('tp3/bin/'),
+    System.normalize('tp3/bin/x'),
+
+    System.normalize('.', System.baseURL + 'tests/testpkg3/bin/x')
   ])
   .then(function(n) {
     ok(n[0] == System.baseURL + 'tests/testpkg3/lib/asdf.js');
@@ -1201,6 +1221,25 @@ asyncTest('Package map circular cases', function() {
     ok(n[15] == System.baseURL + 'tests/testpkg3/lib/index.js');
     ok(n[16] == System.baseURL + 'tests/testpkg3/lib/x.js');
     ok(n[17] == System.baseURL + 'tests/testpkg3/lib/q.js');
+
+    ok(n[18] == System.baseURL + 'tests/testpkg3/src.js');
+    ok(n[19] == System.baseURL + 'tests/testpkg3/src/index.js');
+    ok(n[20] == System.baseURL + 'tests/testpkg3/src/x.js');
+
+    ok(n[21] == System.baseURL + 'tests/testpkg3/src.js');
+    ok(n[22] == System.baseURL + 'tests/testpkg3/src/index.js');
+    ok(n[23] == System.baseURL + 'tests/testpkg3/src/x.js');
+
+    ok(n[24] == System.baseURL + 'tests/testpkg3/bin/index.js');
+    ok(n[25] == System.baseURL + 'tests/testpkg3/bin/index.js');
+    ok(n[26] == System.baseURL + 'tests/testpkg3/bin/x.js');
+
+    ok(n[27] == System.baseURL + 'tests/testpkg3/bin/index.js');
+    ok(n[28] == System.baseURL + 'tests/testpkg3/bin/index.js');
+    ok(n[29] == System.baseURL + 'tests/testpkg3/bin/x.js');
+
+    console.log(n[30]);
+    ok(n[30] == System.baseURL + 'tests/testpkg3/bin/index.js');
     start();
   }, err);
 
