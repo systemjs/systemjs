@@ -75,27 +75,27 @@ dist/system.src.js: lib/*.js
 			lib/loader-wrapper-start.js \
 				lib/system-fetch.js \
 				lib/legacy-transpiler.js \
-					lib/proto.js \
-					lib/global-eval.js \
-					lib/core.js \
-					lib/package.js \
-					lib/scriptLoader.js \
-					lib/register.js \
-					lib/esm.js \
-					lib/global.js \
-					lib/global-helpers.js \
-					lib/cjs.js \
-					lib/cjs-helpers.js \
-					lib/amd-helpers.js \
-					lib/amd.js \
-					lib/plugins.js \
-					lib/conditionals.js \
-					lib/alias.js \
-					lib/meta.js \
-					lib/bundles.js \
-					lib/depCache.js \
-					lib/createSystem.js \
-					; echo "$$STANDARD_VERSION" ; cat \
+				lib/proto.js \
+				lib/global-eval.js \
+				lib/core.js \
+				lib/package.js \
+				lib/scriptLoader.js \
+				lib/register.js \
+				lib/esm.js \
+				lib/global.js \
+				lib/global-helpers.js \
+				lib/cjs.js \
+				lib/cjs-helpers.js \
+				lib/amd-helpers.js \
+				lib/amd.js \
+				lib/plugins.js \
+				lib/conditionals.js \
+				lib/alias.js \
+				lib/meta.js \
+				lib/bundles.js \
+				lib/depCache.js \
+				lib/createSystem.js \
+				; echo "$$STANDARD_VERSION" ; cat \
 			lib/loader-wrapper-end.js \
 			lib/wrapper-end.js \
 	) > $@;
@@ -106,30 +106,29 @@ dist/system.perf.js: lib/*.js
 			lib/wrapper-start.js \
 			lib/url-polyfill.js \
 			lib/loader-wrapper-start.js \
-				lib/system-fetch.js \
 				lib/legacy-transpiler.js \
-					lib/proto.js \
-					lib/perf.js \
-					lib/global-eval.js \
-					lib/core.js \
-					lib/package.js \
-					lib/scriptLoader.js \
-					lib/register.js \
-					lib/esm.js \
-					lib/global.js \
-					lib/global-helpers.js \
-					lib/cjs.js \
-					lib/cjs-helpers.js \
-					lib/amd-helpers.js \
-					lib/amd.js \
-					lib/plugins.js \
-					lib/conditionals.js \
-					lib/alias.js \
-					lib/meta.js \
-					lib/bundles.js \
-					lib/depCache.js \
-					lib/createSystem.js \
-					; echo "$$STANDARD_VERSION" ; cat \
+				lib/proto.js \
+				lib/perf.js \
+				lib/global-eval.js \
+				lib/core.js \
+				lib/package.js \
+				lib/scriptLoader.js \
+				lib/register.js \
+				lib/esm.js \
+				lib/global.js \
+				lib/global-helpers.js \
+				lib/cjs.js \
+				lib/cjs-helpers.js \
+				lib/amd-helpers.js \
+				lib/amd.js \
+				lib/plugins.js \
+				lib/conditionals.js \
+				lib/alias.js \
+				lib/meta.js \
+				lib/bundles.js \
+				lib/depCache.js \
+				lib/createSystem.js \
+				; echo "$$STANDARD_VERSION" ; cat \
 			lib/loader-wrapper-end.js \
 			lib/wrapper-end.js \
 	) > $@;
@@ -140,24 +139,24 @@ dist/system-csp-production.src.js: lib/*.js
 			lib/wrapper-start.js \
 			lib/url-polyfill.js \
 			lib/loader-wrapper-start.js \
+				lib/proto.js \
 				lib/system-fetch.js \
-					lib/proto.js \
-					lib/core.js \
-					lib/package.js \
-					lib/scriptLoader.js \
-					lib/register.js \
-					lib/global-helpers.js \
-					lib/cjs-helpers.js \
-					lib/amd-helpers.js \
-					lib/plugins.js \
-					lib/conditionals.js \
-					lib/alias.js \
-					lib/meta.js \
-					lib/bundles.js \
-					lib/depCache.js \
-					lib/scriptOnly.js \
-					lib/createSystem.js \
-					; echo "$$CSP_VERSION" ; cat \
+				lib/core.js \
+				lib/package.js \
+				lib/scriptLoader.js \
+				lib/register.js \
+				lib/global-helpers.js \
+				lib/cjs-helpers.js \
+				lib/amd-helpers.js \
+				lib/plugins.js \
+				lib/conditionals.js \
+				lib/alias.js \
+				lib/meta.js \
+				lib/bundles.js \
+				lib/depCache.js \
+				lib/scriptOnly.js \
+				lib/createSystem.js \
+				; echo "$$CSP_VERSION" ; cat \
 			lib/loader-wrapper-end.js \
 			lib/wrapper-end.js \
 	) > $@;
@@ -167,18 +166,18 @@ dist/system-register-only.src.js: lib/*.js
 		cat \
 			lib/url-polyfill.js \
 			lib/loader-wrapper-start.js \
+				lib/proto.js \
 				lib/system-only-resolve.js \
-					lib/proto.js \
-					lib/scriptLoader.js \
-					lib/register.js \
-					lib/bundles.js \
-					lib/scriptOnly.js \
-					lib/createSystem.js \
-					; echo "$$REGISTER_VERSION" ; cat \
+				lib/scriptLoader.js \
+				lib/register.js \
+				lib/bundles.js \
+				lib/scriptOnly.js \
+				lib/createSystem.js \
+				; echo "$$REGISTER_VERSION" ; cat \
 			lib/loader-wrapper-end.js \
 	) > $@;
 
-dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js
+dist/system-polyfills.src.js: lib/*.js
 	( echo "$$POLYFILLS_BANNER"; \
 		echo "(function(define) {"; \
 		echo ""; \
