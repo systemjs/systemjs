@@ -1306,5 +1306,4 @@ asyncTest('Package-local alias cjs default export', function() {
 });
 
 
-
 })(typeof window == 'undefined' ? global : window);
