@@ -1138,6 +1138,74 @@ asyncTest('Package edge cases', function() {
   }, err);
 });
 
+asyncTest('Package map circular cases', function() {
+  System.config({
+    map: {
+      tp3: 'tests/testpkg3'
+    },
+    packages: {
+      'tests/testpkg3': {
+        map: {
+          './lib': './lib/asdf.js',
+          './lib/': './lib/index.js',
+          './lib/p': './lib/q.js'
+        }
+      }
+    }
+  });
+
+  Promise.all([
+    System.normalize('tp3/lib'),
+    System.normalize('tp3/lib/'),
+    System.normalize('tp3/lib/q'),
+    System.normalize('tp3/lib/p'),
+    
+    System.normalize('../lib', System.baseURL + 'tests/testpkg3/asdf/x.js'),
+    System.normalize('../lib/', System.baseURL + 'tests/testpkg3/asdf/x.js'),
+    System.normalize('../lib/x', System.baseURL + 'tests/testpkg3/asdf/x.js'),
+    
+    System.normalize('.', System.baseURL + 'tests/testpkg3/lib/a'),
+    System.normalize('./', System.baseURL + 'tests/testpkg3/lib/x'),
+    System.normalize('./p', System.baseURL + 'tests/testpkg3/lib/x'),
+    System.normalize('./q', System.baseURL + 'tests/testpkg3/lib/x'),
+
+    System.normalize('./lib', System.baseURL + 'tests/testpkg3/x.js'),
+    System.normalize('./lib/', System.baseURL + 'tests/testpkg3/x.js'),
+    System.normalize('./lib/p', System.baseURL + 'tests/testpkg3/x.js'),
+    System.normalize('./lib/q', System.baseURL + 'tests/testpkg3/x.js'),
+
+    System.normalize('../lib/', System.baseURL + 'tests/testpkg3/lib/x.js'),
+    System.normalize('../lib/x', System.baseURL + 'tests/testpkg3/lib/x.js'),
+    System.normalize('tp3/lib/q', System.baseURL + 'tests/testpkg3/lib/x.js')
+  ])
+  .then(function(n) {
+    ok(n[0] == System.baseURL + 'tests/testpkg3/lib/asdf.js');
+    ok(n[1] == System.baseURL + 'tests/testpkg3/lib/index.js');
+    ok(n[2] == System.baseURL + 'tests/testpkg3/lib/q.js');
+    ok(n[3] == System.baseURL + 'tests/testpkg3/lib/q.js');
+
+    ok(n[4] == System.baseURL + 'tests/testpkg3/lib/asdf.js');
+    ok(n[5] == System.baseURL + 'tests/testpkg3/lib/index.js');
+    ok(n[6] == System.baseURL + 'tests/testpkg3/lib/x.js');
+
+    ok(n[7] == System.baseURL + 'tests/testpkg3/lib/index.js');
+    ok(n[8] == System.baseURL + 'tests/testpkg3/lib/index.js');
+    ok(n[9] == System.baseURL + 'tests/testpkg3/lib/q.js');
+    ok(n[10] == System.baseURL + 'tests/testpkg3/lib/q.js');
+
+    ok(n[11] == System.baseURL + 'tests/testpkg3/lib/asdf.js');
+    ok(n[12] == System.baseURL + 'tests/testpkg3/lib/index.js');
+    ok(n[13] == System.baseURL + 'tests/testpkg3/lib/q.js');
+    ok(n[14] == System.baseURL + 'tests/testpkg3/lib/q.js');
+
+    ok(n[15] == System.baseURL + 'tests/testpkg3/lib/index.js');
+    ok(n[16] == System.baseURL + 'tests/testpkg3/lib/x.js');
+    ok(n[17] == System.baseURL + 'tests/testpkg3/lib/q.js');
+    start();
+  }, err);
+
+});
+
 if (!ie8)
 asyncTest('Conditional loading', function() {
   System.set('env', System.newModule({ 'browser': 'ie' }));
