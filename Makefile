@@ -1,5 +1,4 @@
 VERSION = $(shell cat package.json | sed -n 's/.*"version": "\([^"]*\)",/\1/p')
-ESML = node_modules/es6-module-loader/src
 
 define BANNER
 /*
@@ -10,7 +9,7 @@ export BANNER
 
 define POLYFILLS_BANNER
 /*
- * SystemJS Polyfills for URL and Promise providing IE8+ Support
+ * SystemJS Promise Polyfill
  */
 endef
 export POLYFILLS_BANNER
@@ -33,7 +32,7 @@ System.version = '$(VERSION) CSP';
 endef
 export CSP_VERSION
 
-compile: clean-compile dist/system.src.js dist/system-csp-production.src.js dist/system-register-only.src.js
+compile: clean-compile dist/system.src.js dist/system.perf.js dist/system-csp-production.src.js dist/system-register-only.src.js
 build: clean dist/system.js dist/system-csp-production.js dist/system-register-only.js dist/system-polyfills.js
 
 version:
@@ -46,7 +45,7 @@ footprint: build
 	@cat dist/system-polyfills.js | gzip -9f | wc -c
 
 clean-compile:
-	@rm -f dist/system.src.js dist/system-csp-production.src.js
+	@rm -f dist/system.src.js dist/system.perf.js dist/system-csp-production.src.js
 
 clean:
 	@rm -f dist/*
@@ -68,17 +67,14 @@ dist/%.js: dist/%.src.js
 	@echo "$$BANNER" > $@
 	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map $*.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
 
-dist/system.src.js: lib/*.js $(ESML)/*.js
+dist/system.src.js: lib/*.js
 	( echo "$$BANNER"; \
 		cat \
 			lib/wrapper-start.js \
-			$(ESML)/url-polyfill.js \
-			$(ESML)/wrapper-start.js \
-				$(ESML)/loader.js \
-				$(ESML)/dynamic-only.js \
-				$(ESML)/system.js \
-				$(ESML)/system-fetch.js \
-				$(ESML)/transpiler.js \
+			lib/url-polyfill.js \
+			lib/loader-wrapper-start.js \
+				lib/system-fetch.js \
+				lib/legacy-transpiler.js \
 					lib/proto.js \
 					lib/global-eval.js \
 					lib/core.js \
@@ -100,20 +96,51 @@ dist/system.src.js: lib/*.js $(ESML)/*.js
 					lib/depCache.js \
 					lib/createSystem.js \
 					; echo "$$STANDARD_VERSION" ; cat \
-			$(ESML)/wrapper-end.js \
+			lib/loader-wrapper-end.js \
 			lib/wrapper-end.js \
 	) > $@;
 
-dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
+dist/system.perf.js: lib/*.js
 	( echo "$$BANNER"; \
 		cat \
 			lib/wrapper-start.js \
-			$(ESML)/url-polyfill.js \
-			$(ESML)/wrapper-start.js \
-				$(ESML)/loader.js \
-				$(ESML)/dynamic-only.js \
-				$(ESML)/system.js \
-				$(ESML)/system-fetch.js \
+			lib/url-polyfill.js \
+			lib/loader-wrapper-start.js \
+				lib/system-fetch.js \
+				lib/legacy-transpiler.js \
+					lib/proto.js \
+					lib/perf.js \
+					lib/global-eval.js \
+					lib/core.js \
+					lib/package.js \
+					lib/scriptLoader.js \
+					lib/register.js \
+					lib/esm.js \
+					lib/global.js \
+					lib/global-helpers.js \
+					lib/cjs.js \
+					lib/cjs-helpers.js \
+					lib/amd-helpers.js \
+					lib/amd.js \
+					lib/plugins.js \
+					lib/conditionals.js \
+					lib/alias.js \
+					lib/meta.js \
+					lib/bundles.js \
+					lib/depCache.js \
+					lib/createSystem.js \
+					; echo "$$STANDARD_VERSION" ; cat \
+			lib/loader-wrapper-end.js \
+			lib/wrapper-end.js \
+	) > $@;
+
+dist/system-csp-production.src.js: lib/*.js
+	( echo "$$BANNER"; \
+		cat \
+			lib/wrapper-start.js \
+			lib/url-polyfill.js \
+			lib/loader-wrapper-start.js \
+				lib/system-fetch.js \
 					lib/proto.js \
 					lib/core.js \
 					lib/package.js \
@@ -131,19 +158,16 @@ dist/system-csp-production.src.js: lib/*.js $(ESML)/*.js
 					lib/scriptOnly.js \
 					lib/createSystem.js \
 					; echo "$$CSP_VERSION" ; cat \
-			$(ESML)/wrapper-end.js \
+			lib/loader-wrapper-end.js \
 			lib/wrapper-end.js \
 	) > $@;
 
-dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
+dist/system-register-only.src.js: lib/*.js
 	( echo "$$BANNER"; \
 		cat \
-			$(ESML)/url-polyfill.js \
-			$(ESML)/wrapper-start.js \
-				$(ESML)/loader.js \
-				$(ESML)/dynamic-only.js \
-				$(ESML)/system.js \
-				$(ESML)/system-resolve.js \
+			lib/url-polyfill.js \
+			lib/loader-wrapper-start.js \
+				lib/system-only-resolve.js \
 					lib/proto.js \
 					lib/scriptLoader.js \
 					lib/register.js \
@@ -151,7 +175,7 @@ dist/system-register-only.src.js: lib/*.js $(ESML)/*.js
 					lib/scriptOnly.js \
 					lib/createSystem.js \
 					; echo "$$REGISTER_VERSION" ; cat \
-			$(ESML)/wrapper-end.js \
+			lib/loader-wrapper-end.js \
 	) > $@;
 
 dist/system-polyfills.src.js: lib/*.js $(ESML)/*.js

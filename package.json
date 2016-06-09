@@ -25,6 +25,7 @@
   },
   "scripts": {
     "test:browser": "make test",
+    "perf": "node bench/normalize-perf.js",
     "build": "make",
     "test": "npm run test:babel && npm run test:traceur && npm run test:typescript",
     "test:babel": "qunit -c s:./index.js -t ./test/test-babel.js",
