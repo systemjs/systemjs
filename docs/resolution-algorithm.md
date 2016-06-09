@@ -535,6 +535,8 @@ by the non-sync normalization.
   chain for these plain names only.
   A "." target in package map is allowed to reference the package itself.
 
+1. If _request_ ends with _"/"_,
+  1. Let _request_ be the substring of request excluding the trailing _"/"_
 1. Let _packageMap_ be the value of _SystemJS.packages[packageURL].map_
 1. If _packageMap_ is _undefined_ then,
   1. Return _undefined_
@@ -553,8 +555,10 @@ by the non-sync normalization.
   1. If _mapValue_ is of type _object_ then,
     1. Return _undefined_
 1. Assert _mapValue_ is a string
-1. Call _VALIDATE_PACKAGE_MAP(mapMatch, mapValue)_, rejecting with any error on abrupt completion
 1. Let _mapSubPath_ be equal to _request.substr(request.length - mapMatch.length))_
+1. Let _valid_ be the result of _VALID_PACKAGE_MAP(mapMatch, mapValue, mapSubPath)_, rejecting with any error on abrupt completion
+1. If _valid_ is _false,
+  1. Return _undefined_
 1. If _IS_PLAIN_NAME(mapValue)_ then,
   1. Return the result of _CORE_RESOLVE(mapValue + mapSubPath, packageURL + _"/"_)_
 1. Else,
@@ -565,18 +569,18 @@ by the non-sync normalization.
     1. Return _packageURL + '/' + subPath + GET_DEFAULT_PACKAGE_EXTENSION(packageURL, subPath)_
   1. Return _URL_RESOLVE(mapValue + mapSubPath, packageURL + _"/"_)_
 
-##### 2.12.8 VALIDATE_PACKAGE_MAP(mapMatch, mapValue)
+##### 2.12.8 VALID_PACKAGE_MAP(mapMatch, mapValue, mapSubPath)
 
-> We disallow recursive package map of the form "x" - > "x/y"
-  by throwing an error in these cases. We also disallow "." as a key in map config.
+> Returns true or false if the map should be used or not. Also throws on invalid mapping cases.
+  We allow recursive package map of the form "./x" -> "./x/y" but skip this recursion in the case "./x/z" -> "./x/y".
+  We throw for "." as a key in map config.
 
 1. If _mapMatch_ is equal to the string _"."_ then,
   1. Throw a new _Error_
-1. If _mapMatch_ does not end with the string _"/"_ then,
-  1. If _mapValue_ is equal to the string _mapMatch_ then,
-    1. Throw a new _Error_
-  1. If _mapValue[mapMatch.length]_ is equal to _"/"_ then,
-    1. Throw a new _Error_
+1. If _mapValue.substr(0, mapMatch.length)_ is equal to the string _mapMatch_ then,
+  1. If _mapSubPath.length_ > _mapMatch.length_ then,
+    1. Return _false_;
+1. Return _true_
 
 ### 3. DECANONICALIZE(request, parent)
 
