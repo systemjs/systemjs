@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.29
+ * SystemJS v0.19.31
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -1029,7 +1029,7 @@ function urlResolve(name, parent) {
   // url resolution shortpaths
   if (name[0] == '.') {
     // dot-relative url normalization
-    if (name[1] == '/')
+    if (name[1] == '/' && name[2] != '.')
       return (parent && parent.substr(0, parent.lastIndexOf('/') + 1) || baseURI) + name.substr(2);
   }
   else if (name[0] != '/' && name.indexOf(':') == -1) {
@@ -1413,12 +1413,13 @@ function prepareBaseURL(loader) {
 }
 
 var envModule;
-function setProduction(isProduction) {
+function setProduction(isProduction, isBuilder) {
   this.set('@system-env', envModule = this.newModule({
     browser: isBrowser,
     node: !!this._nodeRequire,
-    production: isProduction,
-    dev: !isProduction,
+    production: !isBuilder && isProduction,
+    dev: isBuilder || !isProduction,
+    build: isBuilder,
     'default': true
   }));
 }
@@ -1447,7 +1448,7 @@ hookConstructor(function(constructor) {
     // support the empty module, as a concept
     this.set('@empty', this.newModule({}));
 
-    setProduction.call(this, false);
+    setProduction.call(this, false, false);
   };
 });
 
@@ -1663,8 +1664,6 @@ hook('instantiate', function(instantiate) {
   For easy normalization canonicalization with latest URL support.
 
 */
-SystemJSLoader.prototype.env = 'dev';
-
 function envSet(loader, cfg, envCallback) {
   if (envModule.browser && cfg.browserConfig)
     envCallback(cfg.browserConfig);
@@ -1672,6 +1671,8 @@ function envSet(loader, cfg, envCallback) {
     envCallback(cfg.nodeConfig);
   if (envModule.dev && cfg.devConfig)
     envCallback(cfg.devConfig);
+  if (envModule.build && cfg.buildConfig)
+    envCallback(cfg.buildConfig);
   if (envModule.production && cfg.productionConfig)
     envCallback(cfg.productionConfig);
 }
@@ -1708,8 +1709,8 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
   if (cfg.transpilerRuntime === false)
     loader._loader.loadedTranspilerRuntime = true;
 
-  if ('production' in cfg)
-    setProduction.call(loader, cfg.production);
+  if ('production' in cfg || 'build' in cfg)
+    setProduction.call(loader, !!cfg.production, !!(cfg.build || envModule && envModule.build));
 
   if (!isEnvConfig) {
     // if using nodeConfig / browserConfig / productionConfig, take baseURL from there
@@ -1839,7 +1840,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
     var v = cfg[c];
 
     if (indexOf.call(['baseURL', 'map', 'packages', 'bundles', 'paths', 'warnings', 'packageConfigPaths', 
-          'loaderErrorStack', 'browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'], c) != -1)
+          'loaderErrorStack', 'browserConfig', 'nodeConfig', 'devConfig', 'buildConfig', 'productionConfig'], c) != -1)
       continue;
 
     if (typeof v != 'object' || v instanceof Array) {
@@ -4029,7 +4030,7 @@ hookConstructor(function(constructor) {
  *
  */
 
-  var sysConditions = ['browser', 'node', 'dev', 'production', 'default'];
+  var sysConditions = ['browser', 'node', 'dev', 'build', 'production', 'default'];
 
   function parseCondition(condition) {
     var conditionExport, conditionModule, negation;
@@ -4478,7 +4479,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.29 CSP';
+System.version = '0.19.31 CSP';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 

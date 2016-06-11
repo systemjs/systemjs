@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.29
+ * SystemJS v0.19.31
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -1028,7 +1028,7 @@ function urlResolve(name, parent) {
   // url resolution shortpaths
   if (name[0] == '.') {
     // dot-relative url normalization
-    if (name[1] == '/')
+    if (name[1] == '/' && name[2] != '.')
       return (parent && parent.substr(0, parent.lastIndexOf('/') + 1) || baseURI) + name.substr(2);
   }
   else if (name[0] != '/' && name.indexOf(':') == -1) {
@@ -2189,7 +2189,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.29 Register Only';
+System.version = '0.19.31 Register Only';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
