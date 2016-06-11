@@ -98,7 +98,7 @@ dist/system.src.js: lib/*.js
 				; echo "$$STANDARD_VERSION" ; cat \
 			lib/loader-wrapper-end.js \
 			lib/wrapper-end.js \
-	) | uglifyjs -b --comments all --compress drop_console > $@;
+	) > $@;
 
 dist/system.perf.js: lib/*.js
 	( echo "$$BANNER"; \
