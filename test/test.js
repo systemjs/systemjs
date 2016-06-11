@@ -1238,7 +1238,6 @@ asyncTest('Package map circular cases', function() {
     ok(n[28] == System.baseURL + 'tests/testpkg3/bin/index.js');
     ok(n[29] == System.baseURL + 'tests/testpkg3/bin/x.js');
 
-    console.log(n[30]);
     ok(n[30] == System.baseURL + 'tests/testpkg3/bin/index.js');
     start();
   }, err);
