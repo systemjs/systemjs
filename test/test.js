@@ -234,6 +234,30 @@ asyncTest('Contextual map configuration', function() {
   }, err);
 });
 
+asyncTest('Contextual map configuration for a package that is a file', function() {
+  System.config({
+    packages: {
+      'tests/jquery.js': {
+        meta: {
+          '*': {
+            deps: ['a']
+          }
+        },
+        map: {
+          'a': 'tests/amd-dep-A.js'
+        }
+      }
+    },
+    map: {
+      jquery: 'tests/jquery.js'
+    }
+  });
+  System['import']('tests/jquery.js').then(function(m) {
+    ok(m == 10);
+    start();
+  }, err);
+})
+
 asyncTest('Package map with shim', function() {
   System.config({
     packages: {
