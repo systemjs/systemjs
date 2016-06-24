@@ -5,22 +5,19 @@ SystemJS
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 [![Support](https://supporterhq.com/api/b/33df4abbec4d39260f49015d2457eafe/SystemJS)](https://supporterhq.com/support/33df4abbec4d39260f49015d2457eafe/SystemJS)
 
-_For upgrading to SystemJS 0.17-0.19, see the [SystemJS 0.17 release upgrade notes for more information](https://github.com/systemjs/systemjs/releases/tag/0.17.0), or read the updated [SystemJS Overview](docs/overview.md) guide._
-
-Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS. Works with both Traceur and Babel.
+Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS.
 
 * [Loads any module format](docs/module-formats.md) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md).
 * Loads [ES6 modules compiled into the `System.register` bundle format for production](docs/production-workflows.md), maintaining circular references support.
 * Supports RequireJS-style [map](docs/overview.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), [bundles](docs/production-workflows.md#bundle-extension) and [global shims](docs/module-formats.md#shim-dependencies).
-* [Loader plugins](docs/overview.md#plugin-loaders) allow loading assets through the module naming system such as CSS, JSON or images.
+* [Loader plugins](docs/overview.md#plugin-loaders) allow custom transpilation or asset loading.
 
-Built on top of the [ES6 Module Loader polyfill](https://github.com/ModuleLoader/es6-module-loader).
+Built to the format ES6-specified loader API from [ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27),
+and will be updated to the [WhatWG loader API](https://whatwg.github.io/loader/) as soon as it can be considered stable for implementation.
 
-~15KB minified and gzipped, runs in IE8+ and NodeJS.
+~19KB minified and gzipped, runs in IE8+ and NodeJS.
 
-For discussion, [see the Google Group](https://groups.google.com/group/systemjs).
-
-For a list of guides and tools, see the [Third-Party Resources Wiki](https://github.com/systemjs/systemjs/wiki/Third-Party-Resources).
+For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
 Documentation
 ---
@@ -42,46 +39,28 @@ Basic Use
 <script src="system.js"></script>
 <script>
   // set our baseURL reference path
-  System.config({
-    baseURL: '/app'
+  SystemJS.config({
+    baseURL: '/js'
   });
 
-  // loads /app/main.js
-  System.import('main.js');
+  // loads /js/main.js
+  SystemJS.import('main.js');
 </script>
 ```
 
-To load ES6, locate a transpiler ([`traceur.js`](https://github.com/jmcriffey/bower-traceur), ['browser.js' from Babel](https://github.com/babel/babel), or ['typescript.js' from TypeScript](https://github.com/Microsoft/TypeScript)) 
-in the baseURL path, then set the transpiler:
+The above will support loading all module formats, including ES Modules transpiled into the System.register format.
 
-```html
-<script>
-  System.config({
-    // or 'traceur' or 'typescript'
-    transpiler: 'babel',
-    // or traceurOptions or typescriptOptions
-    babelOptions: {
+To load ES6 code with in-browser transpilation, configure one of the following transpiler plugins:
 
-    }
-  });
-</script>
-```
-
-Alternatively a custom path to Babel or Traceur can also be set through paths:
-
-```javascript
-System.config({
-  map: {
-    traceur: 'path/to/traceur.js'
-  }
-});
-```
+* [Babel](https://github.com/systemjs/plugin-babel)
+* [TypeScript](https://github.com/frankwallis/plugin-typescript)
+* [Traceur](http://github.com/systemjs/plugin-traceur)
 
 ### Promise Polyfill
 
 SystemJS relies on `Promise` being present in the environment.
 
-For the best performance in IE and older browsers, it is advisable to load [Bluebird](https://github.com/petkaantonov/bluebird) or [es6-promise](https://github.com/stefanpenner/es6-promise) before SystemJS.
+For the best performance in IE and older browsers, it is advisable to load a polyfill like [Bluebird](https://github.com/petkaantonov/bluebird) or [es6-promise](https://github.com/stefanpenner/es6-promise) before SystemJS.
 
 Otherwise, when Promise is not available, SystemJS will attempt to load the `system-polyfills.js` file located in the dist folder which contains the when.js Promise polyfill.
 
@@ -93,33 +72,27 @@ To load modules in NodeJS, install SystemJS with:
   npm install systemjs
 ```
 
-If transpiling ES6, also install the transpiler:
-
-```
-  npm install traceur babel typescript 
-```
+If transpiling ES6, also install the transpiler plugin, following the instructions from the transpiler project page.
 
 We can then load modules equivalently to in the browser:
 
 ```javascript
-var System = require('systemjs');
-
-System.transpiler = 'traceur';
+var SystemJS = require('systemjs');
 
 // loads './app.js' from the current directory
-System.import('./app.js').then(function(m) {
+SystemJS.import('./app.js').then(function(m) {
   console.log(m);
 });
 ```
 
-If using TypeScript, set `global.ts = require('typescript')` before importing to ensure it is loaded correctly.
-
-If you are using jspm as a package manager you will also need to load the generated `config.js`. The best way to do this in node is to get your `System` instance through jspm, which will automatically load your config correctly for you:
+If you are using jspm as a package manager you will also need to load the generated configuration.
+The best way to do this in node is to get your `System` instance through jspm, which will automatically load your config correctly for you:
 
 ```js
-var System = require('jspm').Loader();
+var Loader = require('jspm').Loader;
+var SystemJS = new Loader();
 
-System.import('lodash').then(function (_) {
+SystemJS.import('lodash').then(function (_) {
  console.log(_);
 });
 ```
