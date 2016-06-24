@@ -85,6 +85,12 @@ For comprehensive handling of NodeJS modules, a conversion process is needed to 
 
 _CommonJS is loaded via XHR making it non-[CSP](http://www.html5rocks.com/en/tutorials/security/content-security-policy/) compatible._
 
+Note that CommonJS modules on npm, loaded as CommonJS may well not load correctly through SystemJS. This is because SystemJS
+does not implement the NodeJS loading algorithm.
+
+If you want to load NodeJS modules through SystemJS you can use `import nodeModule from '@node/node-module-name'`, but this should only
+be used when absolutely necessary as it stops code from being universal, and makes it only compatible with NodeJS.
+
 ### AMD
 
 * AMD support includes all AMD structural variations including the [CommonJS wrapper form](http://requirejs.org/docs/api.html#cjsmodule).
