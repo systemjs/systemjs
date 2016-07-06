@@ -1683,22 +1683,18 @@ if (typeof require != 'undefined' && typeof process != 'undefined' && !process.b
   a URL.
  */
 
-function getNodeModule(name) {
+var parentModuleContext;
+function getNodeModule(name, baseURL) {
   if (!isPlain(name))
     throw new Error('Node module ' + name + ' can\'t be loaded as it is not a package require.');
 
-  var nodePath = this._nodeRequire('path');
-  // try to load from node_modules
-  var module;
-  try {
-    module = this._nodeRequire(nodePath.resolve(process.cwd(), 'node_modules', name));
+  if (!parentModuleContext) {
+    var Module = this._nodeRequire('module');
+    var base = baseURL.substr(isWindows ? 8 : 7);
+    parentModuleContext = new Module(base);
+    parentModuleContext.paths = Module._nodeModulePaths(base);
   }
-  catch(e) {
-    // fall back to direct require (in theory this is core modules only, which should really be filtered)
-    if (e.code == 'MODULE_NOT_FOUND')
-      module = this._nodeRequire(name);
-  }
-  return module;
+  return parentModuleContext.require(name);
 }
 
 function coreResolve(name, parentName) {
@@ -1726,7 +1722,7 @@ function coreResolve(name, parentName) {
   if (name.substr(0, 6) == '@node/') {
     if (!this._nodeRequire)
       throw new TypeError('Error loading ' + name + '. Can only load node core modules in Node.');
-    this.set(name, this.newModule(getESModule(getNodeModule.call(this, name.substr(6)))));
+    this.set(name, this.newModule(getESModule(getNodeModule.call(this, name.substr(6), this.baseURL))));
     return name;
   }
 
@@ -1894,7 +1890,7 @@ SystemJSLoader.prototype.getConfig = function(name) {
   var cfg = {};
   var loader = this;
   for (var p in loader) {
-    if (loader.hasOwnProperty && !loader.hasOwnProperty(p) || p in SystemJSLoader.prototype)
+    if (loader.hasOwnProperty && !loader.hasOwnProperty(p) || p in SystemJSLoader.prototype && p != 'transpiler')
       continue;
     if (indexOf.call(['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version'], p) == -1)
       cfg[p] = loader[p];
@@ -2780,7 +2776,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
 
       // if nothing registered, then something went wrong
       if (!load.metadata.entry)
-        reject(new Error(load.address + ' did not call System.register or AMD define'));
+        reject(new Error(load.address + ' did not call System.register or AMD define. If loading a global, ensure the meta format is set to global.'));
 
       resolve('');
     });
@@ -3752,7 +3748,7 @@ function getGlobalValue(exports) {
 
 hook('reduceRegister_', function(reduceRegister) {
   return function(load, register) {
-    if (register || !load.metadata.exports)
+    if (register || (!load.metadata.exports && !(isWorker && load.metadata.format == 'global')))
       return reduceRegister.call(this, load, register);
 
     load.metadata.format = 'global';
@@ -4282,7 +4278,7 @@ hookConstructor(function(constructor) {
           if (curMeta) {
             if (!curMeta.entry && !curMeta.bundle)
               curMeta.entry = entry;
-            else if (curMeta.entry && curMeta.entry.name)
+            else if (curMeta.entry && curMeta.entry.name && curMeta.entry.name != load.name)
               curMeta.entry = undefined;
 
             // note this is now a bundle
