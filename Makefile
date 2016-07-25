@@ -60,12 +60,10 @@ test: compile
 	open test/test-csp.html test/test-tracer.html
 
 dist/system-polyfills.js: dist/system-polyfills.src.js
-	@echo "$$POLYFILLS_BANNER" > $@
-	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map system-polyfills.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
+	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --preamble "$$POLYFILLS_BANNER" --mangle --source-map system-polyfills.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
 
 dist/%.js: dist/%.src.js
-	@echo "$$BANNER" > $@
-	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --mangle --source-map $*.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
+	cd dist && ../node_modules/.bin/uglifyjs $(subst dist/,,$<) --compress drop_console --preamble "$$BANNER" --mangle --source-map $*.js.map >> $(subst dist/,,$@) || rm $(subst dist/,,$@)
 
 dist/system.src.js: lib/*.js
 	( echo "$$BANNER"; \
