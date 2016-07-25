@@ -2951,13 +2951,17 @@ function createEntry() {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
           var importerIndex = indexOf.call(importerModule.dependencies, module);
-          importerModule.setters[importerIndex](exports);
+          var setter = importerModule.setters[importerIndex];
+          if (setter)
+            setter(exports);
         }
       }
 
       module.locked = false;
       return value;
     }, { id: entry.name });
+
+    declaration = declaration || { setters: [], execute: function() {} };
     
     module.setters = declaration.setters;
     module.execute = declaration.execute;
@@ -4490,6 +4494,8 @@ var doPolyfill = typeof Promise === 'undefined';
 if (typeof document !== 'undefined') {
   var scripts = document.getElementsByTagName('script');
   $__curScript = scripts[scripts.length - 1];
+  if ($__curScript.defer || $__curScript.async)
+    $__curScript = document.currentScript;
   if (doPolyfill) {
     var curPath = $__curScript.src;
     var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);

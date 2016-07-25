@@ -1471,7 +1471,24 @@ var __exec;
 
 (function() {
 
-  var hasBtoa = typeof btoa != 'undefined';
+  var hasBuffer = typeof Buffer != 'undefined';
+  try {
+    if (new Buffer('a').toString('base64') != 'YQ==')
+      hasBuffer = false;
+  }
+  catch(e) {
+    hasBuffer = false;
+  }
+
+  var sourceMapPrefix = '\n//# sourceMappingURL=data:application/json;base64,';
+  function inlineSourceMap(sourceMapString) {
+    if (hasBuffer)
+      return sourceMapPrefix + new Buffer(sourceMapString).toString('base64');
+    else if (typeof btoa != 'undefined')
+      return sourceMapPrefix + btoa(unescape(encodeURIComponent(sourceMap)));
+    else
+      return '';
+  }
 
   function getSource(load, wrap) {
     var lastLineIndex = load.source.lastIndexOf('\n');
@@ -1493,7 +1510,7 @@ var __exec;
         + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
           ? '\n//# sourceURL=' + load.address + (sourceMap ? '!transpiled' : '') : '')
         // add sourceMappingURL if load.metadata.sourceMap is set
-        + (sourceMap && hasBtoa && '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(sourceMap))) || '');
+        + (sourceMap && inlineSourceMap(sourceMap));
   }
 
   var curLoad;
@@ -3164,13 +3181,17 @@ function createEntry() {
         var importerModule = module.importers[i];
         if (!importerModule.locked) {
           var importerIndex = indexOf.call(importerModule.dependencies, module);
-          importerModule.setters[importerIndex](exports);
+          var setter = importerModule.setters[importerIndex];
+          if (setter)
+            setter(exports);
         }
       }
 
       module.locked = false;
       return value;
     }, { id: entry.name });
+
+    declaration = declaration || { setters: [], execute: function() {} };
     
     module.setters = declaration.setters;
     module.execute = declaration.execute;
@@ -5087,6 +5108,8 @@ var doPolyfill = typeof Promise === 'undefined';
 if (typeof document !== 'undefined') {
   var scripts = document.getElementsByTagName('script');
   $__curScript = scripts[scripts.length - 1];
+  if ($__curScript.defer || $__curScript.async)
+    $__curScript = document.currentScript;
   if (doPolyfill) {
     var curPath = $__curScript.src;
     var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
