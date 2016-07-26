@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.34
+ * SystemJS v0.19.35
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -1482,8 +1482,6 @@ var __exec;
 
   var sourceMapPrefix = '\n//# sourceMappingURL=data:application/json;base64,';
   function inlineSourceMap(sourceMapString) {
-    console.log("INLINE");
-    console.log(sourceMapString);
     if (hasBuffer)
       return sourceMapPrefix + new Buffer(sourceMapString).toString('base64');
     else if (typeof btoa != 'undefined')
@@ -5095,7 +5093,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.34 Standard';
+System.version = '0.19.35 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
