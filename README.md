@@ -102,6 +102,7 @@ SystemJS.import('lodash').then(function (_) {
 Supported loader plugins:
 
 * [CSS](https://github.com/systemjs/plugin-css)
+* [LESS](https://github.com/systemjs/plugin-less)
 * [Image](https://github.com/systemjs/plugin-image)
 * [JSON](https://github.com/systemjs/plugin-json)
 * [Text](https://github.com/systemjs/plugin-text)
