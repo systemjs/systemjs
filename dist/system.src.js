@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.31
+ * SystemJS v0.19.33
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -1485,7 +1485,7 @@ var __exec;
     if (hasBuffer)
       return sourceMapPrefix + new Buffer(sourceMapString).toString('base64');
     else if (typeof btoa != 'undefined')
-      return sourceMapPrefix + btoa(unescape(encodeURIComponent(sourceMap)));
+      return sourceMapPrefix + btoa(unescape(encodeURIComponent(sourceMapString)));
     else
       return '';
   }
@@ -5093,7 +5093,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.31 Standard';
+System.version = '0.19.33 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 

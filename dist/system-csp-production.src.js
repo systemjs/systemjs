@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.31
+ * SystemJS v0.19.33
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -4479,7 +4479,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.31 CSP';
+System.version = '0.19.33 CSP';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
