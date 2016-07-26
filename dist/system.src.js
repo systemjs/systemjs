@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.33
+ * SystemJS v0.19.34
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -106,7 +106,7 @@ global.URLPolyfill = URLPolyfill;
   function addToError(err, msg) {
     // parse the stack removing loader code lines for simplification
     if (!err.originalErr) {
-      var stack = (err.stack || err.message || err).toString().split('\n');
+      var stack = ((err.message || err) + (err.stack ? '\n' + err.stack : '')).toString().split('\n');
       var newStack = [];
       for (var i = 0; i < stack.length; i++) {
         if (typeof $__curScript == 'undefined' || stack[i].indexOf($__curScript.src) == -1)
@@ -1482,6 +1482,8 @@ var __exec;
 
   var sourceMapPrefix = '\n//# sourceMappingURL=data:application/json;base64,';
   function inlineSourceMap(sourceMapString) {
+    console.log("INLINE");
+    console.log(sourceMapString);
     if (hasBuffer)
       return sourceMapPrefix + new Buffer(sourceMapString).toString('base64');
     else if (typeof btoa != 'undefined')
@@ -1510,7 +1512,7 @@ var __exec;
         + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
           ? '\n//# sourceURL=' + load.address + (sourceMap ? '!transpiled' : '') : '')
         // add sourceMappingURL if load.metadata.sourceMap is set
-        + (sourceMap && inlineSourceMap(sourceMap));
+        + (sourceMap && inlineSourceMap(sourceMap) || '');
   }
 
   var curLoad;
@@ -5093,7 +5095,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.33 Standard';
+System.version = '0.19.34 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
