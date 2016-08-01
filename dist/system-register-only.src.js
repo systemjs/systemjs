@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.35
+ * SystemJS v0.19.36
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -482,8 +482,6 @@ function logloads(loads) {
       .then(function() {
         // console.log('LoadSucceeded ' + load.name);
         // snapshot(loader);
-
-        console.assert(load.status == 'loading', 'is loading');
 
         load.status = 'loaded';
 
@@ -2193,7 +2191,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.35 Register Only';
+System.version = '0.19.36 Register Only';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 

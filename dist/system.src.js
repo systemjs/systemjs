@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.35
+ * SystemJS v0.19.36
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -483,8 +483,6 @@ function logloads(loads) {
       .then(function() {
         // console.log('LoadSucceeded ' + load.name);
         // snapshot(loader);
-
-        console.assert(load.status == 'loading', 'is loading');
 
         load.status = 'loaded';
 
@@ -1473,7 +1471,7 @@ var __exec;
 
   var hasBuffer = typeof Buffer != 'undefined';
   try {
-    if (new Buffer('a').toString('base64') != 'YQ==')
+    if (hasBuffer && new Buffer('a').toString('base64') != 'YQ==')
       hasBuffer = false;
   }
   catch(e) {
@@ -5093,7 +5091,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.35 Standard';
+System.version = '0.19.36 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
