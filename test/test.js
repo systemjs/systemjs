@@ -384,6 +384,26 @@ asyncTest('AMD contextual require toUrl', function() {
   }, err);
 });
 
+asyncTest('AMD race condition test', function() {
+  System.config({
+    bundles: {
+      "tests/out.js": ["tests/lib/modB.js"]
+    }
+  });
+
+  var completed = 0;
+  function completeImport() {
+    if (++completed == 3)
+      ok(true);
+  }
+
+  System.import('tests/modA.js').then(completeImport, err);
+  setTimeout(function () {
+    System.import('tests/modC.js').then(completeImport, err);
+    System.import('tests/lib/modB.js').then(completeImport, err);
+  }, 10);
+});
+
 asyncTest('Loading a CommonJS module', function() {
   System['import']('tests/common-js-module.js').then(function(m) {
     ok(m.hello == 'world', 'module value not defined');
