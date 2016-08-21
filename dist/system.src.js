@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.36
+ * SystemJS v0.19.37
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -49,9 +49,8 @@ function URLPolyfill(url, baseURL) {
       protocol = base.protocol;
   }
 
-  // convert windows file URLs to use /
-  if (protocol == 'file:')
-    pathname = pathname.replace(/\\/g, '/');
+  // convert URLs to use / always
+  pathname = pathname.replace(/\\/g, '/');
 
   this.origin = host ? protocol + (protocol !== "" || host !== "" ? "//" : "") + host : "";
   this.href = protocol + (protocol && host || protocol == "file:" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
@@ -1540,7 +1539,7 @@ var __exec;
     curLoad = undefined;
   }
 
-  var nwjs = typeof process != 'undefined' && process.versions && process.versions['node-webkit'];
+  var useVm;
   var vm;
   __exec = function(load) {
     if (!load.source)
@@ -1551,13 +1550,14 @@ var __exec;
       preExec(this, load);
       curLoad = load;
       // global scoped eval for node (avoids require scope leak)
-      if (this._nodeRequire && !nwjs) {
-        vm = vm || this._nodeRequire('vm');
+      if (!vm && this._nodeRequire) {
+        vm = this._nodeRequire('vm');
+        useVm = vm.runInThisContext("typeof System !== 'undefined' && System") === this;
+      }
+      if (useVm)
         vm.runInThisContext(getSource(load, true), { filename: load.address + (load.metadata.sourceMap ? '!transpiled' : '') });
-      }
-      else {
+      else
         (0, eval)(getSource(load, true));
-      }
       postExec();
     }
     catch(e) {
@@ -1661,6 +1661,10 @@ hookConstructor(function(constructor) {
 
     // support map and paths
     this.map = {};
+
+    // make the location of the system.js script accessible
+    if (typeof $__curScript != 'undefined')
+      this.scriptSrc = $__curScript.src;
 
     // global behaviour flags
     this.warnings = false;
@@ -1907,7 +1911,7 @@ SystemJSLoader.prototype.getConfig = function(name) {
   for (var p in loader) {
     if (loader.hasOwnProperty && !loader.hasOwnProperty(p) || p in SystemJSLoader.prototype && p != 'transpiler')
       continue;
-    if (indexOf.call(['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version'], p) == -1)
+    if (indexOf.call(['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version', 'loads'], p) == -1)
       cfg[p] = loader[p];
   }
   cfg.production = envModule.production;
@@ -3189,6 +3193,10 @@ function createEntry() {
       return value;
     }, { id: entry.name });
 
+    if (typeof declaration == 'function')
+      declaration = { setters: [], execute: declaration };
+
+    // allowing undefined declaration was a mistake! To be deprecated.
     declaration = declaration || { setters: [], execute: function() {} };
     
     module.setters = declaration.setters;
@@ -3307,7 +3315,7 @@ function createEntry() {
       throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
     }, exports, module);
     
-    if (output)
+    if (output !== undefined)
       module.exports = output;
 
     // create the esModule object, which allows ES6 named imports of dynamics
@@ -3616,6 +3624,8 @@ function createEntry() {
               load.metadata.sourceMap = undefined;
               return source;
             });            
+          }, function(err) {
+            throw addToError(err, 'Unable to load transpiler to transpile ' + load.name);
           });
         }
 
@@ -5091,7 +5101,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.36 Standard';
+System.version = '0.19.37 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 

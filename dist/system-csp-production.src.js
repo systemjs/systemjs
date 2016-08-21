@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.36
+ * SystemJS v0.19.37
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -49,9 +49,8 @@ function URLPolyfill(url, baseURL) {
       protocol = base.protocol;
   }
 
-  // convert windows file URLs to use /
-  if (protocol == 'file:')
-    pathname = pathname.replace(/\\/g, '/');
+  // convert URLs to use / always
+  pathname = pathname.replace(/\\/g, '/');
 
   this.origin = host ? protocol + (protocol !== "" || host !== "" ? "//" : "") + host : "";
   this.href = protocol + (protocol && host || protocol == "file:" ? "//" : "") + (username !== "" ? username + (password !== "" ? ":" + password : "") + "@" : "") + host + pathname + search + hash;
@@ -1432,6 +1431,10 @@ hookConstructor(function(constructor) {
     // support map and paths
     this.map = {};
 
+    // make the location of the system.js script accessible
+    if (typeof $__curScript != 'undefined')
+      this.scriptSrc = $__curScript.src;
+
     // global behaviour flags
     this.warnings = false;
     this.defaultJSExtensions = false;
@@ -1677,7 +1680,7 @@ SystemJSLoader.prototype.getConfig = function(name) {
   for (var p in loader) {
     if (loader.hasOwnProperty && !loader.hasOwnProperty(p) || p in SystemJSLoader.prototype && p != 'transpiler')
       continue;
-    if (indexOf.call(['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version'], p) == -1)
+    if (indexOf.call(['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version', 'loads'], p) == -1)
       cfg[p] = loader[p];
   }
   cfg.production = envModule.production;
@@ -2959,6 +2962,10 @@ function createEntry() {
       return value;
     }, { id: entry.name });
 
+    if (typeof declaration == 'function')
+      declaration = { setters: [], execute: declaration };
+
+    // allowing undefined declaration was a mistake! To be deprecated.
     declaration = declaration || { setters: [], execute: function() {} };
     
     module.setters = declaration.setters;
@@ -3077,7 +3084,7 @@ function createEntry() {
       throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
     }, exports, module);
     
-    if (output)
+    if (output !== undefined)
       module.exports = output;
 
     // create the esModule object, which allows ES6 named imports of dynamics
@@ -4477,7 +4484,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.36 CSP';
+System.version = '0.19.37 CSP';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 

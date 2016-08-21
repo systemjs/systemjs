@@ -1270,6 +1270,7 @@ define(function() {
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
 },{}]},{},[1])
+//# sourceMappingURL=Promise.js.map
 (1)
 });
 ;if (typeof systemJSBootstrap !== 'undefined')
