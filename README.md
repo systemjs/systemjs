@@ -127,6 +127,7 @@ Additional Plugins:
 * [sofe](https://github.com/CanopyTax/sofe)
 * [SVG](https://github.com/vuzonp/systemjs-plugin-svg)
 * [WebFont](https://github.com/guybedford/plugin-font)
+* [WebWorkers](https://github.com/casperlamboo/plugin-worker)
 * [YAML](https://github.com/tb/plugin-yaml)
 
 Guides:
