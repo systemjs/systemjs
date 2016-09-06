@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.37
+ * SystemJS v0.19.38
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -120,13 +120,8 @@ global.URLPolyfill = URLPolyfill;
 
     var newErr = errArgs ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
     
-    // Node needs stack adjustment for throw to show message
-    if (!isBrowser)
-      newErr.stack = newMsg;
-    // Clearing the stack stops unnecessary loader lines showing
-    else
-      newErr.stack = null;
-    
+    newErr.stack = newMsg;
+        
     // track the original error
     newErr.originalErr = err.originalErr || err;
 
@@ -2194,7 +2189,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.37 Register Only';
+System.version = '0.19.38 Register Only';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
