@@ -254,7 +254,7 @@ System.config({
 #### paths
 Type: `Object`
 
-The [ES6 Module Loader](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md) paths implementation, applied after normalization and supporting subpaths via wildcards.
+The [ES6 Module Loader](https://github.com/systemjs/systemjs/blob/master/docs/es6-modules-overview.md) paths implementation, applied after normalization and supporting subpaths via wildcards.
 
 _It is usually advisable to use map configuration over paths unless you need strict control over normalized module names._
 
