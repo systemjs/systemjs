@@ -74,7 +74,7 @@ To load modules in NodeJS, install SystemJS with:
 
 If transpiling ES6, also install the transpiler plugin, following the instructions from the transpiler project page.
 
-We can then load modules equivalently to in the browser:
+We can then load modules equivalently in NodeJS as we do in the browser:
 
 ```javascript
 var SystemJS = require('systemjs');
