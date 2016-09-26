@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.38
+ * SystemJS v0.19.39
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -1895,7 +1895,7 @@ function createEntry() {
       entry.esModule = loader.newModule(getESModule(exports));
     // just use the 'default' export
     else
-      entry.esModule = loader.newModule({ 'default': exports });
+      entry.esModule = loader.newModule({ 'default': exports, __useDefault: true });
   }
 
   /*
@@ -2189,7 +2189,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.38 Register Only';
+System.version = '0.19.39 Register Only';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 

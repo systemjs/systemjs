@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.38
+ * SystemJS v0.19.39
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -3328,7 +3328,7 @@ function createEntry() {
       entry.esModule = loader.newModule(getESModule(exports));
     // just use the 'default' export
     else
-      entry.esModule = loader.newModule({ 'default': exports });
+      entry.esModule = loader.newModule({ 'default': exports, __useDefault: true });
   }
 
   /*
@@ -5100,7 +5100,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.38 Standard';
+System.version = '0.19.39 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
@@ -5115,7 +5115,7 @@ var doPolyfill = typeof Promise === 'undefined';
 if (typeof document !== 'undefined') {
   var scripts = document.getElementsByTagName('script');
   $__curScript = scripts[scripts.length - 1];
-  if ($__curScript.defer || $__curScript.async)
+  if (document.currentScript && ($__curScript.defer || $__curScript.async))
     $__curScript = document.currentScript;
   if (doPolyfill) {
     var curPath = $__curScript.src;
