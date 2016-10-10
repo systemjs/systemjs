@@ -41,7 +41,7 @@ Set the Babel transpiler options when [System.transpiler](#transpiler) is set to
 ```javascript
 System.config({
   babelOptions: {
-    stage: 1
+    presets: ['es2015']
   }
 });
 ```
