@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.39
+ * SystemJS v0.19.40
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -4483,7 +4483,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.39 CSP';
+System.version = '0.19.40 CSP';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
@@ -4500,6 +4500,8 @@ if (typeof document !== 'undefined') {
   $__curScript = scripts[scripts.length - 1];
   if (document.currentScript && ($__curScript.defer || $__curScript.async))
     $__curScript = document.currentScript;
+  if (!$__curScript.src)
+    $__curScript = undefined;
   if (doPolyfill) {
     var curPath = $__curScript.src;
     var basePath = curPath.substr(0, curPath.lastIndexOf('/') + 1);
