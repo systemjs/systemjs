@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.19.41",
+  "version": "1.0.0-dev",
   "description": "Universal dynamic module loader",
   "repository": {
     "type": "git",
@@ -9,26 +9,29 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "files": [
-    "index.js",
     "dist"
   ],
-  "dependencies": {
-    "when": "^3.7.5"
-  },
+  "main": "dist/system.src.js",
   "devDependencies": {
-    "babel-core": "^5.8.22",
+    "bluebird": "^3.4.6",
+    "es-module-loader": "^1.3.5",
+    "plugin-typescript": "^5.2.7",
     "qunit": "^0.6.2",
-    "traceur": "0.0.105",
-    "typescript": "^1.6.2",
-    "uglify-js": "~2.4.23"
+    "rollup": "^0.34.13",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-replace": "^1.1.1",
+    "systemjs-plugin-babel": "0.0.17",
+    "systemjs-plugin-traceur": "0.0.3",
+    "traceur": "0.0.111",
+    "typescript": "^2.0.6"
   },
   "scripts": {
-    "test:browser": "make test",
-    "perf": "node bench/normalize-perf.js",
-    "build": "make",
+    "build": "rollup -c",
+    "min": "uglifyjs dist/system.src.js -cm --in-source-map dist/system.src.js.map --source-map dist/system.js.map --screw-ie8 --comments '/SystemJS v/' > dist/system.js",
+    "footprint": "uglifyjs dist/system.src.js -cm --screw-ie8 | gzip -9f | wc -c",
     "test": "npm run test:babel && npm run test:traceur && npm run test:typescript",
-    "test:babel": "qunit -c s:./index.js -t ./test/test-babel.js",
-    "test:traceur": "qunit -c s:./index.js -t ./test/test-traceur.js",
-    "test:typescript": "qunit -c s:./index.js -t ./test/test-typescript.js"
+    "test:babel": "qunit -c s:./dist/system.src.js -t ./test/test-babel.js",
+    "test:traceur": "qunit -c s:./dist/system.src.js -t ./test/test-traceur.js",
+    "test:typescript": "qunit -c s:./dist/system.src.js -t ./test/test-typescript.js"
   }
 }

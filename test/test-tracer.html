@@ -18,7 +18,24 @@
     <script src="../bower_components/qunit/qunit/qunit.js"></script>
 
     <script>
-      System.paths.traceur = '../node_modules/traceur/bin/traceur.js';
+      SystemJS.config({
+        traceurOptions: {
+          asyncFunctions: true
+        },
+        warnings: true,
+        map: {
+          'plugin-traceur': '../node_modules/systemjs-plugin-traceur/plugin-traceur.js',
+          'traceur': '../node_modules/traceur/bin/traceur.js'
+        },
+        meta: {
+          'traceur': {
+            format: 'global',
+            exports: 'traceur',
+            scriptLoad: false
+          }
+        },
+        transpiler: 'plugin-traceur'
+      });
 
       QUnit.config.testTimeout = 2000;
 
@@ -28,15 +45,11 @@
         setTimeout(function() {
           throw e.stack || e;
           start();
-        });  
+        });
       }
 
       // enable tracing
-      System.pluginLoader = new System.constructor();
-      System.pluginLoader.paths = System.paths;
-      System.pluginLoader.baseURL = System.baseURL;
       System.trace = true;
-      // System.execute = false;
 
       asyncTest('ES6 Circular', function() {
         System['import']('tests/es6-circular1.js').then(function(m) {
