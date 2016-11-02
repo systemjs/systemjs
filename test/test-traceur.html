@@ -13,20 +13,31 @@
 		<ol id="qunit-tests"></ol>
 		<div id="qunit-test-area"></div>
 
-		<script>
-			// test polyfill loading
-			// window.URL = undefined;
-		</script>
+		<!-- used for IE testing -->
+		<script src="../node_modules/bluebird/js/browser/bluebird.js"></script>
 
 		<script src="../dist/system.src.js" type="text/javascript"></script>
 		<script>
-			System.traceurOptions = { asyncFunctions: true };
-			System.paths.traceur = '../node_modules/traceur/bin/traceur.js';
-			System['import']('test.js')['catch'](function(e) {
-				setTimeout(function() {
-					throw e.stack || e;
-				});
+			SystemJS.config({
+				traceurOptions: {
+					asyncFunctions: true
+				},
+				warnings: true,
+				map: {
+					'plugin-traceur': '../node_modules/systemjs-plugin-traceur/plugin-traceur.js',
+					'traceur': '../node_modules/traceur/bin/traceur.js'
+				},
+				meta: {
+					'traceur': {
+						format: 'global',
+						exports: 'traceur',
+						scriptLoad: false
+					}
+				},
+				transpiler: 'plugin-traceur'
 			});
+
+			SystemJS.import('test.js');
 		</script>
 
 		<script src="../bower_components/qunit/qunit/qunit.js"></script>
