@@ -1,30 +1,26 @@
 <!doctype html>
-<html>
-	<head>
-		<link rel="stylesheet" type="text/css" href="../bower_components/qunit/qunit/qunit.css"/>
-	</head>
-	<body>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
 
-		<h1 id="qunit-header">SystemJS Test Suite</h1>
+	<script src="../node_modules/mocha/mocha.js"></script>
 
-		<h2 id="qunit-banner"></h2>
-		<div id="qunit-testrunner-toolbar"></div>
-		<h2 id="qunit-userAgent"></h2>
-		<ol id="qunit-tests"></ol>
-		<div id="qunit-test-area"></div>
+	<script src="../dist/system.src.js" type="text/javascript"></script>
 
-		<script src="../dist/system.src.js" type="text/javascript"></script>
-		<script>
-			SystemJS.config({
-				map: {
-			    'plugin-babel': '../node_modules/systemjs-plugin-babel/plugin-babel.js',
-			    'systemjs-babel-build': '../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
-			  },
-			  transpiler: 'plugin-babel'
-			});
-			SystemJS.import('test.js');
-		</script>
+	<script>
+		mocha.setup('tdd');
 
-		<script src="../bower_components/qunit/qunit/qunit.js"></script>
-	</body>
-</html>
+		SystemJS.config({
+			map: {
+				'plugin-babel': '../node_modules/systemjs-plugin-babel/plugin-babel.js',
+				'systemjs-babel-build': '../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+			},
+			transpiler: 'plugin-babel'
+		});
+
+		SystemJS.import('test.js')
+		.then(function () {
+			mocha.run();
+		});
+	</script>
+
+	<div id="mocha"></div>

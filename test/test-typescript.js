@@ -1,3 +1,5 @@
+require('../dist/system.src.js');
+
 SystemJS.config({
   baseURL: 'test/',
   packages: {

@@ -1,3 +1,5 @@
+require('../dist/system.src.js');
+
 SystemJS.config({
   baseURL: 'test/',
   map: {
@@ -6,4 +8,5 @@ SystemJS.config({
   },
   transpiler: 'plugin-babel'
 });
+
 require('./test');
