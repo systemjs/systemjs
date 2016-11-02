@@ -15,8 +15,8 @@
   "devDependencies": {
     "bluebird": "^3.4.6",
     "es-module-loader": "^1.3.5",
+    "mocha": "^3.1.2",
     "plugin-typescript": "^5.2.7",
-    "qunit": "^0.6.2",
     "rollup": "^0.34.13",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-replace": "^1.1.1",
@@ -30,8 +30,8 @@
     "min": "uglifyjs dist/system.src.js -cm --in-source-map dist/system.src.js.map --source-map dist/system.js.map --screw-ie8 --comments '/SystemJS v/' > dist/system.js",
     "footprint": "uglifyjs dist/system.src.js -cm --screw-ie8 | gzip -9f | wc -c",
     "test": "npm run test:babel && npm run test:traceur && npm run test:typescript",
-    "test:babel": "qunit -c s:./dist/system.src.js -t ./test/test-babel.js",
-    "test:traceur": "qunit -c s:./dist/system.src.js -t ./test/test-traceur.js",
-    "test:typescript": "qunit -c s:./dist/system.src.js -t ./test/test-typescript.js"
+    "test:traceur": "mocha test/test-traceur.js -u tdd --reporter dot",
+    "test:babel": "mocha test/test-babel.js -u tdd --reporter dot",
+    "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot"
   }
 }
