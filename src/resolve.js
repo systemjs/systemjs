@@ -73,10 +73,11 @@ export function normalizeSync (name, parentName) {
   if (parsed) {
     metadata.pluginName = this.normalizeSync(parsed.plugin, parentName);
     return combinePluginParts(this,
-        packageResolveSync.call(this, parsed.argument, parentMetadata.pluginArgument || parentName, metadata, parentMetadata), metadata.pluginName);
+        packageResolveSync.call(this, parsed.argument, parentMetadata.pluginArgument || parentName, metadata, parentMetadata, !!metadata.pluginName),
+        metadata.pluginName);
   }
 
-  return packageResolveSync.call(this, name, parentMetadata.pluginArgument || parentName, metadata, parentMetadata);
+  return packageResolveSync.call(this, name, parentMetadata.pluginArgument || parentName, metadata, parentMetadata, !!metadata.pluginName);
 }
 
 export function coreResolve (name, parentName) {
@@ -113,10 +114,12 @@ function pluginResolve (name, parentName, metadata, parentMetadata) {
   var parsed = parsePlugin(loader, name);
 
   if (!parsed)
-    return packageResolve.call(this, name, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata);
+    return packageResolve.call(this, name, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata, false);
+
+  metadata.pluginName = parsed.plugin;
 
   return Promise.all([
-    packageResolve.call(this, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata),
+    packageResolve.call(this, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata, true),
     this.resolve(parsed.plugin, parentName)
   ])
   .then(function (normalized) {
@@ -131,14 +134,14 @@ function pluginResolve (name, parentName, metadata, parentMetadata) {
   });
 }
 
-function packageResolveSync (name, parentName, metadata, parentMetadata) {
+function packageResolveSync (name, parentName, metadata, parentMetadata, skipExtensions) {
   // ignore . since internal maps handled by standard package resolution
   if (parentMetadata && parentMetadata.packageConfig && name[0] !== '.') {
     var parentMap = parentMetadata.packageConfig.map;
     var parentMapMatch = parentMap && getMapMatch(parentMap, name);
 
     if (parentMapMatch && typeof parentMap[parentMapMatch] === 'string') {
-      var mapped = doMapSync(this, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, !!metadata.pluginName);
+      var mapped = doMapSync(this, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, skipExtensions);
       if (mapped)
         return mapped;
     }
@@ -156,10 +159,10 @@ function packageResolveSync (name, parentName, metadata, parentMetadata) {
 
   var subPath = normalized.substr(metadata.packageName.length + 1);
 
-  return applyPackageConfigSync(this, metadata.packageConfig, pkgName, subPath, !!metadata.pluginName);
+  return applyPackageConfigSync(this, metadata.packageConfig, metadata.packageName, subPath, skipExtensions);
 }
 
-function packageResolve (name, parentName, metadata, parentMetadata) {
+function packageResolve (name, parentName, metadata, parentMetadata, skipExtensions) {
   var loader = this;
 
   return Promise.resolve()
@@ -170,7 +173,7 @@ function packageResolve (name, parentName, metadata, parentMetadata) {
       var parentMapMatch = parentMap && getMapMatch(parentMap, name);
 
       if (parentMapMatch)
-        return doMap(loader, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, !!metadata.pluginName);
+        return doMap(loader, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, skipExtensions);
     }
 
     return Promise.resolve();
@@ -197,7 +200,7 @@ function packageResolve (name, parentName, metadata, parentMetadata) {
       metadata.packageConfig = packageConfig;
       var subPath = normalized.substr(metadata.packageName.length + 1);
 
-      return applyPackageConfig(loader, metadata.packageConfig, metadata.packageName, subPath, !!metadata.pluginName);
+      return applyPackageConfig(loader, metadata.packageConfig, metadata.packageName, subPath, skipExtensions);
     });
   });
 }
