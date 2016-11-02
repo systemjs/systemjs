@@ -6,10 +6,10 @@
   "defaultExtension": "js",
   "meta": {
     "*.json": { "loader": "json" },
-    "noext": { "alias": "./json.json" },
     "test.ts": true
   },
   "map": {
+    "./noext": "./json.json",
     "json": "./json.js",
     "./json": "./json.json",
     "./dir/": "./dir/index",

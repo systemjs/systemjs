@@ -13,17 +13,29 @@
 		<ol id="qunit-tests"></ol>
 		<div id="qunit-test-area"></div>
 
-		<!-- <script src="../bower_components/traceur/traceur.js"></script> -->
-		<script src="../node_modules/es6-module-loader/dist/es6-module-loader.src.js"></script>
 		<script src="../dist/system.src.js" type="text/javascript"></script>
 		<script>
-			System.paths['typescript'] = '../node_modules/typescript/lib/typescript.js';
-			System.transpiler = 'typescript';
-			System['import']('test.js')['catch'](function(e) {
-				setTimeout(function() {
-					throw e;
-				})
+			SystemJS.config({
+			  packages: {
+			    "ts": {
+			      "main": "plugin.js"
+			    },
+			    "typescript": {
+			      "main": "lib/typescript.js",
+			      "meta": {
+			        "lib/typescript.js": {
+			          "exports": "ts"
+			        }
+			      }
+			    }
+			  },
+			  map: {
+			    "ts": "../node_modules/plugin-typescript/lib",
+			    "typescript": "../node_modules/typescript"
+			  },
+				transpiler: 'ts'
 			});
+			System.import('test.js');
 		</script>
 
 		<script src="../bower_components/qunit/qunit/qunit.js"></script>
