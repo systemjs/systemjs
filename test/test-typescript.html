@@ -1,43 +1,39 @@
 <!doctype html>
-<html>
-	<head>
-		<link rel="stylesheet" type="text/css" href="../bower_components/qunit/qunit/qunit.css"/>
-	</head>
-	<body>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
 
-		<h1 id="qunit-header">SystemJS Test Suite</h1>
+	<script src="../node_modules/mocha/mocha.js"></script>
 
-		<h2 id="qunit-banner"></h2>
-		<div id="qunit-testrunner-toolbar"></div>
-		<h2 id="qunit-userAgent"></h2>
-		<ol id="qunit-tests"></ol>
-		<div id="qunit-test-area"></div>
+	<script src="../dist/system.src.js" type="text/javascript"></script>
 
-		<script src="../dist/system.src.js" type="text/javascript"></script>
-		<script>
-			SystemJS.config({
-			  packages: {
-			    "ts": {
-			      "main": "plugin.js"
-			    },
-			    "typescript": {
-			      "main": "lib/typescript.js",
-			      "meta": {
-			        "lib/typescript.js": {
-			          "exports": "ts"
-			        }
-			      }
-			    }
-			  },
-			  map: {
-			    "ts": "../node_modules/plugin-typescript/lib",
-			    "typescript": "../node_modules/typescript"
-			  },
-				transpiler: 'ts'
-			});
-			System.import('test.js');
-		</script>
+	<script>
+		mocha.setup('tdd');
 
-		<script src="../bower_components/qunit/qunit/qunit.js"></script>
-	</body>
-</html>
+		SystemJS.config({
+			packages: {
+				"ts": {
+					"main": "plugin.js"
+				},
+				"typescript": {
+					"main": "lib/typescript.js",
+					"meta": {
+						"lib/typescript.js": {
+							"exports": "ts"
+						}
+					}
+				}
+			},
+			map: {
+				"ts": "../node_modules/plugin-typescript/lib",
+				"typescript": "../node_modules/typescript"
+			},
+			transpiler: 'ts'
+		});
+
+		SystemJS.import('test.js')
+		.then(function () {
+			mocha.run();
+		});
+	</script>
+
+	<div id="mocha"></div>
