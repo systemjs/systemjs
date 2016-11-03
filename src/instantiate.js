@@ -139,13 +139,13 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
   // fetch
   .then(function () {
     if (!metadata.pluginModule)
-      return fetch(key);
+      return fetch(key, metadata.load.authorization, metadata.load.integrity);
 
     if (!metadata.pluginModule.fetch)
-      return fetch(metadata.pluginArgument);
+      return fetch(metadata.pluginArgument, metadata.load.authorization, metadata.load.integrity);
 
     return metadata.pluginModule.fetch.call(loader, metadata.pluginLoad, function (load) {
-      return fetch(load.address);
+      return fetch(load.address, metadata.load.authorization, metadata.load.integrity);
     });
   })
 

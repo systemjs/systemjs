@@ -151,10 +151,8 @@ export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   src = src.replace(/#/g, '%23');
 
   if (isWorker) {
-    if (integrity)
-      reject(new Error('Subresource integrity checking is not supported in web workers.'));
-    else
-      workerImport(src, resolve, reject);
+    // subresource integrity is not supported in web workers
+    workerImport(src, resolve, reject);
   }
   else {
     curSystem = global.System;
@@ -276,9 +274,9 @@ if (isBrowser && typeof document != 'undefined' && document.getElementsByTagName
 }
 
 // script execution via injecting a script tag into the page
-// this allows CSP integrity and nonce to be set for CSP environments
+// this allows CSP nonce to be set for CSP environments
 var head;
-function scriptExec(loader, source, sourceMap, address, integrity, nonce) {
+function scriptExec(loader, source, sourceMap, address, nonce) {
   if (!head)
     head = document.head || document.body || document.documentElement;
 
@@ -293,8 +291,6 @@ function scriptExec(loader, source, sourceMap, address, integrity, nonce) {
   }
   preExec(loader);
 
-  if (integrity)
-    script.setAttribute('integrity', integrity);
   if (nonce)
     script.setAttribute('nonce', nonce);
 
@@ -312,8 +308,8 @@ var useVm;
 export function evaluate (loader, source, sourceMap, address, integrity, nonce, noWrap) {
   if (!source)
     return;
-  if ((integrity || nonce) && supportsScriptExec)
-    return scriptExec(loader, source, sourceMap, address, integrity, nonce);
+  if (nonce && supportsScriptExec)
+    return scriptExec(loader, source, sourceMap, address, nonce);
   try {
     preExec(loader);
     // global scoped eval for node (avoids require scope leak)
