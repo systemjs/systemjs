@@ -405,7 +405,7 @@ function getPackage (loader, normalized) {
 
 function addDefaultExtension (loader, pkg, pkgName, subPath, skipExtensions) {
   // don't apply extensions to folders or if defaultExtension = false
-  if (!subPath || subPath[subPath.length - 1] === '/' || skipExtensions || pkg.defaultExtension === false)
+  if (!subPath || !pkg.defaultExtension || subPath[subPath.length - 1] === '/' || skipExtensions)
     return subPath;
 
   var metaMatch = false;
@@ -428,8 +428,7 @@ function addDefaultExtension (loader, pkg, pkgName, subPath, skipExtensions) {
     return subPath;
 
   // work out what the defaultExtension is and add if not there already
-  // NB reconsider if default should really be ".js"?
-  var defaultExtension = '.' + (pkg.defaultExtension || 'js');
+  var defaultExtension = '.' + pkg.defaultExtension;
   if (subPath.substr(subPath.length - defaultExtension.length) !== defaultExtension)
     return subPath + defaultExtension;
   else

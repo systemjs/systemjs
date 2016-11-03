@@ -2,7 +2,7 @@ suite('SystemJS Standard Tests', function() {
 
   function ok(assertion, message) {
     if (!assertion)
-      throw new Error(messasge);
+      throw new Error(message);
   }
 
   test('System version', function () {
@@ -1057,6 +1057,7 @@ suite('SystemJS Standard Tests', function() {
       },
       packages: {
         'tests/testpkg3': {
+          defaultExtension: 'js',
           map: {
             './lib': './lib/asdf.js',
             './lib/': './lib/index.js',
@@ -1217,7 +1218,8 @@ suite('SystemJS Standard Tests', function() {
       meta: {
         'tests/csp/integrity-2.js': {
           format: 'amd',
-          integrity: 'sha256-abc'
+          integrity: 'sha256-abc',
+          scriptLoad: System.baseURL.substr(0, 8) === 'file:///'
         }
       }
     });
