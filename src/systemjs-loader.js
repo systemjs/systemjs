@@ -35,7 +35,7 @@ function SystemJSLoader (baseKey) {
 
   // global behaviour flags
   this.warnings = false;
-  this.pluginFirst = true;
+  this.pluginFirst = false;
 
   this._nodeRequire = nodeRequire;
 
