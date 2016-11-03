@@ -26,7 +26,7 @@ export function instantiate (key, metadata, processAnonRegister) {
 
     // auto script load AMD, global without deps
     if (!metadata.pluginName && !metadata.load.deps && !metadata.load.globals && metadata.load.scriptLoad !== false &&
-        (metadata.load.format === 'amd' || metadata.load.format === 'system' || metadata.load.format === 'register' ||
+        (metadata.load.format === 'system' || metadata.load.format === 'register' ||
         metadata.load.format === 'global' && metadata.load.exports && !isWorker))
       metadata.load.scriptLoad = true;
 
@@ -36,9 +36,6 @@ export function instantiate (key, metadata, processAnonRegister) {
 
     // just script loading
     return new Promise(function (resolve, reject) {
-      // scriptLoad implies a define leak for AMD
-      global.define = loader.amdDefine;
-
       scriptLoad(key, metadata.load.crossOrigin, metadata.load.integrity, function () {
         processAnonRegister();
 
