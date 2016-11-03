@@ -1,1 +1,1 @@
-module.exports = require('./test.css!');
+module.exports = require('css!./test.css');
