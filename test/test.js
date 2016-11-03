@@ -478,7 +478,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Simple compiler Plugin', function () {
     System.map['coffee'] = 'tests/compiler-plugin.js';
-    return System.import('tests/compiler-test.coffee!').then(function (m) {
+    return System.import('coffee!tests/compiler-test.coffee').then(function (m) {
       ok(m.output == 'plugin output', 'Plugin not working.');
       ok(m.extra == 'yay!', 'Compiler not working.');
     });
@@ -487,24 +487,24 @@ suite('SystemJS Standard Tests', function() {
   test('Mapping a plugin argument', function () {
     System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
     System.map['coffee'] = 'tests/compiler-plugin.js';
-    return System.import('bootstrap/test.coffee!coffee').then(function (m) {
+    return System.import('coffee!bootstrap/test.coffee').then(function (m) {
       ok(m.extra == 'yay!', 'not working');
     });
   });
 
   test('Using pluginFirst config', function () {
-    System.pluginFirst = true;
+    System.pluginFirst = false;
     System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
     System.map['coffee'] = 'tests/compiler-plugin.js';
-    return System.import('coffee!bootstrap/test.coffee').then(function (m) {
+    return System.import('bootstrap/test.coffee!').then(function (m) {
       ok(m.extra == 'yay!', 'not working');
-      System.pluginFirst = false;
+      System.pluginFirst = true;
     });
   });
 
   test('Advanced compiler plugin', function () {
-    return System.import('tests/compiler-test.js!tests/advanced-plugin.js').then(function (m) {
-      ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
+    return System.import('tests/advanced-plugin.js!tests/compiler-test.js').then(function (m) {
+      ok(m == 'custom fetch:' + System.baseURL + 'tests/advanced-plugin.js!' + System.baseURL + 'tests/compiler-test.js', m);
     });
   });
 
@@ -654,7 +654,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('ES6 plugin', function () {
-    return System.import('tests/blah.js!tests/es6-plugin.js').then(function (m) {
+    return System.import('tests/es6-plugin.js!tests/blah.js').then(function (m) {
       ok(m == 'plugin');
     });
   });
