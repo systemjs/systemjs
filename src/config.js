@@ -1,5 +1,5 @@
 import SystemJSLoader, { envModule, setProduction } from './systemjs-loader.js';
-import { extend, warn, urlResolve } from './common.js';
+import { extend, warn, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
 import { coreResolve } from './resolve.js';
 
 /*
@@ -90,7 +90,7 @@ export function setConfig (cfg, isEnvConfig) {
       if (checkHasConfig(loader.packages) || checkHasConfig(loader.meta) || checkHasConfig(loader.depCache) || checkHasConfig(loader.bundles) || checkHasConfig(loader.packageConfigPaths))
         throw new TypeError('Incorrect configuration order. The baseURL must be configured with the first SystemJS.config call.');
 
-      this.baseURL = urlResolve(baseURL);
+      this.baseURL = resolveUrlToParentIfNotPlain(baseURL, baseURI) || resolveUrlToParentIfNotPlain('./' + baseURL, baseURI);
     }
 
     if (cfg.paths)
