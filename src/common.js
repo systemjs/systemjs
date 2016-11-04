@@ -1,7 +1,7 @@
 import { resolveUrlToParentIfNotPlain } from 'es-module-loader/core/resolve.js';
-import { baseURI, isBrowser, isWindows, addToError, global } from 'es-module-loader/core/common.js';
+import { baseURI, isBrowser, isWindows, addToError, global, createSymbol } from 'es-module-loader/core/common.js';
 
-export { baseURI, isBrowser, isWindows, addToError, global, resolveUrlToParentIfNotPlain }
+export { baseURI, isBrowser, isWindows, addToError, global, createSymbol, resolveUrlToParentIfNotPlain }
 
 export var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
 
@@ -39,40 +39,6 @@ if (typeof require !== 'undefined' && typeof process !== 'undefined' && !process
 export function warn (msg, force) {
   if (force || this.warnings && typeof console !== 'undefined' && console.warn)
     console.warn(msg);
-}
-
-export function applyPaths (loader, name) {
-  // most specific (most number of slashes in path) match wins
-  var pathMatch = '', wildcard;
-
-  var paths = loader.paths;
-  var pathsCache = loader._loader.paths;
-
-  // check to see if we have a paths entry
-  for (var p in paths) {
-    if (!paths.hasOwnProperty(p))
-      continue;
-
-    // paths sanitization
-    var path = paths[p];
-    if (path !== pathsCache[p])
-      path = paths[p] = pathsCache[p] = resolveUrlToParentIfNotPlain(paths[p], baseURI) || resolveUrlToParentIfNotPlain('./' + paths[p], loader.baseURL);
-
-    // exact path match
-    if (name == p) {
-      return paths[p];
-    }
-    // support trailing / in paths rules
-    else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && (paths[p][paths[p].length - 1] == '/' || paths[p] == '')) {
-      return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? (paths[p] && '/' || '') + name.substr(p.length) : '');
-    }
-  }
-
-  var outPath = paths[pathMatch];
-  if (typeof wildcard == 'string')
-    outPath = outPath.replace('*', wildcard);
-
-  return outPath;
 }
 
 var parentModuleContext;

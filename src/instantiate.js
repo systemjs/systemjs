@@ -1,4 +1,4 @@
-import SystemJSLoader from './systemjs-loader.js';
+import SystemJSLoader, { CONFIG } from './systemjs-loader.js';
 import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule } from './common.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
@@ -6,7 +6,7 @@ import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal,
 export function instantiate (key, metadata, processAnonRegister) {
   var loader = this;
   // first do bundles and depCache
-  return (loadBundlesAndDepCache(this, key) || Promise.resolve())
+  return (loadBundlesAndDepCache(this[CONFIG], this, key) || Promise.resolve())
   .then(function () {
     if (metadata.registered)
       return;
@@ -78,18 +78,18 @@ function initializePlugin (loader, key, metadata) {
   });
 }
 
-function loadBundlesAndDepCache (loader, key) {
+function loadBundlesAndDepCache (config, loader, key) {
   // load direct deps, in turn will pick up their trace trees
-  var deps = loader.depCache[key];
+  var deps = config.depCache[key];
   if (deps) {
     for (var i = 0; i < deps.length; i++)
       loader.load(deps[i], key);
   }
   else {
     var matched = false;
-    for (var b in loader.bundles) {
-      for (var i = 0; i < loader.bundles[b].length; i++) {
-        var curModule = loader.bundles[b][i];
+    for (var b in config.bundles) {
+      for (var i = 0; i < config.bundles[b].length; i++) {
+        var curModule = config.bundles[b][i];
 
         if (curModule == key) {
           matched = true;
@@ -100,7 +100,7 @@ function loadBundlesAndDepCache (loader, key) {
         if (curModule.indexOf('*') != -1) {
           var parts = curModule.split('*');
           if (parts.length != 2) {
-            loader.bundles[b].splice(i--, 1);
+            config.bundles[b].splice(i--, 1);
             continue;
           }
 
@@ -378,7 +378,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
       break;
 
       default:
-        throw new TypeError('Unknown module format "' + metadata.load.format + '" for "' + key + '".' + (metadata.load.format === 'es6' ? ' SystemJS 0.20 uses "esm" instead here.' : ''));
+        throw new TypeError('Unknown module format "' + metadata.load.format + '" for "' + key + '".' + (metadata.load.format === 'es6' ? ' Use "esm" instead here.' : ''));
     }
 
     if (!metadata.registered)

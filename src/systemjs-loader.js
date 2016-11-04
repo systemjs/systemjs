@@ -1,8 +1,8 @@
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
-import { warn, nodeRequire, scriptSrc, isBrowser, global } from './common.js';
+import { warn, nodeRequire, scriptSrc, isBrowser, global, createSymbol, baseURI } from './common.js';
 
-import { getConfig, setConfig } from './config.js';
+import { getConfig, getConfigItem, setConfig } from './config.js';
 import { coreResolve, normalize, normalizeSync } from './resolve.js';
 import { instantiate } from './instantiate.js';
 import formatHelpers from './format-helpers.js';
@@ -12,35 +12,39 @@ export default SystemJSLoader;
 function SystemJSLoader (baseKey) {
   RegisterLoader.call(this, baseKey);
 
-  // support baseURL
-  this.baseURL = this.key;
+  // NB deprecate
+  this._loader = {};
 
-  // configurations
-  this.map = {};
-  this.paths = {};
-  this.packages = {};
-  this.packageConfigPaths = [];
-  this.depCache = {};
-  this.meta = {};
-  this.bundles = {};
+  // internal configuration
+  this[CONFIG] = {
+    // this means paths normalization has already happened
+    pathsLocked: false,
 
-  // internal state cache
-  this._loader = {
+    baseURL: baseURI,
     paths: {},
-    loadedBundles: {}
+
+    packageConfigPaths: [],
+    map: {},
+    packages: {},
+    depCache: {},
+    meta: {},
+    bundles: {},
+
+    production: false,
+
+    // traceur is default transpiler
+    transpiler: 'traceur',
+    loadedBundles: {},
+
+    // global behaviour flags
+    warnings: false,
+    pluginFirst: false,
   };
 
   // make the location of the system.js script accessible (if any)
   this.scriptSrc = scriptSrc;
 
-  // global behaviour flags
-  this.warnings = false;
-  this.pluginFirst = false;
-
   this._nodeRequire = nodeRequire;
-
-  // traceur is default transpiler
-  this.transpiler = 'traceur';
 
   // support the empty module, as a concept
   this.set('@empty', this.newModule({}));
@@ -53,6 +57,7 @@ function SystemJSLoader (baseKey) {
 
 export var envModule;
 export function setProduction (isProduction, isBuilder) {
+  this[CONFIG].production = isProduction;
   this.set('@system-env', envModule = this.newModule({
     browser: isBrowser,
     node: !!this._nodeRequire,
@@ -63,6 +68,7 @@ export function setProduction (isProduction, isBuilder) {
   }));
 }
 
+export var CONFIG = createSymbol('loader-config');
 export var CREATE_METADATA = SystemJSLoader.createMetadata = RegisterLoader.createMetadata;
 var RESOLVE = SystemJSLoader.resolve = RegisterLoader.resolve;
 var INSTANTIATE = SystemJSLoader.instantiate = RegisterLoader.instantiate;
@@ -93,12 +99,37 @@ SystemJSLoader.prototype.getConfig = getConfig;
 
 SystemJSLoader.prototype.global = global;
 
+export var configNames = ['baseURL', 'map', 'paths', 'packages', 'packageConfigPaths', 'depCache', 'meta', 'bundles', 'transpiler', 'warnings', 'pluginFirst', 'production'];
+
+var hasProxy = typeof Proxy !== 'undefined';
+for (var i = 0; i < configNames.length; i++) (function (configName) {
+  Object.defineProperty(SystemJSLoader.prototype, configName, {
+    get: function () {
+      var cfg = getConfigItem(this[CONFIG], configName);
+
+      if (hasProxy && typeof cfg === 'object')
+        cfg = new Proxy(cfg, {
+          set: function (target, option) {
+            throw new Error('Cannot set SystemJS.' + configName + '["' + option + '"] directly. Use SystemJS.config({ ' + configName + ': { "' + option + '": ... } }) rather.');
+          }
+        });
+
+      //if (typeof cfg === 'object')
+      //  warn.call(this[CONFIG], 'Referencing `SystemJS.' + configName + '` is deprecated. Use the config getter `SystemJS.getConfig(\'' + configName + '\')`');
+      return cfg;
+    },
+    set: function (name) {
+      throw new Error('Setting `SystemJS.' + configName + '` directly is no longer supported. Use `SystemJS.config({ ' + configName + ': ... })`.');
+    }
+  });
+})(configNames[i]);
+
 /*
  * Backwards-compatible registry API, to be deprecated
  */
-function registryWarn(loader, method) {
+/* function registryWarn(loader, method) {
   warn.call(loader, 'SystemJS.' + method + ' is deprecated for SystemJS.registry.' + method);
-}
+} */
 
 SystemJSLoader.prototype.import = function () {
   return RegisterLoader.prototype.import.apply(this, arguments)
@@ -108,19 +139,19 @@ SystemJSLoader.prototype.import = function () {
 };
 
 SystemJSLoader.prototype.delete = function (moduleName) {
-  registryWarn(this, 'delete');
+  // registryWarn(this, 'delete');
   this.registry.delete(moduleName);
 };
 SystemJSLoader.prototype.get = function (moduleName) {
-  registryWarn(this, 'get');
+  // registryWarn(this, 'get');
   return this.registry.get(moduleName);
 };
 SystemJSLoader.prototype.has = function (moduleName) {
-  registryWarn(this, 'has');
+  // registryWarn(this, 'has');
   return this.registry.has(moduleName);
 };
 SystemJSLoader.prototype.set = function (moduleName, module) {
-  registryWarn(this, 'set');
+  // registryWarn(this, 'set');
   return this.registry.set(moduleName, module);
 };
 SystemJSLoader.prototype.newModule = function (bindings) {
@@ -130,12 +161,12 @@ SystemJSLoader.prototype.newModule = function (bindings) {
 // ensure System.register and System.registerDynamic decanonicalize
 SystemJSLoader.prototype.register = function (key, deps, declare) {
   if (typeof key === 'string')
-    key = coreResolve.call(this, key, undefined);
+    key = coreResolve.call(this, this[CONFIG], key, undefined);
   return RegisterLoader.prototype.register.call(this, key, deps, declare);
 };
 
 SystemJSLoader.prototype.registerDynamic = function (key, deps, executingRequire, execute) {
   if (typeof key === 'string')
-    key = coreResolve.call(this, key, undefined);
+    key = coreResolve.call(this, this[CONFIG], key, undefined);
   return RegisterLoader.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
