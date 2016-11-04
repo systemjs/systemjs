@@ -1,6 +1,6 @@
-import SystemJSLoader, { envModule, setProduction } from './systemjs-loader.js';
+import SystemJSLoader, { envModule, setProduction, CONFIG, configNames } from './systemjs-loader.js';
 import { extend, warn, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
-import { coreResolve } from './resolve.js';
+import { coreResolve, normalizePaths } from './resolve.js';
 
 /*
  Extend config merging one deep only
@@ -36,37 +36,69 @@ import { coreResolve } from './resolve.js';
   For easy normalization canonicalization with latest URL support.
 
 */
+var envConfigNames = ['browserConfig', 'nodeConfig', 'devConfig', 'buildConfig', 'productionConfig'];
 function envSet(loader, cfg, envCallback) {
-  if (envModule.browser && cfg.browserConfig)
-    envCallback(cfg.browserConfig);
-  if (envModule.node && cfg.nodeConfig)
-    envCallback(cfg.nodeConfig);
-  if (envModule.dev && cfg.devConfig)
-    envCallback(cfg.devConfig);
-  if (envModule.build && cfg.buildConfig)
-    envCallback(cfg.buildConfig);
-  if (envModule.production && cfg.productionConfig)
-    envCallback(cfg.productionConfig);
+  for (var i = 0; i < envConfigNames.length; i++) {
+    var envConfig = envConfigNames[i];
+    if (cfg[envConfig] && envModule[envConfig.substr(0, envConfig.length - 6)])
+      envCallback(cfg[envConfig]);
+  }
 }
 
-export function getConfig (name) {
-  var cfg = {};
-  var loader = this;
-  for (var p in loader) {
-    if (!loader.hasOwnProperty(p) || p in SystemJSLoader.prototype && p != 'transpiler')
+function cloneObj (obj, depth) {
+  var clone = {};
+  for (var p in obj) {
+    if (!obj.hasOwnProperty(p))
       continue;
-    if (['_loader', 'amdDefine', 'amdRequire', 'defined', 'failed', 'version', 'loads'].indexOf(p) == -1)
-      cfg[p] = loader[p];
+    var prop = obj[p];
+    if (depth > 1) {
+      if (typeof prop === 'object')
+        clone[p] = cloneObj(prop, depth - 1);
+      else
+        clone[p] = prop;
+    }
+    else {
+      clone[p] = prop;
+    }
   }
-  cfg.production = envModule.production;
+  return clone;
+}
+
+export function getConfigItem (config, p) {
+  var cfgItem = config[p];
+
+  // getConfig must return an unmodifiable clone of the configuration
+  if (cfgItem instanceof Array)
+    return config[p].concat([]);
+  else if (typeof cfgItem === 'object')
+    return cloneObj(cfgItem, p === 'packages' ? 3 : 1)
+  else
+    return config[p];
+}
+
+export function getConfig (configName) {
+  if (configName) {
+    if (configNames.indexOf(configName) !== -1)
+      return getConfigItem.call(this[CONFIG], configName);
+    throw new Error('"' + configName + '" is not a valid configuration name to get. Must be one of ' + configNames.join(', ') + '.');
+  }
+
+  var cfg = {};
+  for (var i = 0; i < configNames.length; i++) {
+    var p = configNames[i];
+    var configItem = getConfigItem(this[CONFIG], p);
+    if (configItem !== undefined)
+      cfg[p] = configItem;
+  }
   return cfg;
-};
+}
 
 export function setConfig (cfg, isEnvConfig) {
   var loader = this;
+  var config = this[CONFIG];
 
   if ('warnings' in cfg)
-    loader.warnings = cfg.warnings;
+    config.warnings = cfg.warnings;
 
   if ('production' in cfg || 'build' in cfg)
     setProduction.call(loader, !!cfg.production, !!(cfg.build || envModule && envModule.build));
@@ -82,60 +114,48 @@ export function setConfig (cfg, isEnvConfig) {
 
     // always configure baseURL first
     if (baseURL) {
-      function checkHasConfig(obj) {
-        for (var p in obj)
-          if (obj.hasOwnProperty(p))
-            return true;
-      }
-      if (checkHasConfig(loader.packages) || checkHasConfig(loader.meta) || checkHasConfig(loader.depCache) || checkHasConfig(loader.bundles) || checkHasConfig(loader.packageConfigPaths))
-        throw new TypeError('Incorrect configuration order. The baseURL must be configured with the first SystemJS.config call.');
-
-      this.baseURL = resolveUrlToParentIfNotPlain(baseURL, baseURI) || resolveUrlToParentIfNotPlain('./' + baseURL, baseURI);
+      if (config.pathsLocked)
+        warn.call(config, 'baseURL should be set before other config to avoid conflicts.');
+      config.baseURL = resolveUrlToParentIfNotPlain(baseURL, baseURI) || resolveUrlToParentIfNotPlain('./' + baseURL, baseURI);
     }
 
-    if (cfg.paths)
-      extend(loader.paths, cfg.paths);
+    var pathsExtended = false;
+
+    if (cfg.paths) {
+      extend(config.paths, cfg.paths);
+      pathsExtended = true;
+    }
 
     envSet(loader, cfg, function(cfg) {
-      if (cfg.paths)
-        extend(loader.paths, cfg.paths);
+      if (cfg.paths) {
+        extend(config.paths, cfg.paths);
+        pathsExtended = true;
+      }
     });
 
-    // warn on wildcard path deprecations
-    for (var p in loader.paths) {
-      if (p.indexOf('*') !== -1)
-        warn.call(loader, 'Paths configuration "' + p + '" -> "' + loader.paths[p] + '" uses wildcards which are no longer supported.', true);
+    // last pathing additions
+    if (config.pathsLocked && pathsExtended) {
+      // warn.call(config, 'paths should be set before other config to avoid conflicts.')
+      normalizePaths(config);
     }
   }
 
   if (cfg.defaultJSExtensions)
-    warn.call(loader, 'The defaultJSExtensions configuration option has been removed, use packages configuration instead.', true);
+    warn.call(config, 'The defaultJSExtensions configuration option has been removed, use packages configuration defaultExtension instead.', true);
 
-  if (cfg.pluginFirst)
-    loader.pluginFirst = cfg.pluginFirst;
+  if (typeof cfg.pluginFirst === 'boolean')
+    config.pluginFirst = cfg.pluginFirst;
 
   if (cfg.map) {
     for (var p in cfg.map) {
       var v = cfg.map[p];
 
+      if (typeof v === 'string')
+        config.map[p] = coreResolve.call(loader, config, v, undefined, false);
+
       // object map
-      if (typeof v !== 'string') {
-        var prop = loader.normalizeSync(p);
-        // if a package main, revert it
-        var pkgMatch = '';
-        for (var pkg in loader.packages) {
-          if (prop.substr(0, pkg.length) === pkg
-              && (!prop[pkg.length] || prop[pkg.length] === '/')
-              && pkgMatch.split('/').length < pkg.split('/').length)
-            pkgMatch = pkg;
-        }
-        if (pkgMatch && loader.packages[pkgMatch].main)
-          prop = prop.substr(0, prop.length - loader.packages[pkgMatch].main.length - 1);
-        setPkgConfig(loader, prop, { map: v }, false);
-      }
-      else {
-        loader.map[p] = v;
-      }
+      else
+        setPkgConfig(loader, config, coreResolve.call(loader, config, p, undefined, true), { map: v }, false);
     }
   }
 
@@ -144,10 +164,10 @@ export function setConfig (cfg, isEnvConfig) {
     for (var i = 0; i < cfg.packageConfigPaths.length; i++) {
       var path = cfg.packageConfigPaths[i];
       var packageLength = Math.max(path.lastIndexOf('*') + 1, path.lastIndexOf('/'));
-      var normalized = coreResolve.call(loader, path.substr(0, packageLength));
+      var normalized = coreResolve.call(loader, config, path.substr(0, packageLength), undefined, false);
       packageConfigPaths[i] = normalized + path.substr(packageLength);
     }
-    loader.packageConfigPaths = packageConfigPaths;
+    config.packageConfigPaths = packageConfigPaths;
   }
 
   if (cfg.bundles) {
@@ -155,7 +175,7 @@ export function setConfig (cfg, isEnvConfig) {
       var bundle = [];
       for (var i = 0; i < cfg.bundles[p].length; i++)
         bundle.push(loader.normalizeSync(cfg.bundles[p][i]));
-      loader.bundles[p] = bundle;
+      config.bundles[p] = bundle;
     }
   }
 
@@ -164,98 +184,97 @@ export function setConfig (cfg, isEnvConfig) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var prop = coreResolve.call(loader, p);
+      var prop = coreResolve.call(loader, config, p, undefined, true);
 
       // allow trailing slash in packages
-      if (prop[prop.length - 1] == '/')
+      if (prop[prop.length - 1] === '/')
         prop = prop.substr(0, prop.length - 1);
 
-      setPkgConfig(loader, prop, cfg.packages[p], false);
+      setPkgConfig(loader, config, prop, cfg.packages[p], false);
     }
   }
 
-  for (var c in cfg) {
-    var v = cfg[c];
+  if (cfg.depCache) {
+    for (var p in cfg.depCache)
+      config.depCache[loader.normalizeSync(p)] = [].concat(cfg.depCache[p]);
+  }
 
-    if (['baseURL', 'map', 'packages', 'bundles', 'paths', 'warnings', 'packageConfigPaths',
-          'loaderErrorStack', 'browserConfig', 'nodeConfig', 'devConfig', 'buildConfig', 'productionConfig'].indexOf(c) != -1)
-      continue;
-
-    if (typeof v != 'object' || v instanceof Array) {
-      loader[c] = v;
-    }
-    else {
-      loader[c] = loader[c] || {};
-
-      for (var p in v) {
-        // base-level wildcard meta does not normalize to retain catch-all quality
-        if (c == 'meta' && p[0] == '*') {
-          extend(loader[c][p] = loader[c][p] || {}, v[p]);
-        }
-        else if (c == 'meta') {
-          // meta can go through global map, with defaultJSExtensions adding
-          var resolved = coreResolve.call(loader, p);
-          extend(loader[c][resolved] = loader[c][resolved] || {}, v[p]);
-        }
-        else if (c == 'depCache') {
-          loader[c][loader.normalizeSync(p)] = [].concat(v[p]);
-        }
-        else {
-          loader[c][p] = v[p];
-        }
+  if (cfg.meta) {
+    for (var p in cfg.meta) {
+      // base wildcard stays base
+      if (p[0] === '*') {
+        extend(config.meta[p] = config.meta[p] || {}, cfg.meta[p]);
+      }
+      else {
+        var resolved = coreResolve.call(loader, config, p, undefined, true);
+        extend(config.meta[resolved] = config.meta[resolved] || {}, cfg.meta[p]);
       }
     }
+  }
+
+  if ('transpiler' in cfg)
+    config.transpiler = cfg.transpiler;
+
+
+  // copy any remaining non-standard configuration properties
+  for (var c in cfg) {
+    if (configNames.indexOf(c) !== -1)
+      continue;
+    if (envConfigNames.indexOf(c) !== -1)
+      continue;
+    // warn.call(config, 'Setting custom config option `System.config({ ' + c + ': ... })` is deprecated. Avoid custom config options or set SystemJS.' + c + ' = ... directly.');
+
+    config[c] = cfg[c];
   }
 
   envSet(loader, cfg, function(cfg) {
     loader.config(cfg, true);
   });
-};
+}
 
 
-
-function extendPkgConfig (pkgCfgA, pkgCfgB, pkgName, loader, warnInvalidProperties) {
+function extendPkgConfig (pkgCfgA, pkgCfgB, pkgName, loader, config, warnInvalidProperties) {
   for (var prop in pkgCfgB) {
-    if (['main', 'format', 'defaultExtension', 'basePath'].indexOf(prop) != -1) {
+    if (prop === 'main' || prop === 'format' || prop === 'defaultExtension') {
       pkgCfgA[prop] = pkgCfgB[prop];
     }
-    else if (prop == 'map') {
+    else if (prop === 'map') {
       extend(pkgCfgA.map = pkgCfgA.map || {}, pkgCfgB.map);
     }
-    else if (prop == 'meta') {
+    else if (prop === 'meta') {
       extend(pkgCfgA.meta = pkgCfgA.meta || {}, pkgCfgB.meta);
     }
-    else if (prop == 'depCache') {
+    else if (prop === 'depCache') {
       for (var d in pkgCfgB.depCache) {
         var dNormalized;
 
         if (d.substr(0, 2) == './')
           dNormalized = pkgName + '/' + d.substr(2);
         else
-          dNormalized = coreResolve.call(loader, d);
-        loader.depCache[dNormalized] = (loader.depCache[dNormalized] || []).concat(pkgCfgB.depCache[d]);
+          dNormalized = coreResolve.call(loader, config, d);
+        config.depCache[dNormalized] = (config.depCache[dNormalized] || []).concat(pkgCfgB.depCache[d]);
       }
     }
-    else if (warnInvalidProperties && ['browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'].indexOf(prop) == -1 && pkgCfgB.hasOwnProperty(prop)) {
-      warn.call(loader, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
+    else if (warnInvalidProperties && envConfigNames.indexOf(prop) === -1 && pkgCfgB.hasOwnProperty(prop)) {
+      warn.call(config, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
     }
   }
 }
 
 // deeply-merge (to first level) config with any existing package config
-export function setPkgConfig (loader, pkgName, cfg, prependConfig) {
+export function setPkgConfig (loader, config, pkgName, cfg, prependConfig) {
   var pkg;
 
   // first package is config by reference for fast path, cloned after that
-  if (!loader.packages[pkgName]) {
-    pkg = loader.packages[pkgName] = cfg;
+  if (!config.packages[pkgName]) {
+    pkg = config.packages[pkgName] = cfg;
   }
   else {
-    var basePkg = loader.packages[pkgName];
-    pkg = loader.packages[pkgName] = {};
+    var basePkg = config.packages[pkgName];
+    pkg = config.packages[pkgName] = {};
 
-    extendPkgConfig(pkg, prependConfig ? cfg : basePkg, pkgName, loader, prependConfig);
-    extendPkgConfig(pkg, prependConfig ? basePkg : cfg, pkgName, loader, !prependConfig);
+    extendPkgConfig(pkg, prependConfig ? cfg : basePkg, pkgName, loader, config, prependConfig);
+    extendPkgConfig(pkg, prependConfig ? basePkg : cfg, pkgName, loader, config, !prependConfig);
   }
 
   if (!('main' in pkg) && pkg.map && pkg.map['.']) {
@@ -263,7 +282,7 @@ export function setPkgConfig (loader, pkgName, cfg, prependConfig) {
     delete pkg.map['.'];
   }
   // main object becomes main map
-  else if (typeof pkg.main == 'object') {
+  else if (typeof pkg.main === 'object') {
     pkg.map = pkg.map || {};
     pkg.map['./@main'] = pkg.main;
     pkg.main['default'] = pkg.main['default'] || './';
