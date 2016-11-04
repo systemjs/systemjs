@@ -36,6 +36,9 @@ export function instantiate (key, metadata, processAnonRegister) {
 
     // just script loading
     return new Promise(function (resolve, reject) {
+      if (metadata.load.format === 'amd' && global.define !== loader.amdDefine)
+        throw new Error('To script load AMD requires setting the global `global.define = SystemJS.amdDefine`');
+
       scriptLoad(key, metadata.load.crossOrigin, metadata.load.integrity, function () {
         processAnonRegister();
 
