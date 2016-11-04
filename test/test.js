@@ -180,13 +180,9 @@ suite('SystemJS Standard Tests', function() {
 
   test('Contextual map configuration', function () {
     System.config({
-      packages: {
-        'tests/contextual-test': {
-          main: 'contextual-map.js'
-        }
-      },
       map: {
         'tests/contextual-test': {
+          '.': './contextual-map.js',
           maptest: '../contextual-map-dep.js'
         }
       }
@@ -939,8 +935,8 @@ suite('SystemJS Standard Tests', function() {
       packageConfigPaths: ['tests/testpkg/system.json'],
       packages: {
         'tests/testpkg': {
-          main: './noext',
           map: {
+            ".": './noext',
             "testpkg": "."
           },
           asdf: 'asdf'
