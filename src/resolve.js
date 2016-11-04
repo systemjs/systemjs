@@ -1,5 +1,5 @@
 import SystemJSLoader, { CREATE_METADATA } from './systemjs-loader.js';
-import { urlResolve, isRel, isAbsolute, getMapMatch, applyPaths, readMemberExpression, extendMeta, addToError } from './common.js';
+import { getMapMatch, applyPaths, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
 import { setPkgConfig } from './config.js';
 import fetch from './fetch.js';
 
@@ -30,6 +30,9 @@ function getParentMetadata (loader, metadata, parentName) {
 }
 
 export function normalize (name, parentName, metadata, parentMetadata) {
+  // these are because users can still call System.normalize('a', 'b')
+  // this will be fixed with deprecating normalize and even sooner with es-module-loader 2
+  // which doesn't need to share the "normalize" prototype method
   metadata = metadata || this[CREATE_METADATA]();
   parentMetadata = parentMetadata || getParentMetadata(this, metadata, parentName);
 
@@ -81,22 +84,21 @@ export function normalizeSync (name, parentName) {
 }
 
 export function coreResolve (name, parentName) {
-  // standard URL resolution
-  if (isRel(name))
-    return urlResolve(name, parentName);
-  else if (isAbsolute(name))
-    return name;
+  var relativeResolved = resolveUrlToParentIfNotPlain(name, parentName || baseURI);
 
-  // plain names not starting with './', '://' and '/' go through custom resolution
+  // standard URL resolution
+  if (relativeResolved)
+    return relativeResolved;
+
+  // plain names not starting with './', 'x://' and '/' go through custom resolution
   var mapMatch = getMapMatch(this.map, name);
 
   if (mapMatch) {
     name = this.map[mapMatch] + name.substr(mapMatch.length);
 
-    if (isRel(name))
-      return urlResolve(name);
-    else if (isAbsolute(name))
-      return name;
+    relativeResolved = resolveUrlToParentIfNotPlain(name, baseURI);
+    if (relativeResolved)
+      return relativeResolved;
   }
 
   if (this.registry.has(name))
