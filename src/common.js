@@ -1,7 +1,7 @@
 import { resolveUrlToParentIfNotPlain } from 'es-module-loader/core/resolve.js';
 import { baseURI, isBrowser, isWindows, addToError, global } from 'es-module-loader/core/common.js';
 
-export { baseURI, isBrowser, isWindows, addToError, global }
+export { baseURI, isBrowser, isWindows, addToError, global, resolveUrlToParentIfNotPlain }
 
 export var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
 
@@ -41,21 +41,6 @@ export function warn (msg, force) {
     console.warn(msg);
 }
 
-var absURLRegEx = /^[^\/]+:\/\//;
-export function isAbsolute (name) {
-  return name.match(absURLRegEx);
-}
-export function isRel (name) {
-  return (name[0] === '.' && (!name[1] || name[1] === '/' || name[1] === '.')) || name[0] === '/';
-}
-export function isPlain (name) {
-  return !isRel(name) && !isAbsolute(name);
-}
-
-export function urlResolve (url, parentUrl) {
-  return resolveUrlToParentIfNotPlain(url, parentUrl || baseURI) || resolveUrlToParentIfNotPlain('./' + url, parentUrl || baseURI);
-}
-
 export function applyPaths (loader, name) {
   // most specific (most number of slashes in path) match wins
   var pathMatch = '', wildcard;
@@ -71,7 +56,7 @@ export function applyPaths (loader, name) {
     // paths sanitization
     var path = paths[p];
     if (path !== pathsCache[p])
-      path = paths[p] = pathsCache[p] = urlResolve(paths[p], isRel(paths[p]) ? baseURI : loader.baseURL);
+      path = paths[p] = pathsCache[p] = resolveUrlToParentIfNotPlain(paths[p], baseURI) || resolveUrlToParentIfNotPlain('./' + paths[p], loader.baseURL);
 
     // exact path match
     if (name == p) {
@@ -92,7 +77,7 @@ export function applyPaths (loader, name) {
 
 var parentModuleContext;
 export function loadNodeModule (name, baseURL) {
-  if (!isPlain(name))
+  if (name[0] === '.')
     throw new Error('Node module ' + name + ' can\'t be loaded as it is not a package require.');
 
   if (!parentModuleContext) {
