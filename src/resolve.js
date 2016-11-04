@@ -1,9 +1,36 @@
-import SystemJSLoader, { CREATE_METADATA } from './systemjs-loader.js';
-import { getMapMatch, applyPaths, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
+import SystemJSLoader, { CREATE_METADATA, CONFIG } from './systemjs-loader.js';
+import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
 import { setPkgConfig } from './config.js';
 import fetch from './fetch.js';
 
-function getParentMetadata (loader, metadata, parentName) {
+// separate out paths cache as a baseURL lock process
+export function applyPaths (paths, name) {
+  // most specific (most number of slashes in path) match wins
+  var pathMatch = '', wildcard;
+
+  // check to see if we have a paths entry
+  for (var p in paths) {
+    if (!paths.hasOwnProperty(p))
+      continue;
+
+    // exact path match
+    if (name === p)
+      return paths[p];
+
+    // support trailing / in paths rules
+    else if ((name.length < p.length || name[p.length - 1] === p[p.length - 1]) && (paths[p][paths[p].length - 1] === '/' || paths[p] === '')
+        && name.substr(0, p.length - 1) === p.substr(0, p.length - 1))
+      return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? (paths[p] && '/' || '') + name.substr(p.length) : '');
+  }
+
+  var outPath = paths[pathMatch];
+  if (typeof wildcard === 'string')
+    outPath = outPath.replace('*', wildcard);
+
+  return outPath;
+}
+
+function getParentMetadata (loader, config, metadata, parentName) {
   var parentMetadata = loader[CREATE_METADATA]();
 
   if (parentName) {
@@ -11,7 +38,7 @@ function getParentMetadata (loader, metadata, parentName) {
     // we just need pluginName to be truthy for package configurations
     // so we duplicate it as pluginArgument - although not correct its not used
     var parentPluginIndex;
-    if (loader.pluginFirst) {
+    if (config.pluginFirst) {
       if ((parentPluginIndex = parentName.lastIndexOf('!')) !== -1)
         parentMetadata.pluginArgument = parentMetadata.pluginName = parentName.substr(0, parentPluginIndex);
     }
@@ -21,32 +48,34 @@ function getParentMetadata (loader, metadata, parentName) {
     }
 
     // detect parent package
-    parentMetadata.packageName = getPackage(loader, parentName);
+    parentMetadata.packageName = getPackage(config, parentName);
     if (parentMetadata.packageName)
-      parentMetadata.packageConfig = loader.packages[parentMetadata.packageName];
+      parentMetadata.packageConfig = config.packages[parentMetadata.packageName];
   }
 
   return parentMetadata;
 }
 
 export function normalize (name, parentName, metadata, parentMetadata) {
+  var config = this[CONFIG];
+
   // these are because users can still call System.normalize('a', 'b')
   // this will be fixed with deprecating normalize and even sooner with es-module-loader 2
   // which doesn't need to share the "normalize" prototype method
   metadata = metadata || this[CREATE_METADATA]();
-  parentMetadata = parentMetadata || getParentMetadata(this, metadata, parentName);
+  parentMetadata = parentMetadata || getParentMetadata(this, config, metadata, parentName);
 
   var loader = this;
   return booleanConditional.call(loader, name, parentName)
   .then(function (name) {
     // pluginResolve wraps packageResolve wraps coreResolve
-    return pluginResolve.call(loader, name, parentName, metadata, parentMetadata);
+    return pluginResolve.call(loader, config, name, parentName, metadata, parentMetadata);
   })
   .then(function (normalized) {
     return interpolateConditional.call(loader, normalized, parentName, parentMetadata);
   })
   .then(function (normalized) {
-    setMeta.call(loader, normalized, metadata);
+    setMeta.call(loader, config, normalized, metadata);
 
     if (metadata.pluginName || !metadata.load.loader)
       return normalized;
@@ -66,24 +95,42 @@ export function normalize (name, parentName, metadata, parentMetadata) {
 }
 
 export function normalizeSync (name, parentName) {
+  var config = this[CONFIG];
+
   // normalizeSync is metadataless, so create metadata
   var metadata = this[CREATE_METADATA]();
-  var parentMetadata = parentMetadata || getParentMetadata(this, metadata, parentName);
+  var parentMetadata = parentMetadata || getParentMetadata(this, config, metadata, parentName);
 
-  var parsed = parsePlugin(this, name);
+  var parsed = parsePlugin(config, name);
 
   // plugin
   if (parsed) {
     metadata.pluginName = this.normalizeSync(parsed.plugin, parentName);
-    return combinePluginParts(this,
-        packageResolveSync.call(this, parsed.argument, parentMetadata.pluginArgument || parentName, metadata, parentMetadata, !!metadata.pluginName),
+    return combinePluginParts(config,
+        packageResolveSync.call(this, config, parsed.argument, parentMetadata.pluginArgument || parentName, metadata, parentMetadata, !!metadata.pluginName),
         metadata.pluginName);
   }
 
-  return packageResolveSync.call(this, name, parentMetadata.pluginArgument || parentName, metadata, parentMetadata, !!metadata.pluginName);
+  return packageResolveSync.call(this, config, name, parentMetadata.pluginArgument || parentName, metadata, parentMetadata, !!metadata.pluginName);
 }
 
-export function coreResolve (name, parentName) {
+export function normalizePaths (config) {
+  for (var p in config.paths) {
+    if (!config.paths.hasOwnProperty(p))
+      continue;
+    // warn on wildcard path deprecations
+    var path = config.paths[p];
+    if (path.indexOf('*') !== -1)
+      warn.call(config, 'Paths configuration "' + p + '" -> "' + path + '" uses wildcards which are no longer supported.', true);
+    config.paths[p] = resolveUrlToParentIfNotPlain(path, baseURI) || resolveUrlToParentIfNotPlain('./' + path, config.baseURL);
+  }
+  config.pathsLocked = true;
+}
+
+export function coreResolve (config, name, parentName, doMap) {
+  if (!config.pathsLocked)
+    normalizePaths(config);
+
   var relativeResolved = resolveUrlToParentIfNotPlain(name, parentName || baseURI);
 
   // standard URL resolution
@@ -91,14 +138,16 @@ export function coreResolve (name, parentName) {
     return relativeResolved;
 
   // plain names not starting with './', 'x://' and '/' go through custom resolution
-  var mapMatch = getMapMatch(this.map, name);
+  if (doMap) {
+    var mapMatch = getMapMatch(config.map, name);
 
-  if (mapMatch) {
-    name = this.map[mapMatch] + name.substr(mapMatch.length);
+    if (mapMatch) {
+      name = config.map[mapMatch] + name.substr(mapMatch.length);
 
-    relativeResolved = resolveUrlToParentIfNotPlain(name, baseURI);
-    if (relativeResolved)
-      return relativeResolved;
+      relativeResolved = resolveUrlToParentIfNotPlain(name, baseURI);
+      if (relativeResolved)
+        return relativeResolved;
+    }
   }
 
   if (this.registry.has(name))
@@ -107,21 +156,21 @@ export function coreResolve (name, parentName) {
   if (name.substr(0, 6) === '@node/')
     return name;
 
-  return applyPaths(this, name) || this.baseURL + name;
+  return applyPaths(config.paths, name) || config.baseURL + name;
 }
 
-function pluginResolve (name, parentName, metadata, parentMetadata) {
+function pluginResolve (config, name, parentName, metadata, parentMetadata) {
   var loader = this;
 
-  var parsed = parsePlugin(loader, name);
+  var parsed = parsePlugin(config, name);
 
   if (!parsed)
-    return packageResolve.call(this, name, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata, false);
+    return packageResolve.call(this, config, name, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata, false);
 
   metadata.pluginName = parsed.plugin;
 
   return Promise.all([
-    packageResolve.call(this, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata, true),
+    packageResolve.call(this, config, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentName, metadata, parentMetadata, true),
     this.resolve(parsed.plugin, parentName)
   ])
   .then(function (normalized) {
@@ -132,39 +181,39 @@ function pluginResolve (name, parentName, metadata, parentMetadata) {
     if (metadata.pluginArgument === metadata.pluginName)
       throw new Error('Plugin ' + metadata.pluginArgument + ' cannot load itself, make sure it is excluded from any wildcard meta configuration via a custom loader: false rule.');
 
-    return combinePluginParts(loader, normalized[0], normalized[1]);
+    return combinePluginParts(config, normalized[0], normalized[1]);
   });
 }
 
-function packageResolveSync (name, parentName, metadata, parentMetadata, skipExtensions) {
+function packageResolveSync (config, name, parentName, metadata, parentMetadata, skipExtensions) {
   // ignore . since internal maps handled by standard package resolution
   if (parentMetadata && parentMetadata.packageConfig && name[0] !== '.') {
     var parentMap = parentMetadata.packageConfig.map;
     var parentMapMatch = parentMap && getMapMatch(parentMap, name);
 
     if (parentMapMatch && typeof parentMap[parentMapMatch] === 'string') {
-      var mapped = doMapSync(this, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, parentMetadata, skipExtensions);
+      var mapped = doMapSync(this, config, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, parentMetadata, skipExtensions);
       if (mapped)
         return mapped;
     }
   }
 
-  var normalized = coreResolve.call(this, name, parentName);
+  var normalized = coreResolve.call(this, config, name, parentName, true);
 
-  var pkgConfigMatch = getPackageConfigMatch(this, normalized);
-  metadata.packageName = pkgConfigMatch && pkgConfigMatch.packageName || getPackage(this, normalized);
+  var pkgConfigMatch = getPackageConfigMatch(config, normalized);
+  metadata.packageName = pkgConfigMatch && pkgConfigMatch.packageName || getPackage(config, normalized);
 
   if (!metadata.packageName)
     return normalized;
 
-  metadata.packageConfig = this.packages[metadata.packageName] || {};
+  metadata.packageConfig = config.packages[metadata.packageName] || {};
 
   var subPath = normalized.substr(metadata.packageName.length + 1);
 
-  return applyPackageConfigSync(this, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
+  return applyPackageConfigSync(this, config, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
 }
 
-function packageResolve (name, parentName, metadata, parentMetadata, skipExtensions) {
+function packageResolve (config, name, parentName, metadata, parentMetadata, skipExtensions) {
   var loader = this;
 
   return Promise.resolve()
@@ -175,7 +224,7 @@ function packageResolve (name, parentName, metadata, parentMetadata, skipExtensi
       var parentMapMatch = parentMap && getMapMatch(parentMap, name);
 
       if (parentMapMatch)
-        return doMap(loader, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, parentMetadata, skipExtensions);
+        return doMap(loader, config, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, parentMetadata, skipExtensions);
     }
 
     return Promise.resolve();
@@ -185,30 +234,31 @@ function packageResolve (name, parentName, metadata, parentMetadata, skipExtensi
       return mapped;
 
     // apply map, core, paths, contextual package map
-    var normalized = coreResolve.call(loader, name, parentName);
+    var normalized = coreResolve.call(loader, config, name, parentName, true);
 
-    var pkgConfigMatch = getPackageConfigMatch(loader, normalized);
-    metadata.packageName = pkgConfigMatch && pkgConfigMatch.packageName || getPackage(loader, normalized);
+    var pkgConfigMatch = getPackageConfigMatch(config, normalized);
+    metadata.packageName = pkgConfigMatch && pkgConfigMatch.packageName || getPackage(config, normalized);
 
     if (!metadata.packageName)
       return Promise.resolve(normalized);
 
-    var packageConfig = loader.packages[metadata.packageName];
+    var packageConfig = config.packages[metadata.packageName];
 
     // if package is already configured or not a dynamic config package, use existing package config
     var isConfigured = packageConfig && (packageConfig.configured || !pkgConfigMatch);
-    return (isConfigured ? Promise.resolve(packageConfig) : loadPackageConfigPath(loader, pkgConfigMatch.configPath, metadata))
+    return (isConfigured ? Promise.resolve(packageConfig) : loadPackageConfigPath(loader, config, pkgConfigMatch.configPath, metadata))
     .then(function (packageConfig) {
       metadata.packageConfig = packageConfig;
       var subPath = normalized.substr(metadata.packageName.length + 1);
 
-      return applyPackageConfig(loader, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
+      return applyPackageConfig(loader, config, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
     });
   });
 }
 
-function setMeta (name, metadata) {
+function setMeta (config, name, metadata) {
   metadata.load = {
+    extension: '',
     deps: undefined,
     format: undefined,
     loader: undefined,
@@ -227,7 +277,7 @@ function setMeta (name, metadata) {
   // apply wildcard metas
   var bestDepth = 0;
   var wildcardIndex;
-  for (var module in this.meta) {
+  for (var module in config.meta) {
     wildcardIndex = module.indexOf('*');
     if (wildcardIndex === -1)
       continue;
@@ -236,13 +286,13 @@ function setMeta (name, metadata) {
       var depth = module.split('/').length;
       if (depth > bestDepth)
         bestDepth = depth;
-      extendMeta(metadata.load, this.meta[module], bestDepth !== depth);
+      extendMeta(metadata.load, config.meta[module], bestDepth !== depth);
     }
   }
 
   // apply exact meta
-  if (this.meta[name])
-    extendMeta(metadata.load, this.meta[name]);
+  if (config.meta[name])
+    extendMeta(metadata.load, config.meta[name]);
 
   // apply package meta
   if (metadata.packageName) {
@@ -252,7 +302,6 @@ function setMeta (name, metadata) {
     if (metadata.packageConfig.meta) {
       var bestDepth = 0;
 
-      // NB support a main shorthand in meta here?
       getMetaMatches(metadata.packageConfig.meta, subPath, function (metaPattern, matchMeta, matchDepth) {
         if (matchDepth > bestDepth)
           bestDepth = matchDepth;
@@ -268,7 +317,7 @@ function setMeta (name, metadata) {
   }
 }
 
-function parsePlugin (loader, name) {
+function parsePlugin (config, name) {
   var argumentName;
   var pluginName;
 
@@ -277,7 +326,7 @@ function parsePlugin (loader, name) {
   if (pluginIndex === -1)
     return;
 
-  if (loader.pluginFirst) {
+  if (config.pluginFirst) {
     argumentName = name.substr(pluginIndex + 1);
     pluginName = name.substr(0, pluginIndex);
   }
@@ -293,8 +342,8 @@ function parsePlugin (loader, name) {
 }
 
 // put name back together after parts have been normalized
-function combinePluginParts (loader, argumentName, pluginName) {
-  if (loader.pluginFirst)
+function combinePluginParts (config, argumentName, pluginName) {
+  if (config.pluginFirst)
     return pluginName + '!' + argumentName;
   else
     return argumentName + '!' + pluginName;
@@ -390,10 +439,10 @@ function combinePluginParts (loader, argumentName, pluginName) {
  * packageConfigPaths, use the { configured: true } package config option.
  *
  */
-function getPackage (loader, normalized) {
+function getPackage (config, normalized) {
   // use most specific package
   var curPkg, curPkgLen = 0, pkgLen;
-  for (var p in loader.packages) {
+  for (var p in config.packages) {
     if (normalized.substr(0, p.length) === p && (normalized.length === p.length || normalized[p.length] === '/')) {
       pkgLen = p.split('/').length;
       if (pkgLen > curPkgLen) {
@@ -405,7 +454,7 @@ function getPackage (loader, normalized) {
   return curPkg;
 }
 
-function addDefaultExtension (loader, pkg, pkgName, subPath, skipExtensions) {
+function addDefaultExtension (config, pkg, pkgName, subPath, skipExtensions) {
   // don't apply extensions to folders or if defaultExtension = false
   if (!subPath || !pkg.defaultExtension || subPath[subPath.length - 1] === '/' || skipExtensions)
     return subPath;
@@ -420,8 +469,8 @@ function addDefaultExtension (loader, pkg, pkgName, subPath, skipExtensions) {
     });
 
   // exact global meta or meta with any content after the last wildcard skips extension
-  if (!metaMatch && loader.meta)
-    getMetaMatches(loader.meta, pkgName + '/' + subPath, function (metaPattern, matchMeta, matchDepth) {
+  if (!metaMatch && config.meta)
+    getMetaMatches(config.meta, pkgName + '/' + subPath, function (metaPattern, matchMeta, matchDepth) {
       if (matchDepth === 0 || metaPattern.lastIndexOf('*') !== metaPattern.length - 1)
         return metaMatch = true;
     });
@@ -437,14 +486,14 @@ function addDefaultExtension (loader, pkg, pkgName, subPath, skipExtensions) {
     return subPath;
 }
 
-function applyPackageConfigSync (loader, pkg, pkgName, subPath, parentMetadata, skipExtensions) {
+function applyPackageConfigSync (loader, config, pkg, pkgName, subPath, parentMetadata, skipExtensions) {
   // main
   if (!subPath) {
     if (pkg.main)
       subPath = pkg.main.substr(0, 2) === './' ? pkg.main.substr(2) : pkg.main;
     else
-    // also no submap if name is package itself (import 'pkg' -> 'path/to/pkg.js')
-      // NB can add a default package main convention here when defaultJSExtensions is deprecated
+      // also no submap if name is package itself (import 'pkg' -> 'path/to/pkg.js')
+      // NB can add a default package main convention here
       // if it becomes internal to the package then it would no longer be an exit path
       return pkgName;
   }
@@ -462,7 +511,7 @@ function applyPackageConfigSync (loader, pkg, pkgName, subPath, parentMetadata, 
         mapMatch = getMapMatch(pkg.map, mapPath);
     }
     if (mapMatch) {
-      var mapped = doMapSync(loader, pkg, pkgName, mapMatch, mapPath, parentMetadata, skipExtensions);
+      var mapped = doMapSync(loader, config, pkg, pkgName, mapMatch, mapPath, parentMetadata, skipExtensions);
       if (mapped)
         return mapped;
     }
@@ -481,7 +530,7 @@ function validMapping (mapMatch, mapped, path) {
   return true;
 }
 
-function doMapSync (loader, pkg, pkgName, mapMatch, path, parentMetadata, skipExtensions) {
+function doMapSync (loader, config, pkg, pkgName, mapMatch, path, parentMetadata, skipExtensions) {
   if (path[path.length - 1] === '/')
     path = path.substr(0, path.length - 1);
   var mapped = pkg.map[mapMatch];
@@ -492,17 +541,17 @@ function doMapSync (loader, pkg, pkgName, mapMatch, path, parentMetadata, skipEx
   if (!validMapping(mapMatch, mapped, path) || typeof mapped !== 'string')
     return;
 
-  return packageResolveSync.call(this, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions);
+  return packageResolveSync.call(this, config, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions);
 }
 
-function applyPackageConfig (loader, pkg, pkgName, subPath, parentMetadata, skipExtensions) {
+function applyPackageConfig (loader, config, pkg, pkgName, subPath, parentMetadata, skipExtensions) {
   // main
   if (!subPath) {
     if (pkg.main)
       subPath = pkg.main.substr(0, 2) === './' ? pkg.main.substr(2) : pkg.main;
     // also no submap if name is package itself (import 'pkg' -> 'path/to/pkg.js')
     else
-      // NB can add a default package main convention here when defaultJSExtensions is deprecated
+      // NB can add a default package main convention here
       // if it becomes internal to the package then it would no longer be an exit path
       return Promise.resolve(pkgName);
   }
@@ -522,7 +571,7 @@ function applyPackageConfig (loader, pkg, pkgName, subPath, parentMetadata, skip
     }
   }
 
-  return (mapMatch ? doMap(loader, pkg, pkgName, mapMatch, mapPath, parentMetadata, skipExtensions) : Promise.resolve())
+  return (mapMatch ? doMap(loader, config, pkg, pkgName, mapMatch, mapPath, parentMetadata, skipExtensions) : Promise.resolve())
   .then(function (mapped) {
     if (mapped)
       return Promise.resolve(mapped);
@@ -532,7 +581,7 @@ function applyPackageConfig (loader, pkg, pkgName, subPath, parentMetadata, skip
   });
 }
 
-function doMap (loader, pkg, pkgName, mapMatch, path, parentMetadata, skipExtensions) {
+function doMap (loader, config, pkg, pkgName, mapMatch, path, parentMetadata, skipExtensions) {
   if (path[path.length - 1] === '/')
     path = path.substr(0, path.length - 1);
 
@@ -541,7 +590,7 @@ function doMap (loader, pkg, pkgName, mapMatch, path, parentMetadata, skipExtens
   if (typeof mapped === 'string') {
     if (!validMapping(mapMatch, mapped, path))
       return Promise.resolve();
-    return packageResolve.call(loader, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions)
+    return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions)
     .then(function (normalized) {
       return interpolateConditional.call(loader, normalized, pkgName + '/', parentMetadata);
     });
@@ -578,7 +627,7 @@ function doMap (loader, pkg, pkgName, mapMatch, path, parentMetadata, skipExtens
     if (mapped) {
       if (!validMapping(mapMatch, mapped, path))
         return;
-      return packageResolve.call(loader, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions)
+      return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions)
       .then(function (normalized) {
         return interpolateConditional.call(loader, normalized, pkgName + '/', parentMetadata);
       });
@@ -604,10 +653,10 @@ function createPkgConfigPathObj (path) {
 }
 
 // most specific match wins
-function getPackageConfigMatch (loader, normalized) {
+function getPackageConfigMatch (config, normalized) {
   var pkgName, exactMatch = false, configPath;
-  for (var i = 0; i < loader.packageConfigPaths.length; i++) {
-    var packageConfigPath = loader.packageConfigPaths[i];
+  for (var i = 0; i < config.packageConfigPaths.length; i++) {
+    var packageConfigPath = config.packageConfigPaths[i];
     var p = packageConfigPaths[packageConfigPath] || (packageConfigPaths[packageConfigPath] = createPkgConfigPathObj(packageConfigPath));
     if (normalized.length < p.length)
       continue;
@@ -629,7 +678,7 @@ function getPackageConfigMatch (loader, normalized) {
 }
 
 var fetchedConfig = {};
-function loadPackageConfigPath (loader, pkgConfigPath, metadata) {
+function loadPackageConfigPath (loader, config, pkgConfigPath, metadata) {
   if (fetchedConfig[pkgConfigPath])
     return fetchedConfig[pkgConfigPath];
 
@@ -645,7 +694,7 @@ function loadPackageConfigPath (loader, pkgConfigPath, metadata) {
     var configLoader = loader.pluginLoader || loader;
     configLoader.registry.set(pkgConfig, configLoader.newModule({ default: pkgConfig, __useDefault: true }));
 
-    return setPkgConfig(loader, metadata.packageName, pkgConfig, true);
+    return setPkgConfig(loader, config, metadata.packageName, pkgConfig, true);
   }, function (err) {
     throw addToError(err, 'Unable to fetch package configuration file ' + pkgConfigPath);
   });

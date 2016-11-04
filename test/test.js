@@ -145,7 +145,11 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Meta should override meta syntax', function () {
-    System.meta[System.normalizeSync('tests/meta-override.js')] = { format: 'esm' };
+    System.config({
+      meta: {
+        'tests/meta-override.js': { format: 'esm' }
+      }
+    });
     return System.import('tests/meta-override.js').then(function (m) {
       ok(m.p == 'value', 'Not ES6');
     });
@@ -158,21 +162,35 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Global script with shim config exports', function () {
-    System.meta[System.normalizeSync('tests/global-shim-config-exports.js')] = { exports: 'p' };
+    System.config({
+      meta: {
+        'tests/global-shim-config-exports.js': {
+          exports: 'p'
+        }
+      }
+    });
     return System.import('tests/global-shim-config-exports.js').then(function (m) {
       ok(m == 'export', 'Exports not shimmed');
     });
   });
 
   test('Map configuration', function () {
-    System.map['maptest'] = 'tests/map-test.js';
+    System.config({
+      map: {
+        'maptest': 'tests/map-test.js'
+      }
+    });
     return System.import('maptest').then(function (m) {
       ok(m.maptest == 'maptest', 'Mapped module not loaded');
     });
   });
 
   test('Map configuration subpath', function () {
-    System.map['maptest'] = 'tests/map-test';
+    System.config({
+      map: {
+        'maptest': 'tests/map-test'
+      }
+    });
     return System.import('maptest/sub.js').then(function (m) {
       ok(m.maptest == 'maptestsub', 'Mapped folder not loaded');
     });
@@ -473,7 +491,11 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Simple compiler Plugin', function () {
-    System.map['coffee'] = 'tests/compiler-plugin.js';
+    System.config({
+      map: {
+        'coffee': 'tests/compiler-plugin.js'
+      }
+    });
     return System.import('tests/compiler-test.coffee!').then(function (m) {
       ok(m.output == 'plugin output', 'Plugin not working.');
       ok(m.extra == 'yay!', 'Compiler not working.');
@@ -481,20 +503,30 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Mapping a plugin argument', function () {
-    System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
-    System.map['coffee'] = 'tests/compiler-plugin.js';
+    System.config({
+      map: {
+        bootstrap: 'tests/bootstrap@3.1.1',
+        coffee: 'tests/compiler-plugin.js'
+      }
+    });
     return System.import('bootstrap/test.coffee!coffee').then(function (m) {
       ok(m.extra == 'yay!', 'not working');
     });
   });
 
   test('Using pluginFirst config', function () {
-    System.pluginFirst = true;
-    System.map['bootstrap'] = 'tests/bootstrap@3.1.1';
-    System.map['coffee'] = 'tests/compiler-plugin.js';
+    System.config({
+      pluginFirst: true,
+      map: {
+        bootstrap: 'tests/bootstrap@3.1.1',
+        coffee: 'tests/compiler-plugin.js'
+      }
+    });
     return System.import('coffee!bootstrap/test.coffee').then(function (m) {
       ok(m.extra == 'yay!', 'not working');
-      System.pluginFirst = false;
+      System.config({
+        pluginFirst: false
+      });
     });
   });
 
@@ -505,7 +537,11 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Plugin as a dependency', function () {
-    System.map['css'] = 'tests/css.js';
+    System.config({
+      map: {
+        css: 'tests/css.js'
+      }
+    });
     return System.import('tests/cjs-loading-plugin.js').then(function (m) {
       ok(m.pluginSource == 'this is css');
     });
@@ -692,7 +728,11 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Importing a mapped loaded module', function () {
-    System.map['default1'] = 'tests/default1.js';
+    System.config({
+      map: {
+        'default1': 'tests/default1.js'
+      }
+    });
     return System.import('default1').then(function (m) {
       return System.import('default1').then(function (m) {
         ok(m, 'no module');
@@ -804,10 +844,20 @@ suite('SystemJS Standard Tests', function() {
   test("System clone", function () {
     var clonedSystem = new System.constructor();
 
-    clonedSystem.baseURL = System.baseURL;
+    clonedSystem.config({
+      baseURL: System.baseURL
+    });
 
-    System.map['maptest'] = 'tests/map-test.js';
-    clonedSystem.map['maptest'] = 'tests/map-test-dep.js';
+    System.config({
+      map: {
+        maptest: 'tests/map-test.js'
+      }
+    });
+    clonedSystem.config({
+      map: {
+        'maptest': 'tests/map-test-dep.js'
+      }
+    });
 
     Promise.all([
       System.import('maptest'),
@@ -826,12 +876,7 @@ suite('SystemJS Standard Tests', function() {
   test('Custom loader instance System scoped', function () {
     var customSystem = new System.constructor();
 
-    customSystem.baseURL = System.baseURL;
-    customSystem.paths = System.paths;
-    customSystem.transpiler = System.transpiler;
-    customSystem.meta = System.meta;
-    customSystem.map = System.map;
-    customSystem.packages = System.packages;
+    customSystem.config(System.getConfig());
 
     return customSystem.import('tests/loader-scoping.js')
     .then(function (m) {
