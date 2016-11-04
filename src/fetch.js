@@ -9,7 +9,7 @@ function fetchFetch (url, authorization, integrity) {
     if (hasXhr)
       return xhrFetch(url, authorization);
     else
-      return noFetch();
+      throw new Error('Unable to fetch file URLs in this environment.');
   }
 
   // percent encode just "#" for HTTP requests
