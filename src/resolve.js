@@ -440,8 +440,8 @@ function applyPackageConfigSync (loader, pkg, pkgName, subPath, skipExtensions) 
   if (!subPath) {
     if (pkg.main)
       subPath = pkg.main.substr(0, 2) === './' ? pkg.main.substr(2) : pkg.main;
-    // also no submap if name is package itself (import 'pkg' -> 'path/to/pkg.js')
     else
+    // also no submap if name is package itself (import 'pkg' -> 'path/to/pkg.js')
       // NB can add a default package main convention here when defaultJSExtensions is deprecated
       // if it becomes internal to the package then it would no longer be an exit path
       return pkgName;
@@ -471,10 +471,6 @@ function applyPackageConfigSync (loader, pkg, pkgName, subPath, skipExtensions) 
 }
 
 function validMapping (mapMatch, mapped, pkgName, path) {
-  // disallow internal to subpath maps
-  if (mapMatch === '.')
-    throw new Error('Package ' + pkgName + ' has a map entry for "." which is not permitted.');
-
   // allow internal ./x -> ./x/y or ./x/ -> ./x/y recursive maps
   // but only if the path is exactly ./x and not ./x/z
   if (mapped.substr(0, mapMatch.length) === mapMatch && path.length > mapMatch.length)
