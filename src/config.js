@@ -115,27 +115,23 @@ export function setConfig (cfg, isEnvConfig) {
     loader.pluginFirst = cfg.pluginFirst;
 
   if (cfg.map) {
-    var objMaps = '';
     for (var p in cfg.map) {
       var v = cfg.map[p];
 
-      // object map backwards-compat into packages configuration
+      // object map
       if (typeof v !== 'string') {
-        objMaps += (objMaps.length ? ', ' : '') + '"' + p + '"';
         var prop = loader.normalizeSync(p);
         // if a package main, revert it
         var pkgMatch = '';
         for (var pkg in loader.packages) {
-          if (prop.substr(0, pkg.length) == pkg
-              && (!prop[pkg.length] || prop[pkg.length] == '/')
+          if (prop.substr(0, pkg.length) === pkg
+              && (!prop[pkg.length] || prop[pkg.length] === '/')
               && pkgMatch.split('/').length < pkg.split('/').length)
             pkgMatch = pkg;
         }
         if (pkgMatch && loader.packages[pkgMatch].main)
           prop = prop.substr(0, prop.length - loader.packages[pkgMatch].main.length - 1);
-
-        var pkg = loader.packages[prop] = loader.packages[prop] || {};
-        pkg.map = v;
+        setPkgConfig(loader, prop, { map: v }, false);
       }
       else {
         loader.map[p] = v;
@@ -262,8 +258,12 @@ export function setPkgConfig (loader, pkgName, cfg, prependConfig) {
     extendPkgConfig(pkg, prependConfig ? basePkg : cfg, pkgName, loader, !prependConfig);
   }
 
+  if (!('main' in pkg) && pkg.map && pkg.map['.']) {
+    pkg.main = pkg.map['.'];
+    delete pkg.map['.'];
+  }
   // main object becomes main map
-  if (typeof pkg.main == 'object') {
+  else if (typeof pkg.main == 'object') {
     pkg.map = pkg.map || {};
     pkg.map['./@main'] = pkg.main;
     pkg.main['default'] = pkg.main['default'] || './';
