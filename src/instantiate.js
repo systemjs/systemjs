@@ -14,7 +14,7 @@ export function instantiate (key, metadata, processAnonRegister) {
     // node module loading
     if (key.substr(0, 6) === '@node/') {
       if (!loader._nodeRequire)
-        throw new TypeError('Error loading ' + name + '. Can only load node core modules in Node.');
+        throw new TypeError('Error loading ' + key + '. Can only load node core modules in Node.');
       if (loader.builder)
         loader.registerDynamic([], function () {});
       else
@@ -26,19 +26,19 @@ export function instantiate (key, metadata, processAnonRegister) {
     }
 
     // auto script load AMD, global without deps
-    if (!metadata.pluginName && !metadata.load.deps && !metadata.load.globals && metadata.load.scriptLoad !== false &&
+    if (!metadata.pluginKey && !metadata.load.deps && !metadata.load.globals && metadata.load.scriptLoad !== false &&
         (metadata.load.format === 'system' || metadata.load.format === 'register' ||
         metadata.load.format === 'global' && metadata.load.exports && !isWorker))
       metadata.load.scriptLoad = true;
 
     // fetch / translate / instantiate pipeline
-    if (metadata.load.format == 'json' || !metadata.load.scriptLoad || metadata.load.pluginName || (!isBrowser && !isWorker))
+    if (metadata.load.format == 'json' || !metadata.load.scriptLoad || metadata.load.pluginKey || (!isBrowser && !isWorker))
       return runFetchPipeline(loader, key, metadata, processAnonRegister);
 
     // just script loading
     return new Promise(function (resolve, reject) {
       if (metadata.load.format === 'amd' && global.define !== loader.amdDefine)
-        throw new Error('To script load AMD requires setting the global `global.define = SystemJS.amdDefine`');
+        throw new Error('Loading AMD with scriptLoad requires setting the global `' + globalName + '.define = SystemJS.amdDefine`');
 
       scriptLoad(key, metadata.load.crossOrigin, metadata.load.integrity, function () {
         processAnonRegister();
@@ -64,10 +64,10 @@ export function instantiate (key, metadata, processAnonRegister) {
 };
 
 function initializePlugin (loader, key, metadata) {
-  if (!metadata.pluginName)
+  if (!metadata.pluginKey)
     return Promise.resolve();
 
-  return loader.import(metadata.pluginName).then(function (plugin) {
+  return loader.import(metadata.pluginKey).then(function (plugin) {
     metadata.pluginModule = plugin;
     metadata.pluginLoad = {
       name: key,
@@ -293,18 +293,13 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
           if (metadata.load.globals[g])
             deps.push(metadata.load.globals[g]);
 
-        loader.registerDynamic(deps, function (_require, exports, module) {
-          function require (name) {
-            if (name[name.length - 1] == '/')
-              name = name.substr(0, name.length - 1);
-            return _require.apply(this, arguments);
-          }
-          require.resolve = function (name) {
-            return requireResolve.call(loader, name, module.id);
+        loader.registerDynamic(deps, function (require, exports, module) {
+          require.resolve = function (key) {
+            return requireResolve.call(loader, key, module.id);
           };
           // support module.paths ish
           module.paths = [];
-          module.require = _require;
+          module.require = require;
 
           // ensure meta deps execute first
           if (!metadata.load.cjsDeferDepsExecute && metaDeps)
