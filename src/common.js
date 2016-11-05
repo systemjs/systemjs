@@ -42,9 +42,9 @@ export function warn (msg, force) {
 }
 
 var parentModuleContext;
-export function loadNodeModule (name, baseURL) {
-  if (name[0] === '.')
-    throw new Error('Node module ' + name + ' can\'t be loaded as it is not a package require.');
+export function loadNodeModule (key, baseURL) {
+  if (key[0] === '.')
+    throw new Error('Node module ' + key + ' can\'t be loaded as it is not a package require.');
 
   if (!parentModuleContext) {
     var Module = this._nodeRequire('module');
@@ -52,7 +52,7 @@ export function loadNodeModule (name, baseURL) {
     parentModuleContext = new Module(base);
     parentModuleContext.paths = Module._nodeModulePaths(base);
   }
-  return parentModuleContext.require(name);
+  return parentModuleContext.require(key);
 }
 
 export function extend (a, b, prepend) {
