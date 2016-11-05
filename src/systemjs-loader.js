@@ -3,7 +3,7 @@ import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { warn, nodeRequire, scriptSrc, isBrowser, global, createSymbol, baseURI } from './common.js';
 
 import { getConfig, getConfigItem, setConfig } from './config.js';
-import { coreResolve, normalize, normalizeSync } from './resolve.js';
+import { decanonicalize, normalize, normalizeSync } from './resolve.js';
 import { instantiate } from './instantiate.js';
 import formatHelpers from './format-helpers.js';
 
@@ -81,10 +81,10 @@ SystemJSLoader.prototype.constructor = SystemJSLoader;
 SystemJSLoader.prototype[CREATE_METADATA] = function () {
   return {
     registered: false,
-    pluginName: undefined,
+    pluginKey: undefined,
     pluginArgument: undefined,
     pluginModule: undefined,
-    packageName: undefined,
+    packageKey: undefined,
     packageConfig: undefined,
     load: undefined
   };
@@ -139,21 +139,21 @@ SystemJSLoader.prototype.import = function () {
   });
 };
 
-SystemJSLoader.prototype.delete = function (moduleName) {
+SystemJSLoader.prototype.delete = function (key) {
   // registryWarn(this, 'delete');
-  this.registry.delete(moduleName);
+  this.registry.delete(key);
 };
-SystemJSLoader.prototype.get = function (moduleName) {
+SystemJSLoader.prototype.get = function (key) {
   // registryWarn(this, 'get');
-  return this.registry.get(moduleName);
+  return this.registry.get(key);
 };
-SystemJSLoader.prototype.has = function (moduleName) {
+SystemJSLoader.prototype.has = function (key) {
   // registryWarn(this, 'has');
-  return this.registry.has(moduleName);
+  return this.registry.has(key);
 };
-SystemJSLoader.prototype.set = function (moduleName, module) {
+SystemJSLoader.prototype.set = function (key, module) {
   // registryWarn(this, 'set');
-  return this.registry.set(moduleName, module);
+  return this.registry.set(key, module);
 };
 SystemJSLoader.prototype.newModule = function (bindings) {
   return new ModuleNamespace(bindings);
@@ -162,12 +162,12 @@ SystemJSLoader.prototype.newModule = function (bindings) {
 // ensure System.register and System.registerDynamic decanonicalize
 SystemJSLoader.prototype.register = function (key, deps, declare) {
   if (typeof key === 'string')
-    key = coreResolve.call(this, this[CONFIG], key, undefined);
+    key = decanonicalize.call(this, this[CONFIG], key);
   return RegisterLoader.prototype.register.call(this, key, deps, declare);
 };
 
 SystemJSLoader.prototype.registerDynamic = function (key, deps, executingRequire, execute) {
   if (typeof key === 'string')
-    key = coreResolve.call(this, this[CONFIG], key, undefined);
+    key = decanonicalize.call(this, this[CONFIG], key);
   return RegisterLoader.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
