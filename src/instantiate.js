@@ -155,7 +155,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
 
   // translate
   .then(function (source) {
-    if (metadata.load.format == 'detect')
+    if (metadata.load.format === 'detect')
       metadata.load.format = undefined;
 
     readMetaSyntax(source, metadata);
@@ -543,7 +543,8 @@ function readMetaSyntax (source, metadata) {
         metadata.load[metaName] = metadata.load[metaName] || [];
         metadata.load[metaName].push(metaValue);
       }
-      else {
+      // "use strict" is not meta
+      else if (metaName !== 'use') {
         setMetaProperty(metadata.load, metaName, metaValue);
       }
     }
