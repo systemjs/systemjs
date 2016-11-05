@@ -21,8 +21,5 @@
     "p": "./polate.js",
     "./conditional1": "./interpolate.js",
     "./conditional2": "./inter#{p}.js"
-  },
-  "depCache": {
-    "./dir2/index.json": ["../depcache-test"]
   }
 }

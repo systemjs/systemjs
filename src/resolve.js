@@ -1,6 +1,6 @@
 import SystemJSLoader, { CREATE_METADATA, CONFIG } from './systemjs-loader.js';
 import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
-import { setPkgConfig } from './config.js';
+import { setPkgConfig, createPackage } from './config.js';
 import fetch from './fetch.js';
 
 // separate out paths cache as a baseURL lock process
@@ -135,7 +135,7 @@ export function coreResolve (config, name, parentName, doMap) {
 
   // standard URL resolution
   if (relativeResolved)
-    return relativeResolved;
+    return applyPaths(config.paths, relativeResolved) || relativeResolved;
 
   // plain names not starting with './', 'x://' and '/' go through custom resolution
   if (doMap) {
@@ -206,7 +206,12 @@ function packageResolveSync (config, name, parentName, metadata, parentMetadata,
   if (!metadata.packageName)
     return normalized;
 
-  metadata.packageConfig = config.packages[metadata.packageName] || {};
+  if (config.packageConfigKeys.indexOf(normalized) !== -1) {
+    metadata.packageName = undefined;
+    return normalized;
+  }
+
+  metadata.packageConfig = config.packages[metadata.packageName] || (config.packages[metadata.packageName] = createPackage());
 
   var subPath = normalized.substr(metadata.packageName.length + 1);
 
@@ -242,13 +247,20 @@ function packageResolve (config, name, parentName, metadata, parentMetadata, ski
     if (!metadata.packageName)
       return Promise.resolve(normalized);
 
-    var packageConfig = config.packages[metadata.packageName];
+    if (config.packageConfigKeys.indexOf(normalized) !== -1) {
+      metadata.packageName = undefined;
+      metadata.load = createMeta();
+      metadata.load.format = 'json';
+      return Promise.resolve(normalized);
+    }
 
-    // if package is already configured or not a dynamic config package, use existing package config
-    var isConfigured = packageConfig && (packageConfig.configured || !pkgConfigMatch);
-    return (isConfigured ? Promise.resolve(packageConfig) : loadPackageConfigPath(loader, config, pkgConfigMatch.configPath, metadata))
-    .then(function (packageConfig) {
-      metadata.packageConfig = packageConfig;
+    metadata.packageConfig = config.packages[metadata.packageName] || (config.packages[metadata.packageName] = createPackage());
+
+    // load configuration when it matches packageConfigPaths, not already configured, and not the config itself
+    var loadConfig = pkgConfigMatch && !metadata.packageConfig.configured;
+
+    return (loadConfig ? loadPackageConfigPath(loader, config, pkgConfigMatch.configPath, metadata) : Promise.resolve())
+    .then(function () {
       var subPath = normalized.substr(metadata.packageName.length + 1);
 
       return applyPackageConfig(loader, config, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
@@ -256,8 +268,8 @@ function packageResolve (config, name, parentName, metadata, parentMetadata, ski
   });
 }
 
-function setMeta (config, name, metadata) {
-  metadata.load = {
+function createMeta () {
+  return {
     extension: '',
     deps: undefined,
     format: undefined,
@@ -273,6 +285,10 @@ function setMeta (config, name, metadata) {
     cjsRequireDetection: true,
     cjsDeferDepsExecute: false
   };
+}
+
+function setMeta (config, name, metadata) {
+  metadata.load = metadata.load || createMeta();
 
   // apply wildcard metas
   var bestDepth = 0;
@@ -677,25 +693,20 @@ function getPackageConfigMatch (config, normalized) {
   };
 }
 
-var fetchedConfig = {};
-function loadPackageConfigPath (loader, config, pkgConfigPath, metadata) {
-  if (fetchedConfig[pkgConfigPath])
-    return fetchedConfig[pkgConfigPath];
+function loadPackageConfigPath (loader, config, pkgConfigPath, metadata, normalized) {
+  var configLoader = loader.pluginLoader || loader;
 
-  return fetchedConfig[pkgConfigPath] = fetch(pkgConfigPath)
+  // ensure we note this is a package config file path
+  // it will then be skipped from getting other normalizations itself to ensure idempotency
+  if (config.packageConfigKeys.indexOf(pkgConfigPath) === -1)
+    config.packageConfigKeys.push(pkgConfigPath);
+
+  return configLoader.import(pkgConfigPath)
   .then(function (pkgConfig) {
-    try {
-      pkgConfig = JSON.parse(pkgConfig);
-    }
-    catch (e) {
-      throw new Error('Unable to parse JSON for package configuration file ' + pkgConfigPath);
-    }
-
-    var configLoader = loader.pluginLoader || loader;
-    configLoader.registry.set(pkgConfig, configLoader.newModule({ default: pkgConfig, __useDefault: true }));
-
-    return setPkgConfig(loader, config, metadata.packageName, pkgConfig, true);
-  }, function (err) {
+    setPkgConfig(metadata.packageConfig, pkgConfig, metadata.packageName, true, config);
+    metadata.packageConfig.configured = true;
+  })
+  .catch(function (err) {
     throw addToError(err, 'Unable to fetch package configuration file ' + pkgConfigPath);
   });
 }

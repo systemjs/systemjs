@@ -1013,7 +1013,6 @@ suite('SystemJS Standard Tests', function() {
       ok(m[8] == 'interpolated!');
       ok(m[9].a.prop == 'value' && m[9].b.prop == 'value');
       ok(m[10].a.prop == 'value' && m[10].b.prop == 'value');
-      ok(System.global.depCacheTest == 'passed');
     });
   });
 
