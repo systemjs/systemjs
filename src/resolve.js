@@ -192,7 +192,7 @@ function packageResolveSync (config, name, parentName, metadata, parentMetadata,
     var parentMapMatch = parentMap && getMapMatch(parentMap, name);
 
     if (parentMapMatch && typeof parentMap[parentMapMatch] === 'string') {
-      var mapped = doMapSync(this, config, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, parentMetadata, skipExtensions);
+      var mapped = doMapSync(this, config, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, metadata, skipExtensions);
       if (mapped)
         return mapped;
     }
@@ -215,7 +215,7 @@ function packageResolveSync (config, name, parentName, metadata, parentMetadata,
 
   var subPath = normalized.substr(metadata.packageName.length + 1);
 
-  return applyPackageConfigSync(this, config, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
+  return applyPackageConfigSync(this, config, metadata.packageConfig, metadata.packageName, subPath, metadata, skipExtensions);
 }
 
 function packageResolve (config, name, parentName, metadata, parentMetadata, skipExtensions) {
@@ -229,7 +229,7 @@ function packageResolve (config, name, parentName, metadata, parentMetadata, ski
       var parentMapMatch = parentMap && getMapMatch(parentMap, name);
 
       if (parentMapMatch)
-        return doMap(loader, config, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, parentMetadata, skipExtensions);
+        return doMap(loader, config, parentMetadata.packageConfig, parentMetadata.packageName, parentMapMatch, name, metadata, skipExtensions);
     }
 
     return Promise.resolve();
@@ -263,7 +263,7 @@ function packageResolve (config, name, parentName, metadata, parentMetadata, ski
     .then(function () {
       var subPath = normalized.substr(metadata.packageName.length + 1);
 
-      return applyPackageConfig(loader, config, metadata.packageConfig, metadata.packageName, subPath, parentMetadata, skipExtensions);
+      return applyPackageConfig(loader, config, metadata.packageConfig, metadata.packageName, subPath, metadata, skipExtensions);
     });
   });
 }
@@ -502,7 +502,7 @@ function addDefaultExtension (config, pkg, pkgName, subPath, skipExtensions) {
     return subPath;
 }
 
-function applyPackageConfigSync (loader, config, pkg, pkgName, subPath, parentMetadata, skipExtensions) {
+function applyPackageConfigSync (loader, config, pkg, pkgName, subPath, metadata, skipExtensions) {
   // main
   if (!subPath) {
     if (pkg.main)
@@ -527,7 +527,7 @@ function applyPackageConfigSync (loader, config, pkg, pkgName, subPath, parentMe
         mapMatch = getMapMatch(pkg.map, mapPath);
     }
     if (mapMatch) {
-      var mapped = doMapSync(loader, config, pkg, pkgName, mapMatch, mapPath, parentMetadata, skipExtensions);
+      var mapped = doMapSync(loader, config, pkg, pkgName, mapMatch, mapPath, metadata, skipExtensions);
       if (mapped)
         return mapped;
     }
@@ -546,7 +546,7 @@ function validMapping (mapMatch, mapped, path) {
   return true;
 }
 
-function doMapSync (loader, config, pkg, pkgName, mapMatch, path, parentMetadata, skipExtensions) {
+function doMapSync (loader, config, pkg, pkgName, mapMatch, path, metadata, skipExtensions) {
   if (path[path.length - 1] === '/')
     path = path.substr(0, path.length - 1);
   var mapped = pkg.map[mapMatch];
@@ -557,10 +557,10 @@ function doMapSync (loader, config, pkg, pkgName, mapMatch, path, parentMetadata
   if (!validMapping(mapMatch, mapped, path) || typeof mapped !== 'string')
     return;
 
-  return packageResolveSync.call(this, config, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions);
+  return packageResolveSync.call(this, config, mapped + path.substr(mapMatch.length), pkgName + '/', metadata, metadata, skipExtensions);
 }
 
-function applyPackageConfig (loader, config, pkg, pkgName, subPath, parentMetadata, skipExtensions) {
+function applyPackageConfig (loader, config, pkg, pkgName, subPath, metadata, skipExtensions) {
   // main
   if (!subPath) {
     if (pkg.main)
@@ -587,7 +587,7 @@ function applyPackageConfig (loader, config, pkg, pkgName, subPath, parentMetada
     }
   }
 
-  return (mapMatch ? doMap(loader, config, pkg, pkgName, mapMatch, mapPath, parentMetadata, skipExtensions) : Promise.resolve())
+  return (mapMatch ? doMap(loader, config, pkg, pkgName, mapMatch, mapPath, metadata, skipExtensions) : Promise.resolve())
   .then(function (mapped) {
     if (mapped)
       return Promise.resolve(mapped);
@@ -597,7 +597,7 @@ function applyPackageConfig (loader, config, pkg, pkgName, subPath, parentMetada
   });
 }
 
-function doMap (loader, config, pkg, pkgName, mapMatch, path, parentMetadata, skipExtensions) {
+function doMap (loader, config, pkg, pkgName, mapMatch, path, metadata, skipExtensions) {
   if (path[path.length - 1] === '/')
     path = path.substr(0, path.length - 1);
 
@@ -606,9 +606,9 @@ function doMap (loader, config, pkg, pkgName, mapMatch, path, parentMetadata, sk
   if (typeof mapped === 'string') {
     if (!validMapping(mapMatch, mapped, path))
       return Promise.resolve();
-    return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions)
+    return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgName + '/', metadata, metadata, skipExtensions)
     .then(function (normalized) {
-      return interpolateConditional.call(loader, normalized, pkgName + '/', parentMetadata);
+      return interpolateConditional.call(loader, normalized, pkgName + '/', metadata);
     });
   }
 
@@ -642,10 +642,10 @@ function doMap (loader, config, pkg, pkgName, mapMatch, path, parentMetadata, sk
   .then(function (mapped) {
     if (mapped) {
       if (!validMapping(mapMatch, mapped, path))
-        return;
-      return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgName + '/', loader[CREATE_METADATA](), parentMetadata, skipExtensions)
+        return Promise.resolve();
+      return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgName + '/', metadata, metadata, skipExtensions)
       .then(function (normalized) {
-        return interpolateConditional.call(loader, normalized, pkgName + '/', parentMetadata);
+        return interpolateConditional.call(loader, normalized, pkgName + '/', metadata);
       });
     }
 
