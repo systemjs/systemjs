@@ -24,6 +24,7 @@ function SystemJSLoader (baseKey) {
     paths: {},
 
     packageConfigPaths: [],
+    packageConfigKeys: [],
     map: {},
     packages: {},
     depCache: {},
