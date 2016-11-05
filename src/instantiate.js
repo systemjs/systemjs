@@ -11,6 +11,7 @@ export function instantiate (key, metadata, processAnonRegister) {
     if (metadata.registered)
       return;
 
+    // node module loading
     if (key.substr(0, 6) === '@node/') {
       if (!loader._nodeRequire)
         throw new TypeError('Error loading ' + name + '. Can only load node core modules in Node.');
@@ -242,6 +243,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
       break;
 
       case 'json':
+        // warn.call(config, '"json" module format is deprecated.');
         loader.registerDynamic([], function (require, exports, module) {
           try {
             module.exports = JSON.parse(source);

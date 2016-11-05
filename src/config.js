@@ -150,12 +150,15 @@ export function setConfig (cfg, isEnvConfig) {
     for (var p in cfg.map) {
       var v = cfg.map[p];
 
-      if (typeof v === 'string')
+      if (typeof v === 'string') {
         config.map[p] = coreResolve.call(loader, config, v, undefined, false);
+      }
 
       // object map
-      else
-        setPkgConfig(loader, config, coreResolve.call(loader, config, p, undefined, true), { map: v }, false);
+      else {
+        var pkgName = coreResolve.call(loader, config, p, undefined, true);
+        setPkgConfig(config.packages[pkgName] || (config.packages[pkgName] = createPackage()), { map: v }, pkgName, false, config);
+      }
     }
   }
 
@@ -184,13 +187,13 @@ export function setConfig (cfg, isEnvConfig) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var prop = coreResolve.call(loader, config, p, undefined, true);
+      var pkgName = coreResolve.call(loader, config, p, undefined, true);
 
       // allow trailing slash in packages
-      if (prop[prop.length - 1] === '/')
-        prop = prop.substr(0, prop.length - 1);
+      if (pkgName[pkgName.length - 1] === '/')
+        pkgName = pkgName.substr(0, pkgName.length - 1);
 
-      setPkgConfig(loader, config, prop, cfg.packages[p], false);
+      setPkgConfig(config.packages[pkgName] = config.packages[pkgName] || createPackage(), cfg.packages[p], pkgName, false, config);
     }
   }
 
@@ -232,52 +235,38 @@ export function setConfig (cfg, isEnvConfig) {
   });
 }
 
-
-function extendPkgConfig (pkgCfgA, pkgCfgB, pkgName, loader, config, warnInvalidProperties) {
-  for (var prop in pkgCfgB) {
-    if (prop === 'main' || prop === 'format' || prop === 'defaultExtension') {
-      pkgCfgA[prop] = pkgCfgB[prop];
-    }
-    else if (prop === 'map') {
-      extend(pkgCfgA.map = pkgCfgA.map || {}, pkgCfgB.map);
-    }
-    else if (prop === 'meta') {
-      extend(pkgCfgA.meta = pkgCfgA.meta || {}, pkgCfgB.meta);
-    }
-    else if (prop === 'depCache') {
-      for (var d in pkgCfgB.depCache) {
-        var dNormalized;
-
-        if (d.substr(0, 2) == './')
-          dNormalized = pkgName + '/' + d.substr(2);
-        else
-          dNormalized = coreResolve.call(loader, config, d);
-        config.depCache[dNormalized] = (config.depCache[dNormalized] || []).concat(pkgCfgB.depCache[d]);
-      }
-    }
-    else if (warnInvalidProperties && envConfigNames.indexOf(prop) === -1 && pkgCfgB.hasOwnProperty(prop)) {
-      warn.call(config, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
-    }
-  }
+export function createPackage () {
+  return {
+    defaultExtension: undefined,
+    main: undefined,
+    format: undefined,
+    meta: undefined,
+    map: undefined,
+    depCache: undefined,
+    packageConfig: undefined,
+    configured: false
+  };
 }
 
 // deeply-merge (to first level) config with any existing package config
-export function setPkgConfig (loader, config, pkgName, cfg, prependConfig) {
-  var pkg;
-
-  // first package is config by reference for fast path, cloned after that
-  if (!config.packages[pkgName]) {
-    pkg = config.packages[pkgName] = cfg;
+export function setPkgConfig (pkg, cfg, pkgName, prependConfig, config) {
+  for (var prop in cfg) {
+    if (prop === 'main' || prop === 'format' || prop === 'defaultExtension') {
+      if (!prependConfig || pkg[prop] === undefined)
+        pkg[prop] = cfg[prop];
+    }
+    else if (prop === 'map') {
+      extend(pkg.map = pkg.map || {}, cfg.map, prependConfig);
+    }
+    else if (prop === 'meta') {
+      extend(pkg.meta = pkg.meta || {}, cfg.meta, prependConfig);
+    }
+    else if (cfg.hasOwnProperty(prop)) {
+      warn.call(config, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
+    }
   }
-  else {
-    var basePkg = config.packages[pkgName];
-    pkg = config.packages[pkgName] = {};
 
-    extendPkgConfig(pkg, prependConfig ? cfg : basePkg, pkgName, loader, config, prependConfig);
-    extendPkgConfig(pkg, prependConfig ? basePkg : cfg, pkgName, loader, config, !prependConfig);
-  }
-
-  if (!('main' in pkg) && pkg.map && pkg.map['.']) {
+  if (pkg.main === undefined && pkg.map && pkg.map['.']) {
     pkg.main = pkg.map['.'];
     delete pkg.map['.'];
   }
