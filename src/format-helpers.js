@@ -266,7 +266,7 @@ function globalIterator (globalName) {
   this(globalName, value);
 }
 
-export function getGlobalValue (exports, withDefault) {
+export function getGlobalValue (exports) {
   if (typeof exports === 'string')
     return readMemberExpression(exports, global);
 
@@ -274,10 +274,8 @@ export function getGlobalValue (exports, withDefault) {
     throw new Error('Global exports must be a string or array.');
 
   var globalValue = {};
-  for (var i = 0; i < exports.length; i++) {
-    var val = readMemberExpression(exports[i], global);
-    globalValue[exports[i].split('.').pop()] = val;
-  }
+  for (var i = 0; i < exports.length; i++)
+    globalValue[exports[i].split('.').pop()] = readMemberExpression(exports[i], global);
   return globalValue;
 }
 

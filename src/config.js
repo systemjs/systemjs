@@ -98,6 +98,9 @@ export function setConfig (cfg, isEnvConfig) {
   if ('warnings' in cfg)
     config.warnings = cfg.warnings;
 
+  if ('wasm' in cfg)
+    config.wasm = cfg.wasm;
+
   if ('production' in cfg || 'build' in cfg)
     setProduction.call(loader, !!cfg.production, !!(cfg.build || envModule && envModule.build));
 
