@@ -624,8 +624,8 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
   }
 
   // we use a special conditional syntax to allow the builder to handle conditional branch points further
-  if (loader.builder)
-    return Promise.resolve(pkgKey + '/#:' + path);
+  /*if (loader.builder)
+    return Promise.resolve(pkgKey + '/#:' + path);*/
 
   // we load all conditions upfront
   var conditionPromises = [];
@@ -645,7 +645,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
     // first map condition to match is used
     for (var i = 0; i < conditions.length; i++) {
       var c = conditions[i].condition;
-      var value = readMemberExpression(c.prop, conditionValues[i]);
+      var value = readMemberExpression(c.prop, conditionValues[i].__useDefault ? conditionValues[i].default : conditionValues[i]);
       if (!c.negate && value || c.negate && !value)
         return conditions[i].map;
     }
@@ -714,6 +714,8 @@ function loadPackageConfigPath (loader, config, pkgConfigPath, metadata, normali
 
   return configLoader.import(pkgConfigPath)
   .then(function (pkgConfig) {
+    if (pkgConfig.__useDefault)
+      pkgConfig = pkgConfig.default;
     setPkgConfig(metadata.packageConfig, pkgConfig, metadata.packageKey, true, config);
     metadata.packageConfig.configured = true;
   })
@@ -849,12 +851,12 @@ function interpolateConditional (key, parentKey, parentMetadata) {
   var conditionObj = parseCondition.call(this, conditionalMatch[0].substr(2, conditionalMatch[0].length - 3));
 
   // in builds, return normalized conditional
-  if (this.builder)
+  /*if (this.builder)
     return this.normalize(conditionObj.module, parentKey, this[CREATE_METADATA](), parentMetadata)
     .then(function (conditionModule) {
       conditionObj.module = conditionModule;
       return key.replace(interpolationRegEx, '#{' + serializeCondition(conditionObj) + '}');
-    });
+    });*/
 
   return resolveCondition.call(this, conditionObj, parentKey, false)
   .then(function (conditionValue) {
@@ -878,12 +880,12 @@ function booleanConditional (key, parentKey) {
   var conditionObj = parseCondition.call(this, key.substr(booleanIndex + 2));
 
   // in builds, return normalized conditional
-  if (this.builder)
+  /*if (this.builder)
     return this.resolve(conditionObj.module, parentKey)
     .then(function (conditionModule) {
       conditionObj.module = conditionModule;
       return key.substr(0, booleanIndex) + '#?' + serializeCondition(conditionObj);
-    });
+    });*/
 
   return resolveCondition.call(this, conditionObj, parentKey, true)
   .then(function (conditionValue) {

@@ -1,4 +1,4 @@
-import SystemJSLoader, { CONFIG } from './systemjs-loader.js';
+import SystemJSLoader, { CONFIG, emptyModule, ModuleNamespace } from './systemjs-loader.js';
 import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule } from './common.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
@@ -15,12 +15,9 @@ export function instantiate (key, metadata, processAnonRegister) {
     if (key.substr(0, 6) === '@node/') {
       if (!loader._nodeRequire)
         throw new TypeError('Error loading ' + key + '. Can only load node core modules in Node.');
-      if (loader.builder)
-        loader.registerDynamic([], function () {});
-      else
-        loader.registerDynamic([], function (require, exports, module) {
-          module.exports = loadNodeModule.call(loader, key.substr(6), loader.baseURL);
-        });
+      loader.registerDynamic([], function (require, exports, module) {
+        module.exports = loadNodeModule.call(loader, key.substr(6), loader.baseURL);
+      });
       processAnonRegister();
       return;
     }
@@ -31,9 +28,18 @@ export function instantiate (key, metadata, processAnonRegister) {
         metadata.load.format === 'global' && metadata.load.exports && !isWorker))
       metadata.load.scriptLoad = true;
 
+    if (metadata.load.scriptLoad && (metadata.load.format === 'json' || metadata.load.pluginKey || (!isBrowser && !isWorker)))
+      metadata.load.scriptLoad = false;
+
     // fetch / translate / instantiate pipeline
-    if (metadata.load.format == 'json' || !metadata.load.scriptLoad || metadata.load.pluginKey || (!isBrowser && !isWorker))
-      return runFetchPipeline(loader, key, metadata, processAnonRegister);
+    if (!metadata.load.scriptLoad)
+      return initializePlugin(loader, key, metadata)
+      .then(function () {
+        // modern plugin = load hook
+        if (metadata.pluginModule && typeof metadata.pluginModule.load === 'function')
+          return metadata.pluginModule.load.call(loader, key, processAnonRegister);
+        return runFetchPipeline(loader, key, metadata, processAnonRegister);
+      })
 
     // just script loading
     return new Promise(function (resolve, reject) {
@@ -47,12 +53,7 @@ export function instantiate (key, metadata, processAnonRegister) {
           metadata.load.format = 'global';
           var globalValue = getGlobalValue(metadata.load.exports);
           loader.registerDynamic([], function (require, exports, module) {
-            try {
-              module.exports = globalValue;
-            }
-            catch(e) {
-              throw new Error("Invalid JSON file " + key);
-            }
+            module.exports = globalValue;
           });
           processAnonRegister();
         }
@@ -68,6 +69,8 @@ function initializePlugin (loader, key, metadata) {
     return Promise.resolve();
 
   return loader.import(metadata.pluginKey).then(function (plugin) {
+    if (plugin.__useDefault)
+      plugin = plugin.default;
     metadata.pluginModule = plugin;
     metadata.pluginLoad = {
       name: key,
@@ -121,12 +124,10 @@ function loadBundlesAndDepCache (config, loader, key) {
 }
 
 function runFetchPipeline (loader, key, metadata, processAnonRegister) {
-  metadata.load.scriptLoad = false;
-
   if (metadata.load.exports && !metadata.load.format)
     metadata.load.format = 'global';
 
-  return initializePlugin(loader, key, metadata)
+  return Promise.resolve()
 
   // locate
   .then(function () {
@@ -194,7 +195,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
 
   // instantiate
   .then(function (translated) {
-    if (!metadata.pluginModule || !metadata.pluginModule.instantiate || loader.builder)
+    if (!metadata.pluginModule || !metadata.pluginModule.instantiate)
       return translated;
 
     var calledInstantiate = false;
@@ -233,56 +234,35 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
           throw err;
         processAnonRegister();
 
-        // didnt register itself, use the last named registered value if only one
-        if (!metadata.registered) {
-          loader.register([], function () {
-            return {};
-          });
-          processAnonRegister();
-        }
+        if (!metadata.registered)
+          return emptyModule;
       break;
 
       case 'json':
         // warn.call(config, '"json" module format is deprecated.');
-        loader.registerDynamic([], function (require, exports, module) {
-          try {
-            module.exports = JSON.parse(source);
-          }
-          catch(e) {
-            throw new Error("Invalid JSON file " + key);
-          }
-        });
-        processAnonRegister();
+        return loader.newModule({ default: JSON.parse(source), __useDefault: true });
       break;
 
       case 'amd':
-        if (!loader.builder) {
-          var curDefine = global.define;
-          global.define = loader.amdDefine;
+        var curDefine = global.define;
+        global.define = loader.amdDefine;
 
-          clearLastDefine(metadata.load.deps);
+        clearLastDefine(metadata.load.deps);
 
-          var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
+        var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
 
+        processAnonRegister();
+
+        // if didn't register anonymously, use the last named define if only one
+        if (!metadata.registered) {
+          registerLastDefine(loader);
           processAnonRegister();
-
-          // if didn't register anonymously, use the last named define if only one
-          if (!metadata.registered) {
-            registerLastDefine(loader);
-            processAnonRegister();
-          }
-
-          global.define = curDefine;
-
-          if (err)
-            throw err;
         }
-        else {
-          // TODO
-          metadata.load.execute = function() {
-            return metadata.load.builderExecute.apply(this, arguments);
-          };
-        }
+
+        global.define = curDefine;
+
+        if (err)
+          throw err;
       break;
 
       case 'cjs':
@@ -434,12 +414,8 @@ function sanitizeSourceMap (address, sourceMap) {
 }
 
 function transpile (loader, source, key, metadata) {
-  if (loader.transpiler === false) {
-    // we accept translation to esm for builds though to enable eg rollup optimizations
-    if (loader.builder)
-      return source;
+  if (loader.transpiler === false)
     throw new TypeError('Unable to dynamically transpile ES module as SystemJS.transpiler set to false.');
-  }
 
   // deps support for es transpile
   if (metadata.load.deps) {
@@ -450,8 +426,11 @@ function transpile (loader, source, key, metadata) {
   }
 
   // do transpilation
-  return (loader.pluginLoader || loader).import.call(loader, loader.transpiler)
+  return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
+    if (transpiler.__useDefault)
+      transpiler = transpiler.default;
+
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)
       throw new Error('Unable to load transpiler, ensure the SystemJS.transpiler is configured to a transpiler plugin. See the SystemJS README for more information.');
@@ -479,7 +458,7 @@ function transpile (loader, source, key, metadata) {
       if (sourceMap && typeof sourceMap === 'object')
         sanitizeSourceMap(key, sourceMap);
 
-      if (metadata.load.format === 'esm' && !loader.builder && detectRegisterFormat(source))
+      if (metadata.load.format === 'esm' && detectRegisterFormat(source))
         metadata.load.format = 'register';
 
       return source;
