@@ -3,8 +3,6 @@ import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, add
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
 
-var supportsWasm = typeof WebAssembly !== 'undefined' && WebAssembly.compile;
-
 export function instantiate (key, metadata, processAnonRegister) {
   var loader = this;
   var config = this[CONFIG];
@@ -41,7 +39,7 @@ export function instantiate (key, metadata, processAnonRegister) {
         // modern plugin = load hook
         if (metadata.pluginModule && typeof metadata.pluginModule.load === 'function')
           return metadata.pluginModule.load.call(loader, key, processAnonRegister);
-        return runFetchPipeline(loader, key, metadata, processAnonRegister, supportsWasm && config.wasm || metadata.load.format === 'wasm');
+        return runFetchPipeline(loader, key, metadata, processAnonRegister, config.wasm);
       })
 
     // just script loading
@@ -167,9 +165,6 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
 
     // detect by leading bytes
     if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
-      if (typeof WebAssembly === 'undefined' || !WebAssembly.compile)
-        throw new Error('WebAssembly is not supported in this browser.');
-
       return WebAssembly.compile(bytes).then(function (m) {
         /* TODO handle imports when `WebAssembly.Module.imports` is implemented
         if (WebAssembly.Module.imports) {

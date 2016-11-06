@@ -42,8 +42,9 @@ function SystemJSLoader (baseKey) {
     // global behaviour flags
     warnings: false,
     pluginFirst: false,
-    // enable wasm loading and detection
-    wasm: true
+
+    // enable wasm loading and detection when supported
+    wasm: false
   };
 
   // make the location of the system.js script accessible (if any)
