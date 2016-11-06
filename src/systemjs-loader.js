@@ -7,6 +7,8 @@ import { decanonicalize, normalize, normalizeSync } from './resolve.js';
 import { instantiate } from './instantiate.js';
 import formatHelpers from './format-helpers.js';
 
+export { ModuleNamespace }
+
 export default SystemJSLoader;
 
 function SystemJSLoader (baseKey) {
@@ -48,13 +50,15 @@ function SystemJSLoader (baseKey) {
   this._nodeRequire = nodeRequire;
 
   // support the empty module, as a concept
-  this.set('@empty', this.newModule({}));
+  this.set('@empty', emptyModule = this.newModule({}));
 
   setProduction.call(this, false, false);
 
   // add module format helpers
   formatHelpers(this);
 }
+
+export var emptyModule;
 
 export var envModule;
 export function setProduction (isProduction, isBuilder) {
@@ -131,14 +135,6 @@ for (var i = 0; i < configNames.length; i++) (function (configName) {
 /* function registryWarn(loader, method) {
   warn.call(loader, 'SystemJS.' + method + ' is deprecated for SystemJS.registry.' + method);
 } */
-
-SystemJSLoader.prototype.import = function () {
-  return RegisterLoader.prototype.import.apply(this, arguments)
-  .then(function (module) {
-    return module.__useDefault ? module.default : module;
-  });
-};
-
 SystemJSLoader.prototype.delete = function (key) {
   // registryWarn(this, 'delete');
   this.registry.delete(key);

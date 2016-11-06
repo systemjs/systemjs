@@ -27,6 +27,8 @@ export default function (loader) {
       for (var i = 0; i < names.length; i++)
         dynamicRequires.push(loader.import(names[i], referer));
       Promise.all(dynamicRequires).then(function (modules) {
+        for (var i = 0; i < modules.length; i++)
+          modules[i] = modules[i].__useDefault ? modules[i].default : modules[i];
         if (callback)
           callback.apply(null, modules);
       }, errback);
@@ -38,7 +40,7 @@ export default function (loader) {
       var module = loader.get(normalized);
       if (!module)
         throw new Error('Module not already loaded loading "' + names + '" as ' + normalized + (referer ? ' from "' + referer + '".' : '.'));
-      return module.__useDefault ? module['default'] : module;
+      return module.__useDefault ? module.default : module;
     }
 
     else
@@ -179,7 +181,7 @@ export function getPathVars (moduleId) {
   // remove any plugin syntax
   var pluginIndex = moduleId.lastIndexOf('!');
   var filename;
-  if (pluginIndex != -1)
+  if (pluginIndex !== -1)
     filename = moduleId.substr(0, pluginIndex);
   else
     filename = moduleId;
@@ -264,21 +266,16 @@ function globalIterator (globalName) {
   this(globalName, value);
 }
 
-export function getGlobalValue (exports) {
-  if (typeof exports == 'string')
+export function getGlobalValue (exports, withDefault) {
+  if (typeof exports === 'string')
     return readMemberExpression(exports, global);
 
   if (!(exports instanceof Array))
     throw new Error('Global exports must be a string or array.');
 
   var globalValue = {};
-  var first = true;
   for (var i = 0; i < exports.length; i++) {
     var val = readMemberExpression(exports[i], global);
-    if (first) {
-      globalValue['default'] = val;
-      first = false;
-    }
     globalValue[exports[i].split('.').pop()] = val;
   }
   return globalValue;
@@ -320,7 +317,7 @@ export function prepareGlobal (moduleName, exports, globals, encapsulate) {
       Object.keys(global).forEach(globalIterator, function (name, value) {
         if (globalSnapshot[name] === value)
           return;
-        if (typeof value == 'undefined')
+        if (value === undefined)
           return;
 
         // allow global encapsulation where globals are removed
@@ -330,7 +327,7 @@ export function prepareGlobal (moduleName, exports, globals, encapsulate) {
         if (!exports) {
           globalValue[name] = value;
 
-          if (typeof singleGlobal != 'undefined') {
+          if (singleGlobal !== undefined) {
             if (!multipleExports && singleGlobal !== value)
               multipleExports = true;
           }
