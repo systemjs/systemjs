@@ -42,6 +42,8 @@ function SystemJSLoader (baseKey) {
     // global behaviour flags
     warnings: false,
     pluginFirst: false,
+    // enable wasm loading and detection
+    wasm: true
   };
 
   // make the location of the system.js script accessible (if any)
@@ -95,6 +97,8 @@ SystemJSLoader.prototype[CREATE_METADATA] = function () {
 };
 
 SystemJSLoader.prototype[RESOLVE] = normalize;
+
+// NB deprecate decanonicalize
 SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalizeSync = normalizeSync;
 
 SystemJSLoader.prototype[INSTANTIATE] = instantiate;
