@@ -3,10 +3,13 @@ import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, add
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
 
+var supportsWasm = typeof WebAssembly !== 'undefined' && WebAssembly.compile;
+
 export function instantiate (key, metadata, processAnonRegister) {
   var loader = this;
+  var config = this[CONFIG];
   // first do bundles and depCache
-  return (loadBundlesAndDepCache(this[CONFIG], this, key) || Promise.resolve())
+  return (loadBundlesAndDepCache(config, this, key) || Promise.resolve())
   .then(function () {
     if (metadata.registered)
       return;
@@ -38,7 +41,7 @@ export function instantiate (key, metadata, processAnonRegister) {
         // modern plugin = load hook
         if (metadata.pluginModule && typeof metadata.pluginModule.load === 'function')
           return metadata.pluginModule.load.call(loader, key, processAnonRegister);
-        return runFetchPipeline(loader, key, metadata, processAnonRegister);
+        return runFetchPipeline(loader, key, metadata, processAnonRegister, supportsWasm && config.wasm || metadata.load.format === 'wasm');
       })
 
     // just script loading
@@ -123,7 +126,7 @@ function loadBundlesAndDepCache (config, loader, key) {
   }
 }
 
-function runFetchPipeline (loader, key, metadata, processAnonRegister) {
+function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
   if (metadata.load.exports && !metadata.load.format)
     metadata.load.format = 'global';
 
@@ -144,16 +147,68 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister) {
   // fetch
   .then(function () {
     if (!metadata.pluginModule)
-      return fetch(key, metadata.load.authorization, metadata.load.integrity);
+      return fetch(key, metadata.load.authorization, metadata.load.integrity, wasm);
 
     if (!metadata.pluginModule.fetch)
-      return fetch(metadata.pluginArgument, metadata.load.authorization, metadata.load.integrity);
+      return fetch(metadata.pluginArgument, metadata.load.authorization, metadata.load.integrity, wasm);
 
+    wasm = false;
     return metadata.pluginModule.fetch.call(loader, metadata.pluginLoad, function (load) {
-      return fetch(load.address, metadata.load.authorization, metadata.load.integrity);
+      return fetch(load.address, metadata.load.authorization, metadata.load.integrity, false);
     });
   })
 
+  .then(function (fetched) {
+    // fetch is already a utf-8 string if not doing wasm detection
+    if (!wasm)
+      return translateAndInstantiate(loader, key, fetched, metadata, processAnonRegister);
+
+    var bytes = new Uint8Array(fetched);
+
+    // detect by leading bytes
+    if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
+      if (typeof WebAssembly === 'undefined' || !WebAssembly.compile)
+        throw new Error('WebAssembly is not supported in this browser.');
+
+      return WebAssembly.compile(bytes).then(function (m) {
+        /* TODO handle imports when `WebAssembly.Module.imports` is implemented
+        if (WebAssembly.Module.imports) {
+          var deps = [];
+          var setters = [];
+          var importObj = {};
+          WebAssembly.Module.imports(m).forEach(function (i) {
+            var key = i.module;
+            setters.push(function (m) {
+              importObj[key] = m;
+            });
+            if (deps.indexOf(key) === -1)
+              deps.push(key);
+          });
+          loader.register(deps, function (_export) {
+            return {
+              setters: setters,
+              execute: function () {
+                _export(new WebAssembly.Instance(m, importObj).exports);
+              }
+            };
+          });
+        }*/
+        // for now we just load WASM without dependencies
+        var exports = new WebAssembly.Instance(m, {}).exports;
+        return loader.newModule(exports);
+      });
+    }
+
+    // not wasm -> convert buffer into utf-8 string to execute as a module
+    // TextDecoder compatibility matches WASM currently. Need to keep checking this.
+    // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+    var stringSource = new TextDecoder('utf-8').decode(bytes);
+    return translateAndInstantiate(loader, key, stringSource, metadata, processAnonRegister);
+  })
+}
+
+function translateAndInstantiate (loader, key, source, metadata, processAnonRegister) {
+  return Promise.resolve(source)
   // translate
   .then(function (source) {
     if (metadata.load.format === 'detect')

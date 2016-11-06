@@ -154,6 +154,13 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('String encoding', function () {
+    return System.import('tests/string-encoding.js').then(function (m) {
+      ok(m.pi === decodeURI('%CF%80'));
+      ok(m.emoji === decodeURI('%F0%9F%90%B6'));
+    })
+  })
+
   test('Support the empty module', function () {
     return System.import('@empty').then(function (m) {
       ok(m, 'No empty module');
@@ -532,7 +539,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Advanced compiler plugin', function () {
     return System.import('tests/compiler-test.js!tests/advanced-plugin.js').then(function (m) {
-      ok(m.default == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
+      ok(m.default == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m.default);
     });
   });
 
@@ -1291,4 +1298,12 @@ suite('SystemJS Standard Tests', function() {
       ok(typeof define == 'undefined');
     });
   }
+
+  if (typeof WebAssembly !== 'undefined')
+  test('Loading WASM', function () {
+    return System.import('tests/answer.wasm')
+    .then(function (m) {
+      ok(m.getAnswer() === 42);
+    });
+  });
 });

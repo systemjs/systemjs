@@ -3,7 +3,7 @@ import { isWindows } from './common.js';
 /*
  * Source loading
  */
-function fetchFetch (url, authorization, integrity) {
+function fetchFetch (url, authorization, integrity, asBuffer) {
   // fetch doesn't support file:/// urls
   if (url.substr(0, 8) === 'file:///') {
     if (hasXhr)
@@ -16,6 +16,7 @@ function fetchFetch (url, authorization, integrity) {
   url = url.replace(/#/g, '%23');
 
   var opts = {
+    // NB deprecate
     headers: { Accept: 'application/x-es-module, */*' }
   };
 
@@ -31,20 +32,22 @@ function fetchFetch (url, authorization, integrity) {
   return fetch(url, opts)
   .then(function(res) {
     if (res.ok)
-      return res.text();
+      return asBuffer ? res.arrayBuffer() : res.text();
     else
-      throw new Error('Fetch error: ' + r.status + ' ' + r.statusText);
+      throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
   });
 }
 
-function xhrFetch (url, authorization) {
+function xhrFetch (url, authorization, integrity, asBuffer) {
   return new Promise(function (resolve, reject) {
     // percent encode just "#" for HTTP requests
     url = url.replace(/#/g, '%23');
 
     var xhr = new XMLHttpRequest();
+    if (asBuffer)
+      xhr.responseType = 'arraybuffer';
     function load() {
-      resolve(xhr.responseText);
+      resolve(asBuffer ? xhr.response : xhr.responseText);
     }
     function error() {
       reject(new Error('XHR error' + (xhr.status ? ' (' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText  : '') + ')' : '') + ' loading ' + url));
@@ -54,7 +57,7 @@ function xhrFetch (url, authorization) {
       if (xhr.readyState === 4) {
         // in Chrome on file:/// URLs, status is 0
         if (xhr.status == 0) {
-          if (xhr.responseText) {
+          if (xhr.response) {
             load();
           }
           else {
@@ -89,7 +92,7 @@ function xhrFetch (url, authorization) {
 }
 
 var fs;
-function nodeFetch (url, authorization) {
+function nodeFetch (url, authorization, integrity, asBuffer) {
   if (url.substr(0, 8) != 'file:///')
     return Promise.reject(new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// supported running in Node.'));
 
@@ -105,12 +108,17 @@ function nodeFetch (url, authorization) {
         return reject(err);
       }
       else {
-        // Strip Byte Order Mark out if it's the leading char
-        var dataString = data + '';
-        if (dataString[0] === '\ufeff')
-          dataString = dataString.substr(1);
+        if (asBuffer) {
+          resolve(data);
+        }
+        else {
+          // Strip Byte Order Mark out if it's the leading char
+          var dataString = data + '';
+          if (dataString[0] === '\ufeff')
+            dataString = dataString.substr(1);
 
-        resolve(dataString);
+          resolve(dataString);
+        }
       }
     });
   });
