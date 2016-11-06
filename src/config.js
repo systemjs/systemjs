@@ -48,13 +48,11 @@ function envSet(loader, cfg, envCallback) {
 function cloneObj (obj, depth) {
   var clone = {};
   for (var p in obj) {
-    if (!obj.hasOwnProperty(p))
-      continue;
     var prop = obj[p];
     if (depth > 1) {
       if (typeof prop === 'object')
         clone[p] = cloneObj(prop, depth - 1);
-      else
+      else if (p !== 'packageConfig')
         clone[p] = prop;
     }
     else {
@@ -79,7 +77,7 @@ export function getConfigItem (config, p) {
 export function getConfig (configName) {
   if (configName) {
     if (configNames.indexOf(configName) !== -1)
-      return getConfigItem.call(this[CONFIG], configName);
+      return getConfigItem(this[CONFIG], configName);
     throw new Error('"' + configName + '" is not a valid configuration name to get. Must be one of ' + configNames.join(', ') + '.');
   }
 
@@ -242,7 +240,6 @@ export function createPackage () {
     format: undefined,
     meta: undefined,
     map: undefined,
-    depCache: undefined,
     packageConfig: undefined,
     configured: false
   };
@@ -251,7 +248,7 @@ export function createPackage () {
 // deeply-merge (to first level) config with any existing package config
 export function setPkgConfig (pkg, cfg, pkgName, prependConfig, config) {
   for (var prop in cfg) {
-    if (prop === 'main' || prop === 'format' || prop === 'defaultExtension') {
+    if (prop === 'main' || prop === 'format' || prop === 'defaultExtension' || prop === 'configured') {
       if (!prependConfig || pkg[prop] === undefined)
         pkg[prop] = cfg[prop];
     }
@@ -261,7 +258,7 @@ export function setPkgConfig (pkg, cfg, pkgName, prependConfig, config) {
     else if (prop === 'meta') {
       extend(pkg.meta = pkg.meta || {}, cfg.meta, prependConfig);
     }
-    else if (cfg.hasOwnProperty(prop)) {
+    else if (Object.hasOwnProperty.call(cfg, prop)) {
       warn.call(config, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
     }
   }
