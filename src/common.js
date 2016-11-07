@@ -208,7 +208,6 @@ function getSource(source, sourceMap, address, wrap) {
       + (sourceMap && inlineSourceMap(sourceMap) || '');
 }
 
-var curSystem;
 var callCounter = 0;
 function preExec (loader) {
   if (callCounter++ == 0)
