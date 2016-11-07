@@ -101,48 +101,46 @@ export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   // percent encode just "#" for HTTP requests
   src = src.replace(/#/g, '%23');
 
-  if (isWorker) {
-    // subresource integrity is not supported in web workers
-    workerImport(src, resolve, reject);
+  // subresource integrity is not supported in web workers
+  if (isWorker)
+    return workerImport(src, resolve, reject);
+
+  curSystem = global.System;
+  curRequire = global.require;
+
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.charset = 'utf-8';
+  script.async = true;
+
+  if (crossOrigin)
+    script.crossOrigin = crossOrigin;
+  if (integrity)
+    script.integrity = integrity;
+
+  script.addEventListener('load', load, false);
+  script.addEventListener('error', error, false);
+
+  script.src = src;
+  document.head.appendChild(script);
+
+  function load () {
+    resolve();
+    cleanup();
   }
-  else {
-    curSystem = global.System;
-    curRequire = global.require;
 
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.charset = 'utf-8';
-    script.async = true;
+  // note this does not catch execution errors
+  function error (err) {
+    cleanup();
+    reject(new Error('Fetching ' + src));
+  }
 
-    if (crossOrigin)
-      script.crossOrigin = crossOrigin;
-    if (integrity)
-      script.integrity = integrity;
-
-    script.addEventListener('load', load, false);
-    script.addEventListener('error', error, false);
-
-    script.src = src;
-    document.head.appendChild(script);
-
-    function load () {
-      resolve();
-      cleanup();
-    }
-
-    // note this does not catch execution errors
-    function error (err) {
-      cleanup();
-      reject(new Error('Fetching ' + src));
-    }
-
-    function cleanup () {
-      global.System = curSystem;
-      global.require = curRequire;
-      script.removeEventListener('load', load, false);
-      script.removeEventListener('error', error, false);
-      document.head.removeChild(script);
-    }
+  function cleanup () {
+    global.System = curSystem;
+    global.require = curRequire;
+    script.removeEventListener('load', load, false);
+    script.removeEventListener('error', error, false);
+    document.head.removeChild(script);
   }
 }
 
