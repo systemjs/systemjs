@@ -2,7 +2,7 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
 import fs from 'fs';
 
-var version = JSON.parse(fs.readFileSync('package.json')).version + ' Standard';
+var version = JSON.parse(fs.readFileSync('package.json')).version;
 
 export default {
   entry: 'src/system.js',
