@@ -6,7 +6,7 @@ suite('SystemJS Standard Tests', function() {
   }
 
   test('System version', function () {
-    ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)? Standard$/));
+    ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)?/));
   });
 
   test('Object.prototype.toString(new Module())== "[object Module]"', function () {
