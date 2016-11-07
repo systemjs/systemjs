@@ -7,6 +7,10 @@ export var isWorker = typeof window == 'undefined' && typeof self != 'undefined'
 
 export var scriptSrc;
 
+// Promise detection and error message
+if (typeof Promise === 'undefined')
+  throw new Error('SystemJS requires a global Promise polyfill to be set before loading.');
+
 if (typeof document !== 'undefined') {
   var scripts = document.getElementsByTagName('script');
   var curScript = scripts[scripts.length - 1];
