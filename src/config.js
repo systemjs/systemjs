@@ -45,13 +45,13 @@ function envSet(loader, cfg, envCallback) {
   }
 }
 
-function cloneObj (obj, depth) {
+function cloneObj (obj, maxDepth) {
   var clone = {};
   for (var p in obj) {
     var prop = obj[p];
-    if (depth > 1) {
+    if (maxDepth > 1) {
       if (typeof prop === 'object')
-        clone[p] = cloneObj(prop, depth - 1);
+        clone[p] = cloneObj(prop, maxDepth - 1);
       else if (p !== 'packageConfig')
         clone[p] = prop;
     }
@@ -69,7 +69,7 @@ export function getConfigItem (config, p) {
   if (cfgItem instanceof Array)
     return config[p].concat([]);
   else if (typeof cfgItem === 'object')
-    return cloneObj(cfgItem, p === 'packages' ? 3 : 1)
+    return cloneObj(cfgItem, 3)
   else
     return config[p];
 }
