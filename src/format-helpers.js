@@ -105,11 +105,11 @@ export default function (loader) {
         depValues.splice(exportsIndex, 0, exports);
 
       if (requireIndex !== -1) {
-        function contextualRequire (names, callback, errback) {
+        var contextualRequire = function (names, callback, errback) {
           if (typeof names === 'string' && typeof callback !== 'function')
             return req(names);
           return require.call(loader, names, callback, errback, module.id);
-        }
+        };
         contextualRequire.toUrl = function (name) {
           return loader.normalizeSync(name, module.id);
         };
