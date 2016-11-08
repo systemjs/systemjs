@@ -101,6 +101,8 @@ function workerImport (src, resolve, reject) {
 
 var curSystem, curRequire;
 
+export var supportsScriptLoad = (isBrowser || isWorker) && typeof navigator !== 'undefined' && navigator.userAgent && !navigator.userAgent.match(/MSIE (9|10).0/);
+
 export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   // percent encode just "#" for HTTP requests
   src = src.replace(/#/g, '%23');
@@ -109,6 +111,7 @@ export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   if (isWorker)
     return workerImport(src, resolve, reject);
 
+  // if scriptLoad
   curSystem = global.System;
   curRequire = global.require;
 
