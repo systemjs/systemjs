@@ -1,5 +1,5 @@
 import SystemJSLoader, { CONFIG, emptyModule, ModuleNamespace } from './systemjs-loader.js';
-import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule } from './common.js';
+import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule, supportsScriptLoad, warn } from './common.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
 
@@ -24,13 +24,18 @@ export function instantiate (key, metadata, processAnonRegister) {
     }
 
     // auto script load AMD, global without deps
-    if (!metadata.pluginKey && !metadata.load.deps && !metadata.load.globals && metadata.load.scriptLoad !== false &&
-        (metadata.load.format === 'system' || metadata.load.format === 'register' ||
-        metadata.load.format === 'global' && metadata.load.exports && !isWorker))
+    if (!metadata.load.deps && !metadata.load.globals && metadata.load.scriptLoad !== false &&
+        (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))
       metadata.load.scriptLoad = true;
 
-    if (metadata.load.scriptLoad && (metadata.load.format === 'json' || metadata.load.pluginKey || (!isBrowser && !isWorker)))
-      metadata.load.scriptLoad = false;
+    if (metadata.load.scriptLoad) {
+      if (metadata.load.pluginKey || !supportsScriptLoad)
+        metadata.load.scriptLoad = false;
+      if (!supportsScriptLoad)
+        warn.call(config, 'scriptLoad not supported in this environment, using XHR load for "' + key + '"');
+    }
+
+
 
     // fetch / translate / instantiate pipeline
     if (!metadata.load.scriptLoad)
