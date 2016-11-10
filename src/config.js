@@ -158,7 +158,13 @@ export function setConfig (cfg, isEnvConfig) {
       // object map
       else {
         var pkgName = coreResolve.call(loader, config, p, undefined, true);
-        setPkgConfig(config.packages[pkgName] || (config.packages[pkgName] = createPackage()), { map: v }, pkgName, false, config);
+        var pkg = config.packages[pkgName];
+        if (!pkg) {
+          pkg = config.packages[pkgName] = createPackage();
+          // use '' instead of false to keep type consistent
+          pkg.defaultExtension = '';
+        }
+        setPkgConfig(pkg, { map: v }, pkgName, false, config);
       }
     }
   }
@@ -265,6 +271,10 @@ export function setPkgConfig (pkg, cfg, pkgName, prependConfig, config) {
       warn.call(config, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
     }
   }
+
+  // default defaultExtension for packages only
+  if (pkg.defaultExtension === undefined)
+    pkg.defaultExtension = 'js';
 
   if (pkg.main === undefined && pkg.map && pkg.map['.']) {
     pkg.main = pkg.map['.'];
