@@ -194,8 +194,8 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
           });
         }*/
         // for now we just load WASM without dependencies
-        var exports = new WebAssembly.Instance(m, {}).exports;
-        return loader.newModule(exports);
+        var wasmModule = new WebAssembly.Instance(m, {});
+        return loader.newModule(wasmModule.exports);
       });
     }
 
