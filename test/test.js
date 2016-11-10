@@ -1081,12 +1081,7 @@ suite('SystemJS Standard Tests', function() {
 
     // ensure trailing "/" is equivalent to "tests/testpkg"
     clonedSystem.config({
-      packageConfigPaths: ['tests/*.json'],
-      packages: {
-        'tests/testpkg2/': {
-          defaultExtension: 'js'
-        }
-      }
+      packageConfigPaths: ['tests/*.json']
     });
 
     // we now have nested packages:
