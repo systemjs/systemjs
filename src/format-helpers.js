@@ -72,7 +72,7 @@ export default function (loader) {
     // remove system dependencies
     var requireIndex, exportsIndex, moduleIndex;
 
-    if ((requireIndex = deps.indexOf('require')) != -1) {
+    if ((requireIndex = deps.indexOf('require')) !== -1) {
 
       deps.splice(requireIndex, 1);
 
@@ -82,10 +82,10 @@ export default function (loader) {
         deps = deps.concat(amdGetCJSDeps(factory.toString(), requireIndex));
     }
 
-    if ((exportsIndex = deps.indexOf('exports')) != -1)
+    if ((exportsIndex = deps.indexOf('exports')) !== -1)
       deps.splice(exportsIndex, 1);
 
-    if ((moduleIndex = deps.indexOf('module')) != -1)
+    if ((moduleIndex = deps.indexOf('module')) !== -1)
       deps.splice(moduleIndex, 1);
 
     function execute (req, exports, module) {
