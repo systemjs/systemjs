@@ -2,7 +2,7 @@ SystemJS
 ========
 
 [![Build Status][travis-image]][travis-url]
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Support](https://supporterhq.com/api/b/33df4abbec4d39260f49015d2457eafe/SystemJS)](https://supporterhq.com/support/33df4abbec4d39260f49015d2457eafe/SystemJS)
 
 _SystemJS 0.20.0-alpha.1 is now available with performance improvements and Web Assembly support. [Try it out here](https://github.com/systemjs/systemjs/releases/tag/0.20.0-alpha.1)._
@@ -12,12 +12,12 @@ Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global sc
 * [Loads any module format](docs/module-formats.md) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md).
 * Loads [ES6 modules compiled into the `System.register` bundle format for production](docs/production-workflows.md), maintaining circular references support.
 * Supports RequireJS-style [map](docs/overview.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), [bundles](docs/production-workflows.md#bundle-extension) and [global shims](docs/module-formats.md#shim-dependencies).
-* [Loader plugins](docs/overview.md#plugin-loaders) allow custom transpilation or asset loading.
+* [Loader plugins](docs/overview.md#plugin-loaders) allow production resource loading and custom transpilation dev workflows.
 
-Built to the format ES6-specified loader API from [ES6 Specification Draft Rev 27, Section 15](http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts#august_24_2014_draft_rev_27),
-and will be updated to the [WhatWG loader API](https://whatwg.github.io/loader/) as soon as it can be considered stable for implementation.
+Built with the [ES Module Loader project](https://github.com/ModuleLoader/es-module-loader), based on principles and APIs from the WhatWG Loader
+specification, modules in HTML and NodeJS.
 
-~19KB minified and gzipped, runs in IE8+ and NodeJS.
+~14KB minified and gzipped, runs in IE9+ and NodeJS.
 
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
@@ -40,31 +40,17 @@ Basic Use
 ```html
 <script src="system.js"></script>
 <script>
-  // set our baseURL reference path
-  SystemJS.config({
-    baseURL: '/js'
-  });
-
-  // loads /js/main.js
-  SystemJS.import('main.js');
+  SystemJS.import('/js/main.js');
 </script>
 ```
 
 The above will support loading all module formats, including ES Modules transpiled into the System.register format.
 
-To load ES6 code with in-browser transpilation, configure one of the following transpiler plugins:
+**To load ES6 code with in-browser transpilation, ne of the following transpiler plugins must be configured**:
 
 * [Babel](https://github.com/systemjs/plugin-babel)
 * [TypeScript](https://github.com/frankwallis/plugin-typescript)
 * [Traceur](http://github.com/systemjs/plugin-traceur)
-
-### Promise Polyfill
-
-SystemJS relies on `Promise` being present in the environment.
-
-For the best performance in IE and older browsers, it is advisable to load a polyfill like [Bluebird](https://github.com/petkaantonov/bluebird) or [es6-promise](https://github.com/stefanpenner/es6-promise) before SystemJS.
-
-Otherwise, when Promise is not available, SystemJS will attempt to load the `system-polyfills.js` file located in the dist folder which contains the when.js Promise polyfill.
 
 ### NodeJS
 
@@ -98,6 +84,12 @@ SystemJS.import('lodash').then(function (_) {
  console.log(_);
 });
 ```
+
+### Promise Polyfill
+
+SystemJS relies on `Promise` being present in the environment.
+
+For the best performance in IE and older browsers, it is advisable to load a polyfill like [Bluebird](https://github.com/petkaantonov/bluebird) or [es6-promise](https://github.com/stefanpenner/es6-promise) before SystemJS.
 
 ### Plugins
 
@@ -140,8 +132,9 @@ Guides:
 
 #### Running the tests
 
-To install the dependencies correctly, run `bower install` from the root of the repo, then open `test/test.html` in a browser with a local server
-or file access flags enabled.
+```
+  npm run build && npm run test
+```
 
 License
 ---

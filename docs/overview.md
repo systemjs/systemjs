@@ -56,7 +56,7 @@ For a reference see the [Config API](config-api.md) page.
 
 #### baseURL
 
-The *baseURL* provides a special mechanism for loading modules relative to a standard reference URL.
+The *baseURL* provides a mechanism for loading modules relative to a standard reference URL.
 
 This can be useful for being able to refer to the same module from many different page URLs or environments:
 
@@ -72,6 +72,13 @@ SystemJS.import('jquery.js');
 
 Module names of the above form are referred to as _plain names_ and are always loaded baseURL-relative instead of
 parentURL relative like one would expect with ordinary URLs.
+
+When loading with relative syntax, modules are loaded not relative to the baseURL, but to the baseURI:
+
+```javascript
+// will load relative to the baseURI, regardless of baseURL
+SystemJS.import('./x.js');
+```
 
 > Note we always run the `SystemJS.config` function instead of setting instance properties directly as this will set the correct normalized baseURL in the process.
 
@@ -163,4 +170,4 @@ SystemJS.import('some/file.txt!text')
 
 When no plugin is explicitly specified the extension is used as the plugin name itself.
 
-> Note it is usually advisable to use plugin loader configuration over plugin syntax.
+> To use the Webpack-style plugin syntax `System.import('text!some/file.txt')` this can be enabled globally via `System.config({ pluginFirst: true })`.
