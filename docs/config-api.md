@@ -20,33 +20,13 @@ For this reason it is usually advisable to use `SystemJS.config` instead of sett
 
 ### Configuration Options
 
-* [babelOptions](#babeloptions)
 * [bundle](#bundle)
-* [defaultJSExtensions](#defaultjsextensions)
 * [depCache](#depcache)
 * [map](#map)
 * [meta](#meta)
 * [packages](#packages)
 * [paths](#paths)
-* [traceurOptions](#traceuroptions)
 * [transpiler](#transpiler)
-* [typescriptOptions](#typescriptoptions)
-
-#### babelOptions
-Type: `Object`
-Default: `{}`
-
-Set the Babel transpiler options when [SystemJS.transpiler](#transpiler) is set to `babel`:
-
-```javascript
-SystemJS.config({
-  babelOptions: {
-    presets: ['es2015']
-  }
-});
-```
-
-A list of options is available in the [Babel project documentation](https://babeljs.io/docs/usage/options/).
 
 #### bundle
 Type: `Object`
@@ -67,21 +47,6 @@ In the above any require to `dependencyA` or `dependencyB` will first trigger a 
 It is an alternative to including a script tag for a bundle in the page, useful for bundles that load dynamically where we want to trigger the bundle load automatically only when needed.
 
 The bundle itself is a module which contains named System.register and define calls as an output of the builder. The dependency names the bundles config lists should be the same names that are explicitly defined in the bundle.
-
-#### defaultJSExtensions
-
-Backwards-compatibility mode for the loader to automatically add '.js' extensions when not present to module requests.
-
-This allows code written for SystemJS 0.16 or less to work easily in the latest version:
-
-```javascript
-SystemJS.defaultJSExtensions = true;
-
-// requests ./some/module.js instead
-SystemJS.import('./some/module');
-```
-
-Note that this is a compatibility property for transitioning to using explicit extensions and will be deprecated in future.
 
 #### depCache
 Type: `Object`
@@ -180,11 +145,11 @@ SystemJS.config({
 * [`exports`](module-formats.md#exports):
   For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
   This tells the loader what global name to use as the module's export value.
-* [`deps`](module-formats.md#shim-dependencies): 
+* [`deps`](module-formats.md#shim-dependencies):
   Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats.
 * [`globals`](module-formats.md#custom-globals):
-  A map of global names to module names that should be defined only for the execution of this module. 
-    Enables use of legacy code that expects certain globals to be present. 
+  A map of global names to module names that should be defined only for the execution of this module.
+    Enables use of legacy code that expects certain globals to be present.
     Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats.
 * [`loader`](overview.md#plugin-loaders):
   Set a loader for this meta path.
@@ -201,9 +166,9 @@ SystemJS.config({
   In order to mitigate this, the `<script>` tags need to set [`crossorigin` attribute]
   (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-crossorigin) and the server needs to
   [enable CORS](http://enable-cors.org/).
-  The [valid values](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_settings_attributes) are 
+  The [valid values](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_settings_attributes) are
   `"anonymous"` and `"use-credentials"`.
-* `esmExports`: When loading a module that is not an ECMAScript Module, we set the module as the `default` export, but then also 
+* `esmExports`: When loading a module that is not an ECMAScript Module, we set the module as the `default` export, but then also
   iterate the module object and copy named exports for it a well. Use this option to disable this iteration and copying of the exports.
 
 #### packages
@@ -254,39 +219,22 @@ SystemJS.config({
 #### paths
 Type: `Object`
 
-The [ES6 Module Loader](https://github.com/systemjs/systemjs/blob/master/docs/es6-modules-overview.md) paths implementation, applied after normalization and supporting subpaths via wildcards.
-
-_It is usually advisable to use map configuration over paths unless you need strict control over normalized module names._
-
-#### traceurOptions
-Type: `Object`
-Default: `{}`
-
-Set the Traceur compilation options.
+Paths allow creating mappings that apply after `map` configuration:
 
 ```javascript
 SystemJS.config({
-    traceurOptions: {
-    }
+  paths: {
+    'app/': 'https://code.mycdn.com/app-1.2.3/'
+  }
 });
 ```
 
-A list of options is available in the [Traceur project documentation](https://github.com/google/traceur-compiler/wiki/Options-for-Compiling).
+_It is usually advisable to use map configuration over paths._
 
 #### transpiler
 Type: `String`
-Default: `traceur`
+Default: `undefined`
 
-Sets the module name of the transpiler to be used for loading ES6 modules.
+Sets the module name of the transpiler plugin to be used for loading ES6 modules.
 
-Represents a module name for `SystemJS.import` that must resolve to either Traceur, Babel or TypeScript.
-
-When set to `traceur`, `babel` or `typescript`, loading will be automatically configured as far as possible.
-
-#### typescriptOptions
-Type: `Object`
-Default: `{}`
-
-Sets the TypeScript transpiler options.
-
-A list of options is available in the [TypeScript project documentation](https://www.typescriptlang.org/docs/handbook/compiler-options.html).
+Represents a module name for `SystemJS.import` that must resolve to a valid plugin that supports transpilation of ES modules.
