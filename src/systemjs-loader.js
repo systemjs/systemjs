@@ -35,8 +35,7 @@ function SystemJSLoader (baseKey) {
 
     production: false,
 
-    // traceur is default transpiler
-    transpiler: 'traceur',
+    transpiler: undefined,
     loadedBundles: {},
 
     // global behaviour flags
