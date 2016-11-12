@@ -1,3 +1,4 @@
+
 import { isWindows, global, readMemberExpression, cjsRequireRegEx } from './common.js';
 
 export default function (loader) {
@@ -124,9 +125,7 @@ export default function (loader) {
 
       global.require = curRequire;
 
-      if (typeof output === 'undefined' && module)
-        output = module.exports;
-      else
+      if (typeof output !== 'undefined')
         module.exports = output;
     }
 
