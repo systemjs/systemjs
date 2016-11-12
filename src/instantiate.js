@@ -469,8 +469,8 @@ function sanitizeSourceMap (address, sourceMap) {
 }
 
 function transpile (loader, source, key, metadata) {
-  if (loader.transpiler === false)
-    throw new TypeError('Unable to dynamically transpile ES module as SystemJS.transpiler set to false.');
+  if (!loader.transpiler)
+    throw new TypeError('Unable to dynamically transpile ES module\n   A loader plugin needs to be configured via `SystemJS.config({ transpiler: \'transpiler-module\' })`.');
 
   // deps support for es transpile
   if (metadata.load.deps) {
