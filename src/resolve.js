@@ -171,8 +171,6 @@ export function coreResolve (config, key, parentKey, doMap) {
 }
 
 function pluginResolve (config, key, parentKey, metadata, parentMetadata) {
-  var loader = this;
-
   var parsed = parsePlugin(config, key);
 
   if (!parsed)
