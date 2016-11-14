@@ -13,18 +13,18 @@ should be precompiled for production environments and include use cases such as 
 
 ### Instantiation plugins
 
-As of SystemJS 0.20, instantiation plugins are modules with a `load` method resolving to the module namespace value to use:
+As of SystemJS 0.20, instantiation plugins are modules with a `default` export function providing the module value:
 
 plugin.js
 ```javascript
-export function load (url) {
+export default function (url) {
   return Promise.resolve({
     some: 'value'
   });
 }
 ```
 
-Supporting:
+Which can be used via:
 
 ```javascript
 import { some } from 'test!./plugin.js';
@@ -38,7 +38,7 @@ Within the `load` hook `this` is set to the loader itself. It is also possible t
 in the plugin load hook. Because plugins are referenced via syntax (`resource!plugin`) it is necessary to use the corresponding `registerKey` argument here:
 
 ```javascript
-export function load (url, registerKey) {
+export default function (url, registerKey) {
   this.register(registerKey, deps, function (_export, _context) {
     // ... System.register format ...
   });
@@ -53,7 +53,7 @@ A CSS loading plugin can be written:
 
 css.js:
 ```javascript
-exports.load = function (url) {
+module.exports = function (url) {
   return new Promise(function (resolve, reject) {
     var link = document.createElement('link');
     link.rel = 'stylesheet';
