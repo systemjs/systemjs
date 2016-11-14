@@ -186,7 +186,7 @@ asyncTest('Meta should override meta syntax', function() {
 
 asyncTest('Instantiation plugin', function () {
   System.set('instantiate-plugin', System.newModule({
-    load: function (key) {
+    default: function (key) {
       return {
         value: 'plugin'
       };
@@ -200,7 +200,7 @@ asyncTest('Instantiation plugin', function () {
 
 asyncTest('Instantiate plugin register', function () {
   System.set('instantiate-plugin-register', System.newModule({
-    load: function (key, fullKey) {
+    default: function (key, fullKey) {
       this.register(fullKey, [], function (_export) {
         return function () {
           _export('some', 'thing');
@@ -221,7 +221,7 @@ asyncTest('Load-based transpiler', function () {
     transpiler: 'load-transpiler'
   });
   loadSystem.set('load-transpiler', loadSystem.newModule({
-    load: function (key) {
+    default: function (key) {
       return {
         transpiled: 'value'
       };
