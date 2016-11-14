@@ -1,3 +1,11 @@
+### Canonical Names
+
+Canonical form is defined as a request that only needs to go through the following steps to be turned into URL:
+
+* baseURL
+* Paths
+
+
 ### Compiling Modules into a Bundle
 
 [SystemJS builder](https://github.com/systemjs/builder) provides comprehensive support for compiling all 
