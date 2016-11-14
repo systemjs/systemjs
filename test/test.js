@@ -184,6 +184,55 @@ asyncTest('Meta should override meta syntax', function() {
   }, err);
 });
 
+asyncTest('Instantiation plugin', function () {
+  System.set('instantiate-plugin', System.newModule({
+    load: function (key) {
+      return {
+        value: 'plugin'
+      };
+    }
+  }));
+  System['import']('test!instantiate-plugin').then(function (m) {
+    ok(m.value === 'plugin');
+    start();
+  }, err);
+});
+
+asyncTest('Instantiate plugin register', function () {
+  System.set('instantiate-plugin-register', System.newModule({
+    load: function (key, fullKey) {
+      this.register(fullKey, [], function (_export) {
+        return function () {
+          _export('some', 'thing');
+        };
+      });
+    }
+  }));
+  System['import']('test!instantiate-plugin-register').then(function (m) {
+    ok(m.some === 'thing');
+    start();
+  }, err);
+});
+
+asyncTest('Load-based transpiler', function () {
+  var loadSystem = new System.constructor();
+  loadSystem.config(System.getConfig());
+  loadSystem.config({
+    transpiler: 'load-transpiler'
+  });
+  loadSystem.set('load-transpiler', loadSystem.newModule({
+    load: function (key) {
+      return {
+        transpiled: 'value'
+      };
+    }
+  }));
+  loadSystem.import('tests/meta-override.js').then(function (m) {
+    ok(m.transpiled == 'value');
+    start();
+  }, err);
+});
+
 asyncTest('Support the empty module', function() {
   System['import']('@empty').then(function(m) {
     ok(m, 'No empty module');
@@ -1208,11 +1257,11 @@ asyncTest('Package map circular cases', function() {
     System.normalize('tp3/lib/'),
     System.normalize('tp3/lib/q'),
     System.normalize('tp3/lib/p'),
-    
+
     System.normalize('../lib', System.baseURL + 'tests/testpkg3/asdf/x.js'),
     System.normalize('../lib/', System.baseURL + 'tests/testpkg3/asdf/x.js'),
     System.normalize('../lib/x', System.baseURL + 'tests/testpkg3/asdf/x.js'),
-    
+
     System.normalize('.', System.baseURL + 'tests/testpkg3/lib/a'),
     System.normalize('./', System.baseURL + 'tests/testpkg3/lib/x'),
     System.normalize('./p', System.baseURL + 'tests/testpkg3/lib/x'),
@@ -1367,7 +1416,7 @@ if (typeof process != 'undefined') {
     start();
   });
 }
-  
+
 asyncTest('Package-local alias esm', function() {
   System.config({
     map: {
@@ -1452,7 +1501,7 @@ asyncTest('Package-local alias cjs default export', function() {
   });
   System['import']('package-local-alias-default-cjs').then(function(m) {
     ok(m.q == 'q');
-    ok(m.fromLocal == 'x'); 
+    ok(m.fromLocal == 'x');
     ok(m.fromLocalDirect == 'x');
     start();
   });
