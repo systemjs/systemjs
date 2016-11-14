@@ -17,7 +17,7 @@ As of SystemJS 0.20, instantiation plugins are modules with a `load` method reso
 
 plugin.js
 ```javascript
-export function load (key) {
+export function load (url) {
   return Promise.resolve({
     some: 'value'
   });
@@ -35,7 +35,15 @@ Within this hook, plugins can fetch `key` as a source text, or do any other cust
 is provided, an empty module is used for the plugin module value.
 
 Within the `load` hook `this` is set to the loader itself. It is also possible to call `loader.register(key, deps, declare)` to instantiate the module
-in the plugin load hook.
+in the plugin load hook. Because plugins are referenced via syntax (`resource!plugin`) it is necessary to use the corresponding `registerKey` argument here:
+
+```javascript
+export function load (url, registerKey) {
+  this.register(registerKey, deps, function (_export, _context) {
+    // ... System.register format ...
+  });
+}
+```
 
 > For SystemJS 0.19 and below, instantiation plugins must use the `instantiate` hook API form from the compiler plugins section below.
 
@@ -45,11 +53,11 @@ A CSS loading plugin can be written:
 
 css.js:
 ```javascript
-exports.load = function(key) {
+exports.load = function (url) {
   return new Promise(function (resolve, reject) {
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = key;
+    link.href = url;
     link.onload = resolve;
 
     document.head.appendChild(link);

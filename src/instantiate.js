@@ -42,7 +42,7 @@ export function instantiate (key, metadata, processAnonRegister) {
       .then(function () {
         // modern plugin = load hook
         if (metadata.pluginModule && typeof metadata.pluginModule.load === 'function')
-          return runPluginLoad(loader, key, metadata, metadata.pluginKey, metadata.pluginModule);
+          return runPluginLoad(loader, metadata.pluginArgument, key, metadata, metadata.pluginKey, metadata.pluginModule);
         return runFetchPipeline(loader, key, metadata, processAnonRegister, config.wasm);
       })
 
@@ -95,10 +95,10 @@ function protectedCreateNamespace (bindings) {
   return new ModuleNamespace(bindings);
 }
 
-function runPluginLoad (loader, key, metadata, pluginKey, pluginModule) {
+function runPluginLoad (loader, key, registerKey, metadata, pluginKey, pluginModule) {
   return Promise.resolve()
   .then(function () {
-    return pluginModule.load.call(loader, key);
+    return pluginModule.load.call(loader, key, registerKey);
   })
   .then(function (pluginResult) {
     if (pluginResult === undefined)
@@ -501,7 +501,7 @@ function transpile (loader, source, key, metadata) {
   return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
     if (typeof transpiler.load === 'function')
-      return runPluginLoad(loader, key, metadata, loader.transpiler, transpiler);
+      return runPluginLoad(loader, key, key, metadata, loader.transpiler, transpiler);
 
     if (transpiler.__useDefault)
       transpiler = transpiler.default;
