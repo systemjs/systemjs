@@ -530,8 +530,8 @@ suite('SystemJS Standard Tests', function() {
 
   test('Instantiate plugin register', function () {
     System.set('instantiate-plugin-register', System.newModule({
-      load: function (key) {
-        this.register(key, [], function (_export) {
+      load: function (key, fullKey) {
+        this.register(fullKey, [], function (_export) {
           return function () {
             _export('some', 'thing');
           };
