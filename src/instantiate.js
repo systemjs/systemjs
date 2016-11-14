@@ -23,19 +23,18 @@ export function instantiate (key, metadata, processAnonRegister) {
       return;
     }
 
-    // auto script load AMD, global without deps
-    if (!metadata.load.deps && !metadata.load.globals && metadata.load.scriptLoad !== false &&
-        (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))
-      metadata.load.scriptLoad = true;
-
-    if (metadata.load.scriptLoad) {
-      if (metadata.load.pluginKey || !supportsScriptLoad)
+    if (metadata.load.scriptLoad ) {
+      if (metadata.load.pluginKey || !supportsScriptLoad) {
         metadata.load.scriptLoad = false;
-      if (!supportsScriptLoad)
-        warn.call(config, 'scriptLoad not supported in this environment, using XHR load for "' + key + '"');
+        warn.call(config, 'scriptLoad not supported for "' + key + '"');
+      }
     }
-
-
+    else if (metadata.load.scriptLoad !== false && supportsScriptLoad) {
+      // auto script load AMD, global without deps
+      if (!metadata.load.deps && !metadata.load.globals &&
+          (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))
+        metadata.load.scriptLoad = true;
+    }
 
     // fetch / translate / instantiate pipeline
     if (!metadata.load.scriptLoad)
@@ -43,7 +42,19 @@ export function instantiate (key, metadata, processAnonRegister) {
       .then(function () {
         // modern plugin = load hook
         if (metadata.pluginModule && typeof metadata.pluginModule.load === 'function')
-          return metadata.pluginModule.load.call(loader, key, processAnonRegister);
+          return Promise.resolve()
+          .then(function () {
+            return metadata.pluginModule.load.call(loader, key);
+          })
+          .then(function (pluginResult) {
+            if (pluginResult instanceof ModuleNamespace)
+              return pluginResult;
+            if (pluginResult === undefined)
+              return emptyModule;
+            if (typeof pluginResult !== 'object')
+              throw new TypeError('Plugin ' + metadata.pluginKey + ' returned a ' + (typeof pluginResult) + ' when an object module or undefined instantiation return value is required.');
+            return new ModuleNamespace(pluginResult);
+          });
         return runFetchPipeline(loader, key, metadata, processAnonRegister, config.wasm);
       })
 
@@ -296,7 +307,6 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
       case 'json':
         // warn.call(config, '"json" module format is deprecated.');
         return loader.newModule({ default: JSON.parse(source), __useDefault: true });
-      break;
 
       case 'amd':
         var curDefine = global.define;

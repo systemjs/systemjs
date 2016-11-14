@@ -497,6 +497,19 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Instantiation plugin', function () {
+    System.set('instantiate-plugin', System.newModule({
+      load: function (key) {
+        return {
+          value: 'plugin'
+        };
+      }
+    }));
+    return System.import('test!instantiate-plugin').then(function (m) {
+      ok(m.value == 'plugin');
+    });
+  });
+
   test('Simple compiler Plugin', function () {
     System.config({
       map: {
