@@ -42,19 +42,7 @@ export function instantiate (key, metadata, processAnonRegister) {
       .then(function () {
         // modern plugin = load hook
         if (metadata.pluginModule && typeof metadata.pluginModule.load === 'function')
-          return Promise.resolve()
-          .then(function () {
-            return metadata.pluginModule.load.call(loader, key);
-          })
-          .then(function (pluginResult) {
-            if (pluginResult instanceof ModuleNamespace)
-              return pluginResult;
-            if (pluginResult === undefined)
-              return metadata.registered ? pluginResult : emptyModule;
-            if (typeof pluginResult !== 'object')
-              throw new TypeError('Plugin ' + metadata.pluginKey + ' returned a ' + (typeof pluginResult) + ' when an object module or undefined instantiation return value is required.');
-            return new ModuleNamespace(pluginResult);
-          });
+          return runPluginLoad(loader, key, metadata, metadata.pluginKey, metadata.pluginModule);
         return runFetchPipeline(loader, key, metadata, processAnonRegister, config.wasm);
       })
 
@@ -96,6 +84,29 @@ function initializePlugin (loader, key, metadata) {
       metadata: metadata.load
     };
     metadata.load.deps = metadata.load.deps || [];
+  });
+}
+
+function protectedCreateNamespace (bindings) {
+  if (bindings instanceof ModuleNamespace)
+    return bindings;
+  if (typeof bindings !== 'object')
+    throw new TypeError('Cannot create a module namespace from an object of type "' + typeof bindings + '".');
+  return new ModuleNamespace(bindings);
+}
+
+function runPluginLoad (loader, key, metadata, pluginKey, pluginModule) {
+  return Promise.resolve()
+  .then(function () {
+    return pluginModule.load.call(loader, key);
+  })
+  .then(function (pluginResult) {
+    if (pluginResult === undefined)
+      return metadata.registered ? pluginResult : emptyModule;
+    return protectedCreateNamespace(pluginResult);
+  })
+  .catch(function (err) {
+    throw addToError(err, 'Error running instantiate plugin ' + pluginKey);
   });
 }
 
@@ -261,7 +272,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
   // instantiate
   .then(function (translated) {
-    if (!metadata.pluginModule || !metadata.pluginModule.instantiate)
+    if (typeof translated !== 'string' || !metadata.pluginModule || !metadata.pluginModule.instantiate)
       return translated;
 
     var calledInstantiate = false;
@@ -276,17 +287,13 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
     .then(function (result) {
       if (calledInstantiate)
         return translated;
-
-      loader.registerDynamic([], function (require, exports, module) {
-        module.exports = result;
-      });
-      processAnonRegister();
+      return protectedCreateNamespace(result);
     });
   })
   .then(function (source) {
     // plugin instantiate result case
-    if (source === undefined)
-      return;
+    if (typeof source !== 'string')
+      return source;
 
     if (!metadata.load.format)
       metadata.load.format = detectLegacyFormat(source);
@@ -493,15 +500,18 @@ function transpile (loader, source, key, metadata) {
   // do transpilation
   return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
+    if (typeof transpiler.load === 'function')
+      return runPluginLoad(loader, key, metadata, loader.transpiler, transpiler);
+
     if (transpiler.__useDefault)
       transpiler = transpiler.default;
 
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)
-      throw new Error('Unable to load transpiler, ensure the SystemJS.transpiler is configured to a transpiler plugin. See the SystemJS README for more information.');
+      throw new Error('Unable to load transpiler, ensure the SystemJS.transpiler is configured to a transpiler plugin.');
 
     // if transpiler is the same as the plugin loader, then don't run twice
-    if (transpiler == metadata.pluginModule)
+    if (transpiler === metadata.pluginModule)
       return load.source;
 
     // convert the source map into an object for transpilation chaining

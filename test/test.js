@@ -154,6 +154,24 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Load-based transpiler', function () {
+    var loadSystem = new System.constructor();
+    loadSystem.config(System.getConfig());
+    loadSystem.config({
+      transpiler: 'load-transpiler'
+    });
+    loadSystem.set('load-transpiler', loadSystem.newModule({
+      load: function (key) {
+        return {
+          transpiled: 'value'
+        };
+      }
+    }));
+    return loadSystem.import('tests/meta-override.js').then(function (m) {
+      ok(m.transpiled == 'value');
+    });
+  });
+
   test('String encoding', function () {
     return System.import('tests/string-encoding.js').then(function (m) {
       ok(m.pi === decodeURI('%CF%80'));
@@ -578,7 +596,7 @@ suite('SystemJS Standard Tests', function() {
       }
     });
     return System.import('tests/cjs-loading-plugin.js').then(function (m) {
-      ok(m.pluginSource == 'this is css');
+      ok(m.default.pluginSource == 'this is css');
     });
   });
 
