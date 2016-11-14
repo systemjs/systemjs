@@ -161,7 +161,7 @@ suite('SystemJS Standard Tests', function() {
       transpiler: 'load-transpiler'
     });
     loadSystem.set('load-transpiler', loadSystem.newModule({
-      load: function (key) {
+      default: function (key) {
         return {
           transpiled: 'value'
         };
@@ -517,7 +517,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Instantiation plugin', function () {
     System.set('instantiate-plugin', System.newModule({
-      load: function (key) {
+      default: function (key) {
         return {
           value: 'plugin'
         };
@@ -530,7 +530,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Instantiate plugin register', function () {
     System.set('instantiate-plugin-register', System.newModule({
-      load: function (key, fullKey) {
+      default: function (key, fullKey) {
         this.register(fullKey, [], function (_export) {
           return function () {
             _export('some', 'thing');
