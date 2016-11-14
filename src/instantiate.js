@@ -50,7 +50,7 @@ export function instantiate (key, metadata, processAnonRegister) {
             if (pluginResult instanceof ModuleNamespace)
               return pluginResult;
             if (pluginResult === undefined)
-              return emptyModule;
+              return metadata.registered ? pluginResult : emptyModule;
             if (typeof pluginResult !== 'object')
               throw new TypeError('Plugin ' + metadata.pluginKey + ' returned a ' + (typeof pluginResult) + ' when an object module or undefined instantiation return value is required.');
             return new ModuleNamespace(pluginResult);
