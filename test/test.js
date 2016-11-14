@@ -506,7 +506,22 @@ suite('SystemJS Standard Tests', function() {
       }
     }));
     return System.import('test!instantiate-plugin').then(function (m) {
-      ok(m.value == 'plugin');
+      ok(m.value === 'plugin');
+    });
+  });
+
+  test('Instantiate plugin register', function () {
+    System.set('instantiate-plugin-register', System.newModule({
+      load: function (key) {
+        this.register(key, [], function (_export) {
+          return function () {
+            _export('some', 'thing');
+          };
+        });
+      }
+    }));
+    return System.import('test!instantiate-plugin-register').then(function (m) {
+      ok(m.some === 'thing');
     });
   });
 
