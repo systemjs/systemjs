@@ -34,6 +34,9 @@ assert(some === 'value'); // ok
 Within this hook, plugins can fetch `key` as a source text, or do any other custom work necessary to output a valid module object. If no return value
 is provided, an empty module is used for the plugin module value.
 
+Within the `load` hook `this` is set to the loader itself. It is also possible to call `loader.register(key, deps, declare)` to instantiate the module
+in the plugin load hook.
+
 > For SystemJS 0.19 and below, instantiation plugins must use the `instantiate` hook API form from the compiler plugins section below.
 
 #### Sample CSS Plugin
