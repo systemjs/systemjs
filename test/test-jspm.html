@@ -1,0 +1,25 @@
+<!doctype html>
+<script src="../dist/system.src.js"></script>
+<script>
+  System.config({
+    baseURL: 'https://registry.jspm.io/',
+    paths: {
+      'npm:': 'https://npm.jspm.io/',
+      'github:': 'https://github.jspm.io/'
+    },
+    transpiler: 'npm:systemjs-plugin-babel',
+    map: {
+      'systemjs-babel-build': 'npm:systemjs-plugin-babel/systemjs-babel-browser.js'
+    },
+    packages: {
+      'https://npm.jspm.io': { defaultExtension: 'js' },
+      'https://github.jspm.io': { defaultExtension: 'js' },
+      'https://registry.jspm.io': { defaultExtension: 'js' },
+    }
+  });
+</script>
+<script>
+  //System.import('jquery').then(console.log.bind(console));
+  //System.import('npm:lodash').then(console.log.bind(console));
+  System.import('./tests/es6-circular1.js').then(console.log.bind(console));
+</script>
