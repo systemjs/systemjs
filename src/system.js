@@ -5,7 +5,9 @@ SystemJSLoader.prototype.version = VERSION;
 
 var System = new SystemJSLoader();
 
-global.System = global.SystemJS = System;
+global.SystemJS = System;
+
+global.System = global.System || global.SystemJS;
 
 if (typeof module !== 'undefined' && module.exports)
   module.exports = System;
