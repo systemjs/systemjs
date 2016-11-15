@@ -118,6 +118,8 @@ export function setConfig (cfg, isEnvConfig) {
       if (config.pathsLocked)
         warn.call(config, 'baseURL should be set before other config to avoid conflicts.');
       config.baseURL = resolveUrlToParentIfNotPlain(baseURL, baseURI) || resolveUrlToParentIfNotPlain('./' + baseURL, baseURI);
+      if (config.baseURL[config.baseURL.length - 1] !== '/')
+        config.baseURL += '/';
     }
 
     var pathsExtended = false;
