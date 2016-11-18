@@ -320,6 +320,23 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Loading an AMD wildcard bundle fail if not match', function () {
+    System.config({
+      bundles: {
+        'tests/amd-bundle.js': ['bundle-*.css']
+      }
+    });
+    return Promise.all([
+      System.import('bundle-x/path/to/bundle-module-1').then(function (m) {
+        throw new Error('Should fail');
+      }, function(e) {
+        if (typeof console != 'undefined' && console.error)
+          console.error(e);
+        ok(true);
+      })
+    ]);
+  });
+
   test('Loading an AMD bundle', function () {
     System.config({
       bundles: {
@@ -331,6 +348,9 @@ suite('SystemJS Standard Tests', function() {
         ok(m.defined == true);
       }),
       System.import('bundle-2').then(function (m) {
+        ok(m.defined == true);
+      }),
+      System.import('bundle-x/path/to/bundle-module-2').then(function (m) {
         ok(m.defined == true);
       })
     ]);
