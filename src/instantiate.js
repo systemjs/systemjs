@@ -126,7 +126,7 @@ function loadBundlesAndDepCache (config, loader, key) {
           break;
         }
 
-        // wildcard in bundles does not include / boundaries
+        // wildcard in bundles includes / boundaries
         if (curModule.indexOf('*') != -1) {
           var parts = curModule.split('*');
           if (parts.length != 2) {
@@ -135,8 +135,7 @@ function loadBundlesAndDepCache (config, loader, key) {
           }
 
           if (key.substring(0, parts[0].length) == parts[0] &&
-              key.substr(key.length - parts[1].length, parts[1].length) == parts[1] &&
-              key.substr(parts[0].length, key.length - parts[1].length - parts[0].length).indexOf('/') == -1) {
+              key.substr(key.length - parts[1].length, parts[1].length) == parts[1]) {
             matched = true;
             break;
           }
