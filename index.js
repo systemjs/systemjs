@@ -8,6 +8,8 @@ var isWindows = typeof process.platform != 'undefined' && process.platform.match
 // set transpiler paths in Node
 var nodeResolver = typeof process != 'undefined' && typeof require != 'undefined' && require.resolve;
 function configNodePath(loader, module, nodeModule, wildcard) {
+  loader.paths = loader.paths || {};
+
   if (loader.paths[module])
     return;
 
@@ -16,7 +18,7 @@ function configNodePath(loader, module, nodeModule, wildcard) {
     var match = nodeResolver(nodeModule + ext).replace(/\\/g, '/');
   }
   catch(e) {}
-  
+
   if (match)
     loader.paths[module] = 'file://' + (isWindows ? '/' : '') + match.substr(0, match.length - ext.length) + (wildcard ? '/*.js' : '');
 }
