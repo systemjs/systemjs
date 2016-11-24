@@ -48,7 +48,7 @@ By overriding the `translate` hook, we now support CoffeeScript loading with:
 ```
 
 ```javascript
-  System.import('app/main.coffee!').then(function(main) {
+  SystemJS.import('app/main.coffee!').then(function(main) {
     // main is now loaded from CoffeeScript
   });
 ```
