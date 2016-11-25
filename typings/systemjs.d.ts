@@ -56,11 +56,15 @@ interface SystemJSConfig {
   typescriptOptions?: any;
 }
 
-interface SystemJSStatic extends SystemJSConfig {
+interface SystemJSConstructor {
+  new (): SystemJS;
+}
+
+interface SystemJS extends SystemJSConfig {
   amdDefine: Function;
   amdRequire: Function;
   config(config: SystemJSConfig): void;
-  constructor(): SystemJSStatic;
+  constructor: SystemJSConstructor;
   delete(moduleName: string): boolean;
   get(moduleName: string): any
   has(moduleName: string): boolean;
@@ -74,7 +78,7 @@ interface SystemJSStatic extends SystemJSConfig {
   _nodeRequire: Function;
 }
 
-declare let SystemJS: SystemJSStatic;
+declare let SystemJS: SystemJS;
 
 declare module 'systemjs' {
   export = SystemJS;
