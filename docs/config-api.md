@@ -66,7 +66,7 @@ In the above any require to `dependencyA` or `dependencyB` will first trigger a 
 
 It is an alternative to including a script tag for a bundle in the page, useful for bundles that load dynamically where we want to trigger the bundle load automatically only when needed.
 
-The bundle itself is a module which contains named SystemJS.register and define calls as an output of the builder. The dependency names the bundles config lists should be the same names that are explicitly defined in the bundle.
+The bundle itself is a module which contains named System.register and define calls as an output of the builder. The dependency names the bundles config lists should be the same names that are explicitly defined in the bundle.
 
 #### defaultJSExtensions
 

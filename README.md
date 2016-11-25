@@ -8,7 +8,7 @@ SystemJS
 Universal dynamic module loader - loads ES6 modules, AMD, CommonJS and global scripts in the browser and NodeJS.
 
 * [Loads any module format](docs/module-formats.md) with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md).
-* Loads [ES6 modules compiled into the `SystemJS.register` bundle format for production](docs/production-workflows.md), maintaining circular references support.
+* Loads [ES6 modules compiled into the `System.register` bundle format for production](docs/production-workflows.md), maintaining circular references support.
 * Supports RequireJS-style [map](docs/overview.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), [bundles](docs/production-workflows.md#bundle-extension) and [global shims](docs/module-formats.md#shim-dependencies).
 * [Loader plugins](docs/overview.md#plugin-loaders) allow custom transpilation or asset loading.
 
@@ -48,7 +48,7 @@ Basic Use
 </script>
 ```
 
-The above will support loading all module formats, including ES Modules transpiled into the SystemJS.register format.
+The above will support loading all module formats, including ES Modules transpiled into the System.register format.
 
 To load ES6 code with in-browser transpilation, configure one of the following transpiler plugins:
 

@@ -83,17 +83,17 @@ Given a plain JavaScript object, return an equivalent `Module` object.
 
 Useful when writing a custom `instantiate` hook or using `SystemJS.set`.
 
-#### SystemJS.register([name ,] deps, declare)
+#### System.register([name ,] deps, declare)
 Type: `Function`
 
-Declaration function for defining modules of the `SystemJS.register` polyfill module format.
+Declaration function for defining modules of the `System.register` polyfill module format.
 
 [Read more on the format at the loader polyfill page](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/system-register.md)
 
-#### SystemJS.registerDynamic([name ,] deps, executingRequire, declare)
+#### System.registerDynamic([name ,] deps, executingRequire, declare)
 Type: `Function`
 
-Companion module format to `SystemJS.register` for non-ES6 modules.
+Companion module format to `System.register` for non-ES6 modules.
 
 Provides a `<script>`-injection-compatible module format that any CommonJS or Global module can be converted into for CSP compatibility.
 
@@ -108,7 +108,7 @@ module.exports = require('pkg/module');
 Can be written:
 
 ```javascript
-SystemJS.registerDynamic(['pkg/module'], true, function(require, exports, module) {
+System.registerDynamic(['pkg/module'], true, function(require, exports, module) {
   module.exports = require('pkg/module');
 });
 ```

@@ -53,7 +53,7 @@ The bundle extension will automatically download a bundle as soon as an attempt 
   // will delegate to the bundle and only a single request is made
 ```
 
-A built file must contain the exact named defines or named `SystemJS.register` statements for the modules
+A built file must contain the exact named defines or named `System.register` statements for the modules
 it contains. Mismatched names will result in separate requests still being made.
 
 ### CSP-Compatible Production

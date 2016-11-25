@@ -6,7 +6,7 @@ The following module formats are supported:
 * `cjs`: [CommonJS](#commonjs)
 * `amd`: [Asynchronous Module Definition](#amd)
 * `global`: [Global shim module format](#globals)
-* `register`: [SystemJS.register](system-api.md#systemregister-name-deps-declare) or [SystemJS.registerDynamic](system-api.md#systemregisterdynamic-name-deps-executingrequire-declare) compatibility module format
+* `register`: [System.register](system-api.md#systemregister-name-deps-declare) or [System.registerDynamic](system-api.md#systemregisterdynamic-name-deps-executingrequire-declare) compatibility module format
 
 The module format can be set via meta configuration:
 
@@ -26,8 +26,8 @@ When the module format is not set, automatic regular-expression-based detection 
 This module format detection is never completely accurate, but caters well for the majority use cases.
 
 The module format detection happens in the following order:
-* _SystemJS.register / SystemJS.registerDynamic_
-  If the source code starts with a number of comments, followed by `SystemJS.register` or `SystemJS.registerDynamic` as the first line of code.
+* _System.register / System.registerDynamic_
+  If the source code starts with a number of comments, followed by `System.register` or `System.registerDynamic` as the first line of code.
 * _ES modules_
   The source is only detected as an ES module if it contains explicit module syntax - valid `import` or `export` statements.
 * _AMD modules_
