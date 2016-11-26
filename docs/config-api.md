@@ -2,10 +2,10 @@
 
 ### Setting Configuration
 
-Once SystemJS has loaded, configuration can be set on SystemJS by using the configuration function `System.config`:
+Once SystemJS has loaded, configuration can be set on SystemJS by using the configuration function `SystemJS.config`:
 
 ```javascript
-System.config({
+SystemJS.config({
   configA: {},
   configB: 'value'
 });
@@ -13,10 +13,10 @@ System.config({
 
 This is a helper function which normalizes configuration and sets configuration properties on the SystemJS instance.
 
-`System.config({ prop: 'value' })` is mostly equivalent to `System.prop = value` except that it will extend configuration objects,
+`SystemJS.config({ prop: 'value' })` is mostly equivalent to `SystemJS.prop = value` except that it will extend configuration objects,
 and certain properties will be normalized to be stored correctly.
 
-For this reason it is usually advisable to use `System.config` instead of setting instance properties directly.
+For this reason it is usually advisable to use `SystemJS.config` instead of setting instance properties directly.
 
 ### Configuration Options
 
@@ -36,10 +36,10 @@ For this reason it is usually advisable to use `System.config` instead of settin
 Type: `Object`
 Default: `{}`
 
-Set the Babel transpiler options when [System.transpiler](#transpiler) is set to `babel`:
+Set the Babel transpiler options when [SystemJS.transpiler](#transpiler) is set to `babel`:
 
 ```javascript
-System.config({
+SystemJS.config({
   babelOptions: {
     presets: ['es2015']
   }
@@ -55,14 +55,14 @@ Bundles allow a collection of modules to be downloaded together as a package whe
 Useful for splitting an application into sub-modules for production. Use with the [SystemJS Builder](https://github.com/systemjs/builder).
 
 ```javascript
-System.config({
+SystemJS.config({
   bundles: {
     bundleA: ['dependencyA', 'dependencyB']
   }
 });
 ```
 
-In the above any require to `dependencyA` or `dependencyB` will first trigger a `System.import('bundleA')` before proceeding with the load of `dependencyA` or `dependencyB`.
+In the above any require to `dependencyA` or `dependencyB` will first trigger a `SystemJS.import('bundleA')` before proceeding with the load of `dependencyA` or `dependencyB`.
 
 It is an alternative to including a script tag for a bundle in the page, useful for bundles that load dynamically where we want to trigger the bundle load automatically only when needed.
 
@@ -75,10 +75,10 @@ Backwards-compatibility mode for the loader to automatically add '.js' extension
 This allows code written for SystemJS 0.16 or less to work easily in the latest version:
 
 ```javascript
-System.defaultJSExtensions = true;
+SystemJS.defaultJSExtensions = true;
 
 // requests ./some/module.js instead
-System.import('./some/module');
+SystemJS.import('./some/module');
 ```
 
 Note that this is a compatibility property for transitioning to using explicit extensions and will be deprecated in future.
@@ -90,7 +90,7 @@ An alternative to bundling providing a solution to the latency issue of progress
 When a module specified in depCache is loaded, asynchronous loading of its pre-cached dependency list begins in parallel.
 
 ```javascript
-System.config({
+SystemJS.config({
   depCache: {
     moduleA: ['moduleB'], // moduleA depends on moduleB
     moduleB: ['moduleC'] // moduleB depends on moduleC
@@ -99,7 +99,7 @@ System.config({
 
 // when we do this import, depCache knows we also need moduleB and moduleC,
 // it then directly requests those modules as well as soon as we request moduleA
-System.import('moduleA')
+SystemJS.import('moduleA')
 ```
 
 Over HTTP/2 this approach may be preferable as it allows files to be individually cached in the browser meaning bundle optimizations are no longer a concern.
@@ -111,7 +111,7 @@ The map option is similar to paths, but acts very early in the normalization pro
 location or package:
 
 ```javascript
-System.config({
+SystemJS.config({
   map: {
     jquery: '//code.jquery.com/jquery-2.1.4.min.js'
   }
@@ -126,7 +126,7 @@ import $ from 'jquery';
 In addition, a map also applies to any subpaths, making it suitable for package folders as well:
 
 ```javascript
-System.config({
+SystemJS.config({
   map: {
     package: 'local/package'
   }
@@ -135,7 +135,7 @@ System.config({
 
 ```javascript
 // loads /local/package/path.js
-System.import('package/path.js');
+SystemJS.import('package/path.js');
 ```
 
 > Note map configuration used to support contextual submaps but this has been deprecated for package configuration.
@@ -149,7 +149,7 @@ Module meta provides an API for SystemJS to understand how to load modules corre
 Meta is how we set the module format of a module, or know how to shim dependencies of a global script.
 
 ```javascript
-System.config({
+SystemJS.config({
   meta: {
     // meaning [baseURL]/vendor/angular.js when no other rules are present
     // path is normalized using map and paths configuration
@@ -168,7 +168,7 @@ System.config({
 Wildcard meta is also supported and is additive from least to most specific match:
 
 ```javascript
-System.config({
+SystemJS.config({
   meta: {
     '/vendor/*': { format: 'global' }
   }
@@ -194,7 +194,7 @@ System.config({
 * `nonce`: The [nonce](https://www.w3.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
   This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
 * `integrity`: The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
-  For example, `System.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
+  For example, `SystemJS.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
 * `crossOrigin`: When scripts are loaded from a different domain (e.g. CDN) the global error handler (`window.onerror`)
   has very limited information about errors to [prevent unintended leaking]
   (https://developer.mozilla.org/en/docs/Web/API/GlobalEventHandlers/onerror#Notes).
@@ -216,7 +216,7 @@ In addition packages allow for setting contextual map configuration which only a
 This allows for full dependency encapsulation without always needing to have all dependencies in a global namespace.
 
 ```javascript
-System.config({
+SystemJS.config({
   packages: {
     // meaning [baseURL]/local/package when no other rules are present
     // path is normalized using map and paths configuration
@@ -265,7 +265,7 @@ Default: `{}`
 Set the Traceur compilation options.
 
 ```javascript
-System.config({
+SystemJS.config({
     traceurOptions: {
     }
 });
@@ -279,7 +279,7 @@ Default: `traceur`
 
 Sets the module name of the transpiler to be used for loading ES6 modules.
 
-Represents a module name for `System.import` that must resolve to either Traceur, Babel or TypeScript.
+Represents a module name for `SystemJS.import` that must resolve to either Traceur, Babel or TypeScript.
 
 When set to `traceur`, `babel` or `typescript`, loading will be automatically configured as far as possible.
 

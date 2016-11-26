@@ -2,22 +2,22 @@
 
 For setting SystemJS configuration see the [Configuration API](config-api.md) page.
 
-#### System.amdDefine
+#### SystemJS.amdDefine
 Type: `Function`
 
-For backwards-compatibility with AMD environments, set `window.define = System.amdDefine`.
+For backwards-compatibility with AMD environments, set `window.define = SystemJS.amdDefine`.
 
-#### System.amdRequire
+#### SystemJS.amdRequire
 Type: `Function`
 
-For backwards-compatibility with AMD environments, set `window.require = System.amdRequire`.
+For backwards-compatibility with AMD environments, set `window.require = SystemJS.amdRequire`.
 
-#### System.config
+#### SystemJS.config
 Type: `Function`
 
 SystemJS configuration helper function. See the [Configuration API](config-api.md).
 
-#### System.constructor
+#### SystemJS.constructor
 Type: `Function`
 
 This represents the System base class, which can be extended or reinstantiated to create a custom System instance.
@@ -25,41 +25,41 @@ This represents the System base class, which can be extended or reinstantiated t
 Example:
 
 ```javascript
-  var clonedSystem = new System.constructor();
-  clonedSystem.baseURL = System.baseURL;
-  clonedSystem.import('x'); // imports in a custom context
+  var clonedSystemJS = new SystemJS.constructor();
+  clonedSystemJS.baseURL = SystemJS.baseURL;
+  clonedSystemJS.import('x'); // imports in a custom context
 ```
 
-#### System.delete(moduleName)
+#### SystemJS.delete(moduleName)
 Type: `Function`
 
 Deletes a module from the registry by normalized name.
 
 ```javascript
-System.delete('http://site.com/normalized/module/name.js');
+SystemJS.delete('http://site.com/normalized/module/name.js');
 ```
 
-#### System.get(moduleName) -> Module
+#### SystemJS.get(moduleName) -> Module
 Type: `Function`
 
 Returns a module from the registry by normalized name.
 
 ```javascript
-System.get('http://site.com/normalized/module/name.js').exportedFunction();
+SystemJS.get('http://site.com/normalized/module/name.js').exportedFunction();
 ```
 
-#### System.has(moduleName) -> Boolean
+#### SystemJS.has(moduleName) -> Boolean
 Type: `Function`
 
 Returns whether a given module exists in the registry by normalized module name.
 
 ```javascript
-if (System.has('http://site.com/normalized/module/name.js')) {
+if (SystemJS.has('http://site.com/normalized/module/name.js')) {
   // ...
 }
 ```
 
-#### System.import(moduleName [, normalizedParentName]) -> Promise(Module)
+#### SystemJS.import(moduleName [, normalizedParentName]) -> Promise(Module)
 Type: `Function`
 
 Loads a module by name taking an optional normalized parent name argument.
@@ -69,19 +69,19 @@ Promise resolves to the module value.
 For loading relative to the current module, ES Modules define a `__moduleName` binding, so that:
 
 ```javascript
-System.import('./local', __moduleName);
+SystemJS.import('./local', __moduleName);
 ```
 
 In CommonJS modules the above would be `module.id` instead.
 
 This is non-standard, but coverse a use case that will be provided by the spec.
 
-#### System.newModule(Object) -> Module
+#### SystemJS.newModule(Object) -> Module
 Type: `Function`
 
 Given a plain JavaScript object, return an equivalent `Module` object.
 
-Useful when writing a custom `instantiate` hook or using `System.set`.
+Useful when writing a custom `instantiate` hook or using `SystemJS.set`.
 
 #### System.register([name ,] deps, declare)
 Type: `Function`
@@ -119,23 +119,23 @@ System.registerDynamic(['pkg/module'], true, function(require, exports, module) 
 * `exports` the CommonJS exports object, which is assigned to the `default` export of the module, with its own properties available as named exports.
 * `module` represents the CommonJS module object, with `export`, `id` and `url` properties set.
 
-#### System.set(moduleName, Module)
+#### SystemJS.set(moduleName, Module)
 Type: `Function`
 
 Sets a module into the registry directly and synchronously.
 
-Typically used along with `System.newModule` to create a valid `Module` object:
+Typically used along with `SystemJS.newModule` to create a valid `Module` object:
 
 ```javascript
-System.set('custom-module', System.newModule({ prop: 'value' }));
+SystemJS.set('custom-module', SystemJS.newModule({ prop: 'value' }));
 ```
 
-> Note SystemJS stores all module names in the registry as normalized URLs. To be able to properly use the registry with `System.set` it is usually necessary to run `System.set(System.normalizeSync('custom-module'), System.newModule({ prop: 'value' }));` to ensure that `System.import` behaves correctly.
+> Note SystemJS stores all module names in the registry as normalized URLs. To be able to properly use the registry with `SystemJS.set` it is usually necessary to run `SystemJS.set(SystemJS.normalizeSync('custom-module'), SystemJS.newModule({ prop: 'value' }));` to ensure that `SystemJS.import` behaves correctly.
 
-#### System._nodeRequire
+#### SystemJS._nodeRequire
 Type: `Function`
 
 In CommonJS environments, SystemJS will substitute the global `require` as needed by the module format being loaded to ensure
 the correct detection paths in loaded code.
 
-The CommonJS require can be recovered within these modules from `System._nodeRequire`.
+The CommonJS require can be recovered within these modules from `SystemJS._nodeRequire`.

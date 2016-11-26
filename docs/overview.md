@@ -6,10 +6,10 @@ Any URL can be loaded as a module with standard URL syntax:
 <script src="system.js"></script>
 <script>
   // loads relative to the current page URL
-  System.import('./local-module.js'); 
+  SystemJS.import('./local-module.js');
 
   // load from an absolute URL directly
-  System.import('https://code.jquery.com/jquery.js');
+  SystemJS.import('https://code.jquery.com/jquery.js');
 </script>
 ```
 
@@ -36,7 +36,7 @@ app/es6-file.js:
 
 ```html
   <script>
-    System.import('./app/es6-file.js').then(function(m) {
+    SystemJS.import('./app/es6-file.js').then(function(m) {
       console.log(new m.q().es6); // yay
     });
   </script>
@@ -61,19 +61,19 @@ The *baseURL* provides a special mechanism for loading modules relative to a sta
 This can be useful for being able to refer to the same module from many different page URLs or environments:
 
 ```javascript
-System.config({
+SystemJS.config({
   baseURL: '/modules'
 });
 
 
 // loads /modules/jquery.js
-System.import('jquery.js');
+SystemJS.import('jquery.js');
 ```
 
 Module names of the above form are referred to as _plain names_ and are always loaded baseURL-relative instead of
 parentURL relative like one would expect with ordinary URLs.
 
-> Note we always run the `System.config` function instead of setting instance properties directly as this will set the correct normalized baseURL in the process.
+> Note we always run the `SystemJS.config` function instead of setting instance properties directly as this will set the correct normalized baseURL in the process.
 
 #### Map Config
 
@@ -85,7 +85,7 @@ Sometimes we want to load things from different places.
 Map configuration is useful here to be able to specific exactly where to locate a given package:
 
 ```javascript
-System.config({
+SystemJS.config({
   map: {
     jquery: 'https://code.jquery.com/jquery.js'
   }
@@ -95,14 +95,14 @@ System.config({
 Map configuration can also be used to map subpaths:
 
 ```javascript
-System.config({
+SystemJS.config({
   map: {
     app: '/app/'
   }
 });
 
 // will load /app/main.js
-System.import('app/main.js');
+SystemJS.import('app/main.js');
 ```
 
 Map configuration is always applied before the baseURL rule in the loader.
@@ -126,7 +126,7 @@ In this case, we're using the [text plugin](https://github.com/systemjs/plugin-t
 Then configure a custom resource to be loaded via the plugin, we then use meta configuration:
 
 ```javascript
-System.config({
+SystemJS.config({
   // locate the plugin via map configuration
   // (alternatively have it in the baseURL)
   map: {
@@ -158,7 +158,7 @@ When we build app.js, the text plugin will then automatically inline the templat
 It is also possible to use syntax to load via plugins instead of configuration:
 
 ```javascript
-System.import('some/file.txt!text')
+SystemJS.import('some/file.txt!text')
 ```
 
 When no plugin is explicitly specified the extension is used as the plugin name itself.
