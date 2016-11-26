@@ -30,10 +30,11 @@ Example:
   clonedSystemJS.import('x'); // imports in a custom context
 ```
 
-#### SystemJS.delete(moduleName)
+#### SystemJS.delete(moduleName) -> Boolean
 Type: `Function`
 
 Deletes a module from the registry by normalized name.
+Returns true if the module was found in the registry before deletion.
 
 ```javascript
 SystemJS.delete('http://site.com/normalized/module/name.js');
