@@ -1,15 +1,16 @@
-import SystemJSLoader, { CONFIG, emptyModule, ModuleNamespace } from './systemjs-loader.js';
-import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule, supportsScriptLoad, warn } from './common.js';
+import { emptyModule } from './systemjs-loader.js';
+import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule, supportsScriptLoad, warn, CONFIG, METADATA, ModuleNamespace } from './common.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
 
-export function instantiate (key, metadata, processAnonRegister) {
+export function instantiate (key, processAnonRegister) {
   var loader = this;
   var config = this[CONFIG];
+  var metadata = this[METADATA][key];
   // first do bundles and depCache
   return (loadBundlesAndDepCache(config, this, key) || Promise.resolve())
   .then(function () {
-    if (metadata.registered)
+    if (processAnonRegister())
       return;
 
     // node module loading
@@ -42,7 +43,7 @@ export function instantiate (key, metadata, processAnonRegister) {
       .then(function () {
         // modern plugin = load hook
         if (metadata.pluginModule && typeof metadata.pluginModule.default === 'function')
-          return runPluginLoad(loader, metadata.pluginArgument, key, metadata, metadata.pluginKey, metadata.pluginModule);
+          return runPluginLoad(loader, metadata.pluginArgument, key, metadata, metadata.pluginKey, metadata.pluginModule, processAnonRegister);
         return runFetchPipeline(loader, key, metadata, processAnonRegister, config.wasm);
       })
 
@@ -52,9 +53,7 @@ export function instantiate (key, metadata, processAnonRegister) {
         throw new Error('Loading AMD with scriptLoad requires setting the global `' + globalName + '.define = SystemJS.amdDefine`');
 
       scriptLoad(key, metadata.load.crossOrigin, metadata.load.integrity, function () {
-        processAnonRegister();
-
-        if (!metadata.registered) {
+        if (!processAnonRegister()) {
           metadata.load.format = 'global';
           var globalValue = getGlobalValue(metadata.load.exports);
           loader.registerDynamic([], function (require, exports, module) {
@@ -66,6 +65,10 @@ export function instantiate (key, metadata, processAnonRegister) {
         resolve();
       }, reject);
     });
+  })
+  .then(function (instantiated) {
+    loader[METADATA][key] = undefined;
+    return instantiated;
   });
 };
 
@@ -93,14 +96,14 @@ function protectedCreateNamespace (bindings) {
   return new ModuleNamespace(bindings);
 }
 
-function runPluginLoad (loader, key, registerKey, metadata, pluginKey, pluginModule) {
+function runPluginLoad (loader, key, registerKey, metadata, pluginKey, pluginModule, processAnonRegister) {
   return Promise.resolve()
   .then(function () {
     return pluginModule.default.call(loader, key, registerKey);
   })
   .then(function (pluginResult) {
     if (pluginResult === undefined)
-      return metadata.registered ? pluginResult : emptyModule;
+      return processAnonRegister() ? pluginResult : emptyModule;
     return protectedCreateNamespace(pluginResult);
   })
   .catch(function (err) {
@@ -182,7 +185,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
 
   .then(function (fetched) {
     // fetch is already a utf-8 string if not doing wasm detection
-    if (!wasm)
+    if (!wasm || typeof fetched === 'string')
       return translateAndInstantiate(loader, key, fetched, metadata, processAnonRegister);
 
     var bytes = new Uint8Array(fetched);
@@ -264,7 +267,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
     }
 
     metadata.load.format = 'esm';
-    return transpile(loader, source, key, metadata);
+    return transpile(loader, source, key, metadata, processAnonRegister);
   })
 
   // instantiate
@@ -295,6 +298,8 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
     if (!metadata.load.format)
       metadata.load.format = detectLegacyFormat(source);
 
+    var registered = false;
+
     switch (metadata.load.format) {
       case 'esm':
       case 'register':
@@ -302,10 +307,9 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
         var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
         if (err)
           throw err;
-        processAnonRegister();
-
-        if (!metadata.registered)
+        if (!processAnonRegister())
           return emptyModule;
+        return;
       break;
 
       case 'json':
@@ -320,12 +324,11 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
         var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
 
-        processAnonRegister();
-
         // if didn't register anonymously, use the last named define if only one
-        if (!metadata.registered) {
+        registered = processAnonRegister();
+        if (!registered) {
           registerLastDefine(loader);
-          processAnonRegister();
+          registered = processAnonRegister();
         }
 
         global.define = curDefine;
@@ -384,7 +387,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           global.__cjsWrapper = undefined;
           global.define = define;
         });
-        processAnonRegister();
+        registered = processAnonRegister();
       break;
 
       case 'global':
@@ -420,14 +423,14 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
           module.exports = retrieveGlobal();
         });
-        processAnonRegister();
+        registered = processAnonRegister();
       break;
 
       default:
         throw new TypeError('Unknown module format "' + metadata.load.format + '" for "' + key + '".' + (metadata.load.format === 'es6' ? ' Use "esm" instead here.' : ''));
     }
 
-    if (!metadata.registered)
+    if (!registered)
       throw new Error('Module ' + key + ' detected as ' + metadata.load.format + ' but didn\'t execute correctly.');
   });
 }
@@ -482,7 +485,7 @@ function sanitizeSourceMap (address, sourceMap) {
     sourceMap.sources = [originalName];
 }
 
-function transpile (loader, source, key, metadata) {
+function transpile (loader, source, key, metadata, processAnonRegister) {
   if (!loader.transpiler)
     throw new TypeError('Unable to dynamically transpile ES module\n   A loader plugin needs to be configured via `SystemJS.config({ transpiler: \'transpiler-module\' })`.');
 
@@ -498,7 +501,7 @@ function transpile (loader, source, key, metadata) {
   return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
     if (typeof transpiler.default === 'function')
-      return runPluginLoad(loader, key, key, metadata, loader.transpiler, transpiler);
+      return runPluginLoad(loader, key, key, metadata, loader.transpiler, transpiler, processAnonRegister);
 
     if (transpiler.__useDefault)
       transpiler = transpiler.default;

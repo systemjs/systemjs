@@ -1,5 +1,5 @@
-import SystemJSLoader, { envModule, setProduction, CONFIG, configNames } from './systemjs-loader.js';
-import { extend, warn, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
+import { envModule, setProduction, configNames } from './systemjs-loader.js';
+import { extend, warn, resolveUrlToParentIfNotPlain, baseURI, CONFIG } from './common.js';
 import { coreResolve, normalizePaths } from './resolve.js';
 
 /*
