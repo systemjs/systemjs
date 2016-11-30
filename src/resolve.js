@@ -1,7 +1,17 @@
-import SystemJSLoader, { CREATE_METADATA, CONFIG } from './systemjs-loader.js';
-import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI } from './common.js';
+import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI, CONFIG, METADATA } from './common.js';
 import { setPkgConfig, createPackage } from './config.js';
 import fetch from './fetch.js';
+
+export function createMetadata () {
+  return {
+    pluginKey: undefined,
+    pluginArgument: undefined,
+    pluginModule: undefined,
+    packageKey: undefined,
+    packageConfig: undefined,
+    load: undefined
+  };
+}
 
 // separate out paths cache as a baseURL lock process
 export function applyPaths (paths, key) {
@@ -30,8 +40,29 @@ export function applyPaths (paths, key) {
   return outPath;
 }
 
-function getParentMetadata (loader, config, metadata, parentKey) {
-  var parentMetadata = loader[CREATE_METADATA]();
+function getCoreParentMetadata (loader, config, parentKey) {
+  var parentMetadata = createMetadata();
+
+  if (parentKey) {
+    // detect parent plugin
+    // we just need pluginKey to be truthy for package configurations
+    // so we duplicate it as pluginArgument - although not correct its not used
+    var parentPluginIndex;
+    if (config.pluginFirst) {
+      if ((parentPluginIndex = parentKey.lastIndexOf('!')) !== -1)
+        parentMetadata.pluginArgument = parentMetadata.pluginKey = parentKey.substr(0, parentPluginIndex);
+    }
+    else {
+      if ((parentPluginIndex = parentKey.indexOf('!')) !== -1)
+        parentMetadata.pluginArgument = parentMetadata.pluginKey = parentKey.substr(parentPluginIndex + 1);
+    }
+  }
+
+  return parentMetadata;
+}
+
+function getParentMetadata (loader, config, parentKey) {
+  var parentMetadata = createMetadata();
 
   if (parentKey) {
     // detect parent plugin
@@ -56,14 +87,11 @@ function getParentMetadata (loader, config, metadata, parentKey) {
   return parentMetadata;
 }
 
-export function normalize (key, parentKey, metadata, parentMetadata) {
+export function normalize (key, parentKey) {
   var config = this[CONFIG];
 
-  // these are because users can still call System.normalize('a', 'b')
-  // this will be fixed with deprecating normalize and even sooner with es-module-loader 2
-  // which doesn't need to share the "normalize" prototype method
-  metadata = metadata || this[CREATE_METADATA]();
-  parentMetadata = parentMetadata || getParentMetadata(this, config, metadata, parentKey);
+  var metadata = createMetadata();
+  var parentMetadata = getParentMetadata(this, config, parentKey);
 
   var loader = this;
   return booleanConditional.call(loader, key, parentKey)
@@ -82,12 +110,47 @@ export function normalize (key, parentKey, metadata, parentMetadata) {
 
     // loader by configuration
     // normalizes to parent to support package loaders
-    return loader.normalize(metadata.load.loader, normalized, loader[CREATE_METADATA](), metadata)
+    return loader.resolve(metadata.load.loader, normalized)
     .then(function (pluginKey) {
       metadata.pluginKey = pluginKey;
       metadata.pluginArgument = normalized;
       return normalized;
     });
+  })
+  .then(function (normalized) {
+    loader[METADATA][normalized] = metadata;
+    return normalized;
+  });
+}
+
+export function coreNormalize (key, parentKey, metadata, parentMetadata) {
+  var config = this[CONFIG];
+
+  // these are because users can still call System.normalize('a', 'b')
+  // this will be fixed with deprecating normalize and even sooner with es-module-loader 2
+  // which doesn't need to share the "normalize" prototype method
+  metadata = metadata || createMetadata();
+  parentMetadata = parentMetadata || getCoreParentMetadata(this, config, metadata, parentKey);
+
+  var loader = this;
+
+  // pluginResolve wraps packageResolve wraps coreResolve
+  var parsed = parsePlugin(config, key);
+
+  if (!parsed)
+    return packageResolve.call(this, config, key, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, false);
+
+  metadata.pluginKey = parsed.plugin;
+
+  return Promise.all([
+    packageResolve.call(this, config, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, true),
+    this.resolve(parsed.plugin, parentKey)
+  ])
+  .then(function (normalized) {
+    metadata.pluginArgument = normalized[0];
+    metadata.pluginKey = normalized[1];
+
+    return combinePluginParts(config, normalized[0], normalized[1]);
   });
 }
 
@@ -109,14 +172,14 @@ export function normalizeSync (key, parentKey) {
   var config = this[CONFIG];
 
   // normalizeSync is metadataless, so create metadata
-  var metadata = this[CREATE_METADATA]();
-  var parentMetadata = parentMetadata || getParentMetadata(this, config, metadata, parentKey);
+  var metadata = createMetadata();
+  var parentMetadata = parentMetadata || getParentMetadata(this, config, parentKey);
 
   var parsed = parsePlugin(config, key);
 
   // plugin
   if (parsed) {
-    metadata.pluginKey = this.normalizeSync(parsed.plugin, parentKey);
+    metadata.pluginKey = normalizeSync.call(this, parsed.plugin, parentKey);
     return combinePluginParts(config,
         packageResolveSync.call(this, config, parsed.argument, parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, !!metadata.pluginKey),
         metadata.pluginKey);
@@ -850,7 +913,7 @@ function interpolateConditional (key, parentKey, parentMetadata) {
 
   // in builds, return normalized conditional
   /*if (this.builder)
-    return this.normalize(conditionObj.module, parentKey, this[CREATE_METADATA](), parentMetadata)
+    return this.normalize(conditionObj.module, parentKey, createMetadata(), parentMetadata)
     .then(function (conditionModule) {
       conditionObj.module = conditionModule;
       return key.replace(interpolationRegEx, '#{' + serializeCondition(conditionObj) + '}');

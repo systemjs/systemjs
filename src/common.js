@@ -1,7 +1,12 @@
 import { resolveUrlToParentIfNotPlain } from 'es-module-loader/core/resolve.js';
 import { baseURI, isBrowser, isWindows, addToError, global, createSymbol } from 'es-module-loader/core/common.js';
+import RegisterLoader from 'es-module-loader/core/register-loader.js';
+export { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
-export { baseURI, isBrowser, isWindows, addToError, global, createSymbol, resolveUrlToParentIfNotPlain }
+export { baseURI, isBrowser, isWindows, addToError, global, resolveUrlToParentIfNotPlain }
+
+export var CONFIG = createSymbol('loader-config');
+export var METADATA = createSymbol('metadata');
 
 export var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
 

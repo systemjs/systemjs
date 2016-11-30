@@ -1,13 +1,10 @@
-import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
-import { warn, nodeRequire, scriptSrc, isBrowser, global, createSymbol, baseURI } from './common.js';
+import { warn, nodeRequire, scriptSrc, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace } from './common.js';
 
 import { getConfig, getConfigItem, setConfig } from './config.js';
 import { decanonicalize, normalize, normalizeSync } from './resolve.js';
 import { instantiate } from './instantiate.js';
 import formatHelpers from './format-helpers.js';
-
-export { ModuleNamespace }
 
 export default SystemJSLoader;
 
@@ -16,6 +13,9 @@ function SystemJSLoader (baseKey) {
 
   // NB deprecate
   this._loader = {};
+
+  // internal metadata store
+  this[METADATA] = {};
 
   // internal configuration
   this[CONFIG] = {
@@ -75,8 +75,6 @@ export function setProduction (isProduction, isBuilder) {
   }));
 }
 
-export var CONFIG = createSymbol('loader-config');
-export var CREATE_METADATA = SystemJSLoader.createMetadata = RegisterLoader.createMetadata;
 var RESOLVE = SystemJSLoader.resolve = RegisterLoader.resolve;
 var INSTANTIATE = SystemJSLoader.instantiate = RegisterLoader.instantiate;
 
@@ -84,19 +82,8 @@ SystemJSLoader.prototype = Object.create(RegisterLoader.prototype);
 
 SystemJSLoader.prototype.constructor = SystemJSLoader;
 
-SystemJSLoader.prototype[CREATE_METADATA] = function () {
-  return {
-    registered: false,
-    pluginKey: undefined,
-    pluginArgument: undefined,
-    pluginModule: undefined,
-    packageKey: undefined,
-    packageConfig: undefined,
-    load: undefined
-  };
-};
-
-SystemJSLoader.prototype[RESOLVE] = normalize;
+// NB deprecate normalize
+SystemJSLoader.prototype[RESOLVE] = SystemJSLoader.prototype.normalize = normalize;
 
 // NB deprecate decanonicalize
 SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalizeSync = normalizeSync;
