@@ -1,51 +1,30 @@
-import { resolveUrlToParentIfNotPlain } from 'es-module-loader/core/resolve.js';
+import { resolveIfNotPlain } from 'es-module-loader/core/resolve.js';
 import { baseURI, isBrowser, isWindows, addToError, global, createSymbol } from 'es-module-loader/core/common.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
-export { baseURI, isBrowser, isWindows, addToError, global, resolveUrlToParentIfNotPlain, ModuleNamespace }
+export { baseURI, isBrowser, isWindows, addToError, global, resolveIfNotPlain, ModuleNamespace }
+
+export function noop () {};
 
 export var emptyModule = new ModuleNamespace({});
 
+export var resolvedPromise = Promise.resolve();
+
+export function protectedCreateNamespace (bindings) {
+  if (bindings instanceof ModuleNamespace)
+    return bindings;
+  if (typeof bindings !== 'object')
+    throw new TypeError('Cannot create a module namespace from an object of type "' + typeof bindings + '".');
+  return new ModuleNamespace(bindings);
+}
+
 export var CONFIG = createSymbol('loader-config');
 export var METADATA = createSymbol('metadata');
+export var PLAIN_RESOLVE = createSymbol('plain-resolve');
+export var PLAIN_RESOLVE_SYNC = createSymbol('plain-resolve-sync');
 
-export var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
-
-export var scriptSrc;
-
-// Promise detection and error message
-if (typeof Promise === 'undefined')
-  throw new Error('SystemJS requires a global Promise polyfill to be set before loading.');
-
-if (typeof document !== 'undefined') {
-  var scripts = document.getElementsByTagName('script');
-  var curScript = scripts[scripts.length - 1];
-  if (document.currentScript && (curScript.defer || curScript.async))
-    curScript = document.currentScript;
-
-  scriptSrc = curScript.src;
-}
-// worker
-else if (typeof importScripts !== 'undefined') {
-  try {
-    throw new Error('_');
-  }
-  catch (e) {
-    e.stack.replace(/(?:at|@).*(http.+):[\d]+:[\d]+/, function(m, url) {
-      scriptSrc = url;
-    });
-  }
-}
-// node
-else if (typeof __filename !== 'undefined') {
-  scriptSrc = __filename;
-}
-
-// include the node require since we're overriding it
-export var nodeRequire;
-if (typeof require !== 'undefined' && typeof process !== 'undefined' && !process.browser)
-  nodeRequire = require;
+export var isWorker = typeof window === 'undefined' && typeof self !== 'undefined' && typeof importScripts !== 'undefined';
 
 export function warn (msg, force) {
   if (force || this.warnings && typeof console !== 'undefined' && console.warn)
@@ -68,7 +47,7 @@ export function loadNodeModule (key, baseURL) {
 
 export function extend (a, b) {
   for (var p in b) {
-    if (!b.hasOwnProperty(p))
+    if (!Object.hasOwnProperty.call(b, p))
       continue;
     a[p] = b[p];
   }
@@ -77,7 +56,7 @@ export function extend (a, b) {
 
 export function prepend (a, b) {
   for (var p in b) {
-    if (!b.hasOwnProperty(p))
+    if (!Object.hasOwnProperty.call(b, p))
       continue;
     if (a[p] === undefined)
       a[p] = b[p];
@@ -91,7 +70,7 @@ export function prepend (a, b) {
 // other properties replace
 export function extendMeta (a, b, _prepend) {
   for (var p in b) {
-    if (!b.hasOwnProperty(p))
+    if (!Object.hasOwnProperty.call(b, p))
       continue;
     var val = b[p];
     if (a[p] === undefined)
@@ -115,9 +94,19 @@ function workerImport (src, resolve, reject) {
   resolve();
 }
 
-var curSystem, curRequire;
-
-export var supportsScriptLoad = (isBrowser || isWorker) && typeof navigator !== 'undefined' && navigator.userAgent && !navigator.userAgent.match(/MSIE (9|10).0/);
+if (isBrowser) {
+  var loadingScripts = [];
+  var onerror = window.onerror;
+  window.onerror = function globalOnerror (msg, src) {
+    for (var i = 0; i < loadingScripts.length; i++) {
+      if (loadingScripts[i].src !== src)
+        continue;
+      loadingScripts[i].err(msg);
+      return;
+    }
+    onerror.apply(this, arguments);
+  };
+}
 
 export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   // percent encode just "#" for HTTP requests
@@ -126,10 +115,6 @@ export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   // subresource integrity is not supported in web workers
   if (isWorker)
     return workerImport(src, resolve, reject);
-
-  // if scriptLoad
-  curSystem = global.System;
-  curRequire = global.require;
 
   var script = document.createElement('script');
   script.type = 'text/javascript';
@@ -159,8 +144,12 @@ export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   }
 
   function cleanup () {
-    global.System = curSystem;
-    global.require = curRequire;
+    for (var i = 0; i < loadingScripts.length; i++) {
+      if (loadingScripts[i].err === error) {
+        loadingScripts.splice(i, 1);
+        break;
+      }
+    }
     script.removeEventListener('load', load, false);
     script.removeEventListener('error', error, false);
     document.head.removeChild(script);
@@ -174,130 +163,69 @@ export function readMemberExpression (p, value) {
   return value;
 }
 
+function checkMap (p) {
+  var name = this.name;
+  // can add ':' here if we want paths to match the behaviour of map
+  if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/' || p[p.length - 1] === '/' || p[p.length - 1] === ':')) {
+    var curLen = p.split('/').length;
+    if (curLen > this.len) {
+      this.match = p;
+      this.len = curLen;
+    }
+  }
+}
+
+export function normalizePaths (config) {
+  for (var p in config.paths) {
+    if (!Object.hasOwnProperty.call(config.paths, p))
+      continue;
+    // warn on wildcard path deprecations
+    var path = config.paths[p];
+    if (path.indexOf('*') !== -1)
+      warn.call(config, 'Paths configuration "' + p + '" -> "' + path + '" uses wildcards which are no longer supported.', true);
+    config.paths[p] = resolveIfNotPlain(path, baseURI) || resolveIfNotPlain('./' + path, config.baseURL);
+  }
+  config.pathsLocked = true;
+}
+
+// separate out paths cache as a baseURL lock process
+export function applyPaths (config, key) {
+  var paths = config.paths;
+
+  var mapMatch = getMapMatch(paths, key);
+  if (mapMatch) {
+    var target = paths[mapMatch] + key.substr(mapMatch.length);
+
+    var resolved = resolveIfNotPlain(target, baseURI);
+    if (resolved !== undefined)
+      return resolved;
+
+    resolved = target;
+  }
+  else if (key.indexOf(':') !== -1) {
+    return key;
+  }
+  else {
+    resolved = key;
+  }
+
+  // plain paths map, or plain to begin with -> baseURL
+  return config.baseURL + resolved;
+}
+
 export function getMapMatch (map, name) {
-  var bestMatch, bestMatchLength = 0;
+  if (Object.hasOwnProperty.call(map, name))
+    return name;
 
-  for (var p in map) {
-    if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/')) {
-      var curMatchLength = p.split('/').length;
-      if (curMatchLength <= bestMatchLength)
-        continue;
-      bestMatch = p;
-      bestMatchLength = curMatchLength;
-    }
-  }
+  var bestMatch = {
+    name: name,
+    match: undefined,
+    len: 0
+  };
 
-  return bestMatch;
-}
+  Object.keys(map).forEach(checkMap, bestMatch);
 
-var hasBuffer = typeof Buffer !== 'undefined';
-try {
-  if (hasBuffer && new Buffer('a').toString('base64') !== 'YQ==')
-    hasBuffer = false;
-}
-catch (e) {
-  hasBuffer = false;
-}
-
-var sourceMapPrefix = '\n//# sourceMapping' + 'URL=data:application/json;base64,';
-function inlineSourceMap (sourceMapString) {
-  if (hasBuffer)
-    return sourceMapPrefix + new Buffer(sourceMapString).toString('base64');
-  else if (typeof btoa !== 'undefined')
-    return sourceMapPrefix + btoa(unescape(encodeURIComponent(sourceMapString)));
-  else
-    return '';
-}
-
-function getSource(source, sourceMap, address, wrap) {
-  var lastLineIndex = source.lastIndexOf('\n');
-
-  if (sourceMap) {
-    if (typeof sourceMap != 'object')
-      throw new TypeError('load.metadata.sourceMap must be set to an object.');
-
-    sourceMap = JSON.stringify(sourceMap);
-  }
-
-  return (wrap ? '(function(System, SystemJS) {' : '') + source + (wrap ? '\n})(System, System);' : '')
-      // adds the sourceURL comment if not already present
-      + (source.substr(lastLineIndex, 15) != '\n//# sourceURL='
-        ? '\n//# sourceURL=' + address + (sourceMap ? '!transpiled' : '') : '')
-      // add sourceMappingURL if load.metadata.sourceMap is set
-      + (sourceMap && inlineSourceMap(sourceMap) || '');
-}
-
-var callCounter = 0;
-function preExec (loader) {
-  if (callCounter++ == 0)
-    curSystem = global.System;
-  global.System = global.SystemJS = loader;
-}
-function postExec () {
-  if (--callCounter == 0)
-    global.System = global.SystemJS = curSystem;
-}
-
-var supportsScriptExec = false;
-if (isBrowser && typeof document != 'undefined' && document.getElementsByTagName) {
-  if (!(window.chrome && window.chrome.extension || navigator.userAgent.match(/^Node\.js/)))
-    supportsScriptExec = true;
-}
-
-// script execution via injecting a script tag into the page
-// this allows CSP nonce to be set for CSP environments
-var head;
-function scriptExec(loader, source, sourceMap, address, nonce) {
-  if (!head)
-    head = document.head || document.body || document.documentElement;
-
-  var script = document.createElement('script');
-  script.text = getSource(source, sourceMap, address, false);
-  var onerror = window.onerror;
-  var e;
-  window.onerror = function(_e) {
-    e = addToError(_e, 'Evaluating ' + address);
-    if (onerror)
-      onerror.apply(this, arguments);
-  }
-  preExec(loader);
-
-  if (nonce)
-    script.setAttribute('nonce', nonce);
-
-  head.appendChild(script);
-  head.removeChild(script);
-  postExec();
-  window.onerror = onerror;
-  if (e)
-    return e;
-}
-
-var vm;
-var useVm;
-
-export function evaluate (loader, source, sourceMap, address, integrity, nonce, noWrap) {
-  if (!source)
-    return;
-  if (nonce && supportsScriptExec)
-    return scriptExec(loader, source, sourceMap, address, nonce);
-  try {
-    preExec(loader);
-    // global scoped eval for node (avoids require scope leak)
-    if (!vm && loader._nodeRequire) {
-      vm = loader._nodeRequire('vm');
-      useVm = vm.runInThisContext("typeof System !== 'undefined' && System") === loader;
-    }
-    if (useVm)
-      vm.runInThisContext(getSource(source, sourceMap, address, !noWrap), { filename: address + (sourceMap ? '!transpiled' : '') });
-    else
-      (0, eval)(getSource(source, sourceMap, address, !noWrap));
-    postExec();
-  }
-  catch (e) {
-    postExec();
-    return e;
-  }
+  return bestMatch.match;
 }
 
 // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339

@@ -1,1 +1,3 @@
-require('non-existent');
+System.register(['non-existent'], function () {
+  return function () {};
+});

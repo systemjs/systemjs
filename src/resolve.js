@@ -1,4 +1,5 @@
-import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveUrlToParentIfNotPlain, baseURI, CONFIG, METADATA } from './common.js';
+import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveIfNotPlain,
+    baseURI, CONFIG, METADATA, applyPaths, normalizePaths, resolvedPromise, getPackage } from './common.js';
 import { setPkgConfig, createPackage } from './config.js';
 import fetch from './fetch.js';
 
@@ -11,33 +12,6 @@ export function createMetadata () {
     packageConfig: undefined,
     load: undefined
   };
-}
-
-// separate out paths cache as a baseURL lock process
-export function applyPaths (paths, key) {
-  // most specific (most number of slashes in path) match wins
-  var pathMatch = '', wildcard;
-
-  // check to see if we have a paths entry
-  for (var p in paths) {
-    if (!paths.hasOwnProperty(p))
-      continue;
-
-    // exact path match
-    if (key === p)
-      return paths[p];
-
-    // support trailing / in paths rules
-    else if ((key.length < p.length || key[p.length - 1] === p[p.length - 1]) && (paths[p][paths[p].length - 1] === '/' || paths[p] === '')
-        && key.substr(0, p.length - 1) === p.substr(0, p.length - 1))
-      return paths[p].substr(0, paths[p].length - 1) + (key.length > p.length ? (paths[p] && '/' || '') + key.substr(p.length) : '');
-  }
-
-  var outPath = paths[pathMatch];
-  if (typeof wildcard === 'string')
-    outPath = outPath.replace('*', wildcard);
-
-  return outPath;
 }
 
 function getCoreParentMetadata (loader, config, parentKey) {
@@ -79,7 +53,7 @@ function getParentMetadata (loader, config, parentKey) {
     }
 
     // detect parent package
-    parentMetadata.packageKey = getPackage(config, parentKey);
+    parentMetadata.packageKey = getMapMatch(config.packages, parentKey);
     if (parentMetadata.packageKey)
       parentMetadata.packageConfig = config.packages[parentMetadata.packageKey];
   }
@@ -126,12 +100,12 @@ export function normalize (key, parentKey) {
 // normalization function used for registry keys
 // just does coreResolve without map
 export function decanonicalize (config, key) {
-  var parsed = parsePlugin(config, key);
+  var parsed = parsePlugin(config.pluginFirst, key);
 
   // plugin
   if (parsed) {
     var pluginKey = decanonicalize.call(this, config, parsed.plugin);
-    return combinePluginParts(config, coreResolve.call(this, config, parsed.argument, undefined, false), pluginKey);
+    return combinePluginParts(config.pluginFirst, coreResolve.call(this, config, parsed.argument, undefined, false), pluginKey);
   }
 
   return coreResolve.call(this, config, key, undefined, false);
@@ -144,12 +118,12 @@ export function normalizeSync (key, parentKey) {
   var metadata = createMetadata();
   var parentMetadata = parentMetadata || getParentMetadata(this, config, parentKey);
 
-  var parsed = parsePlugin(config, key);
+  var parsed = parsePlugin(config.pluginFirst, key);
 
   // plugin
   if (parsed) {
     metadata.pluginKey = normalizeSync.call(this, parsed.plugin, parentKey);
-    return combinePluginParts(config,
+    return combinePluginParts(config.pluginFirst,
         packageResolveSync.call(this, config, parsed.argument, parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, !!metadata.pluginKey),
         metadata.pluginKey);
   }
@@ -157,28 +131,15 @@ export function normalizeSync (key, parentKey) {
   return packageResolveSync.call(this, config, key, parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, !!metadata.pluginKey);
 }
 
-export function normalizePaths (config) {
-  for (var p in config.paths) {
-    if (!config.paths.hasOwnProperty(p))
-      continue;
-    // warn on wildcard path deprecations
-    var path = config.paths[p];
-    if (path.indexOf('*') !== -1)
-      warn.call(config, 'Paths configuration "' + p + '" -> "' + path + '" uses wildcards which are no longer supported.', true);
-    config.paths[p] = resolveUrlToParentIfNotPlain(path, baseURI) || resolveUrlToParentIfNotPlain('./' + path, config.baseURL);
-  }
-  config.pathsLocked = true;
-}
-
 export function coreResolve (config, key, parentKey, doMap) {
-  if (!config.pathsLocked)
-    normalizePaths(config);
-
-  var relativeResolved = resolveUrlToParentIfNotPlain(key, parentKey || baseURI);
+  var relativeResolved = resolveIfNotPlain(key, parentKey || baseURI);
 
   // standard URL resolution
-  if (relativeResolved)
-    return applyPaths(config.paths, relativeResolved) || relativeResolved;
+  if (relativeResolved) {
+    if (!config.pathsLocked)
+      normalizePaths(config);
+    return applyPaths(config, relativeResolved, true);
+  }
 
   // plain keys not starting with './', 'x://' and '/' go through custom resolution
   if (doMap) {
@@ -187,7 +148,7 @@ export function coreResolve (config, key, parentKey, doMap) {
     if (mapMatch) {
       key = config.map[mapMatch] + key.substr(mapMatch.length);
 
-      relativeResolved = resolveUrlToParentIfNotPlain(key, baseURI);
+      relativeResolved = resolveIfNotPlain(key, baseURI);
       if (relativeResolved)
         return relativeResolved;
     }
@@ -199,11 +160,13 @@ export function coreResolve (config, key, parentKey, doMap) {
   if (key.substr(0, 6) === '@node/')
     return key;
 
-  return applyPaths(config.paths, key) || config.baseURL + key;
+  if (!config.pathsLocked)
+    normalizePaths(config);
+  return applyPaths(config, key, false);
 }
 
 function pluginResolve (config, key, parentKey, metadata, parentMetadata) {
-  var parsed = parsePlugin(config, key);
+  var parsed = parsePlugin(config.pluginFirst, key);
 
   if (!parsed)
     return packageResolve.call(this, config, key, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, false);
@@ -222,7 +185,7 @@ function pluginResolve (config, key, parentKey, metadata, parentMetadata) {
     if (metadata.pluginArgument === metadata.pluginKey)
       throw new Error('Plugin ' + metadata.pluginArgument + ' cannot load itself, make sure it is excluded from any wildcard meta configuration via a custom loader: false rule.');
 
-    return combinePluginParts(config, normalized[0], normalized[1]);
+    return combinePluginParts(config.pluginFirst, normalized[0], normalized[1]);
   });
 }
 
@@ -242,7 +205,7 @@ function packageResolveSync (config, key, parentKey, metadata, parentMetadata, s
   var normalized = coreResolve.call(this, config, key, parentKey, true);
 
   var pkgConfigMatch = getPackageConfigMatch(config, normalized);
-  metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getPackage(config, normalized);
+  metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getMapMatch(config.packages, normalized);
 
   if (!metadata.packageKey)
     return normalized;
@@ -262,7 +225,7 @@ function packageResolveSync (config, key, parentKey, metadata, parentMetadata, s
 function packageResolve (config, key, parentKey, metadata, parentMetadata, skipExtensions) {
   var loader = this;
 
-  return Promise.resolve()
+  return resolvedPromise
   .then(function () {
     // ignore . since internal maps handled by standard package resolution
     if (parentMetadata && parentMetadata.packageConfig && key.substr(0, 2) !== './') {
@@ -273,7 +236,7 @@ function packageResolve (config, key, parentKey, metadata, parentMetadata, skipE
         return doMap(loader, config, parentMetadata.packageConfig, parentMetadata.packageKey, parentMapMatch, key, metadata, skipExtensions);
     }
 
-    return Promise.resolve();
+    return resolvedPromise;
   })
   .then(function (mapped) {
     if (mapped)
@@ -283,7 +246,7 @@ function packageResolve (config, key, parentKey, metadata, parentMetadata, skipE
     var normalized = coreResolve.call(loader, config, key, parentKey, true);
 
     var pkgConfigMatch = getPackageConfigMatch(config, normalized);
-    metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getPackage(config, normalized);
+    metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getMapMatch(config.packages, normalized);
 
     if (!metadata.packageKey)
       return Promise.resolve(normalized);
@@ -300,7 +263,7 @@ function packageResolve (config, key, parentKey, metadata, parentMetadata, skipE
     // load configuration when it matches packageConfigPaths, not already configured, and not the config itself
     var loadConfig = pkgConfigMatch && !metadata.packageConfig.configured;
 
-    return (loadConfig ? loadPackageConfigPath(loader, config, pkgConfigMatch.configPath, metadata) : Promise.resolve())
+    return (loadConfig ? loadPackageConfigPath(loader, config, pkgConfigMatch.configPath, metadata) : resolvedPromise)
     .then(function () {
       var subPath = normalized.substr(metadata.packageKey.length + 1);
 
@@ -374,16 +337,16 @@ function setMeta (config, key, metadata) {
   }
 }
 
-function parsePlugin (config, key) {
+function parsePlugin (pluginFirst, key) {
   var argumentKey;
   var pluginKey;
 
-  var pluginIndex = key.lastIndexOf('!');
+  var pluginIndex = pluginFirst ? key.indexOf('!') : key.lastIndexOf('!');
 
   if (pluginIndex === -1)
     return;
 
-  if (config.pluginFirst) {
+  if (pluginFirst) {
     argumentKey = key.substr(pluginIndex + 1);
     pluginKey = key.substr(0, pluginIndex);
   }
@@ -399,8 +362,8 @@ function parsePlugin (config, key) {
 }
 
 // put key back together after parts have been normalized
-function combinePluginParts (config, argumentKey, pluginKey) {
-  if (config.pluginFirst)
+function combinePluginParts (pluginFirst, argumentKey, pluginKey) {
+  if (pluginFirst)
     return pluginKey + '!' + argumentKey;
   else
     return argumentKey + '!' + pluginKey;
@@ -496,20 +459,6 @@ function combinePluginParts (config, argumentKey, pluginKey) {
  * packageConfigPaths, use the { configured: true } package config option.
  *
  */
-function getPackage (config, normalized) {
-  // use most specific package
-  var curPkg, curPkgLen = 0, pkgLen;
-  for (var p in config.packages) {
-    if (normalized.substr(0, p.length) === p && (normalized.length === p.length || normalized[p.length] === '/')) {
-      pkgLen = p.split('/').length;
-      if (pkgLen > curPkgLen) {
-        curPkg = p;
-        curPkgLen = pkgLen;
-      }
-    }
-  }
-  return curPkg;
-}
 
 function addDefaultExtension (config, pkg, pkgKey, subPath, skipExtensions) {
   // don't apply extensions to folders or if defaultExtension = false
@@ -628,7 +577,7 @@ function applyPackageConfig (loader, config, pkg, pkgKey, subPath, metadata, ski
     }
   }
 
-  return (mapMatch ? doMap(loader, config, pkg, pkgKey, mapMatch, mapPath, metadata, skipExtensions) : Promise.resolve())
+  return (mapMatch ? doMap(loader, config, pkg, pkgKey, mapMatch, mapPath, metadata, skipExtensions) : resolvedPromise)
   .then(function (mapped) {
     if (mapped)
       return Promise.resolve(mapped);
@@ -646,7 +595,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
 
   if (typeof mapped === 'string') {
     if (!validMapping(mapMatch, mapped, path))
-      return Promise.resolve();
+      return resolvedPromise;
     return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgKey + '/', metadata, metadata, skipExtensions)
     .then(function (normalized) {
       return interpolateConditional.call(loader, normalized, pkgKey + '/', metadata);
@@ -683,7 +632,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
   .then(function (mapped) {
     if (mapped) {
       if (!validMapping(mapMatch, mapped, path))
-        return Promise.resolve();
+        return resolvedPromise;
       return packageResolve.call(loader, config, mapped + path.substr(mapMatch.length), pkgKey + '/', metadata, metadata, skipExtensions)
       .then(function (normalized) {
         return interpolateConditional.call(loader, normalized, pkgKey + '/', metadata);
@@ -775,7 +724,7 @@ function getMetaMatches (pkgMeta, subPath, matchFn) {
     }
   }
   // exact meta
-  var exactMeta = pkgMeta[subPath] && pkgMeta.hasOwnProperty && pkgMeta.hasOwnProperty(subPath) ? pkgMeta[subPath] : pkgMeta['./' + subPath];
+  var exactMeta = pkgMeta[subPath] && Object.hasOwnProperty.call(pkgMeta, subPath) ? pkgMeta[subPath] : pkgMeta['./' + subPath];
   if (exactMeta)
     matchFn(exactMeta, exactMeta, 0);
 }

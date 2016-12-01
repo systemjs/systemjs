@@ -1,12 +1,42 @@
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
-import { warn, nodeRequire, scriptSrc, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace, emptyModule } from './common.js';
+import { warn, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace, emptyModule } from './common.js';
 
 import { getConfig, getConfigItem, setConfig } from './config.js';
 import { decanonicalize, normalize, normalizeSync } from './resolve.js';
-import { instantiate } from './instantiate.js';
+import { instantiate, nodeRequire } from './instantiate.js';
 import formatHelpers from './format-helpers.js';
 
 export default SystemJSLoader;
+
+var scriptSrc;
+
+// Promise detection and error message
+if (typeof Promise === 'undefined')
+  throw new Error('SystemJS requires a global Promise polyfill to be set before loading.');
+
+if (typeof document !== 'undefined') {
+  var scripts = document.getElementsByTagName('script');
+  var curScript = scripts[scripts.length - 1];
+  if (document.currentScript && (curScript.defer || curScript.async))
+    curScript = document.currentScript;
+
+  scriptSrc = curScript.src;
+}
+// worker
+else if (typeof importScripts !== 'undefined') {
+  try {
+    throw new Error('_');
+  }
+  catch (e) {
+    e.stack.replace(/(?:at|@).*(http.+):[\d]+:[\d]+/, function(m, url) {
+      scriptSrc = url;
+    });
+  }
+}
+// node
+else if (typeof __filename !== 'undefined') {
+  scriptSrc = __filename;
+}
 
 function SystemJSLoader (baseKey) {
   RegisterLoader.call(this, baseKey);

@@ -14,11 +14,9 @@ System.register("group-c", [], function($__export) {
 
 
 System.registerDynamic("group-b", ["group-c"], false, function(__require, __exports, __module) {
-  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(__module.id);
-  (function() {
-    this.foo = 'foo';
-  }).call(System.global);
-  return _retrieveGlobal();
+  return {
+    foo: 'foo'
+  };
 });
 
 System.register("group-a", ["./group-b"], function($__export) {
@@ -29,6 +27,3 @@ System.register("group-a", ["./group-b"], function($__export) {
     execute: function() {}
   };
 });
-
-
-
