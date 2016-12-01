@@ -1,5 +1,5 @@
 import { envModule, setProduction, configNames } from './systemjs-loader.js';
-import { extend, warn, resolveUrlToParentIfNotPlain, baseURI, CONFIG } from './common.js';
+import { extend, prepend, warn, resolveUrlToParentIfNotPlain, baseURI, CONFIG } from './common.js';
 import { coreResolve, normalizePaths } from './resolve.js';
 
 /*
@@ -264,10 +264,10 @@ export function setPkgConfig (pkg, cfg, pkgName, prependConfig, config) {
         pkg[prop] = cfg[prop];
     }
     else if (prop === 'map') {
-      extend(pkg.map = pkg.map || {}, cfg.map, prependConfig);
+      (prependConfig ? prepend : extend)(pkg.map = pkg.map || {}, cfg.map);
     }
     else if (prop === 'meta') {
-      extend(pkg.meta = pkg.meta || {}, cfg.meta, prependConfig);
+      (prependConfig ? prepend : extend)(pkg.meta = pkg.meta || {}, cfg.meta);
     }
     else if (Object.hasOwnProperty.call(cfg, prop)) {
       warn.call(config, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);

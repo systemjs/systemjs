@@ -1,5 +1,5 @@
-import { emptyModule } from './systemjs-loader.js';
-import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError, loadNodeModule, supportsScriptLoad, warn, CONFIG, METADATA, ModuleNamespace } from './common.js';
+import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError,
+    loadNodeModule, supportsScriptLoad, warn, CONFIG, METADATA, ModuleNamespace, emptyModule } from './common.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
 
