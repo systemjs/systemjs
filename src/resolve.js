@@ -123,39 +123,8 @@ export function normalize (key, parentKey) {
   });
 }
 
-export function coreNormalize (key, parentKey, metadata, parentMetadata) {
-  var config = this[CONFIG];
-
-  // these are because users can still call System.normalize('a', 'b')
-  // this will be fixed with deprecating normalize and even sooner with es-module-loader 2
-  // which doesn't need to share the "normalize" prototype method
-  metadata = metadata || createMetadata();
-  parentMetadata = parentMetadata || getCoreParentMetadata(this, config, metadata, parentKey);
-
-  var loader = this;
-
-  // pluginResolve wraps packageResolve wraps coreResolve
-  var parsed = parsePlugin(config, key);
-
-  if (!parsed)
-    return packageResolve.call(this, config, key, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, false);
-
-  metadata.pluginKey = parsed.plugin;
-
-  return Promise.all([
-    packageResolve.call(this, config, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, true),
-    this.resolve(parsed.plugin, parentKey)
-  ])
-  .then(function (normalized) {
-    metadata.pluginArgument = normalized[0];
-    metadata.pluginKey = normalized[1];
-
-    return combinePluginParts(config, normalized[0], normalized[1]);
-  });
-}
-
 // normalization function used for registry keys
-// just does coreResolve without map + plugins
+// just does coreResolve without map
 export function decanonicalize (config, key) {
   var parsed = parsePlugin(config, key);
 
@@ -380,7 +349,7 @@ function setMeta (config, key, metadata) {
 
   // apply exact meta
   if (config.meta[key])
-    extendMeta(metadata.load, config.meta[key]);
+    extendMeta(metadata.load, config.meta[key], false);
 
   // apply package meta
   if (metadata.packageKey) {
@@ -396,7 +365,7 @@ function setMeta (config, key, metadata) {
         extendMeta(meta, matchMeta, matchDepth && bestDepth > matchDepth);
       });
 
-      extendMeta(metadata.load, meta);
+      extendMeta(metadata.load, meta, false);
     }
 
     // format

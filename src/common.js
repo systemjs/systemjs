@@ -1,9 +1,11 @@
 import { resolveUrlToParentIfNotPlain } from 'es-module-loader/core/resolve.js';
 import { baseURI, isBrowser, isWindows, addToError, global, createSymbol } from 'es-module-loader/core/common.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
-export { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
+import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
-export { baseURI, isBrowser, isWindows, addToError, global, resolveUrlToParentIfNotPlain }
+export { baseURI, isBrowser, isWindows, addToError, global, resolveUrlToParentIfNotPlain, ModuleNamespace }
+
+export var emptyModule = new ModuleNamespace({});
 
 export var CONFIG = createSymbol('loader-config');
 export var METADATA = createSymbol('metadata');
@@ -64,11 +66,20 @@ export function loadNodeModule (key, baseURL) {
   return parentModuleContext.require(key);
 }
 
-export function extend (a, b, prepend) {
+export function extend (a, b) {
   for (var p in b) {
     if (!b.hasOwnProperty(p))
       continue;
-    if (!prepend || a[p] === undefined)
+    a[p] = b[p];
+  }
+  return a;
+}
+
+export function prepend (a, b) {
+  for (var p in b) {
+    if (!b.hasOwnProperty(p))
+      continue;
+    if (a[p] === undefined)
       a[p] = b[p];
   }
   return a;
@@ -78,7 +89,7 @@ export function extend (a, b, prepend) {
 // array + array appends
 // object + object extends
 // other properties replace
-export function extendMeta (a, b, prepend) {
+export function extendMeta (a, b, _prepend) {
   for (var p in b) {
     if (!b.hasOwnProperty(p))
       continue;
@@ -86,10 +97,10 @@ export function extendMeta (a, b, prepend) {
     if (a[p] === undefined)
       a[p] = val;
     else if (val instanceof Array && a[p] instanceof Array)
-      a[p] = [].concat(prepend ? val : a[p]).concat(prepend ? a[p] : val);
+      a[p] = [].concat(_prepend ? val : a[p]).concat(_prepend ? a[p] : val);
     else if (typeof val == 'object' && val !== null && typeof a[p] == 'object')
-      a[p] = extend(extend({}, a[p]), val, prepend);
-    else if (!prepend)
+      a[p] = (_prepend ? prepend : extend)(extend({}, a[p]), val);
+    else if (!_prepend)
       a[p] = val;
   }
 }

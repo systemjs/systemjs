@@ -1,5 +1,5 @@
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
-import { warn, nodeRequire, scriptSrc, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace } from './common.js';
+import { warn, nodeRequire, scriptSrc, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace, emptyModule } from './common.js';
 
 import { getConfig, getConfigItem, setConfig } from './config.js';
 import { decanonicalize, normalize, normalizeSync } from './resolve.js';
@@ -52,15 +52,13 @@ function SystemJSLoader (baseKey) {
   this._nodeRequire = nodeRequire;
 
   // support the empty module, as a concept
-  this.set('@empty', emptyModule = this.newModule({}));
+  this.set('@empty', emptyModule);
 
   setProduction.call(this, false, false);
 
   // add module format helpers
   formatHelpers(this);
 }
-
-export var emptyModule;
 
 export var envModule;
 export function setProduction (isProduction, isBuilder) {
@@ -85,8 +83,8 @@ SystemJSLoader.prototype.constructor = SystemJSLoader;
 // NB deprecate normalize
 SystemJSLoader.prototype[RESOLVE] = SystemJSLoader.prototype.normalize = normalize;
 
-// NB deprecate decanonicalize
-SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalizeSync = normalizeSync;
+// NB deprecate decanonicalize, normalizeSync
+SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalizeSync = SystemJSLoader.prototype.resolveSync = normalizeSync;
 
 SystemJSLoader.prototype[INSTANTIATE] = instantiate;
 
