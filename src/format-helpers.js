@@ -1,5 +1,5 @@
 
-import { isWindows, global, readMemberExpression, cjsRequireRegEx } from './common.js';
+import { isWindows, global, readMemberExpression, cjsRequireRegEx, noop } from './common.js';
 
 export default function (loader) {
   loader.set('@@cjs-helpers', loader.newModule({
@@ -96,7 +96,7 @@ export default function (loader) {
 
       module.uri = module.id;
 
-      module.config = function () {};
+      module.config = noop;
 
       // add back in system dependencies
       if (moduleIndex !== -1)
@@ -159,8 +159,9 @@ export default function (loader) {
 }
 
 // CJS
+var windowOrigin;
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.location)
-  var windowOrigin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
+  windowOrigin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
 
 function stripOrigin(path) {
   if (path.substr(0, 8) === 'file:///')
@@ -393,5 +394,5 @@ export function registerLastDefine (loader) {
 
   // bundles are an empty module
   else if (multipleNamedDefines)
-    loader.registerDynamic([], function () {});
+    loader.registerDynamic([], noop);
 }

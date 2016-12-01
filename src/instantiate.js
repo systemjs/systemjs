@@ -1,14 +1,22 @@
-import { scriptLoad, isBrowser, isWorker, global, evaluate, cjsRequireRegEx, addToError,
-    loadNodeModule, supportsScriptLoad, warn, CONFIG, METADATA, ModuleNamespace, emptyModule } from './common.js';
+import { scriptLoad, isBrowser, isWorker, global, cjsRequireRegEx, addToError, loadNodeModule,
+    warn, CONFIG, METADATA, emptyModule, protectedCreateNamespace, resolvedPromise } from './common.js';
+import { evaluate } from './evaluate.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
+
+var supportsScriptLoad = (isBrowser || isWorker) && typeof navigator !== 'undefined' && navigator.userAgent && !navigator.userAgent.match(/MSIE (9|10).0/);
+
+// include the node require since we're overriding it
+export var nodeRequire;
+if (typeof require !== 'undefined' && typeof process !== 'undefined' && !process.browser)
+  nodeRequire = require;
 
 export function instantiate (key, processAnonRegister) {
   var loader = this;
   var config = this[CONFIG];
   var metadata = this[METADATA][key];
   // first do bundles and depCache
-  return (loadBundlesAndDepCache(config, this, key) || Promise.resolve())
+  return (loadBundlesAndDepCache(config, this, key) || resolvedPromise)
   .then(function () {
     if (processAnonRegister())
       return;
@@ -74,7 +82,7 @@ export function instantiate (key, processAnonRegister) {
 
 function initializePlugin (loader, key, metadata) {
   if (!metadata.pluginKey)
-    return Promise.resolve();
+    return resolvedPromise;
 
   return loader.import(metadata.pluginKey).then(function (plugin) {
     metadata.pluginModule = plugin;
@@ -88,16 +96,8 @@ function initializePlugin (loader, key, metadata) {
   });
 }
 
-function protectedCreateNamespace (bindings) {
-  if (bindings instanceof ModuleNamespace)
-    return bindings;
-  if (typeof bindings !== 'object')
-    throw new TypeError('Cannot create a module namespace from an object of type "' + typeof bindings + '".');
-  return new ModuleNamespace(bindings);
-}
-
 function runPluginLoad (loader, key, registerKey, metadata, pluginKey, pluginModule, processAnonRegister) {
-  return Promise.resolve()
+  return resolvedPromise
   .then(function () {
     return pluginModule.default.call(loader, key, registerKey);
   })
@@ -155,7 +155,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
   if (metadata.load.exports && !metadata.load.format)
     metadata.load.format = 'global';
 
-  return Promise.resolve()
+  return resolvedPromise
 
   // locate
   .then(function () {

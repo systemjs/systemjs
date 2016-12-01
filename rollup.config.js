@@ -4,13 +4,20 @@ import fs from 'fs';
 
 var version = JSON.parse(fs.readFileSync('package.json')).version;
 
+if (process.env.production)
+  version += ' Production';
+else
+  version += ' Dev';
+
+var name = `system${process.env.production ? '-production' : ''}`;
+
 export default {
-  entry: 'src/system.js',
+  entry: `src/${name}.js`,
   format: 'iife',
-  dest: 'dist/system.src.js',
+  dest: `dist/${name}.src.js`,
 
   sourceMap: true,
-  sourceMapFile: 'dist/system.js.map',
+  sourceMapFile: `dist/${name}.js.map`,
 
   banner: `/*
  * SystemJS v${version}

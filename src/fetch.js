@@ -7,7 +7,7 @@ function fetchFetch (url, authorization, integrity, asBuffer) {
   // fetch doesn't support file:/// urls
   if (url.substr(0, 8) === 'file:///') {
     if (hasXhr)
-      return xhrFetch(url, authorization);
+      return xhrFetch(url, authorization, integrity, asBuffer);
     else
       throw new Error('Unable to fetch file URLs in this environment.');
   }

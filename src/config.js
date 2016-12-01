@@ -1,6 +1,6 @@
 import { envModule, setProduction, configNames } from './systemjs-loader.js';
-import { extend, prepend, warn, resolveUrlToParentIfNotPlain, baseURI, CONFIG } from './common.js';
-import { coreResolve, normalizePaths } from './resolve.js';
+import { extend, prepend, warn, resolveIfNotPlain, baseURI, CONFIG, normalizePaths } from './common.js';
+import { coreResolve } from './resolve.js';
 
 /*
  Extend config merging one deep only
@@ -117,7 +117,7 @@ export function setConfig (cfg, isEnvConfig) {
     if (baseURL) {
       if (config.pathsLocked)
         warn.call(config, 'baseURL should be set before other config to avoid conflicts.');
-      config.baseURL = resolveUrlToParentIfNotPlain(baseURL, baseURI) || resolveUrlToParentIfNotPlain('./' + baseURL, baseURI);
+      config.baseURL = resolveIfNotPlain(baseURL, baseURI) || resolveIfNotPlain('./' + baseURL, baseURI);
       if (config.baseURL[config.baseURL.length - 1] !== '/')
         config.baseURL += '/';
     }
