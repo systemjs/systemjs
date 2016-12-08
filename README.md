@@ -127,6 +127,7 @@ Additional Plugins:
 * [SASS](https://github.com/screendriver/plugin-sass)
 * [SCSS](https://github.com/kevcjones/plugin-scss)
 * [sofe](https://github.com/CanopyTax/sofe)
+* [svelte](https://github.com/CanopyTax/system-svelte)
 * [SVG](https://github.com/vuzonp/systemjs-plugin-svg)
 * [WebFont](https://github.com/guybedford/plugin-font)
 * [WebWorkers](https://github.com/casperlamboo/plugin-worker)
