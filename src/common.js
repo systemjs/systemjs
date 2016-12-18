@@ -188,18 +188,6 @@ export function readMemberExpression (p, value) {
   return value;
 }
 
-function checkMap (p) {
-  var name = this.name;
-  // can add ':' here if we want paths to match the behaviour of map
-  if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/' || p[p.length - 1] === '/' || p[p.length - 1] === ':')) {
-    var curLen = p.split('/').length;
-    if (curLen > this.len) {
-      this.match = p;
-      this.len = curLen;
-    }
-  }
-}
-
 export function normalizePaths (config) {
   for (var p in config.paths) {
     if (!Object.hasOwnProperty.call(config.paths, p))
@@ -214,9 +202,7 @@ export function normalizePaths (config) {
 }
 
 // separate out paths cache as a baseURL lock process
-export function applyPaths (config, key) {
-  var paths = config.paths;
-
+export function applyPaths (baseURL, paths, key) {
   var mapMatch = getMapMatch(paths, key);
   if (mapMatch) {
     var target = paths[mapMatch] + key.substr(mapMatch.length);
@@ -225,17 +211,26 @@ export function applyPaths (config, key) {
     if (resolved !== undefined)
       return resolved;
 
-    resolved = target;
+    return baseURL + target;
   }
   else if (key.indexOf(':') !== -1) {
     return key;
   }
   else {
-    resolved = key;
+    return baseURL + key;
   }
+}
 
-  // plain paths map, or plain to begin with -> baseURL
-  return config.baseURL + resolved;
+function checkMap (p) {
+  var name = this.name;
+  // can add ':' here if we want paths to match the behaviour of map
+  if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/' || p[p.length - 1] === '/' || p[p.length - 1] === ':')) {
+    var curLen = p.split('/').length;
+    if (curLen > this.len) {
+      this.match = p;
+      this.len = curLen;
+    }
+  }
 }
 
 export function getMapMatch (map, name) {

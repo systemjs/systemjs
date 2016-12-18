@@ -48,7 +48,8 @@ systemJSPrototype[RESOLVE] = function (key, parentKey) {
   .then(function (resolved) {
     // then apply paths
     // baseURL is fallback
-    return applyPaths(loader[CONFIG], resolved || key);
+    var config = loader[CONFIG];
+    return applyPaths(config.baseURL, config.paths, resolved || key);
   });
 };
 
@@ -61,7 +62,8 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
   resolved = this[PLAIN_RESOLVE_SYNC](key, parentKey);
 
   // then apply paths
-  return applyPaths(this[CONFIG], resolved || key);
+  var config = this[CONFIG];
+  return applyPaths(config.baseURL, config.paths, resolved || key);
 };
 
 systemJSPrototype[PLAIN_RESOLVE] = systemJSPrototype[PLAIN_RESOLVE_SYNC] = plainResolve;
@@ -92,7 +94,7 @@ systemJSPrototype.config = function (cfg) {
       // object submap
       else {
         // normalize parent with URL and paths only
-        var resolvedParent = resolveIfNotPlain(p, baseURI) || applyPaths(config, p);
+        var resolvedParent = resolveIfNotPlain(p, baseURI) || applyPaths(config.baseURL, config.paths, p);
         extend(config.submap[resolvedParent] || (config.submap[resolvedParent] = {}), v);
       }
     }

@@ -138,7 +138,7 @@ export function coreResolve (config, key, parentKey, doMap) {
   if (relativeResolved) {
     if (!config.pathsLocked)
       normalizePaths(config);
-    return applyPaths(config, relativeResolved, true);
+    return applyPaths(config.baseURL, config.paths, relativeResolved);
   }
 
   // plain keys not starting with './', 'x://' and '/' go through custom resolution
@@ -162,7 +162,7 @@ export function coreResolve (config, key, parentKey, doMap) {
 
   if (!config.pathsLocked)
     normalizePaths(config);
-  return applyPaths(config, key, false);
+  return applyPaths(config.baseURL, config.paths, key);
 }
 
 function pluginResolve (config, key, parentKey, metadata, parentMetadata) {

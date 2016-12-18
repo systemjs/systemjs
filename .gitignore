@@ -2,3 +2,5 @@ node_modules
 .DS_Store
 dist
 bower_components
+code.asm
+hydrogen.cfg

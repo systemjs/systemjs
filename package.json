@@ -38,6 +38,7 @@
     "test": "npm run test:babel && npm run test:traceur && npm run test:typescript",
     "test:traceur": "mocha test/test-traceur.js -u tdd --reporter dot",
     "test:babel": "mocha test/test-babel.js -u tdd --reporter dot",
-    "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot"
+    "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot",
+    "irhydra": "node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --print-opt-code --trace_hydrogen_file=hydrogen.cfg irhydra/load.js"
   }
 }
