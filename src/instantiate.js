@@ -116,7 +116,7 @@ function loadBundlesAndDepCache (config, loader, key) {
   var deps = config.depCache[key];
   if (deps) {
     for (var i = 0; i < deps.length; i++)
-      loader.load(deps[i], key);
+      loader.normalize(deps[i], key).then(preloadScript);
   }
   else {
     var matched = false;

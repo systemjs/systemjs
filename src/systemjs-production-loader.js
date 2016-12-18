@@ -1,14 +1,14 @@
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { global, baseURI, CONFIG, PLAIN_RESOLVE, PLAIN_RESOLVE_SYNC, resolveIfNotPlain, resolvedPromise,
-    extend, emptyModule, applyPaths, scriptLoad, protectedCreateNamespace, getMapMatch, noop } from './common.js';
+    extend, emptyModule, applyPaths, scriptLoad, protectedCreateNamespace, getMapMatch, noop, preloadScript } from './common.js';
 
 export { ModuleNamespace }
 
 export default SystemJSProductionLoader;
 
 function SystemJSProductionLoader () {
-  RegisterLoader.call(this, baseURI);
+  RegisterLoader.call(this);
 
   // internal configuration
   this[CONFIG] = {
@@ -20,12 +20,6 @@ function SystemJSProductionLoader () {
     depCache: {},
     wasm: false
   };
-
-  Object.defineProperty(this, 'baseURL', {
-    get: function () {
-      return this[CONFIG].baseURL
-    }
-  });
 
   // support the empty module, as a concept
   this.registry.set('@empty', emptyModule);
@@ -78,16 +72,10 @@ systemJSPrototype.config = function (cfg) {
   var config = this[CONFIG];
 
   if (cfg.baseURL)
-    config.baseURL = resolveIfNotPlain(cfg.baseURL, baseURI) || resolveIfNotPlain('./' + cfg.baseURL, baseURI);
+    this.baseURL = resolveIfNotPlain(cfg.baseURL, baseURI) || resolveIfNotPlain('./' + cfg.baseURL, baseURI);
 
-  if (cfg.paths) {
-    var val = cfg.paths;
-    for (var p in val) {
-      if (!Object.hasOwnProperty.call(val, p))
-        continue;
-      config.paths[p] = val[p];
-    }
-  }
+  if (cfg.paths)
+    extend(config.paths, cfg.paths);
 
   if (cfg.map) {
     var val = cfg.map;
@@ -105,14 +93,7 @@ systemJSPrototype.config = function (cfg) {
       else {
         // normalize parent with URL and paths only
         var resolvedParent = resolveIfNotPlain(p, baseURI) || applyPaths(config, p);
-        var submap = config.submap[resolvedParent] || (config.submap[resolvedParent] = {});
-
-        for (var s in v) {
-          if (!Object.hasOwnProperty.call(v, s))
-            continue;
-
-          submap[s] = v[s];
-        }
+        extend(config.submap[resolvedParent] || (config.submap[resolvedParent] = {}), v);
       }
     }
   }
@@ -158,7 +139,7 @@ systemJSPrototype.config = function (cfg) {
 };
 
 // getConfig configuration cloning
-/* systemJSPrototype.getConfig = function () {
+/* systemJSPrototype.getConfig = function (name) {
   var config = this[CONFIG];
 
   var map = {};
@@ -281,35 +262,6 @@ function instantiateIfWasm (url) {
     // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
     return new TextDecoder('utf-8').decode(bytes);
   });
-}
-
-var supportsPreload = (function () {
-  var relList = document.createElement('link').relList;
-  if (relList && relList.supports) {
-    try {
-      return relList.supports('preload');
-    }
-    catch (e) {}
-  }
-  return false;
-})();
-
-function preloadScript (url) {
-  if (supportsPreload) {
-    var link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = url;
-    link.as = 'script';
-    document.head.appendChild(link);
-  }
-  else {
-    // lazy fallback is to parse and execute JS twice
-    // because we are loading System.register, network time saving should
-    // still beat the double parse cost
-    // also System.register is supposed to be fully wrapped,
-    // so there should be no double execution cost
-    scriptLoad(url, 'anonymous', undefined, noop, noop);
-  }
 }
 
 var loadedBundles = {};

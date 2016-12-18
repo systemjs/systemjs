@@ -84,6 +84,31 @@ export function extendMeta (a, b, _prepend) {
   }
 }
 
+var supportsPreload = isBrowser && (function () {
+  var relList = document.createElement('link').relList;
+  if (relList && relList.supports) {
+    try {
+      return relList.supports('preload');
+    }
+    catch (e) {}
+  }
+  return false;
+})();
+
+export function preloadScript (url) {
+  var link = document.createElement('link');
+  if (supportsPreload) {
+    link.rel = 'preload';
+    link.as = 'script';
+  }
+  else {
+    link.rel = 'prefetch';
+  }
+  link.href = url;
+  document.head.appendChild(link);
+  document.head.removeChild(link);
+}
+
 function workerImport (src, resolve, reject) {
   try {
     importScripts(src);
