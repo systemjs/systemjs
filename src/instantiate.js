@@ -49,9 +49,6 @@ export function instantiate (key, processAnonRegister) {
     if (!metadata.load.scriptLoad)
       return initializePlugin(loader, key, metadata)
       .then(function () {
-        // modern plugin = load hook
-        if (metadata.pluginModule && typeof metadata.pluginModule.default === 'function')
-          return runPluginLoad(loader, metadata.pluginArgument, key, metadata, metadata.pluginKey, metadata.pluginModule, processAnonRegister);
         return runFetchPipeline(loader, key, metadata, processAnonRegister, config.wasm);
       })
 
@@ -93,21 +90,6 @@ function initializePlugin (loader, key, metadata) {
       metadata: metadata.load
     };
     metadata.load.deps = metadata.load.deps || [];
-  });
-}
-
-function runPluginLoad (loader, key, registerKey, metadata, pluginKey, pluginModule, processAnonRegister) {
-  return resolvedPromise
-  .then(function () {
-    return pluginModule.default.call(loader, key, registerKey);
-  })
-  .then(function (pluginResult) {
-    if (pluginResult === undefined)
-      return processAnonRegister() ? pluginResult : emptyModule;
-    return protectedCreateNamespace(pluginResult);
-  })
-  .catch(function (err) {
-    throw addToError(err, 'Error running instantiate plugin ' + pluginKey);
   });
 }
 
@@ -500,9 +482,6 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
   // do transpilation
   return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
-    if (typeof transpiler.default === 'function')
-      return runPluginLoad(loader, key, key, metadata, loader.transpiler, transpiler, processAnonRegister);
-
     if (transpiler.__useDefault)
       transpiler = transpiler.default;
 

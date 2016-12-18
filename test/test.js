@@ -154,24 +154,6 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Load-based transpiler', function () {
-    var loadSystem = new System.constructor();
-    loadSystem.config(System.getConfig());
-    loadSystem.config({
-      transpiler: 'load-transpiler'
-    });
-    loadSystem.set('load-transpiler', loadSystem.newModule({
-      default: function (key) {
-        return {
-          transpiled: 'value'
-        };
-      }
-    }));
-    return loadSystem.import('tests/meta-override.js').then(function (m) {
-      ok(m.transpiled == 'value');
-    });
-  });
-
   test('String encoding', function () {
     return System.import('tests/string-encoding.js').then(function (m) {
       ok(m.pi === decodeURI('%CF%80'));
@@ -537,29 +519,18 @@ suite('SystemJS Standard Tests', function() {
 
   test('Instantiation plugin', function () {
     System.set('instantiate-plugin', System.newModule({
-      default: function (key) {
+      fetch: function () {
+        return ''
+      },
+      instantiate: function (key) {
         return {
           value: 'plugin'
         };
       }
     }));
     return System.import('test!instantiate-plugin').then(function (m) {
+      console.log(m);
       ok(m.value === 'plugin');
-    });
-  });
-
-  test('Instantiate plugin register', function () {
-    System.set('instantiate-plugin-register', System.newModule({
-      default: function (key, fullKey) {
-        this.register(fullKey, [], function (_export) {
-          return function () {
-            _export('some', 'thing');
-          };
-        });
-      }
-    }));
-    return System.import('test!instantiate-plugin-register').then(function (m) {
-      ok(m.some === 'thing');
     });
   });
 
@@ -1336,13 +1307,6 @@ suite('SystemJS Standard Tests', function() {
       throw new Error('Was supposed to fail');
     }, function (e) {
       ok(typeof e !== 'undefined');
-    });
-  });
-
-  test('New plugin api', function () {
-    return System.import('tests/asdf!tests/new-plugin-api.js')
-    .then(function (m) {
-      ok(m.hello === 'world');
     });
   });
 
