@@ -20,7 +20,7 @@ if (typeof document !== 'undefined') {
   if (document.currentScript && (curScript.defer || curScript.async))
     curScript = document.currentScript;
 
-  scriptSrc = curScript.src;
+  scriptSrc = curScript && curScript.src;
 }
 // worker
 else if (typeof importScripts !== 'undefined') {
@@ -38,8 +38,8 @@ else if (typeof __filename !== 'undefined') {
   scriptSrc = __filename;
 }
 
-function SystemJSLoader (baseKey) {
-  RegisterLoader.call(this, baseKey);
+function SystemJSLoader () {
+  RegisterLoader.call(this);
 
   // NB deprecate
   this._loader = {};

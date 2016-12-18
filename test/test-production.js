@@ -91,7 +91,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('System.register module name arg', function () {
     return System.import('tests/module-name.js').then(function (m) {
-      ok(m.name == System.baseURL + 'tests/module-name.js');
+      ok(m.name == new URL('tests/module-name.js', document.baseURI));
     });
   });
 
