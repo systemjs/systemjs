@@ -50,7 +50,7 @@ function xhrFetch (url, authorization, integrity, asBuffer) {
       resolve(asBuffer ? xhr.response : xhr.responseText);
     }
     function error() {
-      reject(new Error('XHR error' + (xhr.status ? ' (' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText  : '') + ')' : '') + ' loading ' + url));
+      reject(new Error('XHR error: ' + (xhr.status ? ' (' + xhr.status + (xhr.statusText ? ' ' + xhr.statusText  : '') + ')' : '') + ' loading ' + url));
     }
 
     xhr.onreadystatechange = function () {

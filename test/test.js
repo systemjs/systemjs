@@ -11,7 +11,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Object.prototype.toString(new Module())== "[object Module]"', function () {
     return System.import('tests/global.js').then(function () {
-      var m = System.get(System.normalizeSync('tests/global.js'));
+      var m = System.registry.get(System.normalizeSync('tests/global.js'));
       ok(Object.prototype.toString.call(m) == '[object Module]' || m.toString && m.toString() === '[object Module]');
     });
   });
@@ -177,6 +177,44 @@ suite('SystemJS Standard Tests', function() {
     });
     return System.import('tests/global-shim-config-exports.js').then(function (m) {
       ok(m.default == 'export', 'Exports not shimmed');
+    });
+  });
+
+  test('Paths configuration', function () {
+    System.config({
+      map: {
+        'f/': 'a:',
+        'g': 'https://site.com'
+      },
+      paths: {
+        'a': 'b',
+        'a:': 'c/',
+        'b/': 'd/',
+        'b.js': 'http://jquery.com/jquery.js',
+        'https://site.com/': 'https://another.com/'
+      }
+    });
+
+    var base = System.resolveSync('');
+
+    return Promise.all([
+      System.resolve('a'),
+      System.resolve('f/b'),
+      System.resolve('a/b'),
+      System.resolve('b/c'),
+      System.resolve('b'),
+      System.resolve('b.js'),
+      System.resolve('b.js/c'),
+      System.resolve('g/x')
+    ]).then(function (a) {
+      ok(a[0] === base + 'b');
+      ok(a[1] === base + 'c/b');
+      ok(a[2] === base + 'b/b');
+      ok(a[3] === base + 'd/c');
+      ok(a[4] === base + 'b');
+      ok(a[5] === 'http://jquery.com/jquery.js');
+      ok(a[6] === 'http://jquery.com/jquery.js/c');
+      ok(a[7] === 'https://another.com/x');
     });
   });
 
@@ -423,7 +461,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('CommonJS detection variation 1', function () {
     return System.import('tests/commonjs-variation.js').then(function (m) {
-      ok(m.e === System.get('@empty'));
+      ok(m.e === System.registry.get('@empty'));
     });
   });
 
@@ -518,7 +556,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Instantiation plugin', function () {
-    System.set('instantiate-plugin', System.newModule({
+    System.registry.set('instantiate-plugin', System.newModule({
       fetch: function () {
         return ''
       },
@@ -698,7 +736,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Loading dynamic modules with __esModule flag set', function () {
     return System.import('tests/es-module-flag.js').then(function () {
-      m = System.get(System.normalizeSync('tests/es-module-flag.js'));
+      m = System.registry.get(System.normalizeSync('tests/es-module-flag.js'));
       ok(m.exportName == 'export');
       ok(m.default);
       ok(m.default != 'default export');
@@ -1236,7 +1274,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Conditional loading', function () {
-    System.set('env', System.newModule({ 'browser': 'ie' }));
+    System.registry.set('env', System.newModule({ 'browser': 'ie' }));
 
     return System.import('tests/branch-#{env|browser}.js')
     .then(function (m) {
@@ -1245,16 +1283,16 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Boolean conditional false', function () {
-    System.set('env', System.newModule({ 'js': { 'es5': true } }));
+    System.registry.set('env', System.newModule({ 'js': { 'es5': true } }));
 
     return System.import('tests/branch-boolean.js#?env|~js.es5')
     .then(function (m) {
-      ok(m === System.get('@empty'));
+      ok(m === System.registry.get('@empty'));
     });
   });
 
   test('Boolean conditional true', function () {
-    System.set('env', System.newModule({ 'js': { 'es5': true } }));
+    System.registry.set('env', System.newModule({ 'js': { 'es5': true } }));
 
     System.config({
       paths: {

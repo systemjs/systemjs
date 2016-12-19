@@ -1,5 +1,5 @@
 import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveIfNotPlain,
-    baseURI, CONFIG, METADATA, applyPaths, normalizePaths, resolvedPromise, getPackage } from './common.js';
+    baseURI, CONFIG, METADATA, applyPaths, resolvedPromise, getPackage } from './common.js';
 import { setPkgConfig, createPackage } from './config.js';
 import fetch from './fetch.js';
 
@@ -135,11 +135,8 @@ export function coreResolve (config, key, parentKey, doMap) {
   var relativeResolved = resolveIfNotPlain(key, parentKey || baseURI);
 
   // standard URL resolution
-  if (relativeResolved) {
-    if (!config.pathsLocked)
-      normalizePaths(config);
+  if (relativeResolved)
     return applyPaths(config.baseURL, config.paths, relativeResolved);
-  }
 
   // plain keys not starting with './', 'x://' and '/' go through custom resolution
   if (doMap) {
@@ -150,7 +147,7 @@ export function coreResolve (config, key, parentKey, doMap) {
 
       relativeResolved = resolveIfNotPlain(key, baseURI);
       if (relativeResolved)
-        return relativeResolved;
+        return applyPaths(config.baseURL, config.paths, relativeResolved);
     }
   }
 
@@ -160,8 +157,6 @@ export function coreResolve (config, key, parentKey, doMap) {
   if (key.substr(0, 6) === '@node/')
     return key;
 
-  if (!config.pathsLocked)
-    normalizePaths(config);
   return applyPaths(config.baseURL, config.paths, key);
 }
 
@@ -808,7 +803,7 @@ function serializeCondition (conditionObj) {
 }
 
 function resolveCondition (conditionObj, parentKey, bool) {
-  return this.load(conditionObj.module, parentKey)
+  return this.import(conditionObj.module, parentKey)
   .then(function (condition) {
     var m = readMemberExpression(conditionObj.prop, condition);
 

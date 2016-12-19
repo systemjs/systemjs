@@ -1,15 +1,13 @@
 import { resolveIfNotPlain } from 'es-module-loader/core/resolve.js';
-import { baseURI, isBrowser, isWindows, addToError, global, createSymbol } from 'es-module-loader/core/common.js';
+import { baseURI, isBrowser, isWindows, addToError, global, createSymbol, resolvedPromise } from 'es-module-loader/core/common.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
-export { baseURI, isBrowser, isWindows, addToError, global, resolveIfNotPlain, ModuleNamespace }
+export { baseURI, isBrowser, isWindows, addToError, global, resolveIfNotPlain, ModuleNamespace, resolvedPromise }
 
 export function noop () {};
 
 export var emptyModule = new ModuleNamespace({});
-
-export var resolvedPromise = Promise.resolve();
 
 export function protectedCreateNamespace (bindings) {
   if (bindings instanceof ModuleNamespace)
@@ -186,19 +184,6 @@ export function readMemberExpression (p, value) {
   while (pParts.length)
     value = value[pParts.shift()];
   return value;
-}
-
-export function normalizePaths (config) {
-  for (var p in config.paths) {
-    if (!Object.hasOwnProperty.call(config.paths, p))
-      continue;
-    // warn on wildcard path deprecations
-    var path = config.paths[p];
-    if (path.indexOf('*') !== -1)
-      warn.call(config, 'Paths configuration "' + p + '" -> "' + path + '" uses wildcards which are no longer supported.', true);
-    config.paths[p] = resolveIfNotPlain(path, baseURI) || resolveIfNotPlain('./' + path, config.baseURL);
-  }
-  config.pathsLocked = true;
 }
 
 // separate out paths cache as a baseURL lock process
