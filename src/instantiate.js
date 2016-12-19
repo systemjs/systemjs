@@ -1,5 +1,5 @@
 import { scriptLoad, isBrowser, isWorker, global, cjsRequireRegEx, addToError, loadNodeModule,
-    warn, CONFIG, METADATA, emptyModule, protectedCreateNamespace, resolvedPromise } from './common.js';
+    warn, CONFIG, METADATA, emptyModule, protectedCreateNamespace, resolvedPromise, preloadScript } from './common.js';
 import { evaluate } from './evaluate.js';
 import fetch from './fetch.js';
 import { getGlobalValue, getCJSDeps, requireResolve, getPathVars, prepareGlobal, clearLastDefine, registerLastDefine } from './format-helpers.js';
@@ -487,7 +487,7 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
 
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)
-      throw new Error('Unable to load transpiler, ensure the SystemJS.transpiler is configured to a transpiler plugin.');
+      throw new Error(loader.transpier + ' is not a valid transpiler plugin.');
 
     // if transpiler is the same as the plugin loader, then don't run twice
     if (transpiler === metadata.pluginModule)

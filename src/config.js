@@ -1,5 +1,5 @@
 import { envModule, setProduction, configNames } from './systemjs-loader.js';
-import { extend, prepend, warn, resolveIfNotPlain, baseURI, CONFIG, normalizePaths } from './common.js';
+import { extend, prepend, warn, resolveIfNotPlain, baseURI, CONFIG } from './common.js';
 import { coreResolve } from './resolve.js';
 
 /*
@@ -78,7 +78,7 @@ export function getConfig (configName) {
   if (configName) {
     if (configNames.indexOf(configName) !== -1)
       return getConfigItem(this[CONFIG], configName);
-    throw new Error('"' + configName + '" is not a valid configuration name to get. Must be one of ' + configNames.join(', ') + '.');
+    throw new Error('"' + configName + '" is not a valid configuration name. Must be one of ' + configNames.join(', ') + '.');
   }
 
   var cfg = {};
@@ -115,36 +115,29 @@ export function setConfig (cfg, isEnvConfig) {
 
     // always configure baseURL first
     if (baseURL) {
-      if (config.pathsLocked)
-        warn.call(config, 'baseURL should be set before other config to avoid conflicts.');
       config.baseURL = resolveIfNotPlain(baseURL, baseURI) || resolveIfNotPlain('./' + baseURL, baseURI);
       if (config.baseURL[config.baseURL.length - 1] !== '/')
         config.baseURL += '/';
     }
 
-    var pathsExtended = false;
-
-    if (cfg.paths) {
+    if (cfg.paths)
       extend(config.paths, cfg.paths);
-      pathsExtended = true;
-    }
 
     envSet(loader, cfg, function(cfg) {
-      if (cfg.paths) {
+      if (cfg.paths)
         extend(config.paths, cfg.paths);
-        pathsExtended = true;
-      }
     });
 
-    // last pathing additions
-    if (config.pathsLocked && pathsExtended) {
-      // warn.call(config, 'paths should be set before other config to avoid conflicts.')
-      normalizePaths(config);
+    for (var p in config.paths) {
+      if (config.paths[p].indexOf('*') === -1)
+        continue;
+      warn.call(config, 'Path config ' + p + ' -> ' + config.paths[p] + ' is no longer supported as wildcards are deprecated.');
+      delete config.paths[p];
     }
   }
 
   if (cfg.defaultJSExtensions)
-    warn.call(config, 'The defaultJSExtensions configuration option has been removed, use packages configuration defaultExtension instead.', true);
+    warn.call(config, 'The defaultJSExtensions configuration option is deprecated.\n  Use packages defaultExtension instead.', true);
 
   if (typeof cfg.pluginFirst === 'boolean')
     config.pluginFirst = cfg.pluginFirst;

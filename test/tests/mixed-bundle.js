@@ -13,17 +13,17 @@ System.registerDynamic("tree/cjs", [], true, function(require, exports, __module
   var __define = global.define;
   global.define = undefined;
   var module = { exports: exports };
-  var process = System.get("@@nodeProcess");
+  var process = System.registry.get("@@nodeProcess");
   exports.cjs = true;
   global.define = __define;
   return module.exports;
 });
 
 System.registerDynamic("tree/jquery", [], false, function(require, exports, __moduleName) {
-  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(__moduleName);
+  var _retrieveGlobal = System.registry.get("@@global-helpers").prepareGlobal(__moduleName);
   this.jquery = {};
-  
-  
+
+
   return _retrieveGlobal();
 });
 
@@ -40,12 +40,12 @@ System.register("tree/second", ["./third", "./cjs"], function($__export) {
 });
 
 System.registerDynamic("tree/global", ['./jquery'], false, function(__require, __exports, __moduleName) {
-  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(__moduleName, "jquery.test");
+  var _retrieveGlobal = System.registry.get("@@global-helpers").prepareGlobal(__moduleName, "jquery.test");
   "deps ./jquery";
   "exports jquery.test";
   this.jquery = this.jquery || {};
   this.jquery.test = 'output';
-  
+
   this["jquery.test"] = jquery.test;
   return _retrieveGlobal();
 });

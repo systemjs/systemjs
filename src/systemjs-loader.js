@@ -12,7 +12,7 @@ var scriptSrc;
 
 // Promise detection and error message
 if (typeof Promise === 'undefined')
-  throw new Error('SystemJS requires a global Promise polyfill to be set before loading.');
+  throw new Error('SystemJS needs a Promise polyfill.');
 
 if (typeof document !== 'undefined') {
   var scripts = document.getElementsByTagName('script');
@@ -49,9 +49,6 @@ function SystemJSLoader () {
 
   // internal configuration
   this[CONFIG] = {
-    // this means paths normalization has already happened
-    pathsLocked: false,
-
     baseURL: baseURI,
     paths: {},
 
@@ -82,7 +79,7 @@ function SystemJSLoader () {
   this._nodeRequire = nodeRequire;
 
   // support the empty module, as a concept
-  this.set('@empty', emptyModule);
+  this.registry.set('@empty', emptyModule);
 
   setProduction.call(this, false, false);
 
@@ -93,7 +90,7 @@ function SystemJSLoader () {
 export var envModule;
 export function setProduction (isProduction, isBuilder) {
   this[CONFIG].production = isProduction;
-  this.set('@system-env', envModule = this.newModule({
+  this.registry.set('@system-env', envModule = this.newModule({
     browser: isBrowser,
     node: !!this._nodeRequire,
     production: !isBuilder && isProduction,
@@ -103,20 +100,22 @@ export function setProduction (isProduction, isBuilder) {
   }));
 }
 
-var RESOLVE = SystemJSLoader.resolve = RegisterLoader.resolve;
-var INSTANTIATE = SystemJSLoader.instantiate = RegisterLoader.instantiate;
-
 SystemJSLoader.prototype = Object.create(RegisterLoader.prototype);
 
 SystemJSLoader.prototype.constructor = SystemJSLoader;
 
 // NB deprecate normalize
-SystemJSLoader.prototype[RESOLVE] = SystemJSLoader.prototype.normalize = normalize;
+SystemJSLoader.prototype[SystemJSLoader.resolve = RegisterLoader.resolve] = SystemJSLoader.prototype.normalize = normalize;
+
+SystemJSLoader.prototype.load = function (key, parentKey) {
+  warn.call(this[CONFIG], 'System.load is deprecated.');
+  return this.import(key, parentKey);
+};
 
 // NB deprecate decanonicalize, normalizeSync
 SystemJSLoader.prototype.decanonicalize = SystemJSLoader.prototype.normalizeSync = SystemJSLoader.prototype.resolveSync = normalizeSync;
 
-SystemJSLoader.prototype[INSTANTIATE] = instantiate;
+SystemJSLoader.prototype[SystemJSLoader.instantiate = RegisterLoader.instantiate] = instantiate;
 
 SystemJSLoader.prototype.config = setConfig;
 SystemJSLoader.prototype.getConfig = getConfig;
@@ -151,23 +150,23 @@ for (var i = 0; i < configNames.length; i++) (function (configName) {
 /*
  * Backwards-compatible registry API, to be deprecated
  */
-/* function registryWarn(loader, method) {
-  warn.call(loader, 'SystemJS.' + method + ' is deprecated for SystemJS.registry.' + method);
-} */
+function registryWarn(loader, method) {
+  warn.call(loader[CONFIG], 'SystemJS.' + method + ' is deprecated for SystemJS.registry.' + method);
+}
 SystemJSLoader.prototype.delete = function (key) {
-  // registryWarn(this, 'delete');
+  registryWarn(this, 'delete');
   this.registry.delete(key);
 };
 SystemJSLoader.prototype.get = function (key) {
-  // registryWarn(this, 'get');
+  registryWarn(this, 'get');
   return this.registry.get(key);
 };
 SystemJSLoader.prototype.has = function (key) {
-  // registryWarn(this, 'has');
+  registryWarn(this, 'has');
   return this.registry.has(key);
 };
 SystemJSLoader.prototype.set = function (key, module) {
-  // registryWarn(this, 'set');
+  registryWarn(this, 'set');
   return this.registry.set(key, module);
 };
 SystemJSLoader.prototype.newModule = function (bindings) {

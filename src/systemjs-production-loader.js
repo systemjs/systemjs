@@ -25,8 +25,6 @@ function SystemJSProductionLoader () {
   this.registry.set('@empty', emptyModule);
 }
 
-var RESOLVE = SystemJSProductionLoader.resolve = RegisterLoader.resolve;
-var INSTANTIATE = SystemJSProductionLoader.instantiate = RegisterLoader.instantiate;
 SystemJSProductionLoader.plainResolve = PLAIN_RESOLVE;
 SystemJSProductionLoader.plainResolveSync = PLAIN_RESOLVE_SYNC;
 
@@ -34,7 +32,7 @@ var systemJSPrototype = SystemJSProductionLoader.prototype = Object.create(Regis
 
 systemJSPrototype.constructor = SystemJSProductionLoader;
 
-systemJSPrototype[RESOLVE] = function (key, parentKey) {
+systemJSPrototype[SystemJSProductionLoader.resolve = RegisterLoader.resolve] = function (key, parentKey) {
   var resolved = resolveIfNotPlain(key, parentKey || baseURI);
   if (resolved !== undefined)
     return Promise.resolve(resolved);
@@ -68,7 +66,7 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
 
 systemJSPrototype[PLAIN_RESOLVE] = systemJSPrototype[PLAIN_RESOLVE_SYNC] = plainResolve;
 
-systemJSPrototype[INSTANTIATE] = coreInstantiate;
+systemJSPrototype[SystemJSProductionLoader.instantiate = RegisterLoader.instantiate] = coreInstantiate;
 
 systemJSPrototype.config = function (cfg) {
   var config = this[CONFIG];
@@ -214,10 +212,6 @@ function plainResolve (key, parentKey) {
   }
 }
 
-function throwUninstantiated (key, wasm) {
-  throw new Error('Module "' + key + '" is not a valid System.register ' + (wasm ? 'or WASM' : '') + 'source.');
-}
-
 function instantiateIfWasm (url) {
   return fetch(url)
   .then(function(res) {
@@ -266,6 +260,15 @@ function instantiateIfWasm (url) {
   });
 }
 
+function doScriptLoad (url, processAnonregister) {
+  return new Promise(function (resolve, reject) {
+    return scriptLoad(url, 'anonymous', undefined, function () {
+      processAnonRegister();
+      resolve();
+    }, reject);
+  });
+}
+
 var loadedBundles = {};
 function coreInstantiate (key, processAnonRegister) {
   var config = this[CONFIG];
@@ -275,13 +278,7 @@ function coreInstantiate (key, processAnonRegister) {
   var bundle = config.bundles[key];
   if (bundle) {
     var bundleUrl = this.resolveSync(bundle, undefined);
-    return (loadedBundles[bundleUrl] || (loadedBundles[bundleUrl] = new Promise(function (resolve, reject) {
-      return scriptLoad(bundleUrl, 'anonymous', undefined, resolve, reject);
-    })))
-    .then(function () {
-      if (!processAnonRegister())
-        throwUninstantiated(key, wasm);
-    });
+    return loadedBundles[bundleUrl] || (loadedBundles[bundleUrl] = doScriptLoad(bundleUrl, processAnonRegister));
   }
 
   var depCache = config.depCache[key];
@@ -298,16 +295,8 @@ function coreInstantiate (key, processAnonRegister) {
         return sourceOrModule;
 
       (0, eval)(sourceOrModule + '\n\/\/# sourceURL=' + key);
-
-      if (!processAnonRegister())
-        throwUninstantiated(key, wasm);
+      processAnonRegister();
     });
 
-  return new Promise(function (resolve, reject) {
-    scriptLoad(key, 'anonymous', undefined, resolve, reject);
-  })
-  .then(function () {
-    if (!processAnonRegister())
-      throwUninstantiated(key, wasm);
-  });
+  return doScriptLoad(key, processAnonRegister);
 }
