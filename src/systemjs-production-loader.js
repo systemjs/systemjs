@@ -51,6 +51,10 @@ systemJSPrototype[SystemJSProductionLoader.resolve = RegisterLoader.resolve] = f
   });
 };
 
+systemJSPrototype.newModule = function (bindings) {
+  return new ModuleNamespace(bindings);
+};
+
 systemJSPrototype.resolveSync = function (key, parentKey) {
   var resolved = resolveIfNotPlain(key, parentKey || baseURI);
   if (resolved !== undefined)
@@ -71,8 +75,11 @@ systemJSPrototype[SystemJSProductionLoader.instantiate = RegisterLoader.instanti
 systemJSPrototype.config = function (cfg) {
   var config = this[CONFIG];
 
-  if (cfg.baseURL)
-    this.baseURL = resolveIfNotPlain(cfg.baseURL, baseURI) || resolveIfNotPlain('./' + cfg.baseURL, baseURI);
+  if (cfg.baseURL) {
+    config.baseURL = resolveIfNotPlain(cfg.baseURL, baseURI) || resolveIfNotPlain('./' + cfg.baseURL, baseURI);
+    if (config.baseURL[config.baseURL.length - 1] !== '/')
+      config.baseURL += '/';
+  }
 
   if (cfg.paths)
     extend(config.paths, cfg.paths);
@@ -105,6 +112,7 @@ systemJSPrototype.config = function (cfg) {
     var val = cfg[p];
 
     switch (p) {
+      case 'baseURL':
       case 'paths':
       case 'map':
       break;
@@ -260,7 +268,7 @@ function instantiateIfWasm (url) {
   });
 }
 
-function doScriptLoad (url, processAnonregister) {
+function doScriptLoad (url, processAnonRegister) {
   return new Promise(function (resolve, reject) {
     return scriptLoad(url, 'anonymous', undefined, function () {
       processAnonRegister();
@@ -277,8 +285,17 @@ function coreInstantiate (key, processAnonRegister) {
 
   var bundle = config.bundles[key];
   if (bundle) {
-    var bundleUrl = this.resolveSync(bundle, undefined);
-    return loadedBundles[bundleUrl] || (loadedBundles[bundleUrl] = doScriptLoad(bundleUrl, processAnonRegister));
+    var loader = this;
+    var bundleUrl = loader.resolveSync(bundle, undefined);
+    if (loader.registry.has(bundleUrl))
+      return;
+    return loadedBundles[bundleUrl] || (loadedBundles[bundleUrl] = doScriptLoad(bundleUrl, processAnonRegister).then(function () {
+      // bundle treated itself as an empty module
+      // this means we can reload bundles by deleting from the registry
+      if (!loader.registry.has(bundleUrl))
+        loader.registry.set(bundleUrl, loader.newModule({}));
+      delete loadedBundles[bundleUrl];
+    }));
   }
 
   var depCache = config.depCache[key];
@@ -294,7 +311,7 @@ function coreInstantiate (key, processAnonRegister) {
       if (typeof sourceOrModule !== 'string')
         return sourceOrModule;
 
-      (0, eval)(sourceOrModule + '\n\/\/# sourceURL=' + key);
+      (0, eval)(sourceOrModule + '\n//# sourceURL=' + key);
       processAnonRegister();
     });
 
