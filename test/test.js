@@ -12,7 +12,7 @@ suite('SystemJS Standard Tests', function() {
   test('Object.prototype.toString(new Module())== "[object Module]"', function () {
     return System.import('tests/global.js').then(function () {
       var m = System.registry.get(System.normalizeSync('tests/global.js'));
-      ok(Object.prototype.toString.call(m) == '[object Module]' || m.toString && m.toString() === '[object Module]');
+      ok(!Symbol.toStringTag || Object.prototype.toString.call(m) == '[object Module]');
     });
   });
 
