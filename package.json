@@ -43,7 +43,9 @@
     "irhydra": "node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --print-opt-code --trace_hydrogen_file=hydrogen.cfg irhydra/load.js"
   },
   "dependencies": {
-    "source-map-support": "^0.4.6",
-    "systemjs-plugin-babel": "0.0.17"
+    "babel-core": "^6.21.0",
+    "babel-plugin-syntax-dynamic-import": "^6.18.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
+    "source-map-support": "^0.4.6"
   }
 }

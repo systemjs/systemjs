@@ -1,6 +1,6 @@
-require('../dist/system.src.js');
+global.System = require('../dist/system.src.js');
 
-SystemJS.config({
+System.config({
   baseURL: 'test/',
   map: {
     'plugin-babel': './node_modules/systemjs-plugin-babel/plugin-babel.js',
