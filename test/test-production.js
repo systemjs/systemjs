@@ -1,6 +1,6 @@
 if (typeof System === 'undefined') {
   global.System = require('../index-production.js');
-  global.System.config({
+  System.config({
     baseURL: 'test'
   });
 }

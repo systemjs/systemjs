@@ -3,8 +3,9 @@ var fs = require('fs');
 var path = require('path');
 var Module = require('module');
 
-var babel = require('systemjs-plugin-babel/systemjs-babel-node.js').babel;
-var modulesRegister = require('systemjs-plugin-babel/systemjs-babel-node.js').modulesRegister;
+var babel = require('babel-core');
+var modulesRegister = require('babel-plugin-transform-es2015-modules-systemjs');
+var importSyntax = require('babel-plugin-syntax-dynamic-import');
 
 var isWindows = process.platform.match(/^win/);
 function fileUrlToPath (fileUrl) {
@@ -33,14 +34,12 @@ var SystemJSProductionLoader = SystemProduction.constructor;
 
 function SystemJSProductionNodeLoader () {
   SystemJSProductionLoader.call(this);
-
-  // ensure System.register is available
-  global.System = global.System || {};
-  global.System.register = this.register.bind(this);
 }
 
 SystemJSProductionNodeLoader.prototype = Object.create(SystemJSProductionLoader.prototype);
 SystemJSProductionNodeLoader.prototype.constructor = SystemJSProductionNodeLoader;
+
+SystemJSProductionNodeLoader.prototype.version = SystemJSProductionLoader.prototype.version + ' Node';
 
 var plainResolveSync = SystemJSProductionLoader.prototype[SystemJSProductionLoader.plainResolveSync];
 
@@ -100,14 +99,17 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
         sourceFileName: key,
         moduleIds: false,
         sourceMaps: 'both',
-        presets: [modulesRegister]
+        plugins: [importSyntax, modulesRegister]
       });
 
       // evaluate without require, exports and module variables
       var path = path + '!transpiled';
       output.map.sources = output.map.sources.map(fileUrlToPath);
       sourceMapSources[path] = output.map;
+      var curSystem = global.System;
+      global.System = loader;
       (0, eval)(output.code + '\n//# sourceURL=' + path);
+      global.System = curSystem;
       processAnonRegister();
 
       resolve();

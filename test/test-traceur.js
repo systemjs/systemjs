@@ -1,6 +1,6 @@
-require('../dist/system.src.js');
+global.System = require('../dist/system.src.js');
 
-SystemJS.config({
+System.config({
   baseURL: 'test/',
   traceurOptions: {
     asyncFunctions: true
