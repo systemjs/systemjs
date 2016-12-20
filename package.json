@@ -9,9 +9,11 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "index-production.js",
+    "index-dev.js"
   ],
-  "main": "dist/system.src.js",
+  "main": "index-production.js",
   "devDependencies": {
     "bluebird": "^3.4.6",
     "es-module-loader": "ModuleLoader/es-module-loader#next",
