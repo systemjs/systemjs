@@ -124,8 +124,8 @@ function tryNodeLoad (path) {
   catch(e) {
     if (e instanceof SyntaxError &&
         (e.message.indexOf('Unexpected token export') !== -1 || e.message.indexOf('Unexpected token import') !== -1 ||
-        // for Node 4 and less we verify the reserved word is exactly 6 chars for import / export
-        e.message.indexOf('Unexpected reserved word') !== -1) && e.message.indexOf(' ^^^^^^\n') !== -1)
+        // for Node 4 and less
+        e.message.indexOf('Unexpected reserved word') !== -1))
       return;
     throw e;
   }

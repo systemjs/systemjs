@@ -216,6 +216,15 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Contextual dynamic import', function () {
+    return System.import('tests/dynamic-import' + (typeof process === 'undefined' ? '-register' : '') + '.js').then(function (m) {
+      return m.lazy();
+    })
+    .then(function (lazyValue) {
+      ok(lazyValue === 5);
+    });
+  });
+
   if (typeof WebAssembly !== 'undefined')
   test('Loading WASM', function () {
     System.config({ wasm: true });
