@@ -103,12 +103,11 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
       });
 
       // evaluate without require, exports and module variables
-      var path = path + '!transpiled';
       output.map.sources = output.map.sources.map(fileUrlToPath);
-      sourceMapSources[path] = output.map;
+      sourceMapSources[path + '!transpiled'] = output.map;
       var curSystem = global.System;
       global.System = loader;
-      (0, eval)(output.code + '\n//# sourceURL=' + path);
+      (0, eval)(output.code + '\n//# sourceURL=' + path + '!transpiled');
       global.System = curSystem;
       processAnonRegister();
 
