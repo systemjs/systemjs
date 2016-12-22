@@ -1,4 +1,4 @@
-var SystemProduction = require('./dist/system-production.src.js');
+var SystemProduction = require('../dist/system-production.src.js');
 var fs = require('fs');
 var path = require('path');
 var Module = require('module');
