@@ -10,7 +10,7 @@ var importSyntax = require('babel-plugin-syntax-dynamic-import');
 var isWindows = process.platform.match(/^win/);
 function fileUrlToPath (fileUrl) {
   if (fileUrl.substr(0, 7) !== 'file://')
-    throw new RangeError(fileUrl + ' is not a valid file url');
+    return;
   if (isWindows)
     return fileUrl.substr(8).replace(/\//g, '/');
   else
@@ -72,6 +72,30 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.plainResolveSync
   return path.isAbsolute(resolved) ? pathToFileUrl(resolved) : 'node:' + resolved;
 };
 
+// allow defining code by source
+SystemJSProductionNodeLoader.prototype.define = function (key, source) {
+  var path = fileUrlToPath(key);
+
+  // transform source with Babel
+  var output = babel.transform(source, {
+    compact: false,
+    moduleId: key,
+    filename: key + '!transpiled',
+    sourceFileName: key,
+    moduleIds: true,
+    sourceMaps: 'both',
+    plugins: [importSyntax, modulesRegister]
+  });
+
+  // evaluate without require, exports and module variables
+  output.map.sources = output.map.sources.map(fileUrlToPath);
+  sourceMapSources[path + '!transpiled'] = output.map;
+  var curSystem = global.System;
+  global.System = this;
+  (0, eval)(output.code + (path && '\n//# sourceURL=' + path + '!transpiled'));
+  global.System = curSystem;
+};
+
 SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = function (key, processAnonRegister) {
   var loader = this;
 
@@ -126,7 +150,7 @@ function tryNodeLoad (path) {
   try {
     return require(path);
   }
-  catch(e) {
+  catch (e) {
     if (e instanceof SyntaxError &&
         (e.message.indexOf('Unexpected token export') !== -1 || e.message.indexOf('Unexpected token import') !== -1 ||
         // for Node 4 and less

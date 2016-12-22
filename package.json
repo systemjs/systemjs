@@ -13,6 +13,9 @@
     "index-production.js",
     "index-dev.js"
   ],
+  "bin": {
+    "sjs": "node/bin.js"
+  },
   "main": "dist/system.src.js",
   "devDependencies": {
     "bluebird": "^3.4.6",
