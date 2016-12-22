@@ -1,5 +1,5 @@
 if (typeof System === 'undefined') {
-  global.System = require('../system-node.js');
+  global.System = require('../node');
   System.config({
     baseURL: 'test'
   });
