@@ -122,7 +122,7 @@ SystemJSLoader.prototype.getConfig = getConfig;
 
 SystemJSLoader.prototype.global = global;
 
-export var configNames = ['baseURL', 'map', 'paths', 'packages', 'packageConfigPaths', 'depCache', 'meta', 'bundles', 'transpiler', 'warnings', 'pluginFirst', 'production'];
+export var configNames = ['baseURL', 'map', 'paths', 'packages', 'packageConfigPaths', 'depCache', 'meta', 'bundles', 'transpiler', 'warnings', 'pluginFirst', 'production', 'wasm'];
 
 var hasProxy = typeof Proxy !== 'undefined';
 for (var i = 0; i < configNames.length; i++) (function (configName) {
