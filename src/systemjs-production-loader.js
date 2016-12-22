@@ -137,7 +137,7 @@ systemJSPrototype.config = function (cfg) {
       break;
 
       case 'wasm':
-        config.wasm = !!val;
+        config.wasm = typeof WebAssembly !== 'undefined' && !!val;
       break;
 
       default:

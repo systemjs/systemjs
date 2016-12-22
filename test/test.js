@@ -1360,12 +1360,14 @@ suite('SystemJS Standard Tests', function() {
     });
   }
 
-  if (typeof WebAssembly !== 'undefined')
   test('Loading WASM', function () {
     System.config({ wasm: true });
     return System.import('tests/answer.wasm')
     .then(function (m) {
       ok(m.getAnswer() === 42);
+    })
+    .catch(function (e) {
+      ok(typeof WebAssembly === 'undefined');
     });
   });
 });

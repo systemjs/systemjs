@@ -99,7 +99,7 @@ export function setConfig (cfg, isEnvConfig) {
     config.warnings = cfg.warnings;
 
   if ('wasm' in cfg)
-    config.wasm = cfg.wasm;
+    config.wasm = typeof WebAssembly !== 'undefined' && cfg.wasm;
 
   if ('production' in cfg || 'build' in cfg)
     setProduction.call(loader, !!cfg.production, !!(cfg.build || envModule && envModule.build));
