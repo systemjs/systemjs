@@ -1,7 +1,7 @@
 {
   "name": "systemjs",
   "version": "0.20.0-alpha.1",
-  "description": "Universal dynamic module loader",
+  "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
     "url": "git://github.com/systemjs/systemjs"
@@ -10,12 +10,8 @@
   "license": "MIT",
   "files": [
     "dist",
-    "index-production.js",
-    "index-dev.js"
+    "node"
   ],
-  "bin": {
-    "sjs": "node/bin.js"
-  },
   "main": "dist/system.src.js",
   "devDependencies": {
     "bluebird": "^3.4.6",

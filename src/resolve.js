@@ -68,10 +68,56 @@ export function normalize (key, parentKey) {
   var parentMetadata = getParentMetadata(this, config, parentKey);
 
   var loader = this;
-  return booleanConditional.call(loader, key, parentKey)
+
+  return Promise.resolve()
+
+  // boolean conditional
+  .then(function () {
+    // first we normalize the conditional
+    var booleanIndex = key.lastIndexOf('#?');
+
+    if (booleanIndex === -1)
+      return Promise.resolve(key);
+
+    var conditionObj = parseCondition.call(loader, key.substr(booleanIndex + 2));
+
+    // in builds, return normalized conditional
+    /*if (this.builder)
+      return this.resolve(conditionObj.module, parentKey)
+      .then(function (conditionModule) {
+        conditionObj.module = conditionModule;
+        return key.substr(0, booleanIndex) + '#?' + serializeCondition(conditionObj);
+      });*/
+
+    return resolveCondition.call(loader, conditionObj, parentKey, true)
+    .then(function (conditionValue) {
+      return conditionValue ? key.substr(0, booleanIndex) : '@empty';
+    });
+  })
+
+  // plugin
   .then(function (key) {
-    // pluginResolve wraps packageResolve wraps coreResolve
-    return pluginResolve.call(loader, config, key, parentKey, metadata, parentMetadata);
+    var parsed = parsePlugin(config.pluginFirst, key);
+
+    if (!parsed)
+      return packageResolve.call(loader, config, key, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, false);
+
+    metadata.pluginKey = parsed.plugin;
+
+    return Promise.all([
+      packageResolve.call(loader, config, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, true),
+      loader.resolve(parsed.plugin, parentKey)
+    ])
+    .then(function (normalized) {
+      metadata.pluginArgument = normalized[0];
+      metadata.pluginKey = normalized[1];
+
+      // don't allow a plugin to load itself
+      if (metadata.pluginArgument === metadata.pluginKey)
+        throw new Error('Plugin ' + metadata.pluginArgument + ' cannot load itself, make sure it is excluded from any wildcard meta configuration via a custom loader: false rule.');
+
+      return combinePluginParts(config.pluginFirst, normalized[0], normalized[1]);
+    });
   })
   .then(function (normalized) {
     return interpolateConditional.call(loader, normalized, parentKey, parentMetadata);
@@ -158,30 +204,6 @@ export function coreResolve (config, key, parentKey, doMap) {
     return key;
 
   return applyPaths(config.baseURL, config.paths, key);
-}
-
-function pluginResolve (config, key, parentKey, metadata, parentMetadata) {
-  var parsed = parsePlugin(config.pluginFirst, key);
-
-  if (!parsed)
-    return packageResolve.call(this, config, key, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, false);
-
-  metadata.pluginKey = parsed.plugin;
-
-  return Promise.all([
-    packageResolve.call(this, config, parsed.argument, parentMetadata && parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, true),
-    this.resolve(parsed.plugin, parentKey)
-  ])
-  .then(function (normalized) {
-    metadata.pluginArgument = normalized[0];
-    metadata.pluginKey = normalized[1];
-
-    // don't allow a plugin to load itself
-    if (metadata.pluginArgument === metadata.pluginKey)
-      throw new Error('Plugin ' + metadata.pluginArgument + ' cannot load itself, make sure it is excluded from any wildcard meta configuration via a custom loader: false rule.');
-
-    return combinePluginParts(config.pluginFirst, normalized[0], normalized[1]);
-  });
 }
 
 function packageResolveSync (config, key, parentKey, metadata, parentMetadata, skipExtensions) {
@@ -785,7 +807,7 @@ function parseCondition (condition) {
     negation = condition[0] === '~';
     conditionExport = 'default';
     conditionModule = condition.substr(negation);
-    if (sysConditions.indexOf(conditionModule) != -1) {
+    if (sysConditions.indexOf(conditionModule) !== -1) {
       conditionExport = conditionModule;
       conditionModule = null;
     }
@@ -798,17 +820,13 @@ function parseCondition (condition) {
   };
 }
 
-function serializeCondition (conditionObj) {
-  return conditionObj.module + '|' + (conditionObj.negate ? '~' : '') + conditionObj.prop;
-}
-
 function resolveCondition (conditionObj, parentKey, bool) {
   return this.import(conditionObj.module, parentKey)
   .then(function (condition) {
     var m = readMemberExpression(conditionObj.prop, condition);
 
     if (bool && typeof m !== 'boolean')
-      throw new TypeError('Condition ' + serializeCondition(conditionObj) + ' did not resolve to a boolean.');
+      throw new TypeError('Condition did not resolve to a boolean.');
 
     return conditionObj.negate ? !m : m;
   });
@@ -841,28 +859,5 @@ function interpolateConditional (key, parentKey, parentMetadata) {
       throw new TypeError('Unabled to interpolate conditional ' + key + (parentKey ? ' in ' + parentKey : '') + '\n\tThe condition value ' + conditionValue + ' cannot contain a "/" separator.');
 
     return key.replace(interpolationRegEx, conditionValue);
-  });
-}
-
-function booleanConditional (key, parentKey) {
-  // first we normalize the conditional
-  var booleanIndex = key.lastIndexOf('#?');
-
-  if (booleanIndex === -1)
-    return Promise.resolve(key);
-
-  var conditionObj = parseCondition.call(this, key.substr(booleanIndex + 2));
-
-  // in builds, return normalized conditional
-  /*if (this.builder)
-    return this.resolve(conditionObj.module, parentKey)
-    .then(function (conditionModule) {
-      conditionObj.module = conditionModule;
-      return key.substr(0, booleanIndex) + '#?' + serializeCondition(conditionObj);
-    });*/
-
-  return resolveCondition.call(this, conditionObj, parentKey, true)
-  .then(function (conditionValue) {
-    return conditionValue ? key.substr(0, booleanIndex) : '@empty';
   });
 }
