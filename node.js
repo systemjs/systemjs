@@ -16,6 +16,9 @@ function fileUrlToPath (fileUrl) {
   else
     return fileUrl.substr(7);
 }
+function pathToFileUrl (filePath) {
+  return 'file://' + (isWindows ? '/' : '') + (isWindows ? filePath.replace(/\\/g, '/') : filePath);
+}
 
 var sourceMapSources = global.systemjsProductionNodeLoaderSourceMapSources = global.systemjsProductionNodeLoaderSourceMapSources || {};
 require('source-map-support').install({
@@ -72,9 +75,11 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.plainResolveSync
 SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = function (key, processAnonRegister) {
   var loader = this;
 
-  // first, try to load the module as CommonJS
   var path = fileUrlToPath(key);
+  var curSystem = global.System;
+  global.System = loader;
   var nodeModule = tryNodeLoad(key.substr(0, 5) === 'node:' ? key.substr(5) : path);
+  global.System = curSystem;
 
   if (nodeModule) {
     // if it was System.register, then ignore the node loaded exports
@@ -82,7 +87,8 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
       return;
     // CommonJS
     return Promise.resolve(loader.newModule({
-      default: nodeModule
+      default: nodeModule,
+      __useDefault: true
     }));
   }
 
