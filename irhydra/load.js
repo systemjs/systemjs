@@ -1,4 +1,4 @@
-var System = require('../');
+var System = require('../node');
 
 function load () {
   var loader = new System.constructor();

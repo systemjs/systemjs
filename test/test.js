@@ -567,7 +567,6 @@ suite('SystemJS Standard Tests', function() {
       }
     }));
     return System.import('test!instantiate-plugin').then(function (m) {
-      console.log(m);
       ok(m.value === 'plugin');
     });
   });

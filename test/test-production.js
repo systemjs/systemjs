@@ -1,5 +1,5 @@
 if (typeof System === 'undefined') {
-  global.System = require('../index-production.js');
+  global.System = require('../system-node.js');
   System.config({
     baseURL: 'test'
   });
@@ -233,6 +233,21 @@ suite('SystemJS Standard Tests', function() {
       ok(m.getAnswer() === 42);
     });
   });
+
+  // Node-specific tests
+  if (typeof process !== 'undefined') {
+    test('Node resolution', function () {
+      return System.import('babel-core').then(function (babel) {
+        ok(babel.default.transform);
+      });
+    });
+
+    test('Node resolution of ES', function () {
+      return System.import('tests/node-resolve.js').then(function (resolved) {
+        ok(resolved.default.transform);
+      });
+    });
+  }
 });
 
 System.register([], function () { return function () {} });
