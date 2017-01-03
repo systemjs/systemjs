@@ -2,16 +2,6 @@
 
 For setting SystemJS configuration see the [Configuration API](config-api.md) page.
 
-#### SystemJS.amdDefine
-Type: `Function`
-
-For backwards-compatibility with AMD environments, set `window.define = SystemJS.amdDefine`.
-
-#### SystemJS.amdRequire
-Type: `Function`
-
-For backwards-compatibility with AMD environments, set `window.require = SystemJS.amdRequire`.
-
 #### SystemJS.config
 Type: `Function`
 
@@ -26,7 +16,6 @@ Example:
 
 ```javascript
   var clonedSystemJS = new SystemJS.constructor();
-  clonedSystemJS.baseURL = SystemJS.baseURL;
   clonedSystemJS.import('x'); // imports in a custom context
 ```
 
@@ -91,7 +80,7 @@ Type: `Function`
 
 Given a plain JavaScript object, return an equivalent `Module` object.
 
-Useful when writing a custom `instantiate` hook or using `SystemJS.set`.
+Useful when writing a custom `instantiate` hook or using `SystemJS.registry.set`.
 
 #### SystemJS.register([name ,] deps, declare)
 Type: `Function`
@@ -126,6 +115,21 @@ System.registerDynamic(['pkg/module'], function(require, exports, module) {
 * `require` is a standard CommonJS-style require
 * `exports` the CommonJS exports object, which is assigned to the `default` export of the module, with its own properties available as named exports.
 * `module` represents the CommonJS module object, with `export` and `id` properties set.
+
+#### SystemJS.registry
+
+SystemJS registry object supporting:
+
+- *`SystemJS.registry.set(resolvedKey, namespace)`*: Set a module namespace into the registry.
+- *`SystemJS.registry.get(resolvedKey)`*: Get a module namespace (if any) from the registry.
+- *`SystemJS.registry.has(resolvedKey)`*: Boolean indicating whether the given key is present in the registry.
+- *`SystemJS.registry.delete(resolvedKey)``*: Removes the given module from the registry (if any), returning true or false.
+- *`SystemJS.registry.keys`*: Function returning the keys iterator for the registry.
+- *`SystemJS.registry.values`*: Function returning the values iterator for the registry.
+- *`SystemJS.registry.entries`*: Function returning the entries iterator for the registry (keys and values).
+- *`SystemJS.registry[Symbol.iterator]`*: In supported environments, provides registry entries iteration.
+
+See also [SystemJS.newModule](#systemjsnewmoduleobject---module).
 
 #### SystemJS.set(moduleName, Module)
 Type: `Function`
