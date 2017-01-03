@@ -1,5 +1,5 @@
 if (typeof System === 'undefined') {
-  global.System = require('../node');
+  global.System = require('../node-production.js');
   System.config({
     baseURL: 'test'
   });
@@ -216,6 +216,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process === 'undefined')
   test('Contextual dynamic import', function () {
     return System.import('tests/dynamic-import' + (typeof process === 'undefined' ? '-register' : '') + '.js').then(function (m) {
       return m.lazy();
@@ -242,7 +243,7 @@ suite('SystemJS Standard Tests', function() {
       });
     });
 
-    test('Node resolution of ES', function () {
+    test('Node resolution via baseURL', function () {
       return System.import('tests/node-resolve.js').then(function (resolved) {
         ok(resolved.default.transform);
       });
