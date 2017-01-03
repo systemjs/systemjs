@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.20.0-alpha.1",
+  "version": "0.20.0-rc.1",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
@@ -9,11 +9,13 @@
   "author": "Guy Bedford",
   "license": "MIT",
   "files": [
-    "dist",
-    "node"
+    "dist"
   ],
   "main": "dist/system.src.js",
   "devDependencies": {
+    "babel-core": "^6.21.0",
+    "babel-plugin-syntax-dynamic-import": "^6.18.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
     "bluebird": "^3.4.6",
     "es-module-loader": "ModuleLoader/es-module-loader#next",
     "mocha": "^3.1.2",
@@ -37,16 +39,10 @@
     "footprint:dev": "uglifyjs dist/system.src.js -cm --screw-ie8 | gzip -9f | wc -c",
     "footprint:production": "uglifyjs dist/system-production.src.js -cm --screw-ie8 | gzip -9f | wc -c",
     "test": "npm run test:production && npm run test:babel && npm run test:traceur && npm run test:typescript",
-    "test:production": "mocha test/test-production.js -u tdd --reporter dot",
     "test:traceur": "mocha test/test-traceur.js -u tdd --reporter dot",
     "test:babel": "mocha test/test-babel.js -u tdd --reporter dot",
     "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot",
+    "test:production": "mocha test/test-production.js -u tdd --reporter dot",
     "irhydra": "node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --print-opt-code --trace_hydrogen_file=hydrogen.cfg irhydra/load.js"
-  },
-  "dependencies": {
-    "babel-core": "^6.21.0",
-    "babel-plugin-syntax-dynamic-import": "^6.18.0",
-    "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
-    "source-map-support": "^0.4.6"
   }
 }
