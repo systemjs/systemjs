@@ -1,5 +1,7 @@
 System.register([], function (_export) {
-  return function () {
-    _export('mapdep', 'mapdep');
+  return {
+    exports: {
+      mapdep: 'mapdep'
+    }
   };
 });
