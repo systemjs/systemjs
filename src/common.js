@@ -82,24 +82,34 @@ export function extendMeta (a, b, _prepend) {
   }
 }
 
-var supportsPreload = isBrowser && (function () {
-  var relList = document.createElement('link').relList;
-  if (relList && relList.supports) {
-    try {
-      return relList.supports('preload');
+var supportsPreload = false, supportsPrefetch = false;
+if (isBrowser)
+  (function () {
+    var relList = document.createElement('link').relList;
+    if (relList && relList.supports) {
+      supportsPrefetch = true;
+      try {
+        supportsPreload = relList.supports('preload');
+      }
+      catch (e) {}
     }
-    catch (e) {}
-  }
-  return false;
-})();
+  })();
 
 export function preloadScript (url) {
+  // fallback to old fashioned image technique which still works in safari
+  if (!supportsPreload && !supportsPrefetch) {
+    var preloadImage = new Image();
+    preloadImage.src = url;
+    return;
+  }
+
   var link = document.createElement('link');
   if (supportsPreload) {
     link.rel = 'preload';
     link.as = 'script';
   }
   else {
+    // this works for all except Safari (detected by relList.supports lacking)
     link.rel = 'prefetch';
   }
   link.href = url;
