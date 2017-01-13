@@ -12,8 +12,6 @@ var isNode = typeof process !== 'undefined' && process.versions && process.versi
 var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
 
 var envGlobal = typeof self !== 'undefined' ? self : global;
-var resolvedPromise = Promise.resolve();
-
 /*
  * Simple Symbol() shim
  */
@@ -215,6 +213,8 @@ function resolveIfNotPlain (relUrl, parentUrl) {
   }
 }
 
+var resolvedPromise$1 = Promise.resolve();
+
 /*
  * Simple Array values shim
  */
@@ -271,7 +271,7 @@ Loader.prototype.import = function (key, parent) {
     throw new TypeError('Loader import method must be passed a module key string');
   // custom resolveInstantiate combined hook for better perf
   var loader = this;
-  return resolvedPromise
+  return resolvedPromise$1
   .then(function () {
     return loader[RESOLVE_INSTANTIATE](key, parent);
   })
@@ -313,7 +313,7 @@ function ensureResolution (resolvedKey) {
 
 Loader.prototype.resolve = function (key, parent) {
   var loader = this;
-  return resolvedPromise
+  return resolvedPromise$1
   .then(function() {
     return loader[RESOLVE](key, parent);
   })
@@ -778,32 +778,6 @@ function traceLoad (loader, load, link) {
  *
  * Sets the default value to the module, while also reading off named exports carefully.
  */
-
-// NB re-evaluate if this will even exist, and if it should be restricted to valid identifiers only
-function copyNamedExports (exports, moduleObj) {
-  if ((typeof exports === 'object' || typeof exports === 'function') && exports !== envGlobal) {
-    var props = Object.getOwnPropertyNames(exports);
-    for (var i = 0; i < props.length; i++)
-      defineOrCopyProperty(moduleObj, exports, props[i]);
-  }
-  moduleObj.default = exports;
-}
-
-function defineOrCopyProperty (targetObj, sourceObj, propName) {
-  // don't trigger getters/setters in environments that support them
-  try {
-    var d;
-    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName)) {
-      // only copy data descriptors
-      if (d.value)
-        targetObj[propName] = d.value;
-    }
-  }
-  catch (e) {
-    // Object.getOwnPropertyDescriptor threw an exception -> not own property
-  }
-}
-
 function registerDeclarative (loader, load, link, declare) {
   var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
@@ -816,7 +790,7 @@ function registerDeclarative (loader, load, link, declare) {
     if (locked)
       return;
 
-    if (typeof name == 'object') {
+    if (typeof name === 'object') {
       for (var p in name)
         if (p !== '__useDefault')
           moduleObj[p] = name[p];
@@ -833,14 +807,10 @@ function registerDeclarative (loader, load, link, declare) {
     return value;
   }, new ContextualLoader(loader, load.key));
 
-  if (typeof declared !== 'function') {
-    link.setters = declared.setters;
-    link.execute = declared.execute;
-  }
-  else {
-    link.setters = [];
-    link.execute = declared;
-  }
+  link.setters = declared.setters;
+  link.execute = declared.execute;
+  if (declared.exports)
+    link.moduleObj = moduleObj = declared.exports;
 }
 
 function instantiateDeps (loader, load, link, registry, state, seen) {
@@ -1121,10 +1091,6 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         module.exports,
         module
       ]);
-
-      // copy module.exports onto the module object
-      if (!err)
-        copyNamedExports(module.exports, moduleObj);
     }
   }
 
@@ -1160,6 +1126,9 @@ function doExecute (execute, context, args) {
   }
 }
 
+var resolvedPromise = Promise.resolve();
+
+
 var emptyModule = new ModuleNamespace({});
 
 
@@ -1173,7 +1142,6 @@ var isWorker = typeof window === 'undefined' && typeof self !== 'undefined' && t
 
 
 
-var parentModuleContext;
 
 
 function extend (a, b) {
@@ -1185,15 +1153,7 @@ function extend (a, b) {
   return a;
 }
 
-function prepend (a, b) {
-  for (var p in b) {
-    if (!Object.hasOwnProperty.call(b, p))
-      continue;
-    if (a[p] === undefined)
-      a[p] = b[p];
-  }
-  return a;
-}
+
 
 // meta first-level extends where:
 // array + array appends
@@ -1201,24 +1161,35 @@ function prepend (a, b) {
 // other properties replace
 
 
-var supportsPreload = isBrowser && (function () {
-  var relList = document.createElement('link').relList;
-  if (relList && relList.supports) {
-    try {
-      return relList.supports('preload');
+var supportsPreload = false;
+var supportsPrefetch = false;
+if (isBrowser)
+  (function () {
+    var relList = document.createElement('link').relList;
+    if (relList && relList.supports) {
+      supportsPrefetch = true;
+      try {
+        supportsPreload = relList.supports('preload');
+      }
+      catch (e) {}
     }
-    catch (e) {}
-  }
-  return false;
-})();
+  })();
 
 function preloadScript (url) {
+  // fallback to old fashioned image technique which still works in safari
+  if (!supportsPreload && !supportsPrefetch) {
+    var preloadImage = new Image();
+    preloadImage.src = url;
+    return;
+  }
+
   var link = document.createElement('link');
   if (supportsPreload) {
     link.rel = 'preload';
     link.as = 'script';
   }
   else {
+    // this works for all except Safari (detected by relList.supports lacking)
     link.rel = 'prefetch';
   }
   link.href = url;

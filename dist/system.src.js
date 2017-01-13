@@ -12,8 +12,6 @@ var isNode = typeof process !== 'undefined' && process.versions && process.versi
 var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
 
 var envGlobal = typeof self !== 'undefined' ? self : global;
-var resolvedPromise = Promise.resolve();
-
 /*
  * Simple Symbol() shim
  */
@@ -215,6 +213,8 @@ function resolveIfNotPlain (relUrl, parentUrl) {
   }
 }
 
+var resolvedPromise$1 = Promise.resolve();
+
 /*
  * Simple Array values shim
  */
@@ -271,7 +271,7 @@ Loader.prototype.import = function (key, parent) {
     throw new TypeError('Loader import method must be passed a module key string');
   // custom resolveInstantiate combined hook for better perf
   var loader = this;
-  return resolvedPromise
+  return resolvedPromise$1
   .then(function () {
     return loader[RESOLVE_INSTANTIATE](key, parent);
   })
@@ -313,7 +313,7 @@ function ensureResolution (resolvedKey) {
 
 Loader.prototype.resolve = function (key, parent) {
   var loader = this;
-  return resolvedPromise
+  return resolvedPromise$1
   .then(function() {
     return loader[RESOLVE](key, parent);
   })
@@ -778,32 +778,6 @@ function traceLoad (loader, load, link) {
  *
  * Sets the default value to the module, while also reading off named exports carefully.
  */
-
-// NB re-evaluate if this will even exist, and if it should be restricted to valid identifiers only
-function copyNamedExports (exports, moduleObj) {
-  if ((typeof exports === 'object' || typeof exports === 'function') && exports !== envGlobal) {
-    var props = Object.getOwnPropertyNames(exports);
-    for (var i = 0; i < props.length; i++)
-      defineOrCopyProperty(moduleObj, exports, props[i]);
-  }
-  moduleObj.default = exports;
-}
-
-function defineOrCopyProperty (targetObj, sourceObj, propName) {
-  // don't trigger getters/setters in environments that support them
-  try {
-    var d;
-    if (d = Object.getOwnPropertyDescriptor(sourceObj, propName)) {
-      // only copy data descriptors
-      if (d.value)
-        targetObj[propName] = d.value;
-    }
-  }
-  catch (e) {
-    // Object.getOwnPropertyDescriptor threw an exception -> not own property
-  }
-}
-
 function registerDeclarative (loader, load, link, declare) {
   var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
@@ -816,7 +790,7 @@ function registerDeclarative (loader, load, link, declare) {
     if (locked)
       return;
 
-    if (typeof name == 'object') {
+    if (typeof name === 'object') {
       for (var p in name)
         if (p !== '__useDefault')
           moduleObj[p] = name[p];
@@ -833,14 +807,10 @@ function registerDeclarative (loader, load, link, declare) {
     return value;
   }, new ContextualLoader(loader, load.key));
 
-  if (typeof declared !== 'function') {
-    link.setters = declared.setters;
-    link.execute = declared.execute;
-  }
-  else {
-    link.setters = [];
-    link.execute = declared;
-  }
+  link.setters = declared.setters;
+  link.execute = declared.execute;
+  if (declared.exports)
+    link.moduleObj = moduleObj = declared.exports;
 }
 
 function instantiateDeps (loader, load, link, registry, state, seen) {
@@ -1121,10 +1091,6 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         module.exports,
         module
       ]);
-
-      // copy module.exports onto the module object
-      if (!err)
-        copyNamedExports(module.exports, moduleObj);
     }
   }
 
@@ -1160,6 +1126,7 @@ function doExecute (execute, context, args) {
   }
 }
 
+var resolvedPromise = Promise.resolve();
 function noop () {}
 
 var emptyModule = new ModuleNamespace({});
@@ -1237,24 +1204,35 @@ function extendMeta (a, b, _prepend) {
   }
 }
 
-var supportsPreload = isBrowser && (function () {
-  var relList = document.createElement('link').relList;
-  if (relList && relList.supports) {
-    try {
-      return relList.supports('preload');
+var supportsPreload = false;
+var supportsPrefetch = false;
+if (isBrowser)
+  (function () {
+    var relList = document.createElement('link').relList;
+    if (relList && relList.supports) {
+      supportsPrefetch = true;
+      try {
+        supportsPreload = relList.supports('preload');
+      }
+      catch (e) {}
     }
-    catch (e) {}
-  }
-  return false;
-})();
+  })();
 
 function preloadScript (url) {
+  // fallback to old fashioned image technique which still works in safari
+  if (!supportsPreload && !supportsPrefetch) {
+    var preloadImage = new Image();
+    preloadImage.src = url;
+    return;
+  }
+
   var link = document.createElement('link');
   if (supportsPreload) {
     link.rel = 'preload';
     link.as = 'script';
   }
   else {
+    // this works for all except Safari (detected by relList.supports lacking)
     link.rel = 'prefetch';
   }
   link.href = url;
@@ -2142,7 +2120,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
       condition: c,
       map: mapped[e]
     });
-    conditionPromises.push(loader.import(c.module, pkgKey));
+    conditionPromises.push(RegisterLoader$1.prototype.import.call(loader, c.module, pkgKey));
   }
 
   // map object -> conditional map
@@ -2220,8 +2198,6 @@ function loadPackageConfigPath (loader, config, pkgConfigPath, metadata, normali
 
   return configLoader.import(pkgConfigPath)
   .then(function (pkgConfig) {
-    if (pkgConfig.__useDefault)
-      pkgConfig = pkgConfig.default;
     setPkgConfig(metadata.packageConfig, pkgConfig, metadata.packageKey, true, config);
     metadata.packageConfig.configured = true;
   })
@@ -2331,7 +2307,8 @@ function parseCondition (condition) {
 }
 
 function resolveCondition (conditionObj, parentKey, bool) {
-  return this.import(conditionObj.module, parentKey)
+  // import without __useDefault handling here
+  return RegisterLoader$1.prototype.import.call(this, conditionObj.module, parentKey)
   .then(function (condition) {
     var m = readMemberExpression(conditionObj.prop, condition);
 
@@ -3848,6 +3825,13 @@ SystemJSLoader$1.prototype.config = setConfig;
 SystemJSLoader$1.prototype.getConfig = getConfig;
 
 SystemJSLoader$1.prototype.global = envGlobal;
+
+SystemJSLoader$1.prototype.import = function () {
+  return RegisterLoader$1.prototype.import.apply(this, arguments)
+  .then(function (m) {
+    return m.__useDefault ? m.default: m;
+  });
+};
 
 var configNames = ['baseURL', 'map', 'paths', 'packages', 'packageConfigPaths', 'depCache', 'meta', 'bundles', 'transpiler', 'warnings', 'pluginFirst', 'production', 'wasm'];
 
