@@ -34,6 +34,25 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process !== 'undefined')
+  test('Load error clearing', function () {
+    require('fs').writeFileSync('test/tests/error-module.js', 'exportxx function hello () {}');
+    return System.import('tests/error-module.js').then(function () {
+      throw new Error('Should not error first time');
+    }, function (err) {
+      ok(err);
+
+      System.registry.delete(System.resolveSync('tests/error-module.js'));
+      require('fs').writeFileSync('test/tests/error-module.js', 'export function hello () { return "world" }');
+
+      return System.import('tests/error-module.js').then(function (m) {
+        ok(m.hello());
+      }, function (err) {
+        throw new Error('Should not have errored second time');
+      });
+    });
+  });
+
   test('Global script loading', function () {
     return System.import('tests/global.js').then(function (m) {
       ok(m.jjQuery && m.another, 'Global objects not defined');
