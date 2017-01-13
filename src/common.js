@@ -5,7 +5,7 @@ import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
 export { baseURI, isBrowser, isWindows, addToError, global, resolveIfNotPlain, ModuleNamespace }
 
-export let resolvedPromise = Promise.resolve();
+export var resolvedPromise = Promise.resolve();
 export function noop () {};
 
 export var emptyModule = new ModuleNamespace({});
