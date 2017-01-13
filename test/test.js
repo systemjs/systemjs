@@ -61,7 +61,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Global script with var syntax', function () {
     return System.import('tests/global-single.js').then(function (m) {
-      ok(m.default == 'bar', 'Wrong global value');
+      ok(m == 'bar', 'Wrong global value');
     });
   });
 
@@ -81,13 +81,13 @@ suite('SystemJS Standard Tests', function() {
 
   test('Global script loading with inline shim', function () {
     return System.import('tests/global-inline-dep.js').then(function (m) {
-      ok(m.default == '1.8.3', 'Global dependency not defined');
+      ok(m == '1.8.3', 'Global dependency not defined');
     });
   });
 
   test('Global script with inline exports', function () {
     return System.import('tests/global-inline-export.js').then(function (m) {
-      ok(m.default == 'r', 'Inline export not applied');
+      ok(m == 'r', 'Inline export not applied');
     });
   });
 
@@ -101,7 +101,7 @@ suite('SystemJS Standard Tests', function() {
     });
     // System. = { deps: ['./global-shim-config-dep.js'] };
     return System.import('tests/global-shim-config.js').then(function (m) {
-      ok(m.default == 'shimmed', 'Not shimmed');
+      ok(m == 'shimmed', 'Not shimmed');
     });
   });
 
@@ -113,7 +113,7 @@ suite('SystemJS Standard Tests', function() {
     });
 
     return System.import('tests/global-inaccessible-props.js').then(function (m) {
-      ok(m.default == 'result of global-inaccessible-props', 'Failed due to a inaccessible property');
+      ok(m == 'result of global-inaccessible-props', 'Failed due to a inaccessible property');
 
       delete System.global.errorOnAccess;
     });
@@ -127,7 +127,7 @@ suite('SystemJS Standard Tests', function() {
     });
 
     return System.import('tests/global-shim-amd.js').then(function (m) {
-      ok(m.default == 'global', 'Not shimmed');
+      ok(m == 'global', 'Not shimmed');
     });
   });
 
@@ -157,7 +157,7 @@ suite('SystemJS Standard Tests', function() {
     });
 
     return System.import('tests/global-encapsulation.js').then(function (m) {
-      ok(m.default == 'encapsulated global');
+      ok(m == 'encapsulated global');
       ok(System.global.globalName === undefined);
     });
   });
@@ -195,7 +195,7 @@ suite('SystemJS Standard Tests', function() {
       }
     });
     return System.import('tests/global-shim-config-exports.js').then(function (m) {
-      ok(m.default == 'export', 'Exports not shimmed');
+      ok(m == 'export', 'Exports not shimmed');
     });
   });
 
@@ -312,7 +312,7 @@ suite('SystemJS Standard Tests', function() {
       }
     });
     return System.import('tests/shim-package/shim-map-test.js').then(function (m) {
-      ok(m.default == 'depvalue', 'shim dep not loaded');
+      ok(m == 'depvalue', 'shim dep not loaded');
     });
   });
 
@@ -486,8 +486,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('CommonJS detection variation 2', function () {
     return System.import('tests/commonjs-variation2.js').then(function (m) {
-      ok(m.OpaqueToken === undefined);
-      ok(m.default.OpaqueToken);
+      ok(m.OpaqueToken);
     });
   });
 
@@ -532,7 +531,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('CommonJS require.resolve', function () {
     return System.import('tests/cjs-resolve.js').then(function (m) {
-      ok(m.default.substr(m.default.length - 12, 12) == 'test/tests/a');
+      ok(m.substr(m.length - 12, 12) == 'test/tests/a');
     });
   })
 
@@ -564,13 +563,13 @@ suite('SystemJS Standard Tests', function() {
 
   test('Versions', function () {
     return System.import('tests/zero@0.js').then(function (m) {
-      ok(m.default == '0');
+      ok(m == '0');
     });
   });
 
   test('Loading a module with # in the name', function () {
     return System.import('tests/#.js').then(function (m) {
-      ok(m.default == '#');
+      ok(m == '#');
     });
   });
 
@@ -632,7 +631,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Advanced compiler plugin', function () {
     return System.import('tests/compiler-test.js!tests/advanced-plugin.js').then(function (m) {
-      ok(m.default == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m.default);
+      ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
     });
   });
 
@@ -643,7 +642,7 @@ suite('SystemJS Standard Tests', function() {
       }
     });
     return System.import('tests/cjs-loading-plugin.js').then(function (m) {
-      ok(m.default.pluginSource == 'this is css');
+      ok(m.pluginSource == 'this is css');
     });
   });
 
@@ -723,7 +722,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('Loading a Global from a bundle', function () {
     return System.import('tree/global').then(function (m) {
-      ok(m.default === 'output');
+      ok(m === 'output');
     });
   });
 
@@ -755,10 +754,10 @@ suite('SystemJS Standard Tests', function() {
   test('Loading dynamic modules with __esModule flag set', function () {
     return System.import('tests/es-module-flag.js').then(function () {
       m = System.registry.get(System.normalizeSync('tests/es-module-flag.js'));
-      ok(m.exportName == 'export');
+      ok(m.default.exportName == 'export');
       ok(m.default);
       ok(m.default != 'default export');
-      ok(m.__esModule === true);
+      ok(m.default.__esModule === true);
     });
   });
    {
@@ -787,7 +786,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('ES6 plugin', function () {
     return System.import('tests/blah.js!tests/es6-plugin.js').then(function (m) {
-      ok(m.default == 'plugin');
+      ok(m == 'plugin');
     });
   });
 
@@ -811,7 +810,7 @@ suite('SystemJS Standard Tests', function() {
         ok(err);
       }),
       System.import('tests/default3.js').then(function (m3) {
-        ok(m3);
+        ok(m3.default);
       }),
       System.import('tests/module.js').then(function (m4) {
         ok(m4.test == 'default3', 'Error defining module');
@@ -914,7 +913,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('AMD -> System.register circular -> ES6', function () {
     return System.import('tests/all-layers1.js').then(function (m) {
-      ok(m.default == true)
+      ok(m == true)
     });
   });
 
@@ -1010,7 +1009,7 @@ suite('SystemJS Standard Tests', function() {
   test('Named imports for non-es6', function () {
     return System.import('tests/es6-cjs-named-export.js')
     .then(function (m) {
-      ok(m.someExport == 'asdf');
+      ok(m.someExport == undefined);
     });
   });
 
@@ -1027,7 +1026,7 @@ suite('SystemJS Standard Tests', function() {
 
     return System.import('tests/with-global-deps.js')
     .then(function (m) {
-      for (var p in m.default)
+      for (var p in m)
         ok(false);
       ok(!System.global.$$$);
     });
@@ -1044,13 +1043,13 @@ suite('SystemJS Standard Tests', function() {
       }
     });
     return System.import('tests/global-single-compiled.js').then(function (m) {
-      ok(m.default == 'foo');
+      ok(m == 'foo');
     });
   });
 
   test('Multi-format deps meta', function () {
     return System.import('tests/amd-extra-deps.js').then(function (m) {
-      ok(m.default.join(',') == '10,5');
+      ok(m.join(',') == '10,5');
     });
   });
 
@@ -1067,7 +1066,7 @@ suite('SystemJS Standard Tests', function() {
       }
     });
     return System.import('tests/cs/main.js').then(function (m) {
-      ok(m.default == 'cs');
+      ok(m == 'cs');
     });
   });
 
@@ -1104,13 +1103,13 @@ suite('SystemJS Standard Tests', function() {
     ]).then(function (m) {
       ok(m[0].prop == 'value');
       ok(m[1].prop == 'value');
-      ok(m[2].default == 'ts');
+      ok(m[2] == 'ts');
       ok(m[3].json == 'index');
-      ok(m[4].default == 'dirindex');
-      ok(m[5].default == (typeof window != 'undefined' ? 'browser' : 'not browser'));
+      ok(m[4] == 'dirindex');
+      ok(m[5] == (typeof window != 'undefined' ? 'browser' : 'not browser'));
       ok(m[6].prop == 'value');
-      ok(m[7].default == 'interpolated!');
-      ok(m[8].default == 'interpolated!');
+      ok(m[7] == 'interpolated!');
+      ok(m[8] == 'interpolated!');
       ok(m[9].a.prop == 'value' && m[9].b.prop == 'value');
       ok(m[10].a.prop == 'value' && m[10].b.prop == 'value');
     });
