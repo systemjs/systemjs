@@ -177,8 +177,15 @@ suite('SystemJS Standard Tests', function() {
     return System.import('tests/string-encoding.js').then(function (m) {
       ok(m.pi === decodeURI('%CF%80'));
       ok(m.emoji === decodeURI('%F0%9F%90%B6'));
-    })
-  })
+    });
+  });
+
+  if (typeof process !== 'undefined')
+  test('Importing non-ascii paths in Node', function () {
+    return System.import('tests/副本.js').then(function (m) {
+      ok(m.p === 5);
+    });
+  });
 
   test('Support the empty module', function () {
     return System.import('@empty').then(function (m) {
