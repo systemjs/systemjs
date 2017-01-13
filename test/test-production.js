@@ -239,13 +239,13 @@ suite('SystemJS Standard Tests', function() {
   if (typeof process !== 'undefined') {
     test('Node resolution', function () {
       return System.import('babel-core').then(function (babel) {
-        ok(babel.default.transform);
+        ok(babel.transform);
       });
     });
 
     test('Node resolution via baseURL', function () {
       return System.import('tests/node-resolve.js').then(function (resolved) {
-        ok(resolved.default.transform);
+        ok(resolved.transform);
       });
     });
   }

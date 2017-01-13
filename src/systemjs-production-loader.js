@@ -68,6 +68,13 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
   return applyPaths(config.baseURL, config.paths, resolved || key);
 };
 
+systemJSPrototype.import = function () {
+  return RegisterLoader.prototype.import.apply(this, arguments)
+  .then(function (m) {
+    return m.__useDefault ? m.default: m;
+  });
+};
+
 systemJSPrototype[PLAIN_RESOLVE] = systemJSPrototype[PLAIN_RESOLVE_SYNC] = plainResolve;
 
 systemJSPrototype[SystemJSProductionLoader.instantiate = RegisterLoader.instantiate] = coreInstantiate;
