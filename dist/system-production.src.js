@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.0-rc.1 Production
+ * SystemJS v0.20.0-rc.3 Production
  */
 (function () {
 'use strict';
@@ -1381,6 +1381,13 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
   return applyPaths(config.baseURL, config.paths, resolved || key);
 };
 
+systemJSPrototype.import = function () {
+  return RegisterLoader$1.prototype.import.apply(this, arguments)
+  .then(function (m) {
+    return m.__useDefault ? m.default: m;
+  });
+};
+
 systemJSPrototype[PLAIN_RESOLVE] = systemJSPrototype[PLAIN_RESOLVE_SYNC] = plainResolve;
 
 systemJSPrototype[SystemJSProductionLoader$1.instantiate = RegisterLoader$1.instantiate] = coreInstantiate;
@@ -1631,7 +1638,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.0-rc.1 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.0-rc.3 Production";
 
 var System = new SystemJSProductionLoader$1();
 
