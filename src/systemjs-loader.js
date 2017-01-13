@@ -122,6 +122,13 @@ SystemJSLoader.prototype.getConfig = getConfig;
 
 SystemJSLoader.prototype.global = global;
 
+SystemJSLoader.prototype.import = function () {
+  return RegisterLoader.prototype.import.apply(this, arguments)
+  .then(function (m) {
+    return m.__useDefault ? m.default: m;
+  });
+};
+
 export var configNames = ['baseURL', 'map', 'paths', 'packages', 'packageConfigPaths', 'depCache', 'meta', 'bundles', 'transpiler', 'warnings', 'pluginFirst', 'production', 'wasm'];
 
 var hasProxy = typeof Proxy !== 'undefined';

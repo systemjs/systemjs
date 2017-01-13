@@ -1,3 +1,4 @@
+import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { getMapMatch, readMemberExpression, extendMeta, addToError, resolveIfNotPlain,
     baseURI, CONFIG, METADATA, applyPaths, resolvedPromise, getPackage } from './common.js';
 import { setPkgConfig, createPackage } from './config.js';
@@ -632,7 +633,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
       condition: c,
       map: mapped[e]
     });
-    conditionPromises.push(loader.import(c.module, pkgKey));
+    conditionPromises.push(RegisterLoader.prototype.import.call(loader, c.module, pkgKey));
   }
 
   // map object -> conditional map
@@ -710,8 +711,6 @@ function loadPackageConfigPath (loader, config, pkgConfigPath, metadata, normali
 
   return configLoader.import(pkgConfigPath)
   .then(function (pkgConfig) {
-    if (pkgConfig.__useDefault)
-      pkgConfig = pkgConfig.default;
     setPkgConfig(metadata.packageConfig, pkgConfig, metadata.packageKey, true, config);
     metadata.packageConfig.configured = true;
   })
@@ -821,7 +820,8 @@ function parseCondition (condition) {
 }
 
 function resolveCondition (conditionObj, parentKey, bool) {
-  return this.import(conditionObj.module, parentKey)
+  // import without __useDefault handling here
+  return RegisterLoader.prototype.import.call(this, conditionObj.module, parentKey)
   .then(function (condition) {
     var m = readMemberExpression(conditionObj.prop, condition);
 
