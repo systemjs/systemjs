@@ -1134,9 +1134,8 @@ var emptyModule = new ModuleNamespace({});
 function protectedCreateNamespace (bindings) {
   if (bindings instanceof ModuleNamespace)
     return bindings;
-  if (typeof bindings !== 'object')
-    throw new TypeError('Cannot create a module namespace from an object of type "' + typeof bindings + '".');
-  return new ModuleNamespace(bindings);
+
+  return new ModuleNamespace({ default: bindings, __useDefault: true });
 }
 
 var CONFIG = createSymbol('loader-config');
