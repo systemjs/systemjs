@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.0-rc.3 Dev
+ * SystemJS v0.20.0-rc.5 Dev
  */
 (function () {
 'use strict';
@@ -1135,7 +1135,15 @@ function protectedCreateNamespace (bindings) {
   if (bindings instanceof ModuleNamespace)
     return bindings;
 
-  return new ModuleNamespace({ default: bindings, __useDefault: true });
+  if (!bindings || !bindings.__esModule)
+    return new ModuleNamespace({ default: bindings, __useDefault: true });
+
+  let bindingsNamespace = {};
+  for (let p in bindings)
+    if (Object.hasOwnProperty.call(bindings, p))
+      bindingsNamespace[p] = bindings[p];
+  bindingsNamespace.default = bindings;
+  return new ModuleNamespace(bindingsNamespace);
 }
 
 var CONFIG = createSymbol('loader-config');
@@ -3896,7 +3904,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.0-rc.3 Dev";
+SystemJSLoader$1.prototype.version = "0.20.0-rc.5 Dev";
 
 var System = new SystemJSLoader$1();
 
