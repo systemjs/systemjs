@@ -262,7 +262,7 @@ _It is usually advisable to use map configuration over paths unless you need str
 Type: `Object`
 Default: `{}`
 
-Set the Traceur compilation options.
+Set the Traceur compilation options when [System.transpiler](#transpiler) is set to `traceur`:
 
 ```javascript
 SystemJS.config({
@@ -287,6 +287,6 @@ When set to `traceur`, `babel` or `typescript`, loading will be automatically co
 Type: `Object`
 Default: `{}`
 
-Sets the TypeScript transpiler options.
+Sets the TypeScript transpiler options when [System.transpiler](#transpiler) is set to `typescript`:
 
 A list of options is available in the [TypeScript project documentation](https://www.typescriptlang.org/docs/handbook/compiler-options.html).
