@@ -14,7 +14,15 @@ export function protectedCreateNamespace (bindings) {
   if (bindings instanceof ModuleNamespace)
     return bindings;
 
-  return new ModuleNamespace({ default: bindings, __useDefault: true });
+  if (!bindings || !bindings.__esModule)
+    return new ModuleNamespace({ default: bindings, __useDefault: true });
+
+  let bindingsNamespace = {};
+  for (let p in bindings)
+    if (Object.hasOwnProperty.call(bindings, p))
+      bindingsNamespace[p] = bindings[p];
+  bindingsNamespace.default = bindings;
+  return new ModuleNamespace(bindingsNamespace);
 }
 
 export var CONFIG = createSymbol('loader-config');
