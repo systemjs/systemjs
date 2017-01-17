@@ -1028,6 +1028,18 @@ asyncTest('Custom loader instance System scoped', function() {
   }, err);;
 });
 
+asyncTest("A module in one bundle can load a System.define module in another bundle", function(){
+	System.bundles['tests/split-bundle-define/master-bundle'] = ['master'];
+	System.bundles['tests/split-bundle-define/slave-bundle'] = ['slave'];
+	System.meta.slave = {format: "global", exports: "slave"};
+	
+	System['import']("master").then(function(master){
+		ok(master.name === "master", "master name is right");
+		ok(master.slave.name === "slave", "slave name is right");
+		start();
+	});
+});
+
 if(typeof window !== 'undefined' && window.Worker) {
   asyncTest('Using SystemJS in a Web Worker', function() {
     var worker = new Worker('./tests/worker-' + System.transpiler + '.js');
