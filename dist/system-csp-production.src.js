@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.41
+ * SystemJS v0.19.42
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -7,7 +7,7 @@ function bootstrap() {// from https://gist.github.com/Yaffle/1088850
 function URLPolyfill(url, baseURL) {
   if (typeof url != 'string')
     throw new TypeError('URL must be a string');
-  var m = String(url).replace(/^\s+|\s+$/g, "").match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
+  var m = String(url).replace(/^\s+|\s+$/g, "").replace(/\\/g, '/').match(/^([^:\/?#]+:)?(?:\/\/(?:([^:@\/?#]*)(?::([^:@\/?#]*))?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
   if (!m)
     throw new RangeError('Invalid URL format');
   var protocol = m[1] || "";
@@ -65,7 +65,8 @@ function URLPolyfill(url, baseURL) {
   this.hash = hash;
 }
 global.URLPolyfill = URLPolyfill;
-})(typeof self != 'undefined' ? self : global);(function(__global) {
+})(typeof self != 'undefined' ? self : global);
+(function(__global) {
 
   var isWorker = typeof window == 'undefined' && typeof self != 'undefined' && typeof importScripts != 'undefined';
   var isBrowser = typeof window != 'undefined' && typeof document != 'undefined';
@@ -1054,7 +1055,7 @@ function applyPaths(loader, name) {
     if (p.indexOf('*') === -1) {
       if (name == p)
         return paths[p];
-      
+
       // support trailing / in paths rules
       else if (name.substr(0, p.length - 1) == p.substr(0, p.length - 1) && (name.length < p.length || name[p.length - 1] == p[p.length - 1]) && (paths[p][paths[p].length - 1] == '/' || paths[p] == '')) {
         return paths[p].substr(0, paths[p].length - 1) + (name.length > p.length ? (paths[p] && '/' || '') + name.substr(p.length) : '');
@@ -1208,7 +1209,7 @@ function extendPkgConfig(pkgCfgA, pkgCfgB, pkgName, loader, warnInvalidPropertie
         loader.depCache[dNormalized] = (loader.depCache[dNormalized] || []).concat(pkgCfgB.depCache[d]);
       }
     }
-    else if (warnInvalidProperties && indexOf.call(['browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'], prop) == -1 && 
+    else if (warnInvalidProperties && indexOf.call(['browserConfig', 'nodeConfig', 'devConfig', 'productionConfig'], prop) == -1 &&
         (!pkgCfgB.hasOwnProperty || pkgCfgB.hasOwnProperty(prop))) {
       warn.call(loader, '"' + prop + '" is not a valid package configuration option in package ' + pkgName);
     }
@@ -1230,7 +1231,7 @@ function setPkgConfig(loader, pkgName, cfg, prependConfig) {
     extendPkgConfig(pkg, prependConfig ? cfg : basePkg, pkgName, loader, prependConfig);
     extendPkgConfig(pkg, prependConfig ? basePkg : cfg, pkgName, loader, !prependConfig);
   }
-  
+
   // main object becomes main map
   if (typeof pkg.main == 'object') {
     pkg.map = pkg.map || {};
@@ -1245,6 +1246,15 @@ function setPkgConfig(loader, pkgName, cfg, prependConfig) {
 function warn(msg) {
   if (this.warnings && typeof console != 'undefined' && console.warn)
     console.warn(msg);
+}
+
+function createInstantiate (load, result) {
+  load.metadata.entry = createEntry();
+  load.metadata.entry.execute = function() {
+    return result;
+  }
+  load.metadata.entry.deps = [];
+  load.metadata.format = 'defined';
 }
   var fetchTextFromURL;
   if (typeof XMLHttpRequest != 'undefined') {
@@ -3909,15 +3919,16 @@ hookConstructor(function(constructor) {
   hook('fetch', function(fetch) {
     return function(load) {
       var loader = this;
-      if (load.metadata.loaderModule && load.metadata.loaderModule.fetch && load.metadata.format != 'defined') {
+      if (load.metadata.loaderModule && load.metadata.format != 'defined') {
+        if (typeof load.metadata.loaderModule === 'function' || load.metadata.loaderModule instanceof Module && typeof load.metadata.loaderModule.default === 'function')
+          return '';
         load.metadata.scriptLoad = false;
-        return load.metadata.loaderModule.fetch.call(loader, load, function(load) {
-          return fetch.call(loader, load);
-        });
+        if (load.metadata.loaderModule.fetch)
+          return load.metadata.loaderModule.fetch.call(loader, load, function(load) {
+            return fetch.call(loader, load);
+          });
       }
-      else {
-        return fetch.call(loader, load);
-      }
+      return fetch.call(loader, load);
     };
   });
 
@@ -3954,9 +3965,7 @@ hookConstructor(function(constructor) {
           return translate.apply(loader, args);
         });
       }
-      else {
-        return translate.apply(loader, args);
-      }
+      return translate.apply(loader, args);
     };
   });
 
@@ -3965,28 +3974,30 @@ hookConstructor(function(constructor) {
       var loader = this;
       var calledInstantiate = false;
 
-      if (load.metadata.loaderModule && load.metadata.loaderModule.instantiate && !loader.builder && load.metadata.format != 'defined')
-        return Promise.resolve(load.metadata.loaderModule.instantiate.call(loader, load, function(load) {
-          if (calledInstantiate)
-            throw new Error('Instantiate must only be called once.');
-          calledInstantiate = true;
-          return instantiate.call(loader, load);
-        })).then(function(result) {
-          if (calledInstantiate)
-            return result;
-
-          if (result !== undefined) {
-            load.metadata.entry = createEntry();
-            load.metadata.entry.execute = function() {
+      if (load.metadata.loaderModule && !loader.builder && load.metadata.format != 'defined') {
+        if (load.metadata.loaderModule.instantiate)
+          return Promise.resolve(load.metadata.loaderModule.instantiate.call(loader, load, function(load) {
+            if (calledInstantiate)
+              throw new Error('Instantiate must only be called once.');
+            calledInstantiate = true;
+            return instantiate.call(loader, load);
+          })).then(function(result) {
+            if (calledInstantiate)
               return result;
-            }
-            load.metadata.entry.deps = load.metadata.deps;
-            load.metadata.format = 'defined';
-          }
-          return instantiate.call(loader, load);
-        });
-      else
-        return instantiate.call(loader, load);
+
+            if (result !== undefined)
+              createInstantiate(load, result);
+            return instantiate.call(loader, load);
+          });
+        else if (typeof load.metadata.loaderModule === 'function' || load.metadata.loaderModule instanceof Module && typeof load.metadata.loaderModule.default === 'function')
+          return Promise.resolve((load.metadata.loaderModule.default || load.metadata.loaderModule).call(loader, load.address, load.name))
+          .then(function (result) {
+            if (result !== undefined)
+              createInstantiate(load, result);
+            return instantiate.call(loader, load);
+          });
+      }
+      return instantiate.call(loader, load);
     };
   });
 
@@ -4480,7 +4491,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.41 CSP';
+System.version = '0.19.42 CSP';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
