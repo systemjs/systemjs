@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.0-rc.6 Production
+ * SystemJS v0.20.0-rc.7 Production
  */
 (function () {
 'use strict';
@@ -433,7 +433,7 @@ function ModuleNamespace (baseObject/*, evaluate*/) {
     });
   }
   else { */
-    Object.getOwnPropertyNames(baseObject).forEach(extendNamespace, this);
+    Object.keys(baseObject).forEach(extendNamespace, this);
   //}
 }
 // 8.4.2
@@ -1091,6 +1091,11 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         module.exports,
         module
       ]);
+      // __esModule flag extension support
+      if (moduleObj.default && moduleObj.default.__esModule)
+        for (var p in moduleObj.default)
+          if (moduleObj.default.hasOwnProperty(p) && p !== 'default')
+            moduleObj[p] = moduleObj.default[p];
     }
   }
 
@@ -1638,7 +1643,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.0-rc.6 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.0-rc.7 Production";
 
 var System = new SystemJSProductionLoader$1();
 
