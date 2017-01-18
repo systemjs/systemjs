@@ -765,9 +765,10 @@ suite('SystemJS Standard Tests', function() {
       ok(m.default);
       ok(m.default != 'default export');
       ok(m.default.__esModule === true);
+      ok(m.exportName === 'export');
     });
   });
-   {
+  
   test('ES6 named export loading of CJS', function () {
     return System.import('tests/es-named-import-cjs.js').then(function (m) {
       ok(m.cjsFuncValue === 'named export');
@@ -945,7 +946,6 @@ suite('SystemJS Standard Tests', function() {
       return System.import('lib/b');
     });
   });
-  }
 
   test("System clone", function () {
     var clonedSystem = new System.constructor();
