@@ -830,6 +830,9 @@ function logloads(loads) {
     },
     // 26.3.3.8
     'import': function(name, parentName, parentAddress) {
+      if (Array.isArray(name){
+        return Promise.all(name.map(this.import.bind(this)));
+      }
       if (typeof parentName == 'object')
         parentName = parentName.name;
 
