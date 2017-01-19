@@ -27,7 +27,6 @@ Documentation
 * [System API](docs/system-api.md)
 * [Plugins](docs/plugins.md)
 * [Creating Plugins](docs/creating-plugins.md)
-* [Production Build](docs/production-build.md)
 
 Basic Use
 ---

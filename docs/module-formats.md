@@ -20,6 +20,16 @@ SystemJS.config({
 });
 ```
 
+SystemJS 0.20 also comes with experimental support for Web Assembly. This can be enabled via:
+
+```javascript
+SystemJS.config({
+  wasm: true
+});
+```
+
+Web Assembly binaries can then be loaded alongside SystemJS modules normally.
+
 #### Module format detection
 
 When the module format is not set, automatic regular-expression-based detection is used.
@@ -36,6 +46,9 @@ The module format detection happens in the following order:
   The presence of `require(...)` or `exports` / `module.exports` assigments
 * _Global_
   This is the fallback module format after all the above fail.
+
+When Web Assembly is enabled, Web Assembly modules are automatically detected from their binary header.
+This is the same detection process that will likely be implemented in browsers.
 
 > Note that ES6 modules are detected via the presence of `import` and `export` module syntax and no other features at all. This is because the transpilation applies to the module format specifically, not the language.
 
