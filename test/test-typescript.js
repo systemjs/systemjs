@@ -6,7 +6,7 @@ System.config({
     "ts": {
       "main": "plugin.js"
     },
-    "typescript": {
+    "actual-typescript": {
       "main": "lib/typescript.js",
       "meta": {
         "lib/typescript.js": {
@@ -17,7 +17,8 @@ System.config({
   },
   map: {
     "ts": "./node_modules/plugin-typescript/lib",
-    "typescript": "./node_modules/typescript"
+    "actual-typescript": "./node_modules/typescript",
+    "typescript": "typescript-shim.js"
   },
   transpiler: 'ts'
 });

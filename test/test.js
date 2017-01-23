@@ -1,3 +1,5 @@
+"format global";
+
 suite('SystemJS Standard Tests', function() {
 
   function ok(assertion, message) {
@@ -564,7 +566,7 @@ suite('SystemJS Standard Tests', function() {
     return System.import('tests/cjs-globals.js').then(function (m) {
       ok(m.filename.match(/tests\/cjs-globals\.js$/));
       ok(m.dirname.match(/\/tests$/));
-      ok(m.global == global);
+      ok(m.global === (typeof self !== 'undefined' ? self : global));
     });
   });
 
@@ -768,7 +770,7 @@ suite('SystemJS Standard Tests', function() {
       ok(m.exportName === 'export');
     });
   });
-  
+
   test('ES6 named export loading of CJS', function () {
     return System.import('tests/es-named-import-cjs.js').then(function (m) {
       ok(m.cjsFuncValue === 'named export');
@@ -992,6 +994,7 @@ suite('SystemJS Standard Tests', function() {
 
   if (typeof window !== 'undefined' && window.Worker) {
     test('Using SystemJS in a Web Worker', function () {
+      this.timeout(10000);
       var worker = new Worker('./tests/worker-' + System.transpiler.replace('plugin-', '') + '.js');
 
       return new Promise(function (resolve, reject) {
