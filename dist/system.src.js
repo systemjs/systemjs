@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.0-rc.7 Dev
+ * SystemJS v0.20.0-rc.8 Dev
  */
 (function () {
 'use strict';
@@ -544,6 +544,8 @@ function createLoadRecord (state, key, registration) {
       instantiatePromise: undefined,
       dependencies: undefined,
       execute: undefined,
+      executingRequire: false,
+
       // underlying module object bindings
       moduleObj: undefined,
 
@@ -687,7 +689,8 @@ function instantiate (loader, load, link, registry, state) {
     if (registration[2]) {
       link.moduleObj.default = {};
       link.moduleObj.__useDefault = true;
-      link.execute = registration[1];
+      link.executingRequire = registration[1];
+      link.execute = registration[2];
     }
 
     // process System.register declaration
@@ -929,47 +932,33 @@ RegisterLoader$1.prototype.register = function (key, deps, declare) {
 
   // anonymous modules get stored as lastAnon
   if (declare === undefined) {
-    state.lastRegister = [key, deps, false];
+    state.lastRegister = [key, deps, undefined];
   }
 
   // everything else registers into the register cache
   else {
     var load = state.records[key] || createLoadRecord(state, key, undefined);
-    load.registration = [deps, declare, false];
+    load.registration = [deps, declare, undefined];
   }
 };
 
 /*
  * System.registerDyanmic
  */
-RegisterLoader$1.prototype.registerDynamic = function (key, deps, execute) {
+RegisterLoader$1.prototype.registerDynamic = function (key, deps, executingRequire, execute) {
   var state = this[REGISTER_INTERNAL];
 
   // anonymous modules get stored as lastAnon
   if (typeof key !== 'string') {
-    state.lastRegister = [key, typeof deps === 'boolean' ? dynamicExecuteCompat(key, deps, execute) : deps, true];
+    state.lastRegister = [key, deps, executingRequire];
   }
 
   // everything else registers into the register cache
   else {
     var load = state.records[key] || createLoadRecord(state, key, undefined);
-    load.registration = [deps, typeof execute === 'boolean' ? dynamicExecuteCompat(deps, execute, arguments[3]) : execute, true];
+    load.registration = [deps, executingRequire, execute];
   }
 };
-
-function dynamicExecuteCompat (deps, executingRequire, execute) {
-  return function (require, exports, module) {
-    // evaluate deps first
-    if (!executingRequire)
-      for (var i = 0; i < deps.length; i++)
-        require(deps[i]);
-
-    // then run execution function
-    // also provide backwards compat for no return value
-    // previous 4 argument form of System.register had "this" as global value
-    module.exports = execute.apply(envGlobal, arguments) || module.exports;
-  };
-}
 
 // ContextualLoader class
 // backwards-compatible with previous System.register context argument by exposing .id
@@ -1003,7 +992,7 @@ function ensureEvaluate (loader, load, link, registry, state, seen) {
 
   // for ES loads we always run ensureEvaluate on top-level, so empty seen is passed regardless
   // for dynamic loads, we pass seen if also dynamic
-  var err = doEvaluate(loader, load, link, registry, state, load.setters ? [] : seen || []);
+  var err = doEvaluate(loader, load, link, registry, state, link.setters ? [] : seen || []);
   if (err) {
     clearLoadErrors(loader, load);
     throw err;
@@ -1070,7 +1059,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
     // ES System.register execute
     // "this" is null in ES
     if (link.setters) {
-      err = doExecute(link.execute, nullContext);
+      err = declarativeExecute(link.execute);
     }
     // System.registerDynamic execute
     // "this" is "exports" in CJS
@@ -1086,11 +1075,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
           return moduleObj.default;
         }
       });
-      err = doExecute(link.execute, module.exports, [
-        makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, state, seen),
-        module.exports,
-        module
-      ]);
+
+      var require = makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, state, seen);
+
+      // evaluate deps first
+      if (!link.executingRequire)
+        for (var i = 0; i < link.dependencies.length; i++)
+          require(link.dependencies[i]);
+
+      err = dynamicExecute(link.execute, require, moduleObj.default, module);
       // __esModule flag extension support
       if (moduleObj.default && moduleObj.default.__esModule)
         for (var p in moduleObj.default)
@@ -1122,9 +1115,21 @@ function doEvaluate (loader, load, link, registry, state, seen) {
 var nullContext = {};
 if (Object.freeze)
   Object.freeze(nullContext);
-function doExecute (execute, context, args) {
+
+function declarativeExecute (execute) {
   try {
-    execute.apply(context, args);
+    execute.call(nullContext);
+  }
+  catch (e) {
+    return e;
+  }
+}
+
+function dynamicExecute (execute, require, exports, module) {
+  try {
+    var output = execute.call(envGlobal, require, exports, module);
+    if (output !== undefined)
+      module.exports = output;
   }
   catch (e) {
     return e;
@@ -2882,10 +2887,10 @@ var formatHelpers = function (loader) {
 
     // anonymous define
     if (!name) {
-      loader.registerDynamic(deps, execute);
+      loader.registerDynamic(deps, false, execute);
     }
     else {
-      loader.registerDynamic(name, deps, execute);
+      loader.registerDynamic(name, deps, false, execute);
 
       // if we don't have any other defines,
       // then let this be an anonymous define
@@ -3138,11 +3143,11 @@ function clearLastDefine (metaDeps) {
 }
 function registerLastDefine (loader) {
   if (lastNamedDefine)
-    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0], lastNamedDefine[1]);
+    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0], false, lastNamedDefine[1]);
 
   // bundles are an empty module
   else if (multipleNamedDefines)
-    loader.registerDynamic([], noop);
+    loader.registerDynamic([], false, noop);
 }
 
 var supportsScriptLoad = (isBrowser || isWorker) && typeof navigator !== 'undefined' && navigator.userAgent && !navigator.userAgent.match(/MSIE (9|10).0/);
@@ -3166,8 +3171,8 @@ function instantiate$1 (key, processAnonRegister) {
     if (key.substr(0, 6) === '@node/') {
       if (!loader._nodeRequire)
         throw new TypeError('Error loading ' + key + '. Can only load node core modules in Node.');
-      loader.registerDynamic([], function (require, exports, module) {
-        module.exports = loadNodeModule.call(loader, key.substr(6), loader.baseURL);
+      loader.registerDynamic([], false, function () {
+        return loadNodeModule.call(loader, key.substr(6), loader.baseURL);
       });
       processAnonRegister();
       return;
@@ -3202,8 +3207,8 @@ function instantiate$1 (key, processAnonRegister) {
         if (!processAnonRegister()) {
           metadata.load.format = 'global';
           var globalValue = getGlobalValue(metadata.load.exports);
-          loader.registerDynamic([], function (require, exports, module) {
-            module.exports = globalValue;
+          loader.registerDynamic([], false, function () {
+            return globalValue;
           });
           processAnonRegister();
         }
@@ -3468,7 +3473,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           if (metadata.load.globals[g])
             deps.push(metadata.load.globals[g]);
 
-        loader.registerDynamic(deps, function (require, exports, module) {
+        loader.registerDynamic(deps, true, function (require, exports, module) {
           require.resolve = function (key) {
             return requireResolve.call(loader, key, module.id);
           };
@@ -3521,10 +3526,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
             deps.push(gl);
         }
 
-        loader.registerDynamic(deps, function (require, exports, module) {
-          for (var i = 0; i < deps.length; i++)
-            require(deps[i]);
-
+        loader.registerDynamic(deps, false, function (require, exports, module) {
           var globals;
           if (metadata.load.globals) {
             globals = {};
@@ -3544,7 +3546,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           if (err)
             throw err;
 
-          module.exports = retrieveGlobal();
+          return retrieveGlobal();
         });
         registered = processAnonRegister();
       break;
@@ -3904,7 +3906,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.0-rc.7 Dev";
+SystemJSLoader$1.prototype.version = "0.20.0-rc.8 Dev";
 
 var System = new SystemJSLoader$1();
 

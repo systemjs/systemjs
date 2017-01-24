@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.0-rc.7 Production
+ * SystemJS v0.20.0-rc.8 Production
  */
 (function () {
 'use strict';
@@ -544,6 +544,8 @@ function createLoadRecord (state, key, registration) {
       instantiatePromise: undefined,
       dependencies: undefined,
       execute: undefined,
+      executingRequire: false,
+
       // underlying module object bindings
       moduleObj: undefined,
 
@@ -687,7 +689,8 @@ function instantiate (loader, load, link, registry, state) {
     if (registration[2]) {
       link.moduleObj.default = {};
       link.moduleObj.__useDefault = true;
-      link.execute = registration[1];
+      link.executingRequire = registration[1];
+      link.execute = registration[2];
     }
 
     // process System.register declaration
@@ -929,47 +932,33 @@ RegisterLoader$1.prototype.register = function (key, deps, declare) {
 
   // anonymous modules get stored as lastAnon
   if (declare === undefined) {
-    state.lastRegister = [key, deps, false];
+    state.lastRegister = [key, deps, undefined];
   }
 
   // everything else registers into the register cache
   else {
     var load = state.records[key] || createLoadRecord(state, key, undefined);
-    load.registration = [deps, declare, false];
+    load.registration = [deps, declare, undefined];
   }
 };
 
 /*
  * System.registerDyanmic
  */
-RegisterLoader$1.prototype.registerDynamic = function (key, deps, execute) {
+RegisterLoader$1.prototype.registerDynamic = function (key, deps, executingRequire, execute) {
   var state = this[REGISTER_INTERNAL];
 
   // anonymous modules get stored as lastAnon
   if (typeof key !== 'string') {
-    state.lastRegister = [key, typeof deps === 'boolean' ? dynamicExecuteCompat(key, deps, execute) : deps, true];
+    state.lastRegister = [key, deps, executingRequire];
   }
 
   // everything else registers into the register cache
   else {
     var load = state.records[key] || createLoadRecord(state, key, undefined);
-    load.registration = [deps, typeof execute === 'boolean' ? dynamicExecuteCompat(deps, execute, arguments[3]) : execute, true];
+    load.registration = [deps, executingRequire, execute];
   }
 };
-
-function dynamicExecuteCompat (deps, executingRequire, execute) {
-  return function (require, exports, module) {
-    // evaluate deps first
-    if (!executingRequire)
-      for (var i = 0; i < deps.length; i++)
-        require(deps[i]);
-
-    // then run execution function
-    // also provide backwards compat for no return value
-    // previous 4 argument form of System.register had "this" as global value
-    module.exports = execute.apply(envGlobal, arguments) || module.exports;
-  };
-}
 
 // ContextualLoader class
 // backwards-compatible with previous System.register context argument by exposing .id
@@ -1003,7 +992,7 @@ function ensureEvaluate (loader, load, link, registry, state, seen) {
 
   // for ES loads we always run ensureEvaluate on top-level, so empty seen is passed regardless
   // for dynamic loads, we pass seen if also dynamic
-  var err = doEvaluate(loader, load, link, registry, state, load.setters ? [] : seen || []);
+  var err = doEvaluate(loader, load, link, registry, state, link.setters ? [] : seen || []);
   if (err) {
     clearLoadErrors(loader, load);
     throw err;
@@ -1070,7 +1059,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
     // ES System.register execute
     // "this" is null in ES
     if (link.setters) {
-      err = doExecute(link.execute, nullContext);
+      err = declarativeExecute(link.execute);
     }
     // System.registerDynamic execute
     // "this" is "exports" in CJS
@@ -1086,11 +1075,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
           return moduleObj.default;
         }
       });
-      err = doExecute(link.execute, module.exports, [
-        makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, state, seen),
-        module.exports,
-        module
-      ]);
+
+      var require = makeDynamicRequire(loader, load.key, link.dependencies, link.dependencyInstantiations, registry, state, seen);
+
+      // evaluate deps first
+      if (!link.executingRequire)
+        for (var i = 0; i < link.dependencies.length; i++)
+          require(link.dependencies[i]);
+
+      err = dynamicExecute(link.execute, require, moduleObj.default, module);
       // __esModule flag extension support
       if (moduleObj.default && moduleObj.default.__esModule)
         for (var p in moduleObj.default)
@@ -1122,9 +1115,21 @@ function doEvaluate (loader, load, link, registry, state, seen) {
 var nullContext = {};
 if (Object.freeze)
   Object.freeze(nullContext);
-function doExecute (execute, context, args) {
+
+function declarativeExecute (execute) {
   try {
-    execute.apply(context, args);
+    execute.call(nullContext);
+  }
+  catch (e) {
+    return e;
+  }
+}
+
+function dynamicExecute (execute, require, exports, module) {
+  try {
+    var output = execute.call(envGlobal, require, exports, module);
+    if (output !== undefined)
+      module.exports = output;
   }
   catch (e) {
     return e;
@@ -1643,7 +1648,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.0-rc.7 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.0-rc.8 Production";
 
 var System = new SystemJSProductionLoader$1();
 
