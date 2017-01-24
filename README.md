@@ -7,6 +7,8 @@ SystemJS
 
 Configurable module loader enabling dynamic ES module workflows in browsers and NodeJS.
 
+_[SystemJS 0.20 release notes](https://github.com/systemjs/systemjs/releases/tag/0.20.0)_
+
 * [Loads any module format](docs/module-formats.md) when running the ~15KB development build.
 * Loads ES modules compiled into the `System.register` module format for production with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md)
 * Supports RequireJS-style [map](docs/overview.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
