@@ -131,10 +131,10 @@ export default function (loader) {
 
     // anonymous define
     if (!name) {
-      loader.registerDynamic(deps, execute);
+      loader.registerDynamic(deps, false, execute);
     }
     else {
-      loader.registerDynamic(name, deps, execute);
+      loader.registerDynamic(name, deps, false, execute);
 
       // if we don't have any other defines,
       // then let this be an anonymous define
@@ -390,9 +390,9 @@ export function clearLastDefine (metaDeps) {
 }
 export function registerLastDefine (loader) {
   if (lastNamedDefine)
-    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0], lastNamedDefine[1]);
+    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0], false, lastNamedDefine[1]);
 
   // bundles are an empty module
   else if (multipleNamedDefines)
-    loader.registerDynamic([], noop);
+    loader.registerDynamic([], false, noop);
 }

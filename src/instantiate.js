@@ -25,8 +25,8 @@ export function instantiate (key, processAnonRegister) {
     if (key.substr(0, 6) === '@node/') {
       if (!loader._nodeRequire)
         throw new TypeError('Error loading ' + key + '. Can only load node core modules in Node.');
-      loader.registerDynamic([], function (require, exports, module) {
-        module.exports = loadNodeModule.call(loader, key.substr(6), loader.baseURL);
+      loader.registerDynamic([], false, function () {
+        return loadNodeModule.call(loader, key.substr(6), loader.baseURL);
       });
       processAnonRegister();
       return;
@@ -61,8 +61,8 @@ export function instantiate (key, processAnonRegister) {
         if (!processAnonRegister()) {
           metadata.load.format = 'global';
           var globalValue = getGlobalValue(metadata.load.exports);
-          loader.registerDynamic([], function (require, exports, module) {
-            module.exports = globalValue;
+          loader.registerDynamic([], false, function () {
+            return globalValue;
           });
           processAnonRegister();
         }
@@ -327,7 +327,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           if (metadata.load.globals[g])
             deps.push(metadata.load.globals[g]);
 
-        loader.registerDynamic(deps, function (require, exports, module) {
+        loader.registerDynamic(deps, true, function (require, exports, module) {
           require.resolve = function (key) {
             return requireResolve.call(loader, key, module.id);
           };
@@ -380,10 +380,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
             deps.push(gl);
         }
 
-        loader.registerDynamic(deps, function (require, exports, module) {
-          for (var i = 0; i < deps.length; i++)
-            require(deps[i]);
-
+        loader.registerDynamic(deps, false, function (require, exports, module) {
           var globals;
           if (metadata.load.globals) {
             globals = {};
@@ -403,7 +400,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           if (err)
             throw err;
 
-          module.exports = retrieveGlobal();
+          return retrieveGlobal();
         });
         registered = processAnonRegister();
       break;
