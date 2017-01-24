@@ -1084,10 +1084,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
           require(link.dependencies[i]);
 
       err = dynamicExecute(link.execute, require, moduleObj.default, module);
+
+      // pick up defineProperty calls to module.exports when we can
+      if (module.exports !== moduleObj.default)
+        moduleObj.default = module.exports;
+
       // __esModule flag extension support
       if (moduleObj.default && moduleObj.default.__esModule)
         for (var p in moduleObj.default)
-          if (moduleObj.default.hasOwnProperty(p) && p !== 'default')
+          if (Object.hasOwnProperty.call(moduleObj.default, p) && p !== 'default')
             moduleObj[p] = moduleObj.default[p];
     }
   }
@@ -3911,23 +3916,8 @@ SystemJSLoader$1.prototype.version = "0.20.0-rc.8 Dev";
 var System = new SystemJSLoader$1();
 
 // only set the global System on the global in browsers
-if (isBrowser || isWorker) {
-  envGlobal.SystemJS = System;
-
-  // dont override an existing System global
-  if (!envGlobal.System) {
-    envGlobal.System = System;
-  }
-  // rather just extend or set a System.register on the existing System global
-  else {
-    var register = envGlobal.System.register;
-    envGlobal.System.register = function () {
-      if (register)
-        register.apply(this, arguments);
-      System.register.apply(this, arguments);
-    };
-  }
-}
+if (isBrowser || isWorker)
+  envGlobal.SystemJS = envGlobal.System = System;
 
 if (typeof module !== 'undefined' && module.exports)
   module.exports = System;
