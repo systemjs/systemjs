@@ -29,6 +29,7 @@ Documentation
 * [System API](docs/system-api.md)
 * [Plugins](docs/plugins.md)
 * [Creating Plugins](docs/creating-plugins.md)
+* [Production Build and Resolution](docs/production-build.md)
 
 Basic Use
 ---
