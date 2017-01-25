@@ -44,7 +44,6 @@ app/es6-file.js:
 
 ES6 modules define named exports, provided as getters on a special immutable `Module` object.
 
-* [Read more about ES6 modules and syntax](es6-modules-overview.md).
 * To build for production, see the [production workflows](production-workflows.md).
 * [Read more about SystemJS module format support](module-formats.md).
 

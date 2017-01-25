@@ -11,7 +11,7 @@ _[SystemJS 0.20 release notes](https://github.com/systemjs/systemjs/releases/tag
 
 * [Loads any module format](docs/module-formats.md) when running the ~15KB development build.
 * Loads ES modules compiled into the `System.register` module format for production with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md)
-* Supports RequireJS-style [map](docs/overview.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
+* Supports RequireJS-style [map](docs/getting-started.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
 
 Built with the [ES Module Loader project](https://github.com/ModuleLoader/es-module-loader), which is based on principles and APIs from the WhatWG Loader specification, modules in HTML and NodeJS.
 
@@ -22,7 +22,7 @@ For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 Documentation
 ---
 
-* [SystemJS Overview](docs/overview.md)
+* [Getting Started](docs/getting-started.md)
 * [Module Formats](docs/module-formats.md)
 * [Production Workflows](docs/production-workflows.md)
 * [Configuration API](docs/config-api.md)

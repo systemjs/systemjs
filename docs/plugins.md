@@ -34,5 +34,5 @@ Additional Plugins:
 
 Guides:
 
-* [Using plugins](docs/overview.md#plugin-loaders)
+* [Using plugins](docs/getting-started.md#plugin-loaders)
 * [Creating plugins](docs/creating-plugins.md)

@@ -172,6 +172,7 @@ SystemJS.config({
 });
 ```
 
+* [`authorization`]: This can be a custom authorization header string for XHR requests made by SystemJS.
 * `crossOrigin`: When scripts are loaded from a different domain (e.g. CDN) the global error handler (`window.onerror`)
   has very limited information about errors to [prevent unintended leaking]
   (https://developer.mozilla.org/en/docs/Web/API/GlobalEventHandlers/onerror#Notes).
@@ -193,7 +194,7 @@ SystemJS.config({
     Referenced modules automatically becomes dependencies. Only supported for the `cjs` and `global` formats.
 * `integrity`: The [subresource integrity](http://www.w3.org/TR/SRI/#the-integrity-attribute) attribute corresponding to the script integrity, describing the expected hash of the final code to be executed.
   For example, `SystemJS.config({ meta: { 'src/example.js': { integrity: 'sha256-e3b0c44...' }});` would throw an error if the translated source of `src/example.js` doesn't match the expected hash.
-* [`loader`](overview.md#plugin-loaders):
+* [`loader`](getting-started.md#plugin-loaders):
   Set a loader for this meta path.
 * `nonce`: The [nonce](https://www.w3.org/TR/CSP2/#script-src-the-nonce-attribute) attribute to use when loading the script as a way to enable CSP.
   This should correspond to the "nonce-" attribute set in the Content-Security-Policy header.
