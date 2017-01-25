@@ -89,7 +89,7 @@ have to locate every single shared dependency from within one folder.
 
 Sometimes we want to load things from different places.
 
-Map configuration is useful here to be able to specific exactly where to locate a given package:
+Map configuration is useful here to be able to specify exactly where to locate a given package:
 
 ```javascript
 SystemJS.config({
