@@ -665,7 +665,7 @@ suite('SystemJS Standard Tests', function() {
     });
 
     return System.import('tests/test-text.html').then(function (m) {
-      console.log(m);
+      ok(m[0] === '<');
     });
   });
 
