@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.42
+ * SystemJS v0.19.43
  */
 // from https://gist.github.com/Yaffle/1088850
 (function(global) {
@@ -83,7 +83,7 @@ global.URLPolyfill = URLPolyfill;
     }
     return -1;
   };
-  
+
   var defineProperty;
   (function () {
     try {
@@ -120,9 +120,9 @@ global.URLPolyfill = URLPolyfill;
       newMsg = newMsg.replace(isWindows ? /file:\/\/\//g : /file:\/\//g, '');
 
     var newErr = errArgs ? new Error(newMsg, err.fileName, err.lineNumber) : new Error(newMsg);
-    
+
     newErr.stack = newMsg;
-        
+
     // track the original error
     newErr.originalErr = err.originalErr || err;
 
@@ -431,7 +431,7 @@ function logloads(loads) {
       .then(function(instantiateResult) {
         if (instantiateResult === undefined)
           throw new TypeError('Declarative modules unsupported in the polyfill.');
-        
+
         if (typeof instantiateResult != 'object')
           throw new TypeError('Invalid instantiate return value');
 
@@ -494,8 +494,6 @@ function logloads(loads) {
       for (var i = 0, l = linkSets.length; i < l; i++) {
         linkSetFailed(linkSets[i], load, exc);
       }
-
-      console.assert(load.linkSets.length == 0, 'linkSets not removed');
     });
   }
 
@@ -548,7 +546,6 @@ function logloads(loads) {
         proceedToFetch(loader, load, Promise.resolve(stepState.moduleAddress));
 
       else {
-        console.assert(step == 'translate', 'translate step');
         load.address = stepState.moduleAddress;
         proceedToTranslate(loader, load, Promise.resolve(stepState.moduleSource));
       }
@@ -636,9 +633,6 @@ function logloads(loads) {
   function updateLinkSetOnLoad(linkSet, load) {
     // console.log('update linkset on load ' + load.name);
     // snapshot(linkSet.loader);
-
-    console.assert(load.status == 'loaded' || load.status == 'linked', 'loaded or linked');
-
     linkSet.loadingCount--;
 
     if (linkSet.loadingCount > 0)
@@ -671,8 +665,6 @@ function logloads(loads) {
     if (abrupt)
       return;
 
-    console.assert(linkSet.loads.length == 0, 'loads cleared');
-
     linkSet.resolve(startingLoad);
   }
 
@@ -681,7 +673,7 @@ function logloads(loads) {
     var loader = linkSet.loader;
     var requests;
 
-    checkError: 
+    checkError:
     if (load) {
       if (linkSet.loads[0].name == load.name) {
         exc = addToError(exc, 'Error loading ' + load.name);
@@ -715,7 +707,6 @@ function logloads(loads) {
         loader.loaderObj.failed.push(load);
 
       var linkIndex = indexOf.call(load.linkSets, linkSet);
-      console.assert(linkIndex != -1, 'link not present');
       load.linkSets.splice(linkIndex, 1);
       if (load.linkSets.length == 0) {
         var globalLoadsIndex = indexOf.call(linkSet.loader.loads, load);
@@ -747,7 +738,6 @@ function logloads(loads) {
     }
     // if not anonymous, add to the module table
     if (load.name) {
-      console.assert(!loader.modules[load.name] || loader.modules[load.name].module === load.module.module, 'load not in module table');
       loader.modules[load.name] = load.module;
     }
     var loadIndex = indexOf.call(loader.loads, load);
@@ -977,7 +967,6 @@ function logloads(loads) {
 })();
 
 var System;
-
 // SystemJS Loader Class and Extension helpers
 function SystemJSLoader() {
   Loader.call(this);
@@ -2199,7 +2188,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.42 Register Only';
+System.version = '0.19.43 Register Only';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
