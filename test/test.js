@@ -655,6 +655,20 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Text plugin', function () {
+    System.config({
+      meta: {
+        '*.html': {
+          loader: 'tests/text-plugin.js'
+        }
+      }
+    });
+
+    return System.import('tests/test-text.html').then(function (m) {
+      console.log(m);
+    });
+  });
+
   test('AMD Circular', function () {
     return System.import('tests/amd-circular1.js').then(function (m) {
       ok(m.outFunc() == 5, 'Expected execution');

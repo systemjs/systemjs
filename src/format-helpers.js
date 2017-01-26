@@ -53,11 +53,6 @@ export default function (loader) {
       factory = deps;
       deps = name;
       name = null;
-
-      if (curMetaDeps) {
-        deps = deps.concat(curMetaDeps);
-        curMetaDeps = undefined;
-      }
     }
 
     if (!(deps instanceof Array)) {
@@ -69,6 +64,13 @@ export default function (loader) {
       factory = (function (factory) {
         return function() { return factory; }
       })(factory);
+
+    if (!name) {
+      if (curMetaDeps) {
+        deps = deps.concat(curMetaDeps);
+        curMetaDeps = undefined;
+      }
+    }
 
     // remove system dependencies
     var requireIndex, exportsIndex, moduleIndex;
