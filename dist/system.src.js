@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.0-rc.8 Dev
+ * SystemJS v0.20.0 Dev
  */
 (function () {
 'use strict';
@@ -2814,11 +2814,6 @@ var formatHelpers = function (loader) {
       factory = deps;
       deps = name;
       name = null;
-
-      if (curMetaDeps) {
-        deps = deps.concat(curMetaDeps);
-        curMetaDeps = undefined;
-      }
     }
 
     if (!(deps instanceof Array)) {
@@ -2830,6 +2825,13 @@ var formatHelpers = function (loader) {
       factory = (function (factory) {
         return function() { return factory; }
       })(factory);
+
+    if (!name) {
+      if (curMetaDeps) {
+        deps = deps.concat(curMetaDeps);
+        curMetaDeps = undefined;
+      }
+    }
 
     // remove system dependencies
     var requireIndex, exportsIndex, moduleIndex;
@@ -3911,7 +3913,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.0-rc.8 Dev";
+SystemJSLoader$1.prototype.version = "0.20.0 Dev";
 
 var System = new SystemJSLoader$1();
 
