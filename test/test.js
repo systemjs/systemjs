@@ -1080,6 +1080,20 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('esModule meta option', function () {
+    System.config({
+      meta: {
+        'tests/es-module-meta.js': {
+          esModule: true
+        }
+      }
+    });
+    return System.import('tests/es-module-meta.js').then(function () {
+      var m = System.registry.get(System.resolveSync('tests/es-module-meta.js'));
+      ok(m.asdf === 'asdf');
+    });
+  });
+
   test('Package configuration CommonJS config example', function () {
     System.config({
       map: {
