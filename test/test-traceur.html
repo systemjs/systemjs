@@ -18,8 +18,11 @@
 			// window.URL = undefined;
 		</script>
 
-		<script src="../dist/system.src.js" type="text/javascript"></script>
+		<script src="../dist/system.js" type="text/javascript"></script>
 		<script>
+			System.config({
+				warnings: true
+			});
 			System.traceurOptions = { asyncFunctions: true };
 			System.paths.traceur = '../node_modules/traceur/bin/traceur.js';
 			System['import']('test.js')['catch'](function(e) {
