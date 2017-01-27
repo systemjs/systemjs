@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.43
+ * SystemJS v0.19.45
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -5112,7 +5112,7 @@ hookConstructor(function(constructor) {
 System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.43 Standard';
+System.version = '0.19.45 Standard';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
