@@ -11,14 +11,14 @@ function configNodePath(loader, module, nodeModule, wildcard) {
   if (loader.paths[module])
     return;
 
-  var ext = wildcard ? '/package.json' : '';
+  var ext = (wildcard ? '' : '/') + 'package.json';
   try {
     var match = nodeResolver(nodeModule + ext).replace(/\\/g, '/');
   }
   catch(e) {}
   
   if (match)
-    loader.paths[module] = 'file://' + (isWindows ? '/' : '') + match.substr(0, match.length - ext.length) + (wildcard ? '/*.js' : '');
+    loader.paths[module] = 'file://' + (isWindows ? '/' : '') + match.substr(0, match.length - ext.length);
 }
 
 var SystemJSLoader = require('./dist/system.src').constructor;
@@ -32,7 +32,7 @@ function SystemJSNodeLoader() {
     configNodePath(this, 'traceur-runtime', 'traceur/bin/traceur-runtime.js');
     configNodePath(this, 'babel', 'babel-core/browser.js');
     configNodePath(this, 'babel/external-helpers', 'babel-core/external-helpers.js');
-    configNodePath(this, 'babel-runtime/*', 'babel-runtime', true);
+    configNodePath(this, 'babel-runtime/', 'babel-runtime', true);
   }
 }
 SystemJSNodeLoader.prototype = Object.create(SystemJSLoader.prototype);
