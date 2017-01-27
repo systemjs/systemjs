@@ -44,6 +44,6 @@
     "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot",
     "test:production": "mocha test/test-production.js -u tdd --reporter dot",
     "irhydra": "node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --print-opt-code --trace_hydrogen_file=hydrogen.cfg irhydra/load.js",
-    "publish": "rm -r dist && npm run build && npm run min && npm publish ."
+    "prepublish": "rm -r dist && npm run build && npm run min"
   }
 }
