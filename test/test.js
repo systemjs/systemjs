@@ -1094,6 +1094,24 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Package configuration pathed package name', function () {
+    System.config({
+      paths: {
+        'app/': 'tests/modules/'
+      },
+      packages: {
+        'app': {
+          format: 'register',
+          defaultExtension: 'js'
+        }
+      }
+    });
+
+    return System.import('app/start').then(function (m) {
+      ok(m.m == 'm');
+    });
+  });
+
   test('Package configuration CommonJS config example', function () {
     System.config({
       map: {
