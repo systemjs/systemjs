@@ -183,6 +183,8 @@ SystemJS.config({
   `"anonymous"` and `"use-credentials"`.
 * [`deps`](module-formats.md#shim-dependencies):
   Dependencies to load before this module. Goes through regular paths and map normalization. Only supported for the `cjs`, `amd` and `global` formats.
+* `esModule`: When loading a legacy module (non-ES module), this informs SystemJS to allow that module to be loaded with named imports (`import {name} from 'cjs.js'`),
+  the same as if the module had an `exports.__esModule = true` flag.
 * [`exports`](module-formats.md#exports):
   For the `global` format, when automatic detection of exports is not enough, a custom exports meta value can be set.
   This tells the loader what global name to use as the module's export value.
