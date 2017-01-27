@@ -26,7 +26,8 @@
     "systemjs-plugin-babel": "0.0.17",
     "systemjs-plugin-traceur": "0.0.3",
     "traceur": "0.0.111",
-    "typescript": "^2.0.6"
+    "typescript": "^2.0.6",
+    "uglifyjs": "^2.4.10"
   },
   "scripts": {
     "build": "npm run build:dev && npm run build:production",
