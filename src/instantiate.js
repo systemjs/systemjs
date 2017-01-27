@@ -11,6 +11,13 @@ export var nodeRequire;
 if (typeof require !== 'undefined' && typeof process !== 'undefined' && !process.browser)
   nodeRequire = require;
 
+function setMetaEsModule (metadata, moduleValue) {
+  if (metadata.load.esModule && !('__esModule' in moduleValue))
+    Object.defineProperty(moduleValue, '__esModule', {
+      value: true
+    });
+}
+
 export function instantiate (key, processAnonRegister) {
   var loader = this;
   var config = this[CONFIG];
@@ -62,6 +69,7 @@ export function instantiate (key, processAnonRegister) {
           metadata.load.format = 'global';
           var globalValue = getGlobalValue(metadata.load.exports);
           loader.registerDynamic([], false, function () {
+            setMetaEsModule(metadata, globalValue);
             return globalValue;
           });
           processAnonRegister();
@@ -366,6 +374,8 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           if (err)
             throw err;
 
+          setMetaEsModule(metadata, exports);
+
           global.__cjsWrapper = undefined;
           global.define = define;
         });
@@ -400,7 +410,9 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
           if (err)
             throw err;
 
-          return retrieveGlobal();
+          var output = retrieveGlobal();
+          setMetaEsModule(metadata, output);
+          return output;
         });
         registered = processAnonRegister();
       break;

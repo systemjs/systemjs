@@ -1109,6 +1109,20 @@ suite('SystemJS Standard Tests', function() {
 
     return System.import('app/start').then(function (m) {
       ok(m.m == 'm');
+    })
+  });
+
+  test('esModule meta option', function () {
+    System.config({
+      meta: {
+        'tests/es-module-meta.js': {
+          esModule: true
+        }
+      }
+    });
+    return System.import('tests/es-module-meta.js').then(function () {
+      var m = System.registry.get(System.resolveSync('tests/es-module-meta.js'));
+      ok(m.asdf === 'asdf');
     });
   });
 
