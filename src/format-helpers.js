@@ -133,7 +133,7 @@ export default function (loader) {
 
     // anonymous define
     if (!name) {
-      loader.registerDynamic(deps, false, execute);
+      loader.registerDynamic(deps, false, curEsModule ? wrapEsModuleExecute(execute) : execute);
     }
     else {
       loader.registerDynamic(name, deps, false, execute);
@@ -381,18 +381,30 @@ function amdGetCJSDeps(source, requireIndex) {
   return deps;
 }
 
+function wrapEsModuleExecute (execute) {
+  return function (require, exports, module) {
+    execute(require, exports, module);
+    Object.defineProperty(module.exports, '__esModule', {
+      value: true
+    });
+  };
+}
+
 // generate anonymous define from singular named define
 var multipleNamedDefines = false;
 var lastNamedDefine;
 var curMetaDeps;
-export function clearLastDefine (metaDeps) {
+var curEsModule = false;
+export function clearLastDefine (metaDeps, esModule) {
   curMetaDeps = metaDeps;
+  curEsModule = esModule;
   lastNamedDefine = undefined;
   multipleNamedDefines = false;
 }
 export function registerLastDefine (loader) {
   if (lastNamedDefine)
-    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0], false, lastNamedDefine[1]);
+    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0],
+        false, curEsModule ? wrapEsModuleExecute(lastNamedDefine[1]) : lastNamedDefine[1]);
 
   // bundles are an empty module
   else if (multipleNamedDefines)

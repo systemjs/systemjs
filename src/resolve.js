@@ -305,7 +305,8 @@ function createMeta () {
     encapsulateGlobal: false,
     crossOrigin: undefined,
     cjsRequireDetection: true,
-    cjsDeferDepsExecute: false
+    cjsDeferDepsExecute: false,
+    esModule: false
   };
 }
 

@@ -1126,6 +1126,20 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('esModule meta option for AMD', function () {
+    System.config({
+      meta: {
+        'tests/es-module-meta-amd.js': {
+          esModule: true
+        }
+      }
+    });
+    return System.import('tests/es-module-meta-amd.js').then(function () {
+      var m = System.registry.get(System.resolveSync('tests/es-module-meta-amd.js'));
+      ok(m.asdf === 'asdf');
+    });
+  })
+
   test('Package configuration CommonJS config example', function () {
     System.config({
       map: {

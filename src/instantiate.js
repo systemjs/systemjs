@@ -310,7 +310,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
         var curDefine = global.define;
         global.define = loader.amdDefine;
 
-        clearLastDefine(metadata.load.deps);
+        clearLastDefine(metadata.load.deps, metadata.load.esModule);
 
         var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
 
