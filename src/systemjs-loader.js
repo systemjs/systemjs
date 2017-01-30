@@ -1,5 +1,5 @@
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
-import { warn, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace, emptyModule } from './common.js';
+import { warn, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace, emptyModule, isModule } from './common.js';
 
 import { getConfig, getConfigItem, setConfig } from './config.js';
 import { decanonicalize, normalize, normalizeSync } from './resolve.js';
@@ -179,6 +179,7 @@ SystemJSLoader.prototype.set = function (key, module) {
 SystemJSLoader.prototype.newModule = function (bindings) {
   return new ModuleNamespace(bindings);
 };
+SystemJSLoader.prototype.isModule = isModule;
 
 // ensure System.register and System.registerDynamic decanonicalize
 SystemJSLoader.prototype.register = function (key, deps, declare) {

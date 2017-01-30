@@ -75,6 +75,12 @@ In CommonJS modules the above would be `module.id` instead.
 
 This is non-standard, but covers a use case that will be provided by the spec.
 
+#### SystemJS.isModule(Object) -> Boolean
+Type: `Function`
+
+Given any object, returns true if the object is either a SystemJS module or native JavaScript module object,
+and false otherwise. Useful for interop scenarios.
+
 #### SystemJS.newModule(Object) -> Module
 Type: `Function`
 

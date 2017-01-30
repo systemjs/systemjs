@@ -20,6 +20,13 @@ export function protectedCreateNamespace (bindings) {
   return new ModuleNamespace({ default: bindings, __useDefault: true });
 }
 
+var hasStringTag;
+export function isModule (m) {
+  if (hasStringTag === undefined)
+    hasStringTag = typeof Symbol !== 'undefined' && !!Symbol.toStringTag;
+  return m instanceof ModuleNamespace || hasStringTag && Object.prototype.toString.call(m) == '[object Module]';
+}
+
 export var CONFIG = createSymbol('loader-config');
 export var METADATA = createSymbol('metadata');
 export var PLAIN_RESOLVE = createSymbol('plain-resolve');

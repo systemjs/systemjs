@@ -175,6 +175,17 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('SystemJS.isModule', function () {
+    System.config({
+      meta: {
+        'tests/meta-override.js': { format: 'esm' }
+      }
+    });
+    return System.import('tests/meta-override.js').then(function (m) {
+      ok(System.isModule(m));
+    });
+  });
+
   test('String encoding', function () {
     return System.import('tests/string-encoding.js').then(function (m) {
       ok(m.pi === decodeURI('%CF%80'));

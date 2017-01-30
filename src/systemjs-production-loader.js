@@ -1,7 +1,7 @@
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { global, baseURI, CONFIG, PLAIN_RESOLVE, PLAIN_RESOLVE_SYNC, resolveIfNotPlain, resolvedPromise,
-    extend, emptyModule, applyPaths, scriptLoad, protectedCreateNamespace, getMapMatch, noop, preloadScript } from './common.js';
+    extend, emptyModule, applyPaths, scriptLoad, protectedCreateNamespace, getMapMatch, noop, preloadScript, isModule } from './common.js';
 
 export { ModuleNamespace }
 
@@ -54,6 +54,8 @@ systemJSPrototype[SystemJSProductionLoader.resolve = RegisterLoader.resolve] = f
 systemJSPrototype.newModule = function (bindings) {
   return new ModuleNamespace(bindings);
 };
+
+systemJSPrototype.isModule = isModule;
 
 systemJSPrototype.resolveSync = function (key, parentKey) {
   var resolved = resolveIfNotPlain(key, parentKey || baseURI);
