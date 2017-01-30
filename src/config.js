@@ -224,9 +224,9 @@ export function setConfig (cfg, isEnvConfig) {
       continue;
     if (envConfigNames.indexOf(c) !== -1)
       continue;
-    // warn.call(config, 'Setting custom config option `System.config({ ' + c + ': ... })` is deprecated. Avoid custom config options or set SystemJS.' + c + ' = ... directly.');
 
-    config[c] = cfg[c];
+    // warn.call(config, 'Setting custom config option `System.config({ ' + c + ': ... })` is deprecated. Avoid custom config options or set SystemJS.' + c + ' = ... directly.');
+    loader[c] = cfg[c];
   }
 
   envSet(loader, cfg, function(cfg) {
