@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.2 Dev
+ * SystemJS v0.20.3 Dev
  */
 (function () {
 'use strict';
@@ -1154,6 +1154,13 @@ function protectedCreateNamespace (bindings) {
     return new ModuleNamespace(bindings);
 
   return new ModuleNamespace({ default: bindings, __useDefault: true });
+}
+
+var hasStringTag;
+function isModule (m) {
+  if (hasStringTag === undefined)
+    hasStringTag = typeof Symbol !== 'undefined' && !!Symbol.toStringTag;
+  return m instanceof ModuleNamespace || hasStringTag && Object.prototype.toString.call(m) == '[object Module]';
 }
 
 var CONFIG = createSymbol('loader-config');
@@ -2589,9 +2596,9 @@ function setConfig (cfg, isEnvConfig) {
       continue;
     if (envConfigNames.indexOf(c) !== -1)
       continue;
-    // warn.call(config, 'Setting custom config option `System.config({ ' + c + ': ... })` is deprecated. Avoid custom config options or set SystemJS.' + c + ' = ... directly.');
 
-    config[c] = cfg[c];
+    // warn.call(config, 'Setting custom config option `System.config({ ' + c + ': ... })` is deprecated. Avoid custom config options or set SystemJS.' + c + ' = ... directly.');
+    loader[c] = cfg[c];
   }
 
   envSet(loader, cfg, function(cfg) {
@@ -3921,6 +3928,7 @@ SystemJSLoader$1.prototype.set = function (key, module) {
 SystemJSLoader$1.prototype.newModule = function (bindings) {
   return new ModuleNamespace(bindings);
 };
+SystemJSLoader$1.prototype.isModule = isModule;
 
 // ensure System.register and System.registerDynamic decanonicalize
 SystemJSLoader$1.prototype.register = function (key, deps, declare) {
@@ -3935,7 +3943,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.2 Dev";
+SystemJSLoader$1.prototype.version = "0.20.3 Dev";
 
 var System = new SystemJSLoader$1();
 

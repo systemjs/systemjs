@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.2 Production
+ * SystemJS v0.20.3 Production
  */
 (function () {
 'use strict';
@@ -1148,6 +1148,13 @@ var emptyModule = new ModuleNamespace({});
 
 
 
+var hasStringTag;
+function isModule (m) {
+  if (hasStringTag === undefined)
+    hasStringTag = typeof Symbol !== 'undefined' && !!Symbol.toStringTag;
+  return m instanceof ModuleNamespace || hasStringTag && Object.prototype.toString.call(m) == '[object Module]';
+}
+
 var CONFIG = createSymbol('loader-config');
 
 var PLAIN_RESOLVE = createSymbol('plain-resolve');
@@ -1382,6 +1389,8 @@ systemJSPrototype[SystemJSProductionLoader$1.resolve = RegisterLoader$1.resolve]
 systemJSPrototype.newModule = function (bindings) {
   return new ModuleNamespace(bindings);
 };
+
+systemJSPrototype.isModule = isModule;
 
 systemJSPrototype.resolveSync = function (key, parentKey) {
   var resolved = resolveIfNotPlain(key, parentKey || baseURI);
@@ -1653,7 +1662,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.2 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.3 Production";
 
 var System = new SystemJSProductionLoader$1();
 
