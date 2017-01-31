@@ -224,10 +224,7 @@ function packageResolveSync (config, key, parentKey, metadata, parentMetadata, s
     }
   }
 
-  var trailingSlash = key[key.length - 1] === '/';
-  var normalized = coreResolve.call(this, config, trailingSlash ? key : key + '/', parentKey, true, true);
-  if (!trailingSlash)
-    normalized = normalized.substr(0, normalized.length - 1);
+  var normalized = coreResolve.call(this, config, key, parentKey, true, true);
 
   var pkgConfigMatch = getPackageConfigMatch(config, normalized);
   metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getMapMatch(config.packages, normalized);

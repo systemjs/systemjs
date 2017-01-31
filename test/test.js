@@ -234,8 +234,6 @@ suite('SystemJS Standard Tests', function() {
       }
     });
 
-    var base = System.resolveSync('./');
-
     return Promise.all([
       System.resolve('a'),
       System.resolve('f/b'),
@@ -246,6 +244,9 @@ suite('SystemJS Standard Tests', function() {
       System.resolve('b.js/c'),
       System.resolve('g/x')
     ]).then(function (a) {
+      var base = System.resolveSync('');
+      console.log(base);
+      ok(base.length > 10);
       ok(a[0] === base + 'b');
       ok(a[1] === base + 'c/b');
       ok(a[2] === base + 'b/b');
