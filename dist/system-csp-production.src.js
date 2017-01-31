@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.19.45
+ * SystemJS v0.19.46
  */
 (function() {
 function bootstrap() {// from https://gist.github.com/Yaffle/1088850
@@ -2673,7 +2673,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
  *
  *
  * The code here replicates the ES6 linking groups algorithm to ensure that
- * circular ES6 compiled into System.register can work alongside circular AMD 
+ * circular ES6 compiled into System.register can work alongside circular AMD
  * and CommonJS, identically to the actual ES6 loader.
  *
  */
@@ -2683,7 +2683,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
  * Registry side table entries in loader.defined
  * Registry Entry Contains:
  *    - name
- *    - deps 
+ *    - deps
  *    - declare for declarative modules
  *    - execute for dynamic modules, different to declarative execute on module
  *    - executingRequire indicates require drives execution for circularity of dynamic modules
@@ -2701,7 +2701,7 @@ SystemJSLoader.prototype.config = function(cfg, isEnvConfig) {
  *    For dynamic we track the es module with:
  *    - esModule actual es module value
  *    - esmExports whether to extend the esModule with named exports
- *      
+ *
  *    Then for declarative only we track dynamic bindings with the 'module' records:
  *      - name
  *      - exports
@@ -2746,7 +2746,7 @@ function createEntry() {
    *    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
    *
    * 2. System.registerDynamic for dynamic modules (3-4 params) - System.registerDynamic([name, ]deps, executingRequire, execute)
-   * the true or false statement 
+   * the true or false statement
    *
    * this extension implements the linking algorithm for the two variations identical to the spec
    * allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
@@ -2765,7 +2765,7 @@ function createEntry() {
       return this.registerDynamic.apply(this, arguments);
 
     var entry = createEntry();
-    // ideally wouldn't apply map config to bundle names but 
+    // ideally wouldn't apply map config to bundle names but
     // dependencies go through map regardless so we can't restrict
     // could reconsider in shift to new spec
     entry.name = name && (this.decanonicalize || this.normalize).call(this, name);
@@ -2851,17 +2851,17 @@ function createEntry() {
     for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       var depEntry = loader.defined[depName];
-      
+
       // not in the registry means already linked / ES6
       if (!depEntry || depEntry.evaluated)
         continue;
-      
+
       // now we know the entry is in our unlinked linkage group
       var depGroupIndex = entry.groupIndex + (depEntry.declarative != entry.declarative);
 
       // the group index of an entry is always the maximum
       if (depEntry.groupIndex === null || depEntry.groupIndex < depGroupIndex) {
-        
+
         // if already in a group, remove from the old group
         if (depEntry.groupIndex !== null) {
           groups[depEntry.groupIndex].splice(indexOf.call(groups[depEntry.groupIndex], depEntry), 1);
@@ -2901,7 +2901,7 @@ function createEntry() {
         else
           linkDynamicModule(entry, loader);
       }
-      curGroupDeclarative = !curGroupDeclarative; 
+      curGroupDeclarative = !curGroupDeclarative;
     }
   }
 
@@ -2961,7 +2961,7 @@ function createEntry() {
 
     // allowing undefined declaration was a mistake! To be deprecated.
     declaration = declaration || { setters: [], execute: function() {} };
-    
+
     module.setters = declaration.setters;
     module.execute = declaration.execute;
 
@@ -3004,7 +3004,7 @@ function createEntry() {
       else {
         module.dependencies.push(null);
       }
-      
+
       // run setters for all entries with the matching dependency name
       var originalIndices = entry.originalIndices[i];
       for (var j = 0, len = originalIndices.length; j < len; ++j) {
@@ -3030,7 +3030,7 @@ function createEntry() {
     else {
       if (entry.declarative)
         ensureEvaluated(name, entry, [], loader);
-    
+
       else if (!entry.evaluated)
         linkDynamicModule(entry, loader);
 
@@ -3039,7 +3039,7 @@ function createEntry() {
 
     if ((!entry || entry.declarative) && exports && exports.__useDefault)
       return exports['default'];
-    
+
     return exports;
   }
 
@@ -3077,7 +3077,7 @@ function createEntry() {
 
       throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
     }, exports, module);
-    
+
     if (output !== undefined)
       module.exports = output;
 
@@ -3101,7 +3101,7 @@ function createEntry() {
    *  (unless one is a circular dependency already in the list of seen
    *  modules, in which case we execute it)
    *
-   * Then we evaluate the module itself depth-first left to right 
+   * Then we evaluate the module itself depth-first left to right
    * execution to match ES6 modules
    */
   function ensureEvaluated(moduleName, entry, seen, loader) {
@@ -3147,7 +3147,7 @@ function createEntry() {
       }
 
       load.metadata.deps = load.metadata.deps || [];
-      
+
       return fetch.call(this, load);
     };
   });
@@ -3158,7 +3158,7 @@ function createEntry() {
       load.metadata.deps = load.metadata.deps || [];
       return Promise.resolve(translate.apply(this, arguments)).then(function(source) {
         // run detection for register format
-        if (load.metadata.format == 'register' || !load.metadata.format && detectRegisterFormat(load.source))
+        if (load.metadata.format == 'register' || load.metadata.format == 'system' || !load.metadata.format && detectRegisterFormat(load.source))
           load.metadata.format = 'register';
         return source;
       });
@@ -3176,7 +3176,7 @@ function createEntry() {
 
       entry.originalIndices = entry.normalizedDeps = [];
 
-      // recursively ensure that the module and all its 
+      // recursively ensure that the module and all its
       // dependencies are linked (with dependency group handling)
       link(normalized, entry, loader);
 
@@ -3227,9 +3227,9 @@ function createEntry() {
 
       // Contains System.register calls
       // (dont run bundles in the builder)
-      else if (!(loader.builder && load.metadata.bundle) 
+      else if (!(loader.builder && load.metadata.bundle)
           && (load.metadata.format == 'register' || load.metadata.format == 'esm' || load.metadata.format == 'es6')) {
-        
+
         if (typeof __exec != 'undefined')
           __exec.call(loader, load);
 
@@ -3252,9 +3252,9 @@ function createEntry() {
 
       // place this module onto defined for circular references
       loader.defined[load.name] = entry;
-      
+
       var grouped = group(entry.deps);
-      
+
       entry.deps = grouped.names;
       entry.originalIndices = grouped.indices;
       entry.name = load.name;
@@ -3272,7 +3272,7 @@ function createEntry() {
         return {
           deps: entry.deps,
           execute: function() {
-            // recursively ensure that the module and all its 
+            // recursively ensure that the module and all its
             // dependencies are linked (with dependency group handling)
             link(load.name, entry, loader);
 
@@ -4480,7 +4480,7 @@ hook('fetch', function(fetch) {
 });System = new SystemJSLoader();
 
 __global.SystemJS = System;
-System.version = '0.19.45 CSP';
+System.version = '0.19.46 CSP';
   if (typeof module == 'object' && module.exports && typeof exports == 'object')
     module.exports = System;
 
