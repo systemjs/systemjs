@@ -147,12 +147,12 @@ export function setConfig (cfg, isEnvConfig) {
       var v = cfg.map[p];
 
       if (typeof v === 'string') {
-        config.map[p] = coreResolve.call(loader, config, v, undefined, false);
+        config.map[p] = coreResolve.call(loader, config, v, undefined, false, false);
       }
 
       // object map
       else {
-        var pkgName = coreResolve.call(loader, config, p, undefined, true);
+        var pkgName = coreResolve.call(loader, config, p, undefined, true, true);
         var pkg = config.packages[pkgName];
         if (!pkg) {
           pkg = config.packages[pkgName] = createPackage();
@@ -169,7 +169,7 @@ export function setConfig (cfg, isEnvConfig) {
     for (var i = 0; i < cfg.packageConfigPaths.length; i++) {
       var path = cfg.packageConfigPaths[i];
       var packageLength = Math.max(path.lastIndexOf('*') + 1, path.lastIndexOf('/'));
-      var normalized = coreResolve.call(loader, config, path.substr(0, packageLength), undefined, false);
+      var normalized = coreResolve.call(loader, config, path.substr(0, packageLength), undefined, false, false);
       packageConfigPaths[i] = normalized + path.substr(packageLength);
     }
     config.packageConfigPaths = packageConfigPaths;
@@ -189,8 +189,7 @@ export function setConfig (cfg, isEnvConfig) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var pkgName = coreResolve.call(loader, config, p[p.length -1] !== '/' ? p + '/' : p, undefined, true);
-      pkgName = pkgName.substr(0, pkgName.length - 1);
+      var pkgName = coreResolve.call(loader, config, p, undefined, true, true);
 
       setPkgConfig(config.packages[pkgName] = config.packages[pkgName] || createPackage(), cfg.packages[p], pkgName, false, config);
     }
@@ -208,7 +207,7 @@ export function setConfig (cfg, isEnvConfig) {
         extend(config.meta[p] = config.meta[p] || {}, cfg.meta[p]);
       }
       else {
-        var resolved = coreResolve.call(loader, config, p, undefined, true);
+        var resolved = coreResolve.call(loader, config, p, undefined, true, true);
         extend(config.meta[resolved] = config.meta[resolved] || {}, cfg.meta[p]);
       }
     }

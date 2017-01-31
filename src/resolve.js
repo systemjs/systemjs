@@ -152,10 +152,10 @@ export function decanonicalize (config, key) {
   // plugin
   if (parsed) {
     var pluginKey = decanonicalize.call(this, config, parsed.plugin);
-    return combinePluginParts(config.pluginFirst, coreResolve.call(this, config, parsed.argument, undefined, false), pluginKey);
+    return combinePluginParts(config.pluginFirst, coreResolve.call(this, config, parsed.argument, undefined, false, false), pluginKey);
   }
 
-  return coreResolve.call(this, config, key, undefined, false);
+  return coreResolve.call(this, config, key, undefined, false, false);
 }
 
 export function normalizeSync (key, parentKey) {
@@ -178,7 +178,7 @@ export function normalizeSync (key, parentKey) {
   return packageResolveSync.call(this, config, key, parentMetadata.pluginArgument || parentKey, metadata, parentMetadata, !!metadata.pluginKey);
 }
 
-export function coreResolve (config, key, parentKey, doMap) {
+export function coreResolve (config, key, parentKey, doMap, packageName) {
   var relativeResolved = resolveIfNotPlain(key, parentKey || baseURI);
 
   // standard URL resolution
@@ -204,7 +204,11 @@ export function coreResolve (config, key, parentKey, doMap) {
   if (key.substr(0, 6) === '@node/')
     return key;
 
-  return applyPaths(config.baseURL, config.paths, key);
+  var trailingSlash = packageName && key[key.length - 1] !== '/';
+  var resolved = applyPaths(config.baseURL, config.paths, trailingSlash ? key + '/' : key);
+  if (trailingSlash)
+    return resolved.substr(0, resolved.length - 1);
+  return resolved;
 }
 
 function packageResolveSync (config, key, parentKey, metadata, parentMetadata, skipExtensions) {
@@ -220,7 +224,10 @@ function packageResolveSync (config, key, parentKey, metadata, parentMetadata, s
     }
   }
 
-  var normalized = coreResolve.call(this, config, key, parentKey, true);
+  var trailingSlash = key[key.length - 1] === '/';
+  var normalized = coreResolve.call(this, config, trailingSlash ? key : key + '/', parentKey, true, true);
+  if (!trailingSlash)
+    normalized = normalized.substr(0, normalized.length - 1);
 
   var pkgConfigMatch = getPackageConfigMatch(config, normalized);
   metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getMapMatch(config.packages, normalized);
@@ -261,7 +268,7 @@ function packageResolve (config, key, parentKey, metadata, parentMetadata, skipE
       return mapped;
 
     // apply map, core, paths, contextual package map
-    var normalized = coreResolve.call(loader, config, key, parentKey, true);
+    var normalized = coreResolve.call(loader, config, key, parentKey, true, true);
 
     var pkgConfigMatch = getPackageConfigMatch(config, normalized);
     metadata.packageKey = pkgConfigMatch && pkgConfigMatch.packageKey || getMapMatch(config.packages, normalized);

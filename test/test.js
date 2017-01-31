@@ -234,7 +234,7 @@ suite('SystemJS Standard Tests', function() {
       }
     });
 
-    var base = System.resolveSync('');
+    var base = System.resolveSync('./');
 
     return Promise.all([
       System.resolve('a'),
@@ -250,7 +250,7 @@ suite('SystemJS Standard Tests', function() {
       ok(a[1] === base + 'c/b');
       ok(a[2] === base + 'b/b');
       ok(a[3] === base + 'd/c');
-      ok(a[4] === base + 'b');
+      ok(a[4] === base + 'd');
       ok(a[5] === 'http://jquery.com/jquery.js');
       ok(a[6] === 'http://jquery.com/jquery.js/c');
       ok(a[7] === 'https://another.com/x');
@@ -1121,6 +1121,24 @@ suite('SystemJS Standard Tests', function() {
     return System.import('app/start').then(function (m) {
       ok(m.m == 'm');
     })
+  });
+
+  test('Package configuration main normalization', function () {
+    SystemJS.config({
+      paths: {
+        "npm:": "jspm_packages/npm/",
+        "app/": "src/"
+      },
+      packages: {
+        "app": {
+          "format": "system",
+          "main": "index.js"
+        }
+      }
+    });
+
+    console.log(System.normalizeSync('app'));
+    ok(System.normalizeSync('app') === System.baseURL + 'src/index.js');
   });
 
   test('esModule meta option', function () {
