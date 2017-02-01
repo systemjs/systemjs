@@ -315,7 +315,29 @@ suite('SystemJS Standard Tests', function() {
     return System.import('tests/jquery.js').then(function (m) {
       ok(m.default == 10);
     });
-  })
+  });
+
+  test('Package with json loader', function () {
+    System.config({
+      paths: {
+        'app/': 'tests/json-pkg/'
+      },
+      packages: {
+        app: {
+          format: 'register',
+          meta: {
+            '*.json': {
+              loader: 'tests/json-loader.js'
+            }
+          }
+        }
+      }
+    });
+
+    return System.import('app/json.json').then(function (m) {
+      ok(m.val === 'val');
+    });
+  });
 
   test('Package map with shim', function () {
     System.config({

@@ -45,7 +45,7 @@ export function instantiate (key, processAnonRegister) {
         warn.call(config, 'scriptLoad not supported for "' + key + '"');
       }
     }
-    else if (metadata.load.scriptLoad !== false && supportsScriptLoad) {
+    else if (metadata.load.scriptLoad !== false && !metadata.load.pluginKey && supportsScriptLoad) {
       // auto script load AMD, global without deps
       if (!metadata.load.deps && !metadata.load.globals &&
           (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))

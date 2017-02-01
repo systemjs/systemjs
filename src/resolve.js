@@ -344,7 +344,6 @@ function setMeta (config, key, metadata) {
     var meta = {};
     if (metadata.packageConfig.meta) {
       var bestDepth = 0;
-
       getMetaMatches(metadata.packageConfig.meta, subPath, function (metaPattern, matchMeta, matchDepth) {
         if (matchDepth > bestDepth)
           bestDepth = matchDepth;
@@ -355,7 +354,7 @@ function setMeta (config, key, metadata) {
     }
 
     // format
-    if (metadata.packageConfig.format && !metadata.pluginKey)
+    if (metadata.packageConfig.format && !metadata.pluginKey && !metadata.load.loader)
       metadata.load.format = metadata.load.format || metadata.packageConfig.format;
   }
 }
