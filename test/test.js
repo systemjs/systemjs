@@ -490,7 +490,8 @@ suite('SystemJS Standard Tests', function() {
   test('CommonJS mapping test', function () {
     System.config({
       map: {
-        wire: '../test/tests/wire/index.js'
+        // baseURI in NodeJS tests is different
+        wire: typeof process !== 'undefined' ? './test/tests/wire/index.js' : '../test/tests/wire/index.js'
       },
       packages: {
         wire: { format: 'cjs' }
