@@ -487,6 +487,21 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('CommonJS mapping test', function () {
+    System.config({
+      map: {
+        wire: '../test/tests/wire/index.js'
+      },
+      packages: {
+        wire: { format: 'cjs' }
+      }
+    });
+
+    return System.import('wire').then(function (m) {
+      ok(m);
+    });
+  });
+
   test('Loading a CommonJS module with this', function () {
     return System.import('tests/cjs-this.js').then(function (m) {
       ok(m.asdf == 'module value')
