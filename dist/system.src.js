@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.4 Dev
+ * SystemJS v0.20.5 Dev
  */
 (function () {
 'use strict';
@@ -1855,7 +1855,6 @@ function setMeta (config, key, metadata) {
     var meta = {};
     if (metadata.packageConfig.meta) {
       var bestDepth = 0;
-
       getMetaMatches(metadata.packageConfig.meta, subPath, function (metaPattern, matchMeta, matchDepth) {
         if (matchDepth > bestDepth)
           bestDepth = matchDepth;
@@ -1866,7 +1865,7 @@ function setMeta (config, key, metadata) {
     }
 
     // format
-    if (metadata.packageConfig.format && !metadata.pluginKey)
+    if (metadata.packageConfig.format && !metadata.pluginKey && !metadata.load.loader)
       metadata.load.format = metadata.load.format || metadata.packageConfig.format;
   }
 }
@@ -2565,7 +2564,8 @@ function setConfig (cfg, isEnvConfig) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var pkgName = coreResolve.call(loader, config, p, undefined, true, true);
+      var pkgName = coreResolve.call(loader, config, p[p.length -1] !== '/' ? p + '/' : p, undefined, true, true);
+      pkgName = pkgName.substr(0, pkgName.length - 1);
 
       setPkgConfig(config.packages[pkgName] = config.packages[pkgName] || createPackage(), cfg.packages[p], pkgName, false, config);
     }
@@ -3218,7 +3218,7 @@ function instantiate$1 (key, processAnonRegister) {
         warn.call(config, 'scriptLoad not supported for "' + key + '"');
       }
     }
-    else if (metadata.load.scriptLoad !== false && supportsScriptLoad) {
+    else if (metadata.load.scriptLoad !== false && !metadata.load.pluginKey && supportsScriptLoad) {
       // auto script load AMD, global without deps
       if (!metadata.load.deps && !metadata.load.globals &&
           (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))
@@ -3240,7 +3240,7 @@ function instantiate$1 (key, processAnonRegister) {
       scriptLoad(key, metadata.load.crossOrigin, metadata.load.integrity, function () {
         if (!processAnonRegister()) {
           metadata.load.format = 'global';
-          var globalValue = getGlobalValue(metadata.load.exports);
+          var globalValue = metadata.load.exports && getGlobalValue(metadata.load.exports);
           loader.registerDynamic([], false, function () {
             setMetaEsModule(metadata, globalValue);
             return globalValue;
@@ -3946,7 +3946,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.4 Dev";
+SystemJSLoader$1.prototype.version = "0.20.5 Dev";
 
 var System = new SystemJSLoader$1();
 
