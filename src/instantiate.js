@@ -67,7 +67,7 @@ export function instantiate (key, processAnonRegister) {
       scriptLoad(key, metadata.load.crossOrigin, metadata.load.integrity, function () {
         if (!processAnonRegister()) {
           metadata.load.format = 'global';
-          var globalValue = getGlobalValue(metadata.load.exports);
+          var globalValue = metadata.load.exports && getGlobalValue(metadata.load.exports);
           loader.registerDynamic([], false, function () {
             setMetaEsModule(metadata, globalValue);
             return globalValue;
