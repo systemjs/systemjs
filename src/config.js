@@ -189,7 +189,8 @@ export function setConfig (cfg, isEnvConfig) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var pkgName = coreResolve.call(loader, config, p, undefined, true, true);
+      var pkgName = coreResolve.call(loader, config, p[p.length -1] !== '/' ? p + '/' : p, undefined, true, true);
+      pkgName = pkgName.substr(0, pkgName.length - 1);
 
       setPkgConfig(config.packages[pkgName] = config.packages[pkgName] || createPackage(), cfg.packages[p], pkgName, false, config);
     }

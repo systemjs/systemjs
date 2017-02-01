@@ -245,7 +245,6 @@ suite('SystemJS Standard Tests', function() {
       System.resolve('g/x')
     ]).then(function (a) {
       var base = System.resolveSync('');
-      console.log(base);
       ok(base.length > 10);
       ok(a[0] === base + 'b');
       ok(a[1] === base + 'c/b');
@@ -1176,7 +1175,6 @@ suite('SystemJS Standard Tests', function() {
       }
     });
 
-    console.log(System.normalizeSync('app'));
     ok(System.normalizeSync('app') === System.baseURL + 'src/index.js');
   });
 
@@ -1319,6 +1317,19 @@ suite('SystemJS Standard Tests', function() {
     // we're testing that we always select the rules of the inner package
     return clonedSystem.import('tests/testpkg2/').then(function (m) {
       ok(m.asdf == 'asdf');
+    });
+  });
+
+  test('Base package test', function () {
+    var clonedSystem = new System.constructor();
+    clonedSystem.config({
+      packages: {
+        '/': { defaultExtension: 'js' }
+      }
+    });
+
+    return clonedSystem.resolve('foo').then(function (resolved) {
+      ok(resolved.startsWith(clonedSystem.baseURL.substr(0, clonedSystem.baseURL.lastIndexOf('/') - 1)));
     });
   });
 
