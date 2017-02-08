@@ -228,10 +228,15 @@ suite('SystemJS Standard Tests', function() {
 
   if (typeof WebAssembly !== 'undefined')
   test('Loading WASM', function () {
-    System.config({ wasm: true });
-    return System.import('tests/answer.wasm')
+    System.config({
+      wasm: true,
+      map: {
+        'example': 'tests/wasm/example.js'
+      }
+    });
+    return System.import('tests/wasm/example.wasm')
     .then(function (m) {
-      ok(m.getAnswer() === 42);
+      ok(m.exampleExport(1) === 2);
     });
   });
 
