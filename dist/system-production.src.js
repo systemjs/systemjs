@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.5 Production
+ * SystemJS v0.20.6 Production
  */
 (function () {
 'use strict';
@@ -1239,7 +1239,8 @@ if (isBrowser) {
       loadingScripts[i].err(msg);
       return;
     }
-    onerror.apply(this, arguments);
+    if (onerror)
+      onerror.apply(this, arguments);
   };
 }
 
@@ -1564,7 +1565,7 @@ function plainResolve (key, parentKey) {
   }
 }
 
-function instantiateIfWasm (url) {
+function instantiateIfWasm (loader, url) {
   return fetch(url)
   .then(function(res) {
     if (res.ok)
@@ -1577,31 +1578,25 @@ function instantiateIfWasm (url) {
     // detect by leading bytes
     if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
       return WebAssembly.compile(bytes).then(function (m) {
-        /* TODO handle imports when `WebAssembly.Module.imports` is implemented
-        if (WebAssembly.Module.imports) {
-          var deps = [];
-          var setters = [];
-          var importObj = {};
-          WebAssembly.Module.imports(m).forEach(function (i) {
-            var key = i.module;
-            setters.push(function (m) {
-              importObj[key] = m;
-            });
-            if (deps.indexOf(key) === -1)
-              deps.push(key);
+        var deps = [];
+        var setters = [];
+        var importObj = {};
+        WebAssembly.Module.imports(m).forEach(function (i) {
+          var key = i.module;
+          setters.push(function (m) {
+            importObj[key] = m;
           });
-          loader.register(deps, function (_export) {
-            return {
-              setters: setters,
-              execute: function () {
-                _export(new WebAssembly.Instance(m, importObj).exports);
-              }
-            };
-          });
-        }*/
-        // for now we just load WASM without dependencies
-        var wasmModule = new WebAssembly.Instance(m, {});
-        return new ModuleNamespace(wasmModule.exports);
+          if (deps.indexOf(key) === -1)
+            deps.push(key);
+        });
+        loader.register(deps, function (_export) {
+          return {
+            setters: setters,
+            execute: function () {
+              _export(new WebAssembly.Instance(m, importObj).exports);
+            }
+          };
+        });
       });
     }
 
@@ -1650,19 +1645,19 @@ function coreInstantiate (key, processAnonRegister) {
   }
 
   if (wasm)
-    return instantiateIfWasm(key)
+    return instantiateIfWasm(this, key)
     .then(function (sourceOrModule) {
-      if (typeof sourceOrModule !== 'string')
-        return sourceOrModule;
+      if (typeof sourceOrModule === 'string') {
+        (0, eval)(sourceOrModule + '\n//# sourceURL=' + key);
+      }
 
-      (0, eval)(sourceOrModule + '\n//# sourceURL=' + key);
       processAnonRegister();
     });
 
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.5 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.6 Production";
 
 var System = new SystemJSProductionLoader$1();
 

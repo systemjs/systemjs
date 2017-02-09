@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.5 Dev
+ * SystemJS v0.20.6 Dev
  */
 (function () {
 'use strict';
@@ -1284,7 +1284,8 @@ if (isBrowser) {
       loadingScripts[i].err(msg);
       return;
     }
-    onerror.apply(this, arguments);
+    if (onerror)
+      onerror.apply(this, arguments);
   };
 }
 
@@ -3325,7 +3326,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     if (!metadata.pluginModule || !metadata.pluginModule.locate)
       return;
 
-    return metadata.pluginModule.locate.call(loader, metadata.pluginLoad)
+    return Promise.resolve(metadata.pluginModule.locate.call(loader, metadata.pluginLoad))
     .then(function (address) {
       if (address)
         metadata.pluginLoad.address = address;
@@ -3337,10 +3338,11 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     if (!metadata.pluginModule)
       return fetch$1(key, metadata.load.authorization, metadata.load.integrity, wasm);
 
-    if (!metadata.pluginModule.fetch)
-      return fetch$1(metadata.pluginArgument, metadata.load.authorization, metadata.load.integrity, wasm);
-
     wasm = false;
+
+    if (!metadata.pluginModule.fetch)
+      return fetch$1(metadata.pluginLoad.address, metadata.load.authorization, metadata.load.integrity, false);
+
     return metadata.pluginModule.fetch.call(loader, metadata.pluginLoad, function (load) {
       return fetch$1(load.address, metadata.load.authorization, metadata.load.integrity, false);
     });
@@ -3356,11 +3358,12 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     // detect by leading bytes
     if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
       return WebAssembly.compile(bytes).then(function (m) {
-        /* TODO handle imports when `WebAssembly.Module.imports` is implemented
-        if (WebAssembly.Module.imports) {
-          var deps = [];
-          var setters = [];
-          var importObj = {};
+        var deps = [];
+        var setters = [];
+        var importObj = {};
+
+        // we can only set imports if supported (eg Safari doesnt support)
+        if (WebAssembly.Module.imports)
           WebAssembly.Module.imports(m).forEach(function (i) {
             var key = i.module;
             setters.push(function (m) {
@@ -3369,18 +3372,15 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
             if (deps.indexOf(key) === -1)
               deps.push(key);
           });
-          loader.register(deps, function (_export) {
-            return {
-              setters: setters,
-              execute: function () {
-                _export(new WebAssembly.Instance(m, importObj).exports);
-              }
-            };
-          });
-        }*/
-        // for now we just load WASM without dependencies
-        var wasmModule = new WebAssembly.Instance(m, {});
-        return loader.newModule(wasmModule.exports);
+        loader.register(deps, function (_export) {
+          return {
+            setters: setters,
+            execute: function () {
+              _export(new WebAssembly.Instance(m, importObj).exports);
+            }
+          };
+        });
+        processAnonRegister();
       });
     }
 
@@ -3665,11 +3665,11 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
 
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)
-      throw new Error(loader.transpier + ' is not a valid transpiler plugin.');
+      throw new Error(loader.transpiler + ' is not a valid transpiler plugin.');
 
     // if transpiler is the same as the plugin loader, then don't run twice
     if (transpiler === metadata.pluginModule)
-      return load.source;
+      return source;
 
     // convert the source map into an object for transpilation chaining
     if (typeof metadata.load.sourceMap === 'string')
@@ -3946,7 +3946,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.5 Dev";
+SystemJSLoader$1.prototype.version = "0.20.6 Dev";
 
 var System = new SystemJSLoader$1();
 
