@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.6 Dev
+ * SystemJS v0.20.7 Dev
  */
 (function () {
 'use strict';
@@ -98,6 +98,7 @@ function throwResolveError () {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
 function resolveIfNotPlain (relUrl, parentUrl) {
+  relUrl = relUrl.trim();
   var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
 
   var firstChar = relUrl[0];
@@ -1089,11 +1090,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       if (module.exports !== moduleObj.default)
         moduleObj.default = module.exports;
 
-      // __esModule flag extension support
-      if (moduleObj.default && moduleObj.default.__esModule)
-        for (var p in moduleObj.default)
-          if (Object.hasOwnProperty.call(moduleObj.default, p) && p !== 'default')
+      // __esModule flag extension support via lifting
+      if (moduleObj.default && moduleObj.default.__esModule) {
+        moduleObj.__useDefault = false;
+        for (var p in moduleObj.default) {
+          if (Object.hasOwnProperty.call(moduleObj.default, p))
             moduleObj[p] = moduleObj.default[p];
+        }
+        moduleObj.__esModule = true;
+      }
     }
   }
 
@@ -3946,7 +3951,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.6 Dev";
+SystemJSLoader$1.prototype.version = "0.20.7 Dev";
 
 var System = new SystemJSLoader$1();
 
