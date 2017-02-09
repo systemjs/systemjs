@@ -496,7 +496,7 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
 
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)
-      throw new Error(loader.transpier + ' is not a valid transpiler plugin.');
+      throw new Error(loader.transpiler + ' is not a valid transpiler plugin.');
 
     // if transpiler is the same as the plugin loader, then don't run twice
     if (transpiler === metadata.pluginModule)
