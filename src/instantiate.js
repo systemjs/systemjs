@@ -188,14 +188,16 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
         var setters = [];
         var importObj = {};
 
-        WebAssembly.Module.imports(m).forEach(function (i) {
-          var key = i.module;
-          setters.push(function (m) {
-            importObj[key] = m;
+        // we can only set imports if supported (eg Safari doesnt support)
+        if (WebAssembly.Module.imports)
+          WebAssembly.Module.imports(m).forEach(function (i) {
+            var key = i.module;
+            setters.push(function (m) {
+              importObj[key] = m;
+            });
+            if (deps.indexOf(key) === -1)
+              deps.push(key);
           });
-          if (deps.indexOf(key) === -1)
-            deps.push(key);
-        });
         loader.register(deps, function (_export) {
           return {
             setters: setters,
