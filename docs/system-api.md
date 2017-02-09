@@ -57,8 +57,9 @@ if (SystemJS.has('http://site.com/normalized/module/name.js')) {
 }
 ```
 
-#### SystemJS.import(moduleName [, normalizedParentName]) -> Promise(Module)
 _Deprecated for `System.registry.has(moduleName)`_
+
+#### SystemJS.import(moduleName [, normalizedParentName]) -> Promise(Module)
 Type: `Function`
 
 Loads a module by name taking an optional normalized parent name argument.
