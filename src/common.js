@@ -147,7 +147,8 @@ if (isBrowser) {
       loadingScripts[i].err(msg);
       return;
     }
-    onerror.apply(this, arguments);
+    if (onerror)
+      onerror.apply(this, arguments);
   };
 }
 
