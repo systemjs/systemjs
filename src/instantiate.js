@@ -500,7 +500,7 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
 
     // if transpiler is the same as the plugin loader, then don't run twice
     if (transpiler === metadata.pluginModule)
-      return load.source;
+      return source;
 
     // convert the source map into an object for transpilation chaining
     if (typeof metadata.load.sourceMap === 'string')
