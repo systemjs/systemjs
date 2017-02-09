@@ -183,31 +183,26 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     // detect by leading bytes
     if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
       return WebAssembly.compile(bytes).then(function (m) {
-        /* TODO handle imports when `WebAssembly.Module.imports` is implemented
-        if (WebAssembly.Module.imports) {
-          var deps = [];
-          var setters = [];
-          var importObj = {};
-          WebAssembly.Module.imports(m).forEach(function (i) {
-            var key = i.module;
-            setters.push(function (m) {
-              importObj[key] = m;
-            });
-            if (deps.indexOf(key) === -1)
-              deps.push(key);
+        var deps = [];
+        var setters = [];
+        var importObj = {};
+        WebAssembly.Module.imports(m).forEach(function (i) {
+          var key = i.module;
+          setters.push(function (m) {
+            importObj[key] = m;
           });
-          loader.register(deps, function (_export) {
-            return {
-              setters: setters,
-              execute: function () {
-                _export(new WebAssembly.Instance(m, importObj).exports);
-              }
-            };
-          });
-        }*/
-        // for now we just load WASM without dependencies
-        var wasmModule = new WebAssembly.Instance(m, {});
-        return loader.newModule(wasmModule.exports);
+          if (deps.indexOf(key) === -1)
+            deps.push(key);
+        });
+        loader.register(deps, function (_export) {
+          return {
+            setters: setters,
+            execute: function () {
+              _export(new WebAssembly.Instance(m, importObj).exports);
+            }
+          };
+        });
+        processAnonRegister();
       });
     }
 
