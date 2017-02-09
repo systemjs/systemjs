@@ -647,6 +647,12 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Locate plugin', function () {
+    return System.import('tests/x!tests/locate-plugin.js').then(function (m) {
+      ok(m.x === 'x');
+    });
+  });
+
   test('Simple compiler Plugin', function () {
     System.config({
       map: {

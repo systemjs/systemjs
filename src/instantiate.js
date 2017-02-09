@@ -164,10 +164,11 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     if (!metadata.pluginModule)
       return fetch(key, metadata.load.authorization, metadata.load.integrity, wasm);
 
-    if (!metadata.pluginModule.fetch)
-      return fetch(metadata.pluginArgument, metadata.load.authorization, metadata.load.integrity, wasm);
-
     wasm = false;
+
+    if (!metadata.pluginModule.fetch)
+      return fetch(metadata.pluginLoad.address, metadata.load.authorization, metadata.load.integrity, false);
+
     return metadata.pluginModule.fetch.call(loader, metadata.pluginLoad, function (load) {
       return fetch(load.address, metadata.load.authorization, metadata.load.integrity, false);
     });
@@ -186,6 +187,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
         var deps = [];
         var setters = [];
         var importObj = {};
+
         WebAssembly.Module.imports(m).forEach(function (i) {
           var key = i.module;
           setters.push(function (m) {
