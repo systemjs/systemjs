@@ -544,7 +544,9 @@ suite('SystemJS Standard Tests', function() {
 
   test('CommonJS detection variation 2', function () {
     return System.import('tests/commonjs-variation2.js').then(function (m) {
-      ok(m.OpaqueToken);
+      // we no longer extend unenumerable properties
+      ok(m.default.OpaqueToken);
+      ok(m);
     });
   });
 
@@ -832,10 +834,7 @@ suite('SystemJS Standard Tests', function() {
   test('Loading dynamic modules with __esModule flag set', function () {
     return System.import('tests/es-module-flag.js').then(function () {
       m = System.registry.get(System.normalizeSync('tests/es-module-flag.js'));
-      ok(m.default.exportName == 'export');
-      ok(m.default);
-      ok(m.default != 'default export');
-      ok(m.default.__esModule === true);
+      ok(m.default == 'default export');
       ok(m.exportName === 'export');
     });
   });
