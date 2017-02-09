@@ -152,7 +152,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     if (!metadata.pluginModule || !metadata.pluginModule.locate)
       return;
 
-    return metadata.pluginModule.locate.call(loader, metadata.pluginLoad)
+    return Promise.resolve(metadata.pluginModule.locate.call(loader, metadata.pluginLoad))
     .then(function (address) {
       if (address)
         metadata.pluginLoad.address = address;
