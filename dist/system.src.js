@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.7 Dev
+ * SystemJS v0.20.8-dev Dev
  */
 (function () {
 'use strict';
@@ -45,9 +45,11 @@ else if (typeof location != 'undefined') {
 // sanitize out the hash and querystring
 if (baseURI) {
   baseURI = baseURI.split('#')[0].split('?')[0];
-  baseURI = baseURI.substr(0, baseURI.lastIndexOf('/') + 1);
+  var slashIndex = baseURI.lastIndexOf('/');
+  if (slashIndex !== -1)
+    baseURI = baseURI.substr(0, slashIndex + 1);
 }
-else if (typeof process != 'undefined' && process.cwd) {
+else if (typeof process !== 'undefined' && process.cwd) {
   baseURI = 'file://' + (isWindows ? '/' : '') + process.cwd();
   if (isWindows)
     baseURI = baseURI.replace(/\\/g, '/');
@@ -94,7 +96,7 @@ function LoaderError__Check_error_message_for_loader_stack (childErr, newMessage
 /*
  * Optimized URL normalization assuming a syntax-valid URL parent
  */
-function throwResolveError () {
+function throwResolveError (relUrl, parentUrl) {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
 function resolveIfNotPlain (relUrl, parentUrl) {
@@ -741,7 +743,7 @@ function resolveInstantiateDep (loader, key, parentKey, registry, state, traceDe
   return loader.resolve(key, parentKey)
   .then(function (resolvedKey) {
     if (traceDepMap)
-      traceDepMap[key] = key;
+      traceDepMap[key] = resolvedKey;
 
     // normalization shortpaths for already-normalized key
     var load = state.records[resolvedKey];
@@ -1090,13 +1092,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       if (module.exports !== moduleObj.default)
         moduleObj.default = module.exports;
 
+      var moduleDefault = moduleObj.default;
+      
       // __esModule flag extension support via lifting
-      if (moduleObj.default && moduleObj.default.__esModule) {
-        moduleObj.__useDefault = false;
-        for (var p in moduleObj.default) {
-          if (Object.hasOwnProperty.call(moduleObj.default, p))
-            moduleObj[p] = moduleObj.default[p];
-        }
+      if (moduleDefault && moduleDefault.__esModule) {
+        moduleObj.__useDefault = false;        
+        for (var p in moduleDefault) {
+          if (Object.hasOwnProperty.call(moduleDefault, p))
+            moduleObj[p] = moduleDefault[p];
+        }        
         moduleObj.__esModule = true;
       }
     }
@@ -3951,7 +3955,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.7 Dev";
+SystemJSLoader$1.prototype.version = "0.20.8-dev Dev";
 
 var System = new SystemJSLoader$1();
 
