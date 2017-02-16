@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.8-dev Dev
+ * SystemJS v0.20.8 Dev
  */
 (function () {
 'use strict';
@@ -500,11 +500,24 @@ var REGISTER_INTERNAL = createSymbol('register-internal');
 function RegisterLoader$1 () {
   Loader.call(this);
 
+  var registryDelete = this.registry.delete;
+  this.registry.delete = function (key) {
+    var deleted = registryDelete.call(this, key);
+
+    // also delete from register registry if linked
+    if (records.hasOwnProperty(key) && !records[key].linkRecord)
+      delete records[key];
+
+    return deleted;
+  };
+
+  var records = {};
+
   this[REGISTER_INTERNAL] = {
     // last anonymous System.register call
     lastRegister: undefined,
     // in-flight es module load records
-    records: {}
+    records: records
   };
 
   // tracing
@@ -1093,14 +1106,15 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         moduleObj.default = module.exports;
 
       var moduleDefault = moduleObj.default;
-      
+
       // __esModule flag extension support via lifting
       if (moduleDefault && moduleDefault.__esModule) {
-        moduleObj.__useDefault = false;        
+        if (moduleObj.__useDefault)
+          delete moduleObj.__useDefault;
         for (var p in moduleDefault) {
           if (Object.hasOwnProperty.call(moduleDefault, p))
             moduleObj[p] = moduleDefault[p];
-        }        
+        }
         moduleObj.__esModule = true;
       }
     }
@@ -3263,7 +3277,7 @@ function instantiate$1 (key, processAnonRegister) {
     });
   })
   .then(function (instantiated) {
-    loader[METADATA][key] = undefined;
+    delete loader[METADATA][key];
     return instantiated;
   });
 }
@@ -3955,7 +3969,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.8-dev Dev";
+SystemJSLoader$1.prototype.version = "0.20.8 Dev";
 
 var System = new SystemJSLoader$1();
 
