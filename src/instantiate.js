@@ -80,7 +80,7 @@ export function instantiate (key, processAnonRegister) {
     });
   })
   .then(function (instantiated) {
-    loader[METADATA][key] = undefined;
+    delete loader[METADATA][key];
     return instantiated;
   });
 };
