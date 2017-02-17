@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.8 Dev
+ * SystemJS v0.20.9 Dev
  */
 (function () {
 'use strict';
@@ -838,7 +838,7 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
     var depsInstantiatePromises = Array(link.dependencies.length);
 
     for (var i = 0; i < link.dependencies.length; i++)
-      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, registry, state, loader.trace && (link.depMap = {}));
+      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, registry, state, loader.trace && link.depMap || (link.depMap = {}));
 
     return Promise.all(depsInstantiatePromises);
   })
@@ -3969,7 +3969,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.8 Dev";
+SystemJSLoader$1.prototype.version = "0.20.9 Dev";
 
 var System = new SystemJSLoader$1();
 

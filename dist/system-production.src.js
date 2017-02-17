@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.8 Production
+ * SystemJS v0.20.9 Production
  */
 (function () {
 'use strict';
@@ -838,7 +838,7 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
     var depsInstantiatePromises = Array(link.dependencies.length);
 
     for (var i = 0; i < link.dependencies.length; i++)
-      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, registry, state, loader.trace && (link.depMap = {}));
+      depsInstantiatePromises[i] = resolveInstantiateDep(loader, link.dependencies[i], load.key, registry, state, loader.trace && link.depMap || (link.depMap = {}));
 
     return Promise.all(depsInstantiatePromises);
   })
@@ -1680,7 +1680,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.8 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.9 Production";
 
 var System = new SystemJSProductionLoader$1();
 
