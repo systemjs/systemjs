@@ -384,9 +384,11 @@ function amdGetCJSDeps(source, requireIndex) {
 function wrapEsModuleExecute (execute) {
   return function (require, exports, module) {
     execute(require, exports, module);
-    Object.defineProperty(module.exports, '__esModule', {
-      value: true
-    });
+    exports = module.exports;
+    if ((typeof exports === 'object' || typeof exports === 'function') && !('__esModule' in exports))
+      Object.defineProperty(module.exports, '__esModule', {
+        value: true
+      });
   };
 }
 

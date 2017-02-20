@@ -12,7 +12,8 @@ if (typeof require !== 'undefined' && typeof process !== 'undefined' && !process
   nodeRequire = require;
 
 function setMetaEsModule (metadata, moduleValue) {
-  if (metadata.load.esModule && !('__esModule' in moduleValue))
+  if (metadata.load.esModule && (typeof moduleValue === 'object' || typeof moduleValue === 'function') &&
+      !('__esModule' in moduleValue))
     Object.defineProperty(moduleValue, '__esModule', {
       value: true
     });
