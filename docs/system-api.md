@@ -138,6 +138,11 @@ SystemJS registry object supporting:
 
 See also [SystemJS.newModule](#systemjsnewmoduleobject---module).
 
+#### SystemJS.resolveSync(moduleName)
+Type: `Function`
+
+Resolves module name to normalized URL.
+
 #### SystemJS.set(moduleName, Module)
 Type: `Function`
 
