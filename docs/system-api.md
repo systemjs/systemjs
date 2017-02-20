@@ -96,7 +96,7 @@ Declaration function for defining modules of the `System.register` polyfill modu
 
 [Read more on the format at the loader polyfill page](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/system-register.md)
 
-#### SystemJS.registerDynamic([name ,] deps, declare)
+#### SystemJS.registerDynamic([name ,] deps, executingRequire, declare)
 Type: `Function`
 
 Companion module format to `System.register` for non-ES6 modules.
@@ -114,7 +114,7 @@ module.exports = require('pkg/module');
 Can be written:
 
 ```javascript
-System.registerDynamic(['pkg/module'], function(require, exports, module) {
+System.registerDynamic(['pkg/module'], true, function(require, exports, module) {
   module.exports = require('pkg/module');
 });
 ```
