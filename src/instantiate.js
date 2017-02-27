@@ -22,12 +22,13 @@ function setMetaEsModule (metadata, moduleValue) {
 export function instantiate (key, processAnonRegister) {
   var loader = this;
   var config = this[CONFIG];
-  var metadata = this[METADATA][key];
   // first do bundles and depCache
   return (loadBundlesAndDepCache(config, this, key) || resolvedPromise)
   .then(function () {
     if (processAnonRegister())
       return;
+
+    var metadata = loader[METADATA][key];
 
     // node module loading
     if (key.substr(0, 6) === '@node/') {
@@ -115,21 +116,21 @@ function loadBundlesAndDepCache (config, loader, key) {
       for (var i = 0; i < config.bundles[b].length; i++) {
         var curModule = config.bundles[b][i];
 
-        if (curModule == key) {
+        if (curModule === key) {
           matched = true;
           break;
         }
 
         // wildcard in bundles includes / boundaries
-        if (curModule.indexOf('*') != -1) {
+        if (curModule.indexOf('*') !== -1) {
           var parts = curModule.split('*');
-          if (parts.length != 2) {
+          if (parts.length !== 2) {
             config.bundles[b].splice(i--, 1);
             continue;
           }
 
-          if (key.substring(0, parts[0].length) == parts[0] &&
-              key.substr(key.length - parts[1].length, parts[1].length) == parts[1]) {
+          if (key.substr(0, parts[0].length) === parts[0] &&
+              key.substr(key.length - parts[1].length, parts[1].length) === parts[1]) {
             matched = true;
             break;
           }
