@@ -215,7 +215,7 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     // not wasm -> convert buffer into utf-8 string to execute as a module
     // TextDecoder compatibility matches WASM currently. Need to keep checking this.
     // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
-    var stringSource = new TextDecoder('utf-8').decode(bytes);
+    var stringSource = isBrowser ? new TextDecoder('utf-8').decode(bytes) : fetched.toString();
     return translateAndInstantiate(loader, key, stringSource, metadata, processAnonRegister);
   })
 }
