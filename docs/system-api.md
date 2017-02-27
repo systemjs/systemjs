@@ -138,7 +138,7 @@ SystemJS registry object supporting:
 
 See also [SystemJS.newModule](#systemjsnewmoduleobject---module).
 
-#### SystemJS.resolve(moduleName, [parentName]) -> Promise<string>
+#### SystemJS.resolve(moduleName, [parentName]) -> Promise(string)
 Type: `Function`
 
 Resolves module name to normalized URL.
