@@ -329,7 +329,7 @@ suite('SystemJS Standard Tests', function() {
     });
 
     return System.normalize('helloworld').then(function (normalized) {
-      ok(normalized.substr(normalized.length - 18, 18) === 'test/helloworld.js');
+      ok(normalized.substr(normalized.length - 14, 14) === '/helloworld.js' && normalized[normalized.length - 15] !== '/');
     });
   });
 
@@ -619,8 +619,6 @@ suite('SystemJS Standard Tests', function() {
 
   test('CommonJS require.resolve', function () {
     return System.import('tests/cjs-resolve.js').then(function (m) {
-      console.log(':' + m);
-      console.log(m.substr(m.length - 12, 12));
       ok(m.substr(m.length - 12, 12) == 'test/tests/a');
     });
   })
