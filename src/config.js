@@ -149,12 +149,17 @@ export function setConfig (cfg, isEnvConfig) {
       var v = cfg.map[p];
 
       if (typeof v === 'string') {
-        config.map[p] = coreResolve.call(loader, config, v, undefined, false, false);
+        var mapped = coreResolve.call(loader, config, v, undefined, false, false);
+        if (mapped[mapped.length -1] === '/' && p[p.length - 1] !== ':' && p[p.length - 1] !== '/')
+          mapped = mapped.substr(0, mapped.length - 1);
+        config.map[p] = mapped;
       }
 
       // object map
       else {
-        var pkgName = coreResolve.call(loader, config, p, undefined, true, true);
+        var pkgName = coreResolve.call(loader, config, p[p.length - 1] !== '/' ? p + '/' : p, undefined, true, true);
+        pkgName = pkgName.substr(0, pkgName.length - 1);
+
         var pkg = config.packages[pkgName];
         if (!pkg) {
           pkg = config.packages[pkgName] = createPackage();
@@ -191,7 +196,7 @@ export function setConfig (cfg, isEnvConfig) {
       if (p.match(/^([^\/]+:)?\/\/$/))
         throw new TypeError('"' + p + '" is not a valid package name.');
 
-      var pkgName = coreResolve.call(loader, config, p[p.length -1] !== '/' ? p + '/' : p, undefined, true, true);
+      var pkgName = coreResolve.call(loader, config, p[p.length - 1] !== '/' ? p + '/' : p, undefined, true, true);
       pkgName = pkgName.substr(0, pkgName.length - 1);
 
       setPkgConfig(config.packages[pkgName] = config.packages[pkgName] || createPackage(), cfg.packages[p], pkgName, false, config);

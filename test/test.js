@@ -316,6 +316,23 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Relative map and package config', function () {
+    System.config({
+      map: {
+        helloworld: './'
+      },
+      packages: {
+        helloworld: {
+          main: './helloworld.js'
+        }
+      }
+    });
+
+    return System.normalize('helloworld').then(function (normalized) {
+      ok(normalized.substr(normalized.length - 18, 18) === 'test/helloworld.js');
+    });
+  });
+
   test('Package with json loader', function () {
     System.config({
       paths: {
@@ -419,6 +436,17 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Loading an AMD bundle', function () {
+    System.config({
+      map: {
+        helloworld: './'
+      },
+      packages: {
+        helloworld: {
+          main: './helloworld.js',
+          defaultExtension: false
+        }
+      }
+    });
     System.config({
       bundles: {
         'tests/amd-bundle.js': ['bundle-*']
@@ -591,6 +619,8 @@ suite('SystemJS Standard Tests', function() {
 
   test('CommonJS require.resolve', function () {
     return System.import('tests/cjs-resolve.js').then(function (m) {
+      console.log(':' + m);
+      console.log(m.substr(m.length - 12, 12));
       ok(m.substr(m.length - 12, 12) == 'test/tests/a');
     });
   })
