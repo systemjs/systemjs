@@ -50,7 +50,9 @@ function cloneObj (obj, maxDepth) {
   for (var p in obj) {
     var prop = obj[p];
     if (maxDepth > 1) {
-      if (typeof prop === 'object')
+      if (prop instanceof Array)
+        clone[p] = [].concat(prop);
+      else if (typeof prop === 'object')
         clone[p] = cloneObj(prop, maxDepth - 1);
       else if (p !== 'packageConfig')
         clone[p] = prop;
