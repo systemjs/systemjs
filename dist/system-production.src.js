@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.9 Production
+ * SystemJS v0.20.10 Production
  */
 (function () {
 'use strict';
@@ -786,8 +786,13 @@ function traceLoad (loader, load, link) {
   loader.loads[load.key] = {
     key: load.key,
     deps: link.dependencies,
+    dynamicDeps: [],
     depMap: link.depMap || {}
   };
+}
+
+function traceDynamicLoad (loader, parentKey, key) {
+  loader.loads[parentKey].dynamicDeps.push(key);
 }
 
 /*
@@ -982,18 +987,17 @@ function ContextualLoader (loader, key) {
   this.loader = loader;
   this.key = this.id = key;
 }
-ContextualLoader.prototype.constructor = function () {
+/*ContextualLoader.prototype.constructor = function () {
   throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
-};
+};*/
 ContextualLoader.prototype.import = function (key) {
+  if (this.loader.trace)
+    traceDynamicLoad(this.loader, this.key, key);
   return this.loader.import(key, this.key);
 };
-ContextualLoader.prototype.resolve = function (key) {
+/*ContextualLoader.prototype.resolve = function (key) {
   return this.loader.resolve(key, this.key);
-};
-ContextualLoader.prototype.load = function (key) {
-  return this.loader.load(key, this.key);
-};
+};*/
 
 // this is the execution function bound to the Module namespace record
 function ensureEvaluate (loader, load, link, registry, state, seen) {
@@ -1403,10 +1407,15 @@ systemJSPrototype[SystemJSProductionLoader$1.resolve = RegisterLoader$1.resolve]
     return loader[PLAIN_RESOLVE](key, parentKey);
   })
   .then(function (resolved) {
+    resolved = resolved || key;
+    // if in the registry then we are done
+    if (loader.registry.has(resolved))
+      return resolved;
+
     // then apply paths
     // baseURL is fallback
     var config = loader[CONFIG];
-    return applyPaths(config.baseURL, config.paths, resolved || key);
+    return applyPaths(config.baseURL, config.paths, resolved);
   });
 };
 
@@ -1422,11 +1431,14 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
     return resolved;
 
   // plain resolution
-  resolved = this[PLAIN_RESOLVE_SYNC](key, parentKey);
+  resolved = this[PLAIN_RESOLVE_SYNC](key, parentKey) || key;
+
+  if (this.registry.has(resolved))
+    return resolved;
 
   // then apply paths
   var config = this[CONFIG];
-  return applyPaths(config.baseURL, config.paths, resolved || key);
+  return applyPaths(config.baseURL, config.paths, resolved);
 };
 
 systemJSPrototype.import = function () {
@@ -1515,7 +1527,7 @@ systemJSPrototype.config = function (cfg) {
 };
 
 // getConfig configuration cloning
-/* systemJSPrototype.getConfig = function (name) {
+systemJSPrototype.getConfig = function (name) {
   var config = this[CONFIG];
 
   var map = {};
@@ -1548,7 +1560,7 @@ systemJSPrototype.config = function (cfg) {
     map: map,
     wasm: config.wasm
   };
-}; */
+};
 
 // ensure System.register and System.registerDynamic decanonicalize
 systemJSPrototype.register = function (key, deps, declare) {
@@ -1604,14 +1616,15 @@ function instantiateIfWasm (loader, url) {
         var deps = [];
         var setters = [];
         var importObj = {};
-        WebAssembly.Module.imports(m).forEach(function (i) {
-          var key = i.module;
-          setters.push(function (m) {
-            importObj[key] = m;
+        if (WebAssembly.Module.imports)
+          WebAssembly.Module.imports(m).forEach(function (i) {
+            var key = i.module;
+            setters.push(function (m) {
+              importObj[key] = m;
+            });
+            if (deps.indexOf(key) === -1)
+              deps.push(key);
           });
-          if (deps.indexOf(key) === -1)
-            deps.push(key);
-        });
         loader.register(deps, function (_export) {
           return {
             setters: setters,
@@ -1680,7 +1693,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.9 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.10 Production";
 
 var System = new SystemJSProductionLoader$1();
 
