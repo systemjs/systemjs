@@ -98,6 +98,12 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Empty module', function () {
+    return System.resolve('@empty').then(function (resolved) {
+      ok(resolved == '@empty');
+    });
+  });
+
   test('Map configuration', function () {
     System.config({
       map: {
@@ -222,6 +228,7 @@ suite('SystemJS Standard Tests', function() {
       return m.lazy();
     })
     .then(function (lazyValue) {
+      console.log(lazyValue);
       ok(lazyValue === 5);
     });
   });

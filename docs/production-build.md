@@ -49,7 +49,8 @@ _Apply contextual map, then global map, then paths resolution._
 1. If `name` is still a _plain name_:
   1. If `name` matches any of the _global map_ mappings:
     1. Set `name` to the mapping of the most specific _global map_ match in `name` replaced with its map target.
-1. Return the _paths resolution_ of `name`
+1. If `name` is defined in the loader registry, return `name`
+1. Otherwise, return the _paths resolution_ of `name`
 
 **Paths resolution:**
 
