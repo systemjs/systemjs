@@ -10,7 +10,6 @@
 * [packages](#packages)
 * [packageConfigPaths](#packageconfigpaths)
 * [pluginFirst](#pluginFirst)
-* [production](#production)
 * [paths](#paths)
 * [transpiler](#transpiler)
 * [warnings](#warnings)
