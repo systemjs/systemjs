@@ -164,7 +164,7 @@ systemJSPrototype.config = function (cfg) {
 };
 
 // getConfig configuration cloning
-/* systemJSPrototype.getConfig = function (name) {
+systemJSPrototype.getConfig = function (name) {
   var config = this[CONFIG];
 
   var map = {};
@@ -197,7 +197,7 @@ systemJSPrototype.config = function (cfg) {
     map: map,
     wasm: config.wasm
   };
-}; */
+};
 
 // ensure System.register and System.registerDynamic decanonicalize
 systemJSPrototype.register = function (key, deps, declare) {
