@@ -4,5 +4,5 @@ System.register([], function (_export, _context) {
       return m.lazyValue;
     });
   });
-  return function () {};
+  return {};
 });
