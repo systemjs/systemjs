@@ -277,6 +277,8 @@ function packageResolve (config, key, parentKey, metadata, parentMetadata, skipE
       metadata.packageKey = undefined;
       metadata.load = createMeta();
       metadata.load.format = 'json';
+      // ensure no loader
+      metadata.load.loader = '';
       return Promise.resolve(normalized);
     }
 
