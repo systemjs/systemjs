@@ -186,14 +186,14 @@ systemJSPrototype.getConfig = function (name) {
   for (var p in config.bundles) {
     if (!Object.hasOwnProperty.call(config.bundles, p))
       continue;
-    (bundles[config.bundles[p]] = bundles[config.bundles[p]] || []).push(p);
+    bundles[p] = [].concat(config.bundles[p]);
   }
 
   return {
     baseURL: config.baseURL,
     paths: extend({}, config.paths),
     depCache: depCache,
-    bundles: cloneArrays(config.bundles),
+    bundles: bundles,
     map: map,
     wasm: config.wasm
   };

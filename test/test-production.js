@@ -233,6 +233,10 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('getConfig', function () {
+    ok(System.getConfig().bundles);
+  });
+
   if (typeof WebAssembly !== 'undefined')
   test('Loading WASM', function () {
     System.config({
