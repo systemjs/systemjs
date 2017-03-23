@@ -248,6 +248,11 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
     });
   })
   .then(function (source) {
+    if (!metadata.load.format && source.substring(0, 8) === '"bundle"') {
+      metadata.load.format = 'system';
+      return source;
+    }
+
     if (metadata.load.format === 'register' || !metadata.load.format && detectRegisterFormat(source)) {
       metadata.load.format = 'register';
       return source;
