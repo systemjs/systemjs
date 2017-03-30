@@ -819,7 +819,6 @@ suite('SystemJS Standard Tests', function() {
   test('Bundle meta', function () {
     return System.import('tests/bundle-meta.js').then(function () {
       return System.import('asdf').then(function (m) {
-        console.log(m);
         ok(m.bundle === 'module');
       });
     });
