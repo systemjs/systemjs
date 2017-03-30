@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.10 Dev
+ * SystemJS v0.20.11 Dev
  */
 (function () {
 'use strict';
@@ -806,35 +806,40 @@ function registerDeclarative (loader, load, link, declare) {
   var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
 
-  var locked = false;
+  var definedExports = false;
 
   // closure especially not based on link to allow link record disposal
   var declared = declare.call(envGlobal, function (name, value) {
-    // export setter propogation with locking to avoid cycles
-    if (locked)
-      return;
-
     if (typeof name === 'object') {
-      for (var p in name)
-        if (p !== '__useDefault')
-          moduleObj[p] = name[p];
+      var changed = false;
+      for (var p in name) {
+        value = name[p];
+        if (p !== '__useDefault' && (!(p in moduleObj) || moduleObj[p] !== value)) {
+          changed = true;
+          moduleObj[p] = value;
+        }
+      }
+      if (changed === false)
+        return value;
     }
     else {
+      if ((definedExports || name in moduleObj) && moduleObj[name] === value)
+        return value;
       moduleObj[name] = value;
     }
 
-    locked = true;
     for (var i = 0; i < importerSetters.length; i++)
       importerSetters[i](moduleObj);
-    locked = false;
 
     return value;
   }, new ContextualLoader(loader, load.key));
 
   link.setters = declared.setters;
   link.execute = declared.execute;
-  if (declared.exports)
+  if (declared.exports) {
     link.moduleObj = moduleObj = declared.exports;
+    definedExports = true;
+  }
 }
 
 function instantiateDeps (loader, load, link, registry, state, seen) {
@@ -1113,13 +1118,10 @@ function doEvaluate (loader, load, link, registry, state, seen) {
 
       // __esModule flag extension support via lifting
       if (moduleDefault && moduleDefault.__esModule) {
-        if (moduleObj.__useDefault)
-          delete moduleObj.__useDefault;
-        for (var p in moduleDefault) {
-          if (Object.hasOwnProperty.call(moduleDefault, p))
+        for (var p in moduleObj.default) {
+          if (Object.hasOwnProperty.call(moduleObj.default, p) && p !== 'default')
             moduleObj[p] = moduleDefault[p];
         }
-        moduleObj.__esModule = true;
       }
     }
   }
@@ -3460,6 +3462,11 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
     });
   })
   .then(function (source) {
+    if (!metadata.load.format && source.substring(0, 8) === '"bundle"') {
+      metadata.load.format = 'system';
+      return source;
+    }
+
     if (metadata.load.format === 'register' || !metadata.load.format && detectRegisterFormat(source)) {
       metadata.load.format = 'register';
       return source;
@@ -3986,7 +3993,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.10 Dev";
+SystemJSLoader$1.prototype.version = "0.20.11 Dev";
 
 var System = new SystemJSLoader$1();
 

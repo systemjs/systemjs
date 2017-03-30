@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.10 Production
+ * SystemJS v0.20.11 Production
  */
 (function () {
 'use strict';
@@ -806,35 +806,40 @@ function registerDeclarative (loader, load, link, declare) {
   var moduleObj = link.moduleObj;
   var importerSetters = load.importerSetters;
 
-  var locked = false;
+  var definedExports = false;
 
   // closure especially not based on link to allow link record disposal
   var declared = declare.call(envGlobal, function (name, value) {
-    // export setter propogation with locking to avoid cycles
-    if (locked)
-      return;
-
     if (typeof name === 'object') {
-      for (var p in name)
-        if (p !== '__useDefault')
-          moduleObj[p] = name[p];
+      var changed = false;
+      for (var p in name) {
+        value = name[p];
+        if (p !== '__useDefault' && (!(p in moduleObj) || moduleObj[p] !== value)) {
+          changed = true;
+          moduleObj[p] = value;
+        }
+      }
+      if (changed === false)
+        return value;
     }
     else {
+      if ((definedExports || name in moduleObj) && moduleObj[name] === value)
+        return value;
       moduleObj[name] = value;
     }
 
-    locked = true;
     for (var i = 0; i < importerSetters.length; i++)
       importerSetters[i](moduleObj);
-    locked = false;
 
     return value;
   }, new ContextualLoader(loader, load.key));
 
   link.setters = declared.setters;
   link.execute = declared.execute;
-  if (declared.exports)
+  if (declared.exports) {
     link.moduleObj = moduleObj = declared.exports;
+    definedExports = true;
+  }
 }
 
 function instantiateDeps (loader, load, link, registry, state, seen) {
@@ -1113,13 +1118,10 @@ function doEvaluate (loader, load, link, registry, state, seen) {
 
       // __esModule flag extension support via lifting
       if (moduleDefault && moduleDefault.__esModule) {
-        if (moduleObj.__useDefault)
-          delete moduleObj.__useDefault;
-        for (var p in moduleDefault) {
-          if (Object.hasOwnProperty.call(moduleDefault, p))
+        for (var p in moduleObj.default) {
+          if (Object.hasOwnProperty.call(moduleObj.default, p) && p !== 'default')
             moduleObj[p] = moduleDefault[p];
         }
-        moduleObj.__esModule = true;
       }
     }
   }
@@ -1549,14 +1551,14 @@ systemJSPrototype.getConfig = function (name) {
   for (var p in config.bundles) {
     if (!Object.hasOwnProperty.call(config.bundles, p))
       continue;
-    (bundles[config.bundles[p]] = bundles[config.bundles[p]] || []).push(p);
+    bundles[p] = [].concat(config.bundles[p]);
   }
 
   return {
     baseURL: config.baseURL,
     paths: extend({}, config.paths),
     depCache: depCache,
-    bundles: cloneArrays(config.bundles),
+    bundles: bundles,
     map: map,
     wasm: config.wasm
   };
@@ -1693,7 +1695,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.10 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.11 Production";
 
 var System = new SystemJSProductionLoader$1();
 
