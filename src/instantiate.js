@@ -184,8 +184,9 @@ function runFetchPipeline (loader, key, metadata, processAnonRegister, wasm) {
     var bytes = new Uint8Array(fetched);
 
     // detect by leading bytes
+    // Can be (new Uint32Array(fetched))[0] === 0x6D736100 when working in Node
     if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
-      return WebAssembly.compile(bytes).then(function (m) {
+      return WebAssembly.compile(fetched).then(function (m) {
         var deps = [];
         var setters = [];
         var importObj = {};
