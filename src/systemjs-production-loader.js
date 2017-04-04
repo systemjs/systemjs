@@ -1,7 +1,7 @@
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { global, baseURI, CONFIG, PLAIN_RESOLVE, PLAIN_RESOLVE_SYNC, resolveIfNotPlain, resolvedPromise,
-    extend, emptyModule, applyPaths, scriptLoad, protectedCreateNamespace, getMapMatch, noop, preloadScript, isModule } from './common.js';
+    extend, emptyModule, applyPaths, scriptLoad, protectedCreateNamespace, getMapMatch, noop, preloadScript, isModule, isNode, checkInstantiateWasm } from './common.js';
 
 export { ModuleNamespace }
 
@@ -237,49 +237,6 @@ function plainResolve (key, parentKey) {
   }
 }
 
-function instantiateIfWasm (loader, url) {
-  return fetch(url)
-  .then(function(res) {
-    if (res.ok)
-      return res.arrayBuffer();
-    else
-      throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
-  })
-  .then(function (fetched) {
-    var bytes = new Uint8Array(fetched);
-    // detect by leading bytes
-    if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
-      return WebAssembly.compile(bytes).then(function (m) {
-        var deps = [];
-        var setters = [];
-        var importObj = {};
-        if (WebAssembly.Module.imports)
-          WebAssembly.Module.imports(m).forEach(function (i) {
-            var key = i.module;
-            setters.push(function (m) {
-              importObj[key] = m;
-            });
-            if (deps.indexOf(key) === -1)
-              deps.push(key);
-          });
-        loader.register(deps, function (_export) {
-          return {
-            setters: setters,
-            execute: function () {
-              _export(new WebAssembly.Instance(m, importObj).exports);
-            }
-          };
-        });
-      });
-    }
-
-    // not wasm -> convert buffer into utf-8 string to execute as a module
-    // TextDecoder compatibility matches WASM currently. Need to keep checking this.
-    // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
-    return new TextDecoder('utf-8').decode(bytes);
-  });
-}
-
 function doScriptLoad (url, processAnonRegister) {
   return new Promise(function (resolve, reject) {
     return scriptLoad(url, 'anonymous', undefined, function () {
@@ -317,15 +274,29 @@ function coreInstantiate (key, processAnonRegister) {
       this.resolve(depCache[i], key).then(preloadFn);
   }
 
-  if (wasm)
-    return instantiateIfWasm(this, key)
-    .then(function (sourceOrModule) {
-      if (typeof sourceOrModule === 'string') {
-        (0, eval)(sourceOrModule + '\n//# sourceURL=' + key);
-      }
-
-      processAnonRegister();
+  if (wasm) {
+    var loader = this;
+    return fetch(key)
+    .then(function(res) {
+      if (res.ok)
+        return res.arrayBuffer();
+      else
+        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
+    })
+    .then(function (fetched) {
+      return checkInstantiateWasm(loader, fetched, processAnonRegister)
+      .then(function (wasmInstantiated) {
+        if (wasmInstantiated)
+          return;
+        // not wasm -> convert buffer into utf-8 string to execute as a module
+        // TextDecoder compatibility matches WASM currently. Need to keep checking this.
+        // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+        var source = new TextDecoder('utf-8').decode(new Uint8Array(fetched));
+        (0, eval)(source + '\n//# sourceURL=' + key);
+        processAnonRegister();
+      });
     });
+  }
 
   return doScriptLoad(key, processAnonRegister);
 }

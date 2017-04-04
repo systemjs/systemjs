@@ -78,6 +78,40 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
     }));
   }
 
+  // Try WASM load
+  var buffer = require('fs').readFileSync(path);
+  var bytes = new Uint8Array(buffer);
+
+  // detect by leading bytes
+  // Can be (new Uint32Array(fetched))[0] === 0x6D736100 when working in Node
+  if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
+    return WebAssembly.compile(buffer).then(function (m) {
+      var deps = [];
+      var setters = [];
+      var importObj = {};
+
+      // we can only set imports if supported (eg Safari doesnt support)
+      if (WebAssembly.Module.imports)
+        WebAssembly.Module.imports(m).forEach(function (i) {
+          var key = i.module;
+          setters.push(function (m) {
+            importObj[key] = m;
+          });
+          if (deps.indexOf(key) === -1)
+            deps.push(key);
+        });
+      loader.register(deps, function (_export) {
+        return {
+          setters: setters,
+          execute: function () {
+            _export(new WebAssembly.Instance(m, importObj).exports);
+          }
+        };
+      });
+      processAnonRegister();
+    });
+  }
+
   throw new TypeError('SystemJS production does not support loading ES modules. For ES module support see the node-es-module-loader project.');
 };
 
@@ -87,7 +121,8 @@ function tryNodeLoad (path) {
   }
   catch (e) {
     if (e instanceof SyntaxError &&
-        (e.message.indexOf('Unexpected token export') !== -1 || e.message.indexOf('Unexpected token import') !== -1 ||
+        // covers "Unexpected token [import|export]" as well as "Invalid or unexpected token" for WASM
+        (e.message.indexOf('nexpected token') !== -1 ||
         // for Node 4 and less
         e.message.indexOf('Unexpected reserved word') !== -1))
       return;
