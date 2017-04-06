@@ -117,7 +117,7 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
 
 function tryNodeLoad (path) {
   try {
-    return require(decodeURI(path));
+    return require(path);
   }
   catch (e) {
     if (e instanceof SyntaxError &&

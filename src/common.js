@@ -88,7 +88,7 @@ export function loadNodeModule (key, baseURL) {
     parentModuleContext = new Module(base);
     parentModuleContext.paths = Module._nodeModulePaths(base);
   }
-  return parentModuleContext.require(decodeURI(key));
+  return parentModuleContext.require(key);
 }
 
 export function extend (a, b) {
