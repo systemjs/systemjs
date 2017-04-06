@@ -42,7 +42,7 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.plainResolveSync
     return resolved;
 
   var parentPath = parentKey ? fileUrlToPath(parentKey) : process.cwd();
-  var requireContext = new Module(parentPath);
+  var requireContext = new Module(decodeURI(parentPath));
   requireContext.paths = Module._nodeModulePaths(parentPath);
 
   try {
@@ -117,7 +117,7 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
 
 function tryNodeLoad (path) {
   try {
-    return require(path);
+    return require(decodeURI(path));
   }
   catch (e) {
     if (e instanceof SyntaxError &&
