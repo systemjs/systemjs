@@ -233,7 +233,7 @@ function plainResolve (key, parentKey) {
 
   if (mapMatch) {
     var target = map[mapMatch] + key.substr(mapMatch.length);
-    return resolveIfNotPlain(target, parent) || target;
+    return resolveIfNotPlain(target, parentKey || config.baseURL) || target;
   }
 }
 
