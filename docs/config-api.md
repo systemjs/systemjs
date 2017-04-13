@@ -173,10 +173,8 @@ SystemJS.config({
 
 * [`authorization`]: This can be a custom authorization header string for XHR requests made by SystemJS.
 * `crossOrigin`: When scripts are loaded from a different domain (e.g. CDN) the global error handler (`window.onerror`)
-  has very limited information about errors to [prevent unintended leaking]
-  (https://developer.mozilla.org/en/docs/Web/API/GlobalEventHandlers/onerror#Notes).
-  In order to mitigate this, the `<script>` tags need to set [`crossorigin` attribute]
-  (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-crossorigin) and the server needs to
+  has very limited information about errors to [prevent unintended leaking](https://developer.mozilla.org/en/docs/Web/API/GlobalEventHandlers/onerror#Notes).
+  In order to mitigate this, the `<script>` tags need to set [`crossorigin` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-crossorigin) and the server needs to
   [enable CORS](http://enable-cors.org/).
   The [valid values](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_settings_attributes) are
   `"anonymous"` and `"use-credentials"`.
