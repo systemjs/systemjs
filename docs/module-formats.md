@@ -7,6 +7,7 @@ The following module formats are supported:
 * `amd`: [Asynchronous Module Definition](#amd)
 * `global`: [Global shim module format](#globals)
 * `system`: [System.register](system-api.md#systemregister-name-deps-declare) or [System.registerDynamic](system-api.md#systemregisterdynamic-name-deps-executingrequire-declare) compatibility module format
+* (Need more? Check the [plugins](plugins.md).)
 
 The module format can be set via meta configuration:
 
