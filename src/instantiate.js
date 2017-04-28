@@ -270,12 +270,13 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
       metadata.load.format = detectLegacyFormat(source);
 
     var registered = false;
+    var address = (metadata.pluginLoad && metadata.pluginLoad.address) ? metadata.pluginLoad.address : key;
 
     switch (metadata.load.format) {
       case 'esm':
       case 'register':
       case 'system':
-        var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
+        var err = evaluate(loader, source, metadata.load.sourceMap, address, metadata.load.integrity, metadata.load.nonce, false);
         if (err)
           throw err;
         if (!processAnonRegister())
@@ -293,7 +294,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
         clearLastDefine(metadata.load.deps, metadata.load.esModule);
 
-        var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
+        var err = evaluate(loader, source, metadata.load.sourceMap, address, metadata.load.integrity, metadata.load.nonce, false);
 
         // if didn't register anonymously, use the last named define if only one
         registered = processAnonRegister();
@@ -351,7 +352,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
           source = cjsWrapper + ") {" + source.replace(hashBangRegEx, '') + "\n}).apply(__cjsWrapper.exports, __cjsWrapper.args);";
 
-          var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, false);
+          var err = evaluate(loader, source, metadata.load.sourceMap, address, metadata.load.integrity, metadata.load.nonce, false);
           if (err)
             throw err;
 
@@ -386,7 +387,7 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
             source += '\n' + globalName + '["' + exportName + '"] = ' + exportName + ';';
 
           var retrieveGlobal = prepareGlobal(module.id, exportName, globals, metadata.load.encapsulateGlobal);
-          var err = evaluate(loader, source, metadata.load.sourceMap, key, metadata.load.integrity, metadata.load.nonce, true);
+          var err = evaluate(loader, source, metadata.load.sourceMap, address, metadata.load.integrity, metadata.load.nonce, true);
 
           if (err)
             throw err;

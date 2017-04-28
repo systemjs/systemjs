@@ -683,6 +683,20 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Source maps', function () {
+    return System.import('tests/x-error.js')
+    .catch(function (error) {
+      ok(error.stack.includes('x-error.js'));
+    });
+  });
+
+  test('Locate plugin source maps', function () {
+    return System.import('tests/x-error!tests/locate-plugin.js')
+    .catch(function (error) {
+      ok(error.stack.includes('x-error.js'));
+    });
+  });
+
   test('Simple compiler Plugin', function () {
     System.config({
       map: {
