@@ -40,7 +40,7 @@ The module format detection happens in the following order:
   If the source code starts with any number of comments, followed by `System.register` or `System.registerDynamic` as the first line of code.
 * _ES modules_
   The source is only detected as an ES module if it contains explicit module syntax - valid `import` or `export` statements.
-  his detection does not do comment removal, so comments in the code containing valid ES module syntax will trigger this detection.
+  This detection does not do comment removal, so comments in the code containing valid ES module syntax will trigger this detection.
 * _AMD modules_
   The presence of a valid AMD `define` statement in the code, with all forms of the define statement supported.
 * _CommonJS modules_
