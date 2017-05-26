@@ -27,18 +27,18 @@
     "systemjs-plugin-traceur": "0.0.3",
     "traceur": "0.0.111",
     "typescript": "^2.0.6",
-    "uglifyjs": "^2.4.10"
+    "uglify-js": "^3.0.11"
   },
   "scripts": {
     "build": "npm run build:dev && npm run build:production",
     "build:dev": "rollup -c",
     "build:production": "rollup -c --environment production",
     "min": "npm run min:dev && npm run min:production",
-    "min:dev": "cd dist && uglifyjs system.src.js -cm --in-source-map system.src.js.map --source-map system.js.map --screw-ie8 --comments '/SystemJS v/' > system.js",
-    "min:production": "cd dist && uglifyjs system-production.src.js -cm --in-source-map system-production.src.js.map --source-map system-production.js.map --screw-ie8 --comments '/SystemJS v/' > system-production.js",
+    "min:dev": "cd dist && uglifyjs system.src.js -cm --source-map content=system.src.js.map --comments '/SystemJS v/' -o system.js",
+    "min:production": "cd dist && uglifyjs system-production.src.js -cm --source-map content=system-production.src.js.map --comments '/SystemJS v/' -o system-production.js",
     "footprint": "npm run footprint:dev && npm run footprint:production",
-    "footprint:dev": "uglifyjs dist/system.src.js -cm --screw-ie8 | gzip -9f | wc -c",
-    "footprint:production": "uglifyjs dist/system-production.src.js -cm --screw-ie8 | gzip -9f | wc -c",
+    "footprint:dev": "uglifyjs dist/system.src.js -cm | gzip -9f | wc -c",
+    "footprint:production": "uglifyjs dist/system-production.src.js -cm | gzip -9f | wc -c",
     "test": "npm run test:production && npm run test:babel && npm run test:traceur && npm run test:typescript",
     "test:traceur": "mocha test/test-traceur.js -u tdd --reporter dot",
     "test:babel": "mocha test/test-babel.js -u tdd --reporter dot",
