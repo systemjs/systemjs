@@ -71,13 +71,13 @@ suite('SystemJS Standard Tests', function() {
 
       require('fs').writeFileSync('test/tests/error-module.js', 'export function hello () { return "world" }');
 
-      return System.import('tests/error-module.js').then(function (m) {
+      return System.import('tests/error-module-parent.js').then(function (m) {
         throw new Error('Should error the second time');
       }, function (err) {
         ok(err);
 
         ok(System.registry.delete(System.resolveSync('tests/error-module.js')));
-        return System.import('tests/error-module.js').then(function (m) {
+        return System.import('tests/error-module-parent.js').then(function (m) {
           ok(true);
         });
       });
