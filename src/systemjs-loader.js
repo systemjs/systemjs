@@ -162,7 +162,7 @@ function registryWarn(loader, method) {
 }
 SystemJSLoader.prototype.delete = function (key) {
   registryWarn(this, 'delete');
-  this.registry.delete(key);
+  return this.registry.delete(key);
 };
 SystemJSLoader.prototype.get = function (key) {
   registryWarn(this, 'get');
