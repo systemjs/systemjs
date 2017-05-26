@@ -74,7 +74,7 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
     // CommonJS
     return Promise.resolve(loader.newModule({
       default: nodeModule,
-      __useDefault: true
+      __useDefault: nodeModule
     }));
   }
 

@@ -648,7 +648,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
     // first map condition to match is used
     for (var i = 0; i < conditions.length; i++) {
       var c = conditions[i].condition;
-      var value = readMemberExpression(c.prop, conditionValues[i].__useDefault ? conditionValues[i].default : conditionValues[i]);
+      var value = readMemberExpression(c.prop, conditionValues[i].__useDefault || conditionValues[i]);
       if (!c.negate && value || c.negate && !value)
         return conditions[i].map;
     }

@@ -125,7 +125,7 @@ SystemJSLoader.prototype.global = global;
 SystemJSLoader.prototype.import = function () {
   return RegisterLoader.prototype.import.apply(this, arguments)
   .then(function (m) {
-    return m.__useDefault ? m.default: m;
+    return m.__useDefault || m;
   });
 };
 

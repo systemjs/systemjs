@@ -81,7 +81,7 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
 systemJSPrototype.import = function () {
   return RegisterLoader.prototype.import.apply(this, arguments)
   .then(function (m) {
-    return m.__useDefault ? m.default: m;
+    return m.__useDefault || m;
   });
 };
 

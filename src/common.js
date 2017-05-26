@@ -17,7 +17,7 @@ export function protectedCreateNamespace (bindings) {
   if (bindings && bindings.__esModule)
     return new ModuleNamespace(bindings);
 
-  return new ModuleNamespace({ default: bindings, __useDefault: true });
+  return new ModuleNamespace({ default: bindings, __useDefault: bindings });
 }
 
 var hasStringTag;

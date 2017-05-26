@@ -285,7 +285,8 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
       case 'json':
         // warn.call(config, '"json" module format is deprecated.');
-        return loader.newModule({ default: JSON.parse(source), __useDefault: true });
+        var parsed = JSON.parse(source);
+        return loader.newModule({ default: parsed, __useDefault: parsed });
 
       case 'amd':
         var curDefine = global.define;
@@ -472,8 +473,7 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
   // do transpilation
   return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
-    if (transpiler.__useDefault)
-      transpiler = transpiler.default;
+    transpiler = transpiler.__useDefault || transpiler;
 
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)

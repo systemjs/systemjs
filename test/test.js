@@ -870,8 +870,7 @@ suite('SystemJS Standard Tests', function() {
   test('Loading dynamic modules with __esModule flag set', function () {
     return System.import('tests/es-module-flag.js').then(function (d) {
       m = System.registry.get(System.normalizeSync('tests/es-module-flag.js'));
-      ok(m.default.default == 'default export');
-      ok(m.default.exportName === 'export');
+      ok(m.default == 'default export');
       ok(m.exportName === 'export');
       ok(d.default == 'default export');
       ok(d.exportName == 'export');
