@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.12 Dev
+ * SystemJS v0.20.13 Dev
  */
 (function () {
 'use strict';
@@ -99,9 +99,11 @@ function LoaderError__Check_error_message_for_loader_stack (childErr, newMessage
 function throwResolveError (relUrl, parentUrl) {
   throw new RangeError('Unable to resolve "' + relUrl + '" to ' + parentUrl);
 }
+var protocolRegEx = /^[^/]+:/;
 function resolveIfNotPlain (relUrl, parentUrl) {
   relUrl = relUrl.trim();
-  var parentProtocol = parentUrl && parentUrl.substr(0, parentUrl.indexOf(':') + 1);
+  if (parentUrl)
+    var parentProtocol = parentUrl.match(protocolRegEx);
 
   var firstChar = relUrl[0];
   var secondChar = relUrl[1];
@@ -110,12 +112,12 @@ function resolveIfNotPlain (relUrl, parentUrl) {
   if (firstChar === '/' && secondChar === '/') {
     if (!parentProtocol)
       throwResolveError(relUrl, parentUrl);
-    return parentProtocol + relUrl;
+    return parentProtocol[0] + relUrl;
   }
   // relative-url
   else if (firstChar === '.' && (secondChar === '/' || secondChar === '.' && (relUrl[2] === '/' || relUrl.length === 2) || relUrl.length === 1)
       || firstChar === '/') {
-    var parentIsPlain = !parentProtocol || parentUrl[parentProtocol.length] !== '/';
+    var parentIsPlain = !parentProtocol || parentUrl[parentProtocol[0].length] !== '/';
 
     // read pathname from parent if a URL
     // pathname taken to be part after leading "/"
@@ -126,10 +128,10 @@ function resolveIfNotPlain (relUrl, parentUrl) {
         throwResolveError(relUrl, parentUrl);
       pathname = parentUrl;
     }
-    else if (parentUrl[parentProtocol.length + 1] === '/') {
+    else if (parentUrl[parentProtocol[0].length + 1] === '/') {
       // resolving to a :// so we need to read out the auth and host
-      if (parentProtocol !== 'file:') {
-        pathname = parentUrl.substr(parentProtocol.length + 2);
+      if (parentProtocol[0] !== 'file:') {
+        pathname = parentUrl.substr(parentProtocol[0].length + 2);
         pathname = pathname.substr(pathname.indexOf('/') + 1);
       }
       else {
@@ -138,7 +140,7 @@ function resolveIfNotPlain (relUrl, parentUrl) {
     }
     else {
       // resolving to :/ so pathname is the /... part
-      pathname = parentUrl.substr(parentProtocol.length + 1);
+      pathname = parentUrl.substr(parentProtocol[0].length + 1);
     }
 
     if (firstChar === '/') {
@@ -350,7 +352,6 @@ var iteratorSupport = typeof Symbol !== 'undefined' && Symbol.iterator;
 var REGISTRY = createSymbol('registry');
 function Registry() {
   this[REGISTRY] = {};
-  this._registry = REGISTRY;
 }
 // 4.4.1
 if (iteratorSupport) {
@@ -491,7 +492,7 @@ Module.evaluate = function (ns) {
  * - loader.register support
  * - hookable higher-level resolve
  * - instantiate hook returning a ModuleNamespace or undefined for es module loading
- * - loader error behaviour as in HTML and loader specs, clearing failed modules from registration cache synchronously
+ * - loader error behaviour as in HTML and loader specs, caching load and eval errors separately
  * - build tracing support by providing a .trace=true and .loads object format
  */
 
@@ -505,8 +506,10 @@ function RegisterLoader$1 () {
     var deleted = registryDelete.call(this, key);
 
     // also delete from register registry if linked
-    if (records.hasOwnProperty(key) && !records[key].linkRecord)
+    if (records.hasOwnProperty(key) && !records[key].linkRecord) {
       delete records[key];
+      deleted = true;
+    }
 
     return deleted;
   };
@@ -554,6 +557,9 @@ function createLoadRecord (state, key, registration) {
     // for already-loaded modules by adding themselves to their importerSetters
     importerSetters: undefined,
 
+    loadError: undefined,
+    evalError: undefined,
+
     // in-flight linking record
     linkRecord: {
       // promise for instantiated
@@ -576,9 +582,8 @@ function createLoadRecord (state, key, registration) {
       // indicates if the load and all its dependencies are instantiated and linked
       // but not yet executed
       // mostly just a performance shortpath to avoid rechecking the promises above
-      linked: false,
+      linked: false
 
-      error: undefined
       // NB optimization and way of ensuring module objects in setters
       // indicates setters which should run pre-execution of that dependency
       // setters is then just for completely executed module objects
@@ -592,28 +597,29 @@ function createLoadRecord (state, key, registration) {
 RegisterLoader$1.prototype[Loader.resolveInstantiate] = function (key, parentKey) {
   var loader = this;
   var state = this[REGISTER_INTERNAL];
-  var registry = loader.registry[loader.registry._registry];
+  var registry = this.registry[REGISTRY];
 
   return resolveInstantiate(loader, key, parentKey, registry, state)
   .then(function (instantiated) {
     if (instantiated instanceof ModuleNamespace)
       return instantiated;
 
-    // if already beaten to linked, return
-    if (instantiated.module)
-      return instantiated.module;
-
     // resolveInstantiate always returns a load record with a link record and no module value
+    var link = instantiated.linkRecord;
+
+    // if already beaten to done, return
+    if (!link) {
+      if (instantiated.module)
+        return instantiated.module;
+      throw instantiated.evalError;
+    }
+
     if (instantiated.linkRecord.linked)
       return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, state, undefined);
 
     return instantiateDeps(loader, instantiated, instantiated.linkRecord, registry, state, [instantiated])
     .then(function () {
       return ensureEvaluate(loader, instantiated, instantiated.linkRecord, registry, state, undefined);
-    })
-    .catch(function (err) {
-      clearLoadErrors(loader, instantiated);
-      throw err;
     });
   });
 };
@@ -628,8 +634,11 @@ function resolveInstantiate (loader, key, parentKey, registry, state) {
   var load = state.records[key];
 
   // already linked but not in main registry is ignored
-  if (load && !load.module)
+  if (load && !load.module) {
+    if (load.loadError)
+      return Promise.reject(load.loadError);
     return instantiate(loader, load, load.linkRecord, registry, state);
+  }
 
   return loader.resolve(key, parentKey)
   .then(function (resolvedKey) {
@@ -646,6 +655,9 @@ function resolveInstantiate (loader, key, parentKey, registry, state) {
     // but keep any existing registration
     if (!load || load.module)
       load = createLoadRecord(state, resolvedKey, load && load.registration);
+
+    if (load.loadError)
+      return Promise.reject(load.loadError);
 
     var link = load.linkRecord;
     if (!link)
@@ -703,8 +715,7 @@ function instantiate (loader, load, link, registry, state) {
 
     // process System.registerDynamic declaration
     if (registration[2]) {
-      link.moduleObj.default = {};
-      link.moduleObj.__useDefault = true;
+      link.moduleObj.default = link.moduleObj.__useDefault = {};
       link.executingRequire = registration[1];
       link.execute = registration[2];
     }
@@ -724,7 +735,8 @@ function instantiate (loader, load, link, registry, state) {
     return load;
   })
   .catch(function (err) {
-    throw link.error = LoaderError__Check_error_message_for_loader_stack(err, 'Instantiating ' + load.key);
+    load.linkRecord = undefined;
+    throw load.loadError = load.loadError || LoaderError__Check_error_message_for_loader_stack(err, 'Instantiating ' + load.key);
   }));
 }
 
@@ -766,6 +778,9 @@ function resolveInstantiateDep (loader, key, parentKey, registry, state, traceDe
     if (module && (!load || load.module && module !== load.module))
       return module;
 
+    if (load && load.loadError)
+      throw load.loadError;
+
     // already has a module value but not already in the registry (load.module)
     // means it was removed by registry.delete, so we should
     // disgard the current load record creating a new one over it
@@ -789,10 +804,6 @@ function traceLoad (loader, load, link) {
     dynamicDeps: [],
     depMap: link.depMap || {}
   };
-}
-
-function traceDynamicLoad (loader, parentKey, key) {
-  loader.loads[parentKey].dynamicDeps.push(key);
 }
 
 /*
@@ -866,6 +877,8 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
             setter(instantiation);
           }
           else {
+            if (instantiation.loadError)
+              throw instantiation.loadError;
             setter(instantiation.module || instantiation.linkRecord.moduleObj);
             // this applies to both es and dynamic registrations
             if (instantiation.importerSetters)
@@ -907,49 +920,10 @@ function instantiateDeps (loader, load, link, registry, state, seen) {
     return load;
   })
   .catch(function (err) {
-    err = LoaderError__Check_error_message_for_loader_stack(err, 'Loading ' + load.key);
-
     // throw up the instantiateDeps stack
-    // loads are then synchonously cleared at the top-level through the clearLoadErrors helper below
-    // this then ensures avoiding partially unloaded tree states
-    link.error = link.error || err;
-
-    throw err;
+    link.depsInstantiatePromise = undefined;
+    throw LoaderError__Check_error_message_for_loader_stack(err, 'Loading ' + load.key);
   });
-}
-
-// clears an errored load and all its errored dependencies from the loads registry
-function clearLoadErrors (loader, load) {
-  var state = loader[REGISTER_INTERNAL];
-
-  // clear from loads
-  if (state.records[load.key] === load)
-    delete state.records[load.key];
-
-  var link = load.linkRecord;
-
-  if (!link)
-    return;
-
-  if (link.dependencyInstantiations)
-    link.dependencyInstantiations.forEach(function (depLoad, index) {
-      if (!depLoad || depLoad instanceof ModuleNamespace)
-        return;
-
-      if (depLoad.linkRecord) {
-        if (depLoad.linkRecord.error) {
-          // provides a circular reference check
-          if (state.records[depLoad.key] === depLoad)
-            clearLoadErrors(loader, depLoad);
-        }
-
-        // unregister setters for es dependency load records that will remain
-        if (link.setters && depLoad.importerSetters) {
-          var setterIndex = depLoad.importerSetters.indexOf(link.setters[index]);
-          depLoad.importerSetters.splice(setterIndex, 1);
-        }
-      }
-    });
 }
 
 /*
@@ -989,17 +963,21 @@ RegisterLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
 };
 
 // ContextualLoader class
-// backwards-compatible with previous System.register context argument by exposing .id
+// backwards-compatible with previous System.register context argument by exposing .id, .key
 function ContextualLoader (loader, key) {
   this.loader = loader;
   this.key = this.id = key;
+  this.meta = {
+    url: key
+    // scriptElement: null
+  };
 }
 /*ContextualLoader.prototype.constructor = function () {
   throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
 };*/
 ContextualLoader.prototype.import = function (key) {
   if (this.loader.trace)
-    traceDynamicLoad(this.loader, this.key, key);
+    this.loader.loads[this.key].dynamicDeps.push(key);
   return this.loader.import(key, this.key);
 };
 /*ContextualLoader.prototype.resolve = function (key) {
@@ -1011,8 +989,8 @@ function ensureEvaluate (loader, load, link, registry, state, seen) {
   if (load.module)
     return load.module;
 
-  if (link.error)
-    throw link.error;
+  if (load.evalError)
+    throw load.evalError;
 
   if (seen && seen.indexOf(load) !== -1)
     return load.linkRecord.moduleObj;
@@ -1020,10 +998,8 @@ function ensureEvaluate (loader, load, link, registry, state, seen) {
   // for ES loads we always run ensureEvaluate on top-level, so empty seen is passed regardless
   // for dynamic loads, we pass seen if also dynamic
   var err = doEvaluate(loader, load, link, registry, state, link.setters ? [] : seen || []);
-  if (err) {
-    clearLoadErrors(loader, load);
+  if (err)
     throw err;
-  }
 
   return load.module;
 }
@@ -1041,7 +1017,7 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
         else
           module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, state, seen);
 
-        return module.__useDefault ? module.default : module;
+        return module.__useDefault || module;
       }
     }
     throw new Error('Module ' + name + ' not declared as a System.registerDynamic dependency of ' + key);
@@ -1068,16 +1044,19 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       // custom Module returned from instantiate
       depLink = depLoad.linkRecord;
       if (depLink && seen.indexOf(depLoad) === -1) {
-        if (depLink.error)
-          err = depLink.error;
+        if (depLoad.evalError)
+          err = depLoad.evalError;
         else
           // dynamic / declarative boundaries clear the "seen" list
           // we just let cross format circular throw as would happen in real implementations
           err = doEvaluate(loader, depLoad, depLink, registry, state, depLink.setters ? seen : []);
       }
 
-      if (err)
-        return link.error = LoaderError__Check_error_message_for_loader_stack(err, 'Evaluating ' + load.key);
+      if (err) {
+        load.linkRecord = undefined;
+        load.evalError = LoaderError__Check_error_message_for_loader_stack(err, 'Evaluating ' + load.key);
+        return load.evalError;
+      }
     }
   }
 
@@ -1096,10 +1075,10 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       Object.defineProperty(module, 'exports', {
         configurable: true,
         set: function (exports) {
-          moduleObj.default = exports;
+          moduleObj.default = moduleObj.__useDefault = exports;
         },
         get: function () {
-          return moduleObj.default;
+          return moduleObj.__useDefault;
         }
       });
 
@@ -1114,22 +1093,25 @@ function doEvaluate (loader, load, link, registry, state, seen) {
 
       // pick up defineProperty calls to module.exports when we can
       if (module.exports !== moduleObj.default)
-        moduleObj.default = module.exports;
+        moduleObj.default = moduleObj.__useDefault = module.exports;
 
       var moduleDefault = moduleObj.default;
 
       // __esModule flag extension support via lifting
       if (moduleDefault && moduleDefault.__esModule) {
-        for (var p in moduleObj.default) {
-          if (Object.hasOwnProperty.call(moduleObj.default, p) && p !== 'default')
+        for (var p in moduleDefault) {
+          if (Object.hasOwnProperty.call(moduleDefault, p))
             moduleObj[p] = moduleDefault[p];
         }
       }
     }
   }
 
+  // dispose link record
+  load.linkRecord = undefined;
+
   if (err)
-    return link.error = LoaderError__Check_error_message_for_loader_stack(err, 'Evaluating ' + load.key);
+    return load.evalError = LoaderError__Check_error_message_for_loader_stack(err, 'Evaluating ' + load.key);
 
   registry[load.key] = load.module = new ModuleNamespace(link.moduleObj);
 
@@ -1142,9 +1124,6 @@ function doEvaluate (loader, load, link, registry, state, seen) {
         load.importerSetters[i](load.module);
     load.importerSetters = undefined;
   }
-
-  // dispose link record
-  load.linkRecord = undefined;
 }
 
 // {} is the closest we can get to call(undefined)
@@ -1184,7 +1163,7 @@ function protectedCreateNamespace (bindings) {
   if (bindings && bindings.__esModule)
     return new ModuleNamespace(bindings);
 
-  return new ModuleNamespace({ default: bindings, __useDefault: true });
+  return new ModuleNamespace({ default: bindings, __useDefault: bindings });
 }
 
 var hasStringTag;
@@ -1251,7 +1230,7 @@ function loadNodeModule (key, baseURL) {
 
   if (!parentModuleContext) {
     var Module = this._nodeRequire('module');
-    var base = baseURL.substr(isWindows ? 8 : 7);
+    var base = decodeURI(baseURL.substr(isWindows ? 8 : 7));
     parentModuleContext = new Module(base);
     parentModuleContext.paths = Module._nodeModulePaths(base);
   }
@@ -2229,7 +2208,7 @@ function doMap (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipExten
     // first map condition to match is used
     for (var i = 0; i < conditions.length; i++) {
       var c = conditions[i].condition;
-      var value = readMemberExpression(c.prop, conditionValues[i].__useDefault ? conditionValues[i].default : conditionValues[i]);
+      var value = readMemberExpression(c.prop, conditionValues[i].__useDefault || conditionValues[i]);
       if (!c.negate && value || c.negate && !value)
         return conditions[i].map;
     }
@@ -2877,7 +2856,7 @@ var formatHelpers = function (loader) {
         dynamicRequires.push(loader.import(names[i], referer));
       Promise.all(dynamicRequires).then(function (modules) {
         for (var i = 0; i < modules.length; i++)
-          modules[i] = modules[i].__useDefault ? modules[i].default : modules[i];
+          modules[i] = modules[i].__useDefault || modules[i];
         if (callback)
           callback.apply(null, modules);
       }, errback);
@@ -2889,7 +2868,7 @@ var formatHelpers = function (loader) {
       var module = loader.get(normalized);
       if (!module)
         throw new Error('Module not already loaded loading "' + names + '" as ' + normalized + (referer ? ' from "' + referer + '".' : '.'));
-      return module.__useDefault ? module.default : module;
+      return module.__useDefault || module;
     }
 
     else
@@ -3539,7 +3518,8 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
       case 'json':
         // warn.call(config, '"json" module format is deprecated.');
-        return loader.newModule({ default: JSON.parse(source), __useDefault: true });
+        var parsed = JSON.parse(source);
+        return loader.newModule({ default: parsed, __useDefault: parsed });
 
       case 'amd':
         var curDefine = envGlobal.define;
@@ -3722,8 +3702,7 @@ function transpile (loader, source, key, metadata, processAnonRegister) {
   // do transpilation
   return loader.import.call(loader, loader.transpiler)
   .then(function (transpiler) {
-    if (transpiler.__useDefault)
-      transpiler = transpiler.default;
+    transpiler = transpiler.__useDefault || transpiler;
 
     // translate hooks means this is a transpiler plugin instead of a raw implementation
     if (!transpiler.translate)
@@ -3939,7 +3918,7 @@ SystemJSLoader$1.prototype.global = envGlobal;
 SystemJSLoader$1.prototype.import = function () {
   return RegisterLoader$1.prototype.import.apply(this, arguments)
   .then(function (m) {
-    return m.__useDefault ? m.default: m;
+    return m.__useDefault || m;
   });
 };
 
@@ -3976,7 +3955,7 @@ function registryWarn(loader, method) {
 }
 SystemJSLoader$1.prototype.delete = function (key) {
   registryWarn(this, 'delete');
-  this.registry.delete(key);
+  return this.registry.delete(key);
 };
 SystemJSLoader$1.prototype.get = function (key) {
   registryWarn(this, 'get');
@@ -4008,7 +3987,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.12 Dev";
+SystemJSLoader$1.prototype.version = "0.20.13 Dev";
 
 var System = new SystemJSLoader$1();
 
