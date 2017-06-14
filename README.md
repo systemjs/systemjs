@@ -10,6 +10,8 @@ Configurable module loader enabling dynamic ES module workflows in browsers and 
 
 _[SystemJS 0.20 release notes](https://github.com/systemjs/systemjs/releases/tag/0.20.0)_
 
+_SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
+
 * [Loads any module format](docs/module-formats.md) when running the ~15KB development build.
 * Loads ES modules compiled into the `System.register` module format for production with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md)
 * Supports RequireJS-style [map](docs/getting-started.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
@@ -19,8 +21,6 @@ Built with the [ES Module Loader project](https://github.com/ModuleLoader/es-mod
 Supports IE9+ provided a promises polyfill is available in the environment.
 
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
-
-_SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
 Documentation
 ---
