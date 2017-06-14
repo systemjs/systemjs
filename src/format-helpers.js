@@ -28,8 +28,6 @@ export default function (loader) {
       for (var i = 0; i < names.length; i++)
         dynamicRequires.push(loader.import(names[i], referer));
       Promise.all(dynamicRequires).then(function (modules) {
-        for (var i = 0; i < modules.length; i++)
-          modules[i] = '__useDefault' in modules[i] ? modules[i].__useDefault : modules[i];
         if (callback)
           callback.apply(null, modules);
       }, errback);
