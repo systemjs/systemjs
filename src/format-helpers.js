@@ -29,7 +29,7 @@ export default function (loader) {
         dynamicRequires.push(loader.import(names[i], referer));
       Promise.all(dynamicRequires).then(function (modules) {
         for (var i = 0; i < modules.length; i++)
-          modules[i] = modules[i].__useDefault || modules[i];
+          modules[i] = '__useDefault' in modules[i] ? modules[i].__useDefault : modules[i];
         if (callback)
           callback.apply(null, modules);
       }, errback);
@@ -41,7 +41,7 @@ export default function (loader) {
       var module = loader.get(normalized);
       if (!module)
         throw new Error('Module not already loaded loading "' + names + '" as ' + normalized + (referer ? ' from "' + referer + '".' : '.'));
-      return module.__useDefault || module;
+      return '__useDefault' in module ? module.__useDefault : module;
     }
 
     else
