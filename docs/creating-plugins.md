@@ -7,7 +7,7 @@ The hooks compiler plugins can override are `locate`, `fetch`, `translate` and `
 The behaviors of the hooks are:
 
 * Locate: Overrides the location of the plugin resource
-* Fetch: Called with third argument representing default fetch function, has full control of fetch output.
+* Fetch: Called with second argument representing default fetch function, has full control of fetch output.
 * Translate: Returns the translated source from `load.source`, can also set `load.metadata.sourceMap` for full source maps support.
 * Instantiate: Providing this hook as a promise or function allows the plugin to hook instantiate. Any return value becomes the defined custom module object for the plugin call.
 
