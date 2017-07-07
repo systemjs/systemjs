@@ -19,7 +19,7 @@ if (isBrowser || isWorker) {
     global.System.register = function () {
       if (register)
         register.apply(this, arguments);
-      System.register.apply(this, arguments);
+      System.register.apply(System, arguments);
     };
   }
 }
