@@ -536,7 +536,7 @@ function applyPackageConfigSync (loader, config, pkg, pkgKey, subPath, metadata,
 
     // we then check map with the default extension adding
     if (!mapMatch) {
-      mapPath = './' + addDefaultExtension(loader, pkg, pkgKey, subPath, skipExtensions);
+      mapPath = './' + addDefaultExtension(config, pkg, pkgKey, subPath, skipExtensions);
       if (mapPath !== './' + subPath)
         mapMatch = getMapMatch(pkg.map, mapPath);
     }
@@ -548,7 +548,7 @@ function applyPackageConfigSync (loader, config, pkg, pkgKey, subPath, metadata,
   }
 
   // normal package resolution
-  return pkgKey + '/' + addDefaultExtension(loader, pkg, pkgKey, subPath, skipExtensions);
+  return pkgKey + '/' + addDefaultExtension(config, pkg, pkgKey, subPath, skipExtensions);
 }
 
 function validMapping (mapMatch, mapped, path) {
@@ -595,7 +595,7 @@ function applyPackageConfig (loader, config, pkg, pkgKey, subPath, metadata, ski
 
     // we then check map with the default extension adding
     if (!mapMatch) {
-      mapPath = './' + addDefaultExtension(loader, pkg, pkgKey, subPath, skipExtensions);
+      mapPath = './' + addDefaultExtension(config, pkg, pkgKey, subPath, skipExtensions);
       if (mapPath !== './' + subPath)
         mapMatch = getMapMatch(pkg.map, mapPath);
     }
@@ -607,7 +607,7 @@ function applyPackageConfig (loader, config, pkg, pkgKey, subPath, metadata, ski
       return Promise.resolve(mapped);
 
     // normal package resolution / fallback resolution for no conditional match
-    return Promise.resolve(pkgKey + '/' + addDefaultExtension(loader, pkg, pkgKey, subPath, skipExtensions));
+    return Promise.resolve(pkgKey + '/' + addDefaultExtension(config, pkg, pkgKey, subPath, skipExtensions));
   });
 }
 
