@@ -20,6 +20,7 @@
     "es-module-loader": "^2.2.6",
     "mocha": "^3.1.2",
     "plugin-typescript": "^5.2.7",
+    "rimraf": "^2.6.1",
     "rollup": "^0.41.1",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-replace": "^1.1.1",
@@ -34,8 +35,8 @@
     "build:dev": "rollup -c",
     "build:production": "rollup -c --environment production",
     "min": "npm run min:dev && npm run min:production",
-    "min:dev": "cd dist && uglifyjs system.src.js -cm --source-map content=system.src.js.map --comments '/SystemJS v/' -o system.js",
-    "min:production": "cd dist && uglifyjs system-production.src.js -cm --source-map content=system-production.src.js.map --comments '/SystemJS v/' -o system-production.js",
+    "min:dev": "cd dist && uglifyjs system.src.js -cm --source-map content=system.src.js.map --comments \"SystemJS v\" -o system.js",
+    "min:production": "cd dist && uglifyjs system-production.src.js -cm --source-map content=system-production.src.js.map --comments \"SystemJS v\" -o system-production.js",
     "footprint": "npm run footprint:dev && npm run footprint:production",
     "footprint:dev": "uglifyjs dist/system.src.js -cm | gzip -9f | wc -c",
     "footprint:production": "uglifyjs dist/system-production.src.js -cm | gzip -9f | wc -c",
@@ -45,6 +46,6 @@
     "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot",
     "test:production": "mocha test/test-production.js -u tdd --reporter dot",
     "irhydra": "node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --print-opt-code --trace_hydrogen_file=hydrogen.cfg irhydra/load.js",
-    "prepublish": "rm -r dist && npm run build && npm run min"
+    "prepublish": "rimraf dist && npm run build && npm run min"
   }
 }
