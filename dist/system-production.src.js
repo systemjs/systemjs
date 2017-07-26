@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.16 Production
+ * SystemJS v0.20.17 Production
  */
 (function () {
 'use strict';
@@ -1685,7 +1685,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.16 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.17 Production";
 
 var System = new SystemJSProductionLoader$1();
 
