@@ -9,7 +9,7 @@
 * [meta](#meta)
 * [packages](#packages)
 * [packageConfigPaths](#packageconfigpaths)
-* [pluginFirst](#pluginFirst)
+* [pluginFirst](#pluginfirst)
 * [paths](#paths)
 * [transpiler](#transpiler)
 * [warnings](#warnings)
