@@ -587,6 +587,12 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Falsy __useDefault CJS Module', function () {
+    return System.import('tests/falsy_use_default/a.js').then(function (m) {
+      ok(m === 0);
+    });
+  });
+
   test('CommonJS setting module.exports', function () {
     return System.import('tests/cjs-exports.js').then(function (m) {
       ok(m.e == 'export');
