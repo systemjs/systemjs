@@ -204,10 +204,14 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
     readMetaSyntax(source, metadata);
 
-    if (!metadata.pluginModule || !metadata.pluginModule.translate)
+    if (!metadata.pluginModule)
       return source;
 
     metadata.pluginLoad.source = source;
+
+    if (!metadata.pluginModule.translate)
+      return source;
+
     return Promise.resolve(metadata.pluginModule.translate.call(loader, metadata.pluginLoad, metadata.traceOpts))
     .then(function (translated) {
       if (metadata.load.sourceMap) {
