@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.17 Production
+ * SystemJS v0.20.18 Production
  */
 (function () {
 'use strict';
@@ -1017,7 +1017,7 @@ function makeDynamicRequire (loader, key, dependencies, dependencyInstantiations
         else
           module = ensureEvaluate(loader, depLoad, depLoad.linkRecord, registry, state, seen);
 
-        return module.__useDefault || module;
+        return '__useDefault' in module ? module.__useDefault : module;
       }
     }
     throw new Error('Module ' + name + ' not declared as a System.registerDynamic dependency of ' + key);
@@ -1685,7 +1685,7 @@ function coreInstantiate (key, processAnonRegister) {
   return doScriptLoad(key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.17 Production";
+SystemJSProductionLoader$1.prototype.version = "0.20.18 Production";
 
 var System = new SystemJSProductionLoader$1();
 
