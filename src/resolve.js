@@ -571,7 +571,7 @@ function doMapSync (loader, config, pkg, pkgKey, mapMatch, path, metadata, skipE
   if (!validMapping(mapMatch, mapped, path) || typeof mapped !== 'string')
     return;
 
-  return packageResolveSync.call(this, config, mapped + path.substr(mapMatch.length), pkgKey + '/', metadata, metadata, skipExtensions);
+  return packageResolveSync.call(loader, config, mapped + path.substr(mapMatch.length), pkgKey + '/', metadata, metadata, skipExtensions);
 }
 
 function applyPackageConfig (loader, config, pkg, pkgKey, subPath, metadata, skipExtensions) {
