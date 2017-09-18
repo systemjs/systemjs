@@ -162,7 +162,6 @@ export function preloadScript (url) {
   }
   link.href = url;
   document.head.appendChild(link);
-  document.head.removeChild(link);
 }
 
 function workerImport (src, resolve, reject) {
@@ -293,4 +292,4 @@ export function getMapMatch (map, name) {
 }
 
 // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
-export var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^'\\]*(?:\\.[^'\\]*)*`)\s*\)/g
+export var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`)\s*\)/g
