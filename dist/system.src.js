@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.18 Dev
+ * SystemJS v0.20.19 Dev
  */
 (function () {
 'use strict';
@@ -170,12 +170,12 @@ function resolveIfNotPlain (relUrl, parentUrl) {
       // new segment - check if it is relative
       if (segmented[i] === '.') {
         // ../ segment
-        if (segmented[i + 1] === '.' && segmented[i + 2] === '/') {
+        if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
           output.pop();
           i += 2;
         }
         // ./ segment
-        else if (segmented[i + 1] === '/') {
+        else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
           i += 1;
         }
         else {
@@ -188,9 +188,6 @@ function resolveIfNotPlain (relUrl, parentUrl) {
         if (parentIsPlain && output.length === 0)
           throwResolveError(relUrl, parentUrl);
 
-        // trailing . or .. segment
-        if (i === segmented.length)
-          output.push('');
         continue;
       }
 
@@ -1092,7 +1089,7 @@ function doEvaluate (loader, load, link, registry, state, seen) {
       err = dynamicExecute(link.execute, require, moduleObj.default, module);
 
       // pick up defineProperty calls to module.exports when we can
-      if (module.exports !== moduleObj.default)
+      if (module.exports !== moduleObj.__useDefault)
         moduleObj.default = moduleObj.__useDefault = module.exports;
 
       var moduleDefault = moduleObj.default;
@@ -1309,7 +1306,6 @@ function preloadScript (url) {
   }
   link.href = url;
   document.head.appendChild(link);
-  document.head.removeChild(link);
 }
 
 function workerImport (src, resolve, reject) {
@@ -1440,7 +1436,7 @@ function getMapMatch (map, name) {
 }
 
 // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
-var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g;
+var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`)\s*\)/g;
 
 /*
  * Source loading
@@ -3989,7 +3985,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.18 Dev";
+SystemJSLoader$1.prototype.version = "0.20.19 Dev";
 
 var System = new SystemJSLoader$1();
 
