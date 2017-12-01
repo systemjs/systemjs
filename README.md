@@ -3,7 +3,6 @@ SystemJS
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Support](https://supporterhq.com/api/b/33df4abbec4d39260f49015d2457eafe/SystemJS)](https://supporterhq.com/support/33df4abbec4d39260f49015d2457eafe/SystemJS)
 [![Sponsor](https://cdn.canopytax.com/images/canopy-sponsorship.svg)](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)
 
 Configurable module loader enabling dynamic ES module workflows in browsers and NodeJS.
