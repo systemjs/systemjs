@@ -420,7 +420,10 @@ export var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s*(['"]|(\*\s+as\s+)?(?!type)([
 var leadingCommentAndMetaRegEx = /^(\s*\/\*[^\*]*(\*(?!\/)[^\*]*)*\*\/|\s*\/\/[^\n]*|\s*"[^"]+"\s*;?|\s*'[^']+'\s*;?)*\s*/;
 export function detectRegisterFormat(source) {
   var leadingCommentAndMeta = source.match(leadingCommentAndMetaRegEx);
-  return leadingCommentAndMeta && source.substr(leadingCommentAndMeta[0].length, 15) === 'System.register';
+  if (!leadingCommentAndMeta)
+    return false;
+  var codeStart = leadingCommentAndMeta[0].length;
+  return source.startsWith('System.register', codeStart) || source.startsWith('SystemJS.register', codeStart);
 }
 
 // AMD Module Format Detection RegEx
