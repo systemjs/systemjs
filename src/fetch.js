@@ -17,6 +17,7 @@ function fetchFetch (url, authorization, integrity, asBuffer) {
 
   var opts = {
     // NB deprecate
+    credentials: "same-origin",
     headers: { Accept: 'application/x-es-module, */*' }
   };
 
