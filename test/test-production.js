@@ -42,26 +42,6 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Support the empty module', function () {
-    return System.import('@empty').then(function (m) {
-      ok(m, 'No empty module');
-    });
-  });
-
-  test('Loading an empty module', function () {
-    return System.import('tests/empty.js').then(function (m) {
-      if (typeof process !== 'undefined')
-        ok(m);
-      else
-        throw new Error('Empty module should not supported in browsers.');
-    }, function (err) {
-      if (typeof process === 'undefined')
-        ok(err);
-      else
-        throw new Error('Empty module should be supported in Node.');
-    })
-  });
-
   test('Paths configuration', function () {
     System.config({
       map: {
@@ -95,12 +75,6 @@ suite('SystemJS Standard Tests', function() {
       ok(a[5] === 'http://jquery.com/jquery.js');
       ok(a[6] === 'http://jquery.com/jquery.js/c');
       ok(a[7] === 'https://another.com/x');
-    });
-  });
-
-  test('Empty module', function () {
-    return System.resolve('@empty').then(function (resolved) {
-      ok(resolved == '@empty');
     });
   });
 
@@ -168,15 +142,9 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('System.register group linking test', function () {
-    System.config({
-      bundles: {
-        'tests/group-test.js': ['group-a']
-      }
-    });
     return Promise.resolve()
     .then(function () {
-      if (typeof process !== 'undefined')
-        return System.import('tests/group-test.js');
+      return System.import('tests/group-test.js');
     })
     .then(function () {
       return System.import('group-a').then(function (m) {
@@ -185,27 +153,10 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading bundle not containing the module', function () {
-    System.config({
-      bundles: {
-        'tests/group-test.js': ['not-in-bundle']
-      }
-    });
-    return System.import('tests/group-test.js').catch(function (e) {
-      ok(e.toString().indexOf('Error: Module instantiation did not call an anonymous or correctly named System.register.') === 0);
-    });
-  });
-
   test('Loading named System.register', function () {
-    System.config({
-      bundles: {
-        'tests/mixed-bundle.js': ['tree/third', 'tree/cjs', 'tree/jquery', 'tree/second', 'tree/global', 'tree/amd', 'tree/first']
-      }
-    });
     return Promise.resolve()
     .then(function () {
-      if (typeof process !== 'undefined')
-        return System.import('tests/mixed-bundle.js');
+      return System.import('tests/mixed-bundle.js');
     })
     .then(function () {
       return System.import('tree/third').then(function (m) {
@@ -222,6 +173,47 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('Global script loading', function () {
+    return System.import('tests/global.js').then(function (m) {
+      ok(m.jjQuery && m.another, 'Global objects not defined');
+    });
+  });
+
+  test('Global script with var syntax', function () {
+    return System.import('tests/global-single.js').then(function (m) {
+      ok(m.default == 'bar', 'Wrong global value');
+    });
+  });
+
+  test('Global script with multiple objects the same', function () {
+    return System.import('tests/global-multi.js').then(function (m) {
+      if (m.jjQuery)
+        ok(false);
+      ok(m.default.jquery == 'here', 'Multi globals not detected');
+    });
+  });
+
+  test('Global script multiple objects different', function () {
+    return System.import('tests/global-multi-diff.js').then(function (m) {
+      ok(m.foo == 'barz');
+      ok(m.baz == 'chaz');
+      ok(m.zed == 'ted');
+    });
+  });
+
+  test('Loading an AMD module', function () {
+    return System.import('tests/amd-module.js').then(function (m) {
+      ok(m.default.amd == true, 'Incorrect module');
+      ok(m.default.dep.amd == 'dep', 'Dependency not defined');
+    });
+  });
+
+  test('Loading AMD CommonJS form', function () {
+    return System.import('tests/amd-cjs-module.js').then(function (m) {
+      ok(m.default.test == 'hi', 'Not defined');
+    });
+  });
+
   if (typeof process === 'undefined')
   test('Contextual dynamic import', function () {
     return System.import('tests/dynamic-import' + (typeof process === 'undefined' ? '-register' : '') + '.js').then(function (m) {
@@ -234,21 +226,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('getConfig', function () {
-    ok(System.getConfig().bundles);
-  });
-
-  if (typeof WebAssembly !== 'undefined')
-  test('Loading WASM', function () {
-    System.config({
-      wasm: true,
-      map: {
-        'example': 'tests/wasm/example.js'
-      }
-    });
-    return System.import('tests/wasm/example.wasm')
-    .then(function (m) {
-      ok(m.exampleExport(1) === 2);
-    });
+    ok(System.getConfig().depCache);
   });
 
   // Node-specific tests

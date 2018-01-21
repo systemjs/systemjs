@@ -4,7 +4,7 @@ import { warn, isBrowser, global, baseURI, CONFIG, METADATA, ModuleNamespace, em
 import { getConfig, getConfigItem, setConfig } from './config.js';
 import { decanonicalize, normalize, normalizeSync } from './resolve.js';
 import { instantiate, nodeRequire } from './instantiate.js';
-import formatHelpers from './format-helpers.js';
+import { setHelpers, setAmdHelper } from './format-helpers.js';
 
 export default SystemJSLoader;
 
@@ -84,7 +84,8 @@ function SystemJSLoader () {
   setProduction.call(this, false, false);
 
   // add module format helpers
-  formatHelpers(this);
+  setHelpers(this);
+  setAmdHelper(this);
 }
 
 export var envModule;

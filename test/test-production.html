@@ -12,10 +12,6 @@
 	<script>
 		mocha.setup('tdd');
 
-    /* System.config({
-      wasm: true
-    }); */
-
 		SystemJS.import('test-production.js')
 		.then(function () {
 			mocha.run();
