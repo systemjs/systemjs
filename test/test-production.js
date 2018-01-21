@@ -173,18 +173,21 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process === 'undefined')
   test('Global script loading', function () {
     return System.import('tests/global.js').then(function (m) {
       ok(m.jjQuery && m.another, 'Global objects not defined');
     });
   });
 
+  if (typeof process === 'undefined')
   test('Global script with var syntax', function () {
     return System.import('tests/global-single.js').then(function (m) {
       ok(m.default == 'bar', 'Wrong global value');
     });
   });
 
+  if (typeof process === 'undefined')
   test('Global script with multiple objects the same', function () {
     return System.import('tests/global-multi.js').then(function (m) {
       if (m.jjQuery)
@@ -193,6 +196,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process === 'undefined')
   test('Global script multiple objects different', function () {
     return System.import('tests/global-multi-diff.js').then(function (m) {
       ok(m.foo == 'barz');
@@ -201,6 +205,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process === 'undefined')
   test('Loading an AMD module', function () {
     return System.import('tests/amd-module.js').then(function (m) {
       ok(m.default.amd == true, 'Incorrect module');
@@ -208,6 +213,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process === 'undefined')
   test('Loading AMD CommonJS form', function () {
     return System.import('tests/amd-cjs-module.js').then(function (m) {
       ok(m.default.test == 'hi', 'Not defined');
@@ -233,13 +239,13 @@ suite('SystemJS Standard Tests', function() {
   if (typeof process !== 'undefined') {
     test('Node resolution', function () {
       return System.import('babel-core').then(function (babel) {
-        ok(babel.transform);
+        ok(babel.default.transform);
       });
     });
 
     test('Node resolution via baseURL', function () {
       return System.import('tests/node-resolve.js').then(function (resolved) {
-        ok(resolved.transform);
+        ok(resolved.default.transform);
       });
     });
   }

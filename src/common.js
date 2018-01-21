@@ -175,15 +175,8 @@ function workerImport (src, resolve, reject) {
 }
 
 if (isBrowser) {
-  var loadingScripts = [];
   var onerror = window.onerror;
   window.onerror = function globalOnerror (msg, src) {
-    for (var i = 0; i < loadingScripts.length; i++) {
-      if (loadingScripts[i].src !== src)
-        continue;
-      loadingScripts[i].err(msg);
-      return;
-    }
     if (onerror)
       onerror.apply(this, arguments);
   };
@@ -225,12 +218,6 @@ export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   }
 
   function cleanup () {
-    for (var i = 0; i < loadingScripts.length; i++) {
-      if (loadingScripts[i].err === error) {
-        loadingScripts.splice(i, 1);
-        break;
-      }
-    }
     script.removeEventListener('load', load, false);
     script.removeEventListener('error', error, false);
     document.head.removeChild(script);
