@@ -7,3 +7,6 @@
 [submodule "plugin-traceur"]
 	path = plugin-traceur
 	url = git@github.com:virtualcodewarrior/plugin-traceur.git
+[submodule "systemjs-plugin-html"]
+	path = systemjs-plugin-html
+	url = git@github.com:virtualcodewarrior/systemjs-plugin-html.git
