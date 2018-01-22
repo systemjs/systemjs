@@ -19,7 +19,7 @@
     "bluebird": "^3.4.6",
     "es-module-loader": "^2.2.8",
     "mocha": "^3.1.2",
-    "plugin-typescript": "^5.2.7",
+    "plugin-typescript": "^8.0.0",
     "rimraf": "^2.6.1",
     "rollup": "^0.41.1",
     "rollup-plugin-node-resolve": "^2.0.0",
