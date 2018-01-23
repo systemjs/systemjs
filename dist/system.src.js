@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.19 Dev
+ * SystemJS v0.21.0 Dev
  */
 (function () {
 'use strict';
@@ -1319,15 +1319,8 @@ function workerImport (src, resolve, reject) {
 }
 
 if (isBrowser) {
-  var loadingScripts = [];
   var onerror = window.onerror;
   window.onerror = function globalOnerror (msg, src) {
-    for (var i = 0; i < loadingScripts.length; i++) {
-      if (loadingScripts[i].src !== src)
-        continue;
-      loadingScripts[i].err(msg);
-      return;
-    }
     if (onerror)
       onerror.apply(this, arguments);
   };
@@ -1369,12 +1362,6 @@ function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   }
 
   function cleanup () {
-    for (var i = 0; i < loadingScripts.length; i++) {
-      if (loadingScripts[i].err === error) {
-        loadingScripts.splice(i, 1);
-        break;
-      }
-    }
     script.removeEventListener('load', load, false);
     script.removeEventListener('error', error, false);
     document.head.removeChild(script);
@@ -2824,7 +2811,7 @@ function evaluate (loader, source, sourceMap, address, integrity, nonce, noWrap)
   }
 }
 
-var formatHelpers = function (loader) {
+function setHelpers (loader) {
   loader.set('@@cjs-helpers', loader.newModule({
     requireResolve: requireResolve.bind(loader),
     getPathVars: getPathVars
@@ -2833,6 +2820,9 @@ var formatHelpers = function (loader) {
   loader.set('@@global-helpers', loader.newModule({
     prepareGlobal: prepareGlobal
   }));
+}
+
+function setAmdHelper (loader) {
 
   /*
     AMD-compatible require
@@ -2979,7 +2969,7 @@ var formatHelpers = function (loader) {
 
   loader.amdDefine = define;
   loader.amdRequire = require;
-};
+}
 
 // CJS
 var windowOrigin;
@@ -3875,7 +3865,8 @@ function SystemJSLoader$1 () {
   setProduction.call(this, false, false);
 
   // add module format helpers
-  formatHelpers(this);
+  setHelpers(this);
+  setAmdHelper(this);
 }
 
 var envModule;
@@ -3985,7 +3976,7 @@ SystemJSLoader$1.prototype.registerDynamic = function (key, deps, executingRequi
   return RegisterLoader$1.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
 };
 
-SystemJSLoader$1.prototype.version = "0.20.19 Dev";
+SystemJSLoader$1.prototype.version = "0.21.0 Dev";
 
 var System = new SystemJSLoader$1();
 

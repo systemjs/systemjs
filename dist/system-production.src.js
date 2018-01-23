@@ -1,5 +1,5 @@
 /*
- * SystemJS v0.20.19 Production
+ * SystemJS v0.21.0 Production
  */
 (function () {
 'use strict';
@@ -1149,7 +1149,7 @@ function dynamicExecute (execute, require, exports, module) {
 }
 
 var resolvedPromise = Promise.resolve();
-
+function noop () {}
 
 var emptyModule = new ModuleNamespace({});
 
@@ -1171,43 +1171,7 @@ var isWorker = typeof window === 'undefined' && typeof self !== 'undefined' && t
 
 
 
-function checkInstantiateWasm (loader, wasmBuffer, processAnonRegister) {
-  var bytes = new Uint8Array(wasmBuffer);
 
-  // detect by leading bytes
-  // Can be (new Uint32Array(fetched))[0] === 0x6D736100 when working in Node
-  if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
-    return WebAssembly.compile(wasmBuffer).then(function (m) {
-      var deps = [];
-      var setters = [];
-      var importObj = {};
-
-      // we can only set imports if supported (eg Safari doesnt support)
-      if (WebAssembly.Module.imports)
-        WebAssembly.Module.imports(m).forEach(function (i) {
-          var key = i.module;
-          setters.push(function (m) {
-            importObj[key] = m;
-          });
-          if (deps.indexOf(key) === -1)
-            deps.push(key);
-        });
-      loader.register(deps, function (_export) {
-        return {
-          setters: setters,
-          execute: function () {
-            _export(new WebAssembly.Instance(m, importObj).exports);
-          }
-        };
-      });
-      processAnonRegister();
-
-      return true;
-    });
-  }
-
-  return Promise.resolve(false);
-}
 
 
 
@@ -1274,15 +1238,8 @@ function workerImport (src, resolve, reject) {
 }
 
 if (isBrowser) {
-  var loadingScripts = [];
   var onerror = window.onerror;
   window.onerror = function globalOnerror (msg, src) {
-    for (var i = 0; i < loadingScripts.length; i++) {
-      if (loadingScripts[i].src !== src)
-        continue;
-      loadingScripts[i].err(msg);
-      return;
-    }
     if (onerror)
       onerror.apply(this, arguments);
   };
@@ -1324,12 +1281,6 @@ function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
   }
 
   function cleanup () {
-    for (var i = 0; i < loadingScripts.length; i++) {
-      if (loadingScripts[i].err === error) {
-        loadingScripts.splice(i, 1);
-        break;
-      }
-    }
     script.removeEventListener('load', load, false);
     script.removeEventListener('error', error, false);
     document.head.removeChild(script);
@@ -1387,6 +1338,248 @@ function getMapMatch (map, name) {
 
 // RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
 
+function setAmdHelper (loader) {
+
+  /*
+    AMD-compatible require
+    To copy RequireJS, set window.require = window.requirejs = loader.amdRequire
+  */
+  function require (names, callback, errback, referer) {
+    // in amd, first arg can be a config object... we just ignore
+    if (typeof names === 'object' && !(names instanceof Array))
+      return require.apply(null, Array.prototype.splice.call(arguments, 1, arguments.length - 1));
+
+    // amd require
+    if (typeof names === 'string' && typeof callback === 'function')
+      names = [names];
+    if (names instanceof Array) {
+      var dynamicRequires = [];
+      for (var i = 0; i < names.length; i++)
+        dynamicRequires.push(loader.import(names[i], referer));
+      Promise.all(dynamicRequires).then(function (modules) {
+        if (callback)
+          callback.apply(null, modules);
+      }, errback);
+    }
+
+    // commonjs require
+    else if (typeof names === 'string') {
+      var normalized = loader.decanonicalize(names, referer);
+      var module = loader.get(normalized);
+      if (!module)
+        throw new Error('Module not already loaded loading "' + names + '" as ' + normalized + (referer ? ' from "' + referer + '".' : '.'));
+      return '__useDefault' in module ? module.__useDefault : module;
+    }
+
+    else
+      throw new TypeError('Invalid require');
+  }
+
+  function define (name, deps, factory) {
+    if (typeof name !== 'string') {
+      factory = deps;
+      deps = name;
+      name = null;
+    }
+
+    if (!(deps instanceof Array)) {
+      factory = deps;
+      deps = ['require', 'exports', 'module'].splice(0, factory.length);
+    }
+
+    if (typeof factory !== 'function')
+      factory = (function (factory) {
+        return function() { return factory; }
+      })(factory);
+
+    if (!name) {
+      if (curMetaDeps) {
+        deps = deps.concat(curMetaDeps);
+        curMetaDeps = undefined;
+      }
+    }
+
+    // remove system dependencies
+    var requireIndex, exportsIndex, moduleIndex;
+
+    if ((requireIndex = deps.indexOf('require')) !== -1) {
+
+      deps.splice(requireIndex, 1);
+
+      // only trace cjs requires for non-named
+      // named defines assume the trace has already been done
+      if (!name)
+        deps = deps.concat(amdGetCJSDeps(factory.toString(), requireIndex));
+    }
+
+    if ((exportsIndex = deps.indexOf('exports')) !== -1)
+      deps.splice(exportsIndex, 1);
+
+    if ((moduleIndex = deps.indexOf('module')) !== -1)
+      deps.splice(moduleIndex, 1);
+
+    function execute (req, exports, module) {
+      var depValues = [];
+      for (var i = 0; i < deps.length; i++)
+        depValues.push(req(deps[i]));
+
+      module.uri = module.id;
+
+      module.config = noop;
+
+      // add back in system dependencies
+      if (moduleIndex !== -1)
+        depValues.splice(moduleIndex, 0, module);
+
+      if (exportsIndex !== -1)
+        depValues.splice(exportsIndex, 0, exports);
+
+      if (requireIndex !== -1) {
+        var contextualRequire = function (names, callback, errback) {
+          if (typeof names === 'string' && typeof callback !== 'function')
+            return req(names);
+          return require.call(loader, names, callback, errback, module.id);
+        };
+        contextualRequire.toUrl = function (name) {
+          return loader.normalizeSync(name, module.id);
+        };
+        depValues.splice(requireIndex, 0, contextualRequire);
+      }
+
+      // set global require to AMD require
+      var curRequire = envGlobal.require;
+      envGlobal.require = require;
+
+      var output = factory.apply(exportsIndex === -1 ? envGlobal : exports, depValues);
+
+      envGlobal.require = curRequire;
+
+      if (typeof output !== 'undefined')
+        module.exports = output;
+    }
+
+    // anonymous define
+    if (!name) {
+      loader.registerDynamic(deps, false, curEsModule ? wrapEsModuleExecute(execute) : execute);
+    }
+    else {
+      loader.registerDynamic(name, deps, false, execute);
+
+      // if we don't have any other defines,
+      // then let this be an anonymous define
+      // this is just to support single modules of the form:
+      // define('jquery')
+      // still loading anonymously
+      // because it is done widely enough to be useful
+      // as soon as there is more than one define, this gets removed though
+      if (lastNamedDefine) {
+        lastNamedDefine = undefined;
+        multipleNamedDefines = true;
+      }
+      else if (!multipleNamedDefines) {
+        lastNamedDefine = [deps, execute];
+      }
+    }
+  }
+  define.amd = {};
+
+  loader.amdDefine = define;
+  loader.amdRequire = require;
+}
+
+// CJS
+var windowOrigin;
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.location)
+  windowOrigin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
+
+
+
+
+
+var commentRegEx = /(^|[^\\])(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+// extract CJS dependencies from source text via regex static analysis
+// read require('x') statements not in comments or strings
+
+
+// Global
+// bare minimum ignores
+var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external',
+  'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
+
+function globalIterator (globalName) {
+  if (ignoredGlobalProps.indexOf(globalName) !== -1)
+    return;
+  try {
+    var value = envGlobal[globalName];
+  }
+  catch (e) {
+    ignoredGlobalProps.push(globalName);
+  }
+  this(globalName, value);
+}
+
+
+
+
+
+// AMD
+var cjsRequirePre = "(?:^|[^$_a-zA-Z\\xA0-\\uFFFF.])";
+var cjsRequirePost = "\\s*\\(\\s*(\"([^\"]+)\"|'([^']+)')\\s*\\)";
+var fnBracketRegEx = /\(([^\)]*)\)/;
+var wsRegEx = /^\s+|\s+$/g;
+
+var requireRegExs = {};
+
+function amdGetCJSDeps(source, requireIndex) {
+
+  // remove comments
+  source = source.replace(commentRegEx, '');
+
+  // determine the require alias
+  var params = source.match(fnBracketRegEx);
+  var requireAlias = (params[1].split(',')[requireIndex] || 'require').replace(wsRegEx, '');
+
+  // find or generate the regex for this requireAlias
+  var requireRegEx = requireRegExs[requireAlias] || (requireRegExs[requireAlias] = new RegExp(cjsRequirePre + requireAlias + cjsRequirePost, 'g'));
+
+  requireRegEx.lastIndex = 0;
+
+  var deps = [];
+
+  var match;
+  while (match = requireRegEx.exec(source))
+    deps.push(match[2] || match[3]);
+
+  return deps;
+}
+
+function wrapEsModuleExecute (execute) {
+  return function (require, exports, module) {
+    execute(require, exports, module);
+    exports = module.exports;
+    if ((typeof exports === 'object' || typeof exports === 'function') && !('__esModule' in exports))
+      Object.defineProperty(module.exports, '__esModule', {
+        value: true
+      });
+  };
+}
+
+// generate anonymous define from singular named define
+var multipleNamedDefines = false;
+var lastNamedDefine;
+var curMetaDeps;
+var curEsModule = false;
+
+function registerLastDefine (loader) {
+  if (lastNamedDefine)
+    loader.registerDynamic(curMetaDeps ? lastNamedDefine[0].concat(curMetaDeps) : lastNamedDefine[0],
+        false, curEsModule ? wrapEsModuleExecute(lastNamedDefine[1]) : lastNamedDefine[1]);
+
+  // bundles are an empty module
+  else if (multipleNamedDefines)
+    loader.registerDynamic([], false, noop);
+}
+
 function SystemJSProductionLoader$1 () {
   RegisterLoader$1.call(this);
 
@@ -1396,13 +1589,12 @@ function SystemJSProductionLoader$1 () {
     paths: {},
     map: {},
     submap: {},
-    bundles: {},
-    depCache: {},
-    wasm: false
+    depCache: {}
   };
 
-  // support the empty module, as a concept
-  this.registry.set('@empty', emptyModule);
+  setAmdHelper(this);
+  if (isBrowser)
+    envGlobal.define = this.amdDefine;
 }
 
 SystemJSProductionLoader$1.plainResolve = PLAIN_RESOLVE;
@@ -1458,13 +1650,6 @@ systemJSPrototype.resolveSync = function (key, parentKey) {
   return applyPaths(config.baseURL, config.paths, resolved);
 };
 
-systemJSPrototype.import = function () {
-  return RegisterLoader$1.prototype.import.apply(this, arguments)
-  .then(function (m) {
-    return '__useDefault' in m ? m.__useDefault : m;
-  });
-};
-
 systemJSPrototype[PLAIN_RESOLVE] = systemJSPrototype[PLAIN_RESOLVE_SYNC] = plainResolve;
 
 systemJSPrototype[SystemJSProductionLoader$1.instantiate = RegisterLoader$1.instantiate] = coreInstantiate;
@@ -1514,16 +1699,6 @@ systemJSPrototype.config = function (cfg) {
       case 'map':
       break;
 
-      case 'bundles':
-        for (var p in val) {
-          if (!Object.hasOwnProperty.call(val, p))
-            continue;
-          var v = val[p];
-          for (var i = 0; i < v.length; i++)
-            config.bundles[this.resolveSync(v[i], undefined)] = p;
-        }
-      break;
-
       case 'depCache':
         for (var p in val) {
           if (!Object.hasOwnProperty.call(val, p))
@@ -1531,10 +1706,6 @@ systemJSPrototype.config = function (cfg) {
           var resolvedParent = this.resolveSync(p, undefined);
           config.depCache[resolvedParent] = (config.depCache[resolvedParent] || []).concat(val[p]);
         }
-      break;
-
-      case 'wasm':
-        config.wasm = typeof WebAssembly !== 'undefined' && !!val;
       break;
 
       default:
@@ -1562,20 +1733,11 @@ systemJSPrototype.getConfig = function (name) {
     depCache[p] = [].concat(config.depCache[p]);
   }
 
-  var bundles = {};
-  for (var p in config.bundles) {
-    if (!Object.hasOwnProperty.call(config.bundles, p))
-      continue;
-    bundles[p] = [].concat(config.bundles[p]);
-  }
-
   return {
     baseURL: config.baseURL,
     paths: extend({}, config.paths),
     depCache: depCache,
-    bundles: bundles,
-    map: map,
-    wasm: config.wasm
+    map: map
   };
 };
 
@@ -1617,71 +1779,80 @@ function plainResolve (key, parentKey) {
   }
 }
 
-function doScriptLoad (url, processAnonRegister) {
+function doScriptLoad (loader, url, processAnonRegister) {
+
+  // store a global snapshot in case it turns out to be global
+  globalSnapshot = {};
+  Object.keys(envGlobal).forEach(globalIterator, function (name, value) {
+    globalSnapshot[name] = value;
+  });
+
   return new Promise(function (resolve, reject) {
     return scriptLoad(url, 'anonymous', undefined, function () {
-      processAnonRegister();
+
+      // check for System.register call
+      var registered = processAnonRegister();
+      if (!registered) {
+        // no System.register -> support named AMD as anonymous
+        registerLastDefine(loader);
+        registered = processAnonRegister();
+
+        // still no registration -> attempt a global detection
+        if (!registered) {
+          loader.registerDynamic([], false, function () {
+            return retrieveGlobal();
+          });
+          processAnonRegister();
+        }
+      }
+
       resolve();
     }, reject);
   });
 }
 
-var loadedBundles = {};
+var globalSnapshot;
+function retrieveGlobal () {
+  var globalValue = { __esModule: true };
+  var singleGlobal;
+  var multipleExports = false;
+
+  Object.keys(envGlobal).forEach(globalIterator, function (name, value) {
+    if (globalSnapshot[name] === value)
+      return;
+    if (value === undefined)
+      return;
+
+    globalValue[name] = value;
+
+    if (singleGlobal !== undefined) {
+      if (!multipleExports && singleGlobal !== value)
+        multipleExports = true;
+    }
+    else {
+      singleGlobal = value;
+    }
+  });
+
+  // clear global snapshot
+  globalSnapshot = undefined;
+
+  return multipleExports ? globalValue : singleGlobal;
+}
+
 function coreInstantiate (key, processAnonRegister) {
   var config = this[CONFIG];
 
-  var wasm = config.wasm;
-
-  var bundle = config.bundles[key];
-  if (bundle) {
-    var loader = this;
-    var bundleUrl = loader.resolveSync(bundle, undefined);
-    if (loader.registry.has(bundleUrl))
-      return;
-    return loadedBundles[bundleUrl] || (loadedBundles[bundleUrl] = doScriptLoad(bundleUrl, processAnonRegister).then(function () {
-      // bundle treated itself as an empty module
-      // this means we can reload bundles by deleting from the registry
-      if (!loader.registry.has(bundleUrl))
-        loader.registry.set(bundleUrl, loader.newModule({}));
-      delete loadedBundles[bundleUrl];
-    }));
-  }
-
   var depCache = config.depCache[key];
   if (depCache) {
-    var preloadFn = wasm ? fetch : preloadScript;
     for (var i = 0; i < depCache.length; i++)
-      this.resolve(depCache[i], key).then(preloadFn);
+      this.resolve(depCache[i], key).then(preloadScript);
   }
 
-  if (wasm) {
-    var loader = this;
-    return fetch(key)
-    .then(function(res) {
-      if (res.ok)
-        return res.arrayBuffer();
-      else
-        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
-    })
-    .then(function (fetched) {
-      return checkInstantiateWasm(loader, fetched, processAnonRegister)
-      .then(function (wasmInstantiated) {
-        if (wasmInstantiated)
-          return;
-        // not wasm -> convert buffer into utf-8 string to execute as a module
-        // TextDecoder compatibility matches WASM currently. Need to keep checking this.
-        // The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
-        var source = new TextDecoder('utf-8').decode(new Uint8Array(fetched));
-        (0, eval)(source + '\n//# sourceURL=' + key);
-        processAnonRegister();
-      });
-    });
-  }
-
-  return doScriptLoad(key, processAnonRegister);
+  return doScriptLoad(this, key, processAnonRegister);
 }
 
-SystemJSProductionLoader$1.prototype.version = "0.20.19 Production";
+SystemJSProductionLoader$1.prototype.version = "0.21.0 Production";
 
 var System = new SystemJSProductionLoader$1();
 
