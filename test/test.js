@@ -919,7 +919,6 @@ suite('SystemJS Standard Tests', function() {
   });
 
   // TypeScript does not support async functions yet
-  if (System.transpiler !== 'typescript')
   test('Async functions', function () {
     System.babelOptions = { stage: 0 };
     System.traceurOptions = { asyncFunctions: true };
@@ -928,7 +927,6 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  if (System.transpiler !== 'typescript')
   test('Wrapper module support', function () {
     return System.import('tests/wrapper.js').then(function (m) {
       ok(m.d == 'default1', 'Wrapper module not defined.');

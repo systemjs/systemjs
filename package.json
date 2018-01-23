@@ -19,7 +19,6 @@
     "bluebird": "^3.4.6",
     "es-module-loader": "^2.2.8",
     "mocha": "^3.1.2",
-    "plugin-typescript": "^5.2.7",
     "rimraf": "^2.6.1",
     "rollup": "^0.41.1",
     "rollup-plugin-node-resolve": "^2.0.0",
@@ -27,7 +26,6 @@
     "systemjs-plugin-babel": "0.0.17",
     "systemjs-plugin-traceur": "0.0.3",
     "traceur": "0.0.111",
-    "typescript": "^2.0.6",
     "uglify-js": "^3.0.11"
   },
   "scripts": {
@@ -40,10 +38,9 @@
     "footprint": "npm run footprint:dev && npm run footprint:production",
     "footprint:dev": "uglifyjs dist/system.src.js -cm | gzip -9f | wc -c",
     "footprint:production": "uglifyjs dist/system-production.src.js -cm | gzip -9f | wc -c",
-    "test": "npm run test:production && npm run test:babel && npm run test:traceur && npm run test:typescript",
+    "test": "npm run test:production && npm run test:babel && npm run test:traceur",
     "test:traceur": "mocha test/test-traceur.js -u tdd --reporter dot",
     "test:babel": "mocha test/test-babel.js -u tdd --reporter dot",
-    "test:typescript": "mocha test/test-typescript.js -u tdd --reporter dot",
     "test:production": "mocha test/test-production.js -u tdd --reporter dot",
     "irhydra": "node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --print-opt-code --trace_hydrogen_file=hydrogen.cfg irhydra/load.js",
     "prepublish": "rimraf dist && npm run build && npm run min"
