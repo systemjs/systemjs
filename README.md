@@ -17,8 +17,6 @@ _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/pos
 
 Built with the [ES Module Loader project](https://github.com/ModuleLoader/es-module-loader), which is based on principles and APIs from the WhatWG Loader specification, modules in HTML and NodeJS.
 
-Supports IE9+ provided a promises polyfill is available in the environment.
-
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
 Documentation
@@ -55,7 +53,7 @@ The above will support loading all module formats.
 
 ### Browser Production
 
-When all modules are already transpiled into the `System.register` module format (which can be output via Babel or TypeScript through any build workflow), a production-only loader can be used:
+When all modules are available as either `system`, `amd` or global module formats, and no package configurations or plugins are needed, a production-only loader can be used:
 
 ```html
 <script src="systemjs/dist/system-production.js"></script>
@@ -64,7 +62,7 @@ When all modules are already transpiled into the `System.register` module format
 </script>
 ```
 
-Configuration support in the production loader includes baseURL, paths, map, contextual map, bundles and depCache.
+Configuration support in the production loader includes baseURL, paths, map and depCache.
 
 ### NodeJS
 

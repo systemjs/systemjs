@@ -1,9 +1,8 @@
 ## SystemJS Production Build
 
-The SystemJS production build supports loading `System.register` and `System.registerDynamic` modules using
-script tag loading, while also keeping support for Web Assembly when enabled via `System.config({ wasm: true })`.
+The SystemJS production build supports loading System, AMD and global modules.
 
-The configuration options of `baseURL`, `paths`, `map`, `depCache` and `bundles` are supported identically to the
+The configuration options of `baseURL`, `paths`, `map` and `depCache` are supported identically to the
 full development build, and as documented at the [configuration API page](config-api.md).
 
 For contextual map configuration, the production build permits objects in the map configuration which act just
