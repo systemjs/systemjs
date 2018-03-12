@@ -13,7 +13,7 @@ _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/pos
 
 * [Loads any module format](docs/module-formats.md) when running the ~15KB development build.
 * Loads ES modules compiled into the `System.register` module format for production with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md)
-* Supports RequireJS-style [map](docs/getting-started.md#map-config), [paths](https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/loader-config.md#paths-implementation), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
+* Supports RequireJS-style [map](docs/getting-started.md#map-config), [paths](https://github.com/systemjs/systemjs/blob/master/docs/config-api.md#paths), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
 
 Built with the [ES Module Loader project](https://github.com/ModuleLoader/es-module-loader), which is based on principles and APIs from the WhatWG Loader specification, modules in HTML and NodeJS.
 
