@@ -93,9 +93,13 @@ function xhrFetch (url, authorization, integrity, asBuffer) {
 
 var fs;
 function nodeFetch (url, authorization, integrity, asBuffer) {
-  if (url.substr(0, 8) != 'file:///')
-    return Promise.reject(new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// supported running in Node.'));
-
+  if (url.substr(0, 8) != 'file:///') {
+    if (hasFetch)
+      return fetchFetch(url, authorization, integrity, asBuffer);
+    else
+      return Promise.reject(new Error('Unable to fetch "' + url + '". Only file URLs of the form file:/// supported running in Node without fetch.'));
+  }
+  
   fs = fs || require('fs');
   if (isWindows)
     url = url.replace(/\//g, '\\').substr(8);
@@ -131,6 +135,7 @@ function noFetch () {
 var fetchFunction;
 
 var hasXhr = typeof XMLHttpRequest !== 'undefined';
+var hasFetch = typeof fetch !== 'undefined';
 
 if (typeof self !== 'undefined' && typeof self.fetch !== 'undefined')
  fetchFunction = fetchFetch;
