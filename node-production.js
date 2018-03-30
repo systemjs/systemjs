@@ -78,7 +78,7 @@ SystemJSProductionNodeLoader.prototype[SystemJSProductionLoader.instantiate] = f
     }));
   }
 
-  throw new TypeError('SystemJS production does not support loading ES modules. For ES module support see the node-es-module-loader project.');
+  throw new TypeError('SystemJS production does not support loading ES or WASM modules in Node.');
 };
 
 function tryNodeLoad (path) {

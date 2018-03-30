@@ -12,16 +12,17 @@ else
 var name = `system${process.env.production ? '-production' : ''}`;
 
 export default {
-  entry: `src/${name}.js`,
-  format: 'iife',
-  dest: `dist/${name}.src.js`,
+  input: `src/${name}.js`,
 
-  sourceMap: true,
-  sourceMapFile: `dist/${name}.js.map`,
-
-  banner: `/*
- * SystemJS v${version}
- */`,
+  output: {
+    format: 'iife',
+    file: `dist/${name}.src.js`,
+    sourceMap: true,
+    sourceMapFile: `dist/${name}.js.map`,
+    banner: `/*
+    * SystemJS v${version}
+    */`
+  },
 
   plugins: [
     nodeResolve({

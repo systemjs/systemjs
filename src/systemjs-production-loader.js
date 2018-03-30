@@ -115,6 +115,8 @@ systemJSPrototype.config = function (cfg) {
     }
   }
 
+  config.wasm = cfg.wasm === true;
+
   for (var p in cfg) {
     if (!Object.hasOwnProperty.call(cfg, p))
       continue;
@@ -125,6 +127,7 @@ systemJSPrototype.config = function (cfg) {
       case 'baseURL':
       case 'paths':
       case 'map':
+      case 'wasm':
       break;
 
       case 'depCache':
@@ -165,7 +168,8 @@ systemJSPrototype.getConfig = function (name) {
     baseURL: config.baseURL,
     paths: extend({}, config.paths),
     depCache: depCache,
-    map: map
+    map: map,
+    wasm: config.wasm === true
   };
 };
 
@@ -207,8 +211,36 @@ function plainResolve (key, parentKey) {
   }
 }
 
-function doScriptLoad (loader, url, processAnonRegister) {
+function instantiateWasm (loader, response, processAnonRegister) {
+  return WebAssembly.compileStreaming(response).then(function (module) {
+    var deps = [];
+    var setters = [];
+    var importObj = {};
 
+    // we can only set imports if supported (eg early Safari doesnt support)
+    if (WebAssembly.Module.imports)
+      WebAssembly.Module.imports(module).forEach(function (i) {
+        var key = i.module;
+        setters.push(function (m) {
+          importObj[key] = m;
+        });
+        if (deps.indexOf(key) === -1)
+          deps.push(key);
+      });
+
+    loader.register(deps, function (_export) {
+      return {
+        setters: setters,
+        execute: function () {
+          _export(new WebAssembly.Instance(module, importObj).exports);
+        }
+      };
+    });
+    processAnonRegister();
+  });
+}
+
+function doScriptLoad (loader, url, processAnonRegister) {
   // store a global snapshot in case it turns out to be global
   globalSnapshot = {};
   Object.keys(global).forEach(globalIterator, function (name, value) {
@@ -227,16 +259,45 @@ function doScriptLoad (loader, url, processAnonRegister) {
 
         // still no registration -> attempt a global detection
         if (!registered) {
-          loader.registerDynamic([], false, function () {
-            return retrieveGlobal();
+          loader.register([], function () {
+            return {
+              execute: retrieveGlobal
+            };
           });
           processAnonRegister();
         }
       }
-
       resolve();
     }, reject);
   });
+}
+
+function doEvalLoad (loader, url, source, processAnonRegister) {
+  // store a global snapshot in case it turns out to be global
+  globalSnapshot = {};
+  Object.keys(global).forEach(globalIterator, function (name, value) {
+    globalSnapshot[name] = value;
+  });
+
+  (0, eval)(source + '\n//# sourceURL=' + url);
+
+  // check for System.register call
+  var registered = processAnonRegister();
+  if (!registered) {
+    // no System.register -> support named AMD as anonymous
+    registerLastDefine(loader);
+    registered = processAnonRegister();
+
+    // still no registration -> attempt a global detection
+    if (!registered) {
+      loader.register([], function () {
+        return {
+          execute: retrieveGlobal
+        };
+      });
+      processAnonRegister();
+    }
+  }
 }
 
 var globalSnapshot;
@@ -275,6 +336,22 @@ function coreInstantiate (key, processAnonRegister) {
   if (depCache) {
     for (var i = 0; i < depCache.length; i++)
       this.resolve(depCache[i], key).then(preloadScript);
+  }
+
+  if (config.wasm) {
+    var loader = this;
+    return fetch(key)
+    .then(function (res) {
+      if (!res.ok)
+        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
+      if (res.headers.get('content-type').indexOf('application/wasm') === -1) {
+        return res.text()
+        .then(function (source) {
+          doEvalLoad(loader, key, source, processAnonRegister);
+        });
+      }
+      return instantiateWasm(loader, res, processAnonRegister);
+    });
   }
 
   return doScriptLoad(this, key, processAnonRegister);

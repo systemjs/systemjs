@@ -10,7 +10,7 @@ if (typeof document !== 'undefined') {
   base = document.baseURI.substr(0, document.baseURI.lastIndexOf('/') + 1);
 }
 else {
-  var cwd = process.cwd();
+  var cwd = process.cwd().replace(/\\/g, '/');
   base = 'file://' + (cwd[0] !== '/' ? '/' : '') + cwd + '/test/';
 }
 
@@ -249,6 +249,20 @@ suite('SystemJS Standard Tests', function() {
       });
     });
   }
+
+  if (typeof WebAssembly !== 'undefined' && typeof process === 'undefined')
+  test('Loading WASM', function () {
+    System.config({
+      wasm: true,
+      map: {
+        'example': 'tests/wasm/example.js'
+      }
+    });
+    return System.import('tests/wasm/example.wasm')
+    .then(function (m) {
+      ok(m.exampleExport(1) === 2);
+    });
+  });
 });
 
 System.register([], function () { return function () {} });
