@@ -1,6 +1,6 @@
 ## SystemJS Production Build
 
-The SystemJS production build supports loading System, AMD and global modules.
+The SystemJS production build supports loading System, AMD and global modules, as well as Web Assembly when `System.config({ wasm: true })` has been set.
 
 The configuration options of `baseURL`, `paths`, `map`, `depCache` and `wasm` are supported identically to the
 full development build, and as documented at the [configuration API page](config-api.md).
