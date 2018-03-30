@@ -17,8 +17,8 @@ export default {
   output: {
     format: 'iife',
     file: `dist/${name}.src.js`,
-    sourceMap: true,
-    sourceMapFile: `dist/${name}.js.map`,
+    sourcemap: true,
+    sourcemapFile: `dist/${name}.js.map`,
     banner: `/*
     * SystemJS v${version}
     */`
