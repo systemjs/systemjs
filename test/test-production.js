@@ -173,63 +173,70 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  if (typeof process === 'undefined')
-  test('Global script loading', function () {
-    return System.import('tests/global.js').then(function (m) {
-      ok(m.jjQuery && m.another, 'Global objects not defined');
+  if (typeof process === 'undefined') {
+    test('Global script loading', function () {
+      return System.import('tests/global.js').then(function (m) {
+        ok(m.jjQuery && m.another, 'Global objects not defined');
+      });
     });
-  });
 
-  if (typeof process === 'undefined')
-  test('Global script with var syntax', function () {
-    return System.import('tests/global-single.js').then(function (m) {
-      ok(m.default == 'bar', 'Wrong global value');
+    test('Global script with var syntax', function () {
+      return System.import('tests/global-single.js').then(function (m) {
+        ok(m.default == 'bar', 'Wrong global value');
+      });
     });
-  });
 
-  if (typeof process === 'undefined')
-  test('Global script with multiple objects the same', function () {
-    return System.import('tests/global-multi.js').then(function (m) {
-      if (m.jjQuery)
-        ok(false);
-      ok(m.default.jquery == 'here', 'Multi globals not detected');
+    test('Global script with multiple objects the same', function () {
+      return System.import('tests/global-multi.js').then(function (m) {
+        if (m.jjQuery)
+          ok(false);
+        ok(m.default.jquery == 'here', 'Multi globals not detected');
+      });
     });
-  });
 
-  if (typeof process === 'undefined')
-  test('Global script multiple objects different', function () {
-    return System.import('tests/global-multi-diff.js').then(function (m) {
-      ok(m.foo == 'barz');
-      ok(m.baz == 'chaz');
-      ok(m.zed == 'ted');
+    test('Global script multiple objects different', function () {
+      return System.import('tests/global-multi-diff.js').then(function (m) {
+        ok(m.foo == 'barz');
+        ok(m.baz == 'chaz');
+        ok(m.zed == 'ted');
+      });
     });
-  });
 
-  if (typeof process === 'undefined')
-  test('Loading an AMD module', function () {
-    return System.import('tests/amd-module.js').then(function (m) {
-      ok(m.default.amd == true, 'Incorrect module');
-      ok(m.default.dep.amd == 'dep', 'Dependency not defined');
-    });
-  });
+    test('Parallel Global loading', function () {
+      var scriptsToLoad = [];
+      for (var i = 1; i < 11; i++)
+        scriptsToLoad.push('tests/globals/import' + i + '.js');
 
-  if (typeof process === 'undefined')
-  test('Loading AMD CommonJS form', function () {
-    return System.import('tests/amd-cjs-module.js').then(function (m) {
-      ok(m.default.test == 'hi', 'Not defined');
+      return Promise.all(scriptsToLoad.map(function (s, index) {
+        return SystemJS.import(s).then(m => {
+          ok(m.default === index + 1, 'Invalid global value');
+        });
+      }));
     });
-  });
 
-  if (typeof process === 'undefined')
-  test('Contextual dynamic import', function () {
-    return System.import('tests/dynamic-import' + (typeof process === 'undefined' ? '-register' : '') + '.js').then(function (m) {
-      return m.lazy();
-    })
-    .then(function (lazyValue) {
-      console.log(lazyValue);
-      ok(lazyValue === 5);
+    test('Loading an AMD module', function () {
+      return System.import('tests/amd-module.js').then(function (m) {
+        ok(m.default.amd == true, 'Incorrect module');
+        ok(m.default.dep.amd == 'dep', 'Dependency not defined');
+      });
     });
-  });
+
+    test('Loading AMD CommonJS form', function () {
+      return System.import('tests/amd-cjs-module.js').then(function (m) {
+        ok(m.default.test == 'hi', 'Not defined');
+      });
+    });
+
+    test('Contextual dynamic import', function () {
+      return System.import('tests/dynamic-import' + (typeof process === 'undefined' ? '-register' : '') + '.js').then(function (m) {
+        return m.lazy();
+      })
+      .then(function (lazyValue) {
+        console.log(lazyValue);
+        ok(lazyValue === 5);
+      });
+    });
+  }
 
   test('getConfig', function () {
     ok(System.getConfig().depCache);

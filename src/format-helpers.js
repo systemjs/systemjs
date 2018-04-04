@@ -254,7 +254,7 @@ export function getCJSDeps (source) {
 // Global
 // bare minimum ignores
 var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external',
-  'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
+  'mozAnimationStartTime', 'mozPaintCount', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
 
 var globalSnapshot;
 export function globalIterator (globalName) {

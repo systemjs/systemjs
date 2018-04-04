@@ -242,7 +242,6 @@ function instantiateWasm (loader, response, processAnonRegister) {
 
 function doScriptLoad (loader, url, processAnonRegister) {
   // store a global snapshot in case it turns out to be global
-  globalSnapshot = {};
   Object.keys(global).forEach(globalIterator, function (name, value) {
     globalSnapshot[name] = value;
   });
@@ -259,9 +258,10 @@ function doScriptLoad (loader, url, processAnonRegister) {
 
         // still no registration -> attempt a global detection
         if (!registered) {
+          var moduleValue = retrieveGlobal();
           loader.register([], function () {
             return {
-              execute: retrieveGlobal
+              exports: moduleValue
             };
           });
           processAnonRegister();
@@ -274,7 +274,6 @@ function doScriptLoad (loader, url, processAnonRegister) {
 
 function doEvalLoad (loader, url, source, processAnonRegister) {
   // store a global snapshot in case it turns out to be global
-  globalSnapshot = {};
   Object.keys(global).forEach(globalIterator, function (name, value) {
     globalSnapshot[name] = value;
   });
@@ -290,9 +289,10 @@ function doEvalLoad (loader, url, source, processAnonRegister) {
 
     // still no registration -> attempt a global detection
     if (!registered) {
+      var moduleValue = retrieveGlobal();
       loader.register([], function () {
         return {
-          execute: retrieveGlobal
+          exports: moduleValue
         };
       });
       processAnonRegister();
@@ -300,33 +300,39 @@ function doEvalLoad (loader, url, source, processAnonRegister) {
   }
 }
 
-var globalSnapshot;
+var globalSnapshot = {};
 function retrieveGlobal () {
-  var globalValue = { __esModule: true };
-  var singleGlobal;
-  var multipleExports = false;
+  var globalValue = { default: undefined };
+  var multipleGlobals = false;
+  var globalName = undefined;
 
   Object.keys(global).forEach(globalIterator, function (name, value) {
     if (globalSnapshot[name] === value)
       return;
+    // update global snapshot as we go
+    globalSnapshot[name] = value;
+
     if (value === undefined)
       return;
 
-    globalValue[name] = value;
-
-    if (singleGlobal !== undefined) {
-      if (!multipleExports && singleGlobal !== value)
-        multipleExports = true;
+    if (multipleGlobals) {
+      globalValue[name] = value;
+    }
+    else if (globalName) {
+      if (globalValue.default !== value) {
+        multipleGlobals = true;
+        globalValue.__esModule = true;
+        globalValue[globalName] = globalValue.default;
+        globalValue[name] = value;
+      }
     }
     else {
-      singleGlobal = value;
+      globalValue.default = value;
+      globalName = name;
     }
   });
 
-  // clear global snapshot
-  globalSnapshot = undefined;
-
-  return multipleExports ? globalValue : singleGlobal;
+  return globalValue;
 }
 
 function coreInstantiate (key, processAnonRegister) {
