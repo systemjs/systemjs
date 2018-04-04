@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",

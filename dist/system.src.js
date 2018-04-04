@@ -1,5 +1,5 @@
 /*
-    * SystemJS v0.21.1 Dev
+    * SystemJS v0.21.2 Dev
     */
 (function () {
   'use strict';
@@ -3058,7 +3058,7 @@
   // Global
   // bare minimum ignores
   var ignoredGlobalProps = ['_g', 'sessionStorage', 'localStorage', 'clipboardData', 'frames', 'frameElement', 'external',
-    'mozAnimationStartTime', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
+    'mozAnimationStartTime', 'mozPaintCount', 'webkitStorageInfo', 'webkitIndexedDB', 'mozInnerScreenY', 'mozInnerScreenX'];
 
   var globalSnapshot;
   function globalIterator (globalName) {
@@ -3318,8 +3318,8 @@
 
   function loadBundlesAndDepCache (config, loader, key) {
     // load direct deps, in turn will pick up their trace trees
-    var deps = config.depCache[key];
-    if (deps) {
+    var deps;
+    if (isBrowser && (deps = config.depCache[key])) {
       for (var i = 0; i < deps.length; i++)
         loader.normalize(deps[i], key).then(preloadScript);
     }
@@ -3976,7 +3976,7 @@
     return RegisterLoader.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
   };
 
-  SystemJSLoader.prototype.version = "0.21.1 Dev";
+  SystemJSLoader.prototype.version = "0.21.2 Dev";
 
   var System = new SystemJSLoader();
 
