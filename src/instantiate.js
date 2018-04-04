@@ -105,8 +105,8 @@ function initializePlugin (loader, key, metadata) {
 
 function loadBundlesAndDepCache (config, loader, key) {
   // load direct deps, in turn will pick up their trace trees
-  var deps = config.depCache[key];
-  if (deps) {
+  var deps;
+  if (isBrowser && (deps = config.depCache[key])) {
     for (var i = 0; i < deps.length; i++)
       loader.normalize(deps[i], key).then(preloadScript);
   }
