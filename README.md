@@ -62,7 +62,7 @@ When all modules are available as either `system`, `amd` or global module format
 </script>
 ```
 
-Configuration support in the production loader includes baseURL, paths, map and depCache.
+Configuration support in the production loader includes baseURL, paths, map, depCache and wasm.
 
 ### NodeJS
 
