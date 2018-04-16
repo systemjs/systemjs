@@ -1,5 +1,5 @@
 /*
-    * SystemJS v0.21.2 Dev
+    * SystemJS v0.21.3 Dev
     */
 (function () {
   'use strict';
@@ -2799,7 +2799,7 @@
       if (useVm)
         vm.runInThisContext(getSource(source, sourceMap, address, !noWrap), { filename: address + (sourceMap ? '!transpiled' : '') });
       else
-        (eval)(getSource(source, sourceMap, address, !noWrap));
+        (0, eval)(getSource(source, sourceMap, address, !noWrap));
       postExec();
     }
     catch (e) {
@@ -3976,7 +3976,7 @@
     return RegisterLoader.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
   };
 
-  SystemJSLoader.prototype.version = "0.21.2 Dev";
+  SystemJSLoader.prototype.version = "0.21.3 Dev";
 
   var System = new SystemJSLoader();
 

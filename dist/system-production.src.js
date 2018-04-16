@@ -1,5 +1,5 @@
 /*
-    * SystemJS v0.21.2 Production
+    * SystemJS v0.21.3 Production
     */
 (function () {
   'use strict';
@@ -1810,7 +1810,7 @@
       globalSnapshot$1[name] = value;
     });
 
-    (eval)(source + '\n//# sourceURL=' + url);
+    (0, eval)(source + '\n//# sourceURL=' + url);
 
     // check for System.register call
     var registered = processAnonRegister();
@@ -1895,7 +1895,7 @@
     return doScriptLoad(this, key, processAnonRegister);
   }
 
-  SystemJSProductionLoader.prototype.version = "0.21.2 Production";
+  SystemJSProductionLoader.prototype.version = "0.21.3 Production";
 
   var System = new SystemJSProductionLoader();
 
