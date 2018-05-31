@@ -1,5 +1,5 @@
 import { resolveIfNotPlain } from 'es-module-loader/core/resolve.js';
-import { baseURI, isBrowser, isWindows, addToError, global, createSymbol } from 'es-module-loader/core/common.js';
+import { baseURI, isBrowser, isWindows, addToError, global, createSymbol, toStringTag } from 'es-module-loader/core/common.js';
 import RegisterLoader from 'es-module-loader/core/register-loader.js';
 import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
 
@@ -11,20 +11,19 @@ export function noop () {};
 export var emptyModule = new ModuleNamespace({});
 
 export function protectedCreateNamespace (bindings) {
-  if (bindings instanceof ModuleNamespace)
-    return bindings;
+  if (bindings) {
+    if (bindings instanceof ModuleNamespace || bindings[toStringTag] === 'module')
+      return bindings;
 
-  if (bindings && bindings.__esModule)
-    return new ModuleNamespace(bindings);
+    if (bindings.__esModule)
+      return new ModuleNamespace(bindings);
+  }
 
   return new ModuleNamespace({ default: bindings, __useDefault: bindings });
 }
 
-var hasStringTag;
 export function isModule (m) {
-  if (hasStringTag === undefined)
-    hasStringTag = typeof Symbol !== 'undefined' && !!Symbol.toStringTag;
-  return m instanceof ModuleNamespace || hasStringTag && Object.prototype.toString.call(m) == '[object Module]';
+  return m instanceof ModuleNamespace || m[toStringTag] === 'module';
 }
 
 export var CONFIG = createSymbol('loader-config');

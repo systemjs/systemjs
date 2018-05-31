@@ -270,6 +270,13 @@ suite('SystemJS Standard Tests', function() {
       ok(m.exampleExport(1) === 2);
     });
   });
+
+  test('Top-level await', function () {
+    return System.import('tests/tla/main.js')
+    .then(function (m) {
+      ok(m.passed === true);
+    });
+  });
 });
 
 System.register([], function () { return function () {} });
