@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "0.21.3",
+  "version": "0.21.4",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
     "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
     "bluebird": "^3.4.6",
-    "es-module-loader": "^2.2.8",
+    "es-module-loader": "^2.3.0",
     "mocha": "^3.1.2",
     "rimraf": "^2.6.1",
     "rollup": "^0.58.0",
