@@ -20,8 +20,8 @@ export default {
     sourcemap: true,
     sourcemapFile: `dist/${name}.js.map`,
     banner: `/*
-    * SystemJS v${version}
-    */`
+* SystemJS v${version}
+*/`
   },
 
   plugins: [
