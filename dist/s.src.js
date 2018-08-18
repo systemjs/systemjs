@@ -1,5 +1,6 @@
 /*
-* SystemJS 2.0.0-dev
+* SJS 2.0.0-dev
+* Minimal SystemJS Build
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -148,12 +149,6 @@
     };
   };
 
-  // onLoad(id, err) provided for tracing / hot-reloading
-  systemJSPrototype.onload = function () {};
-  function onLoadHandler (loader, id, err) {
-    loader.onload(id, err);
-  }
-
   let lastRegister;
   systemJSPrototype.register = function (deps, declare) {
     lastRegister = [deps, declare];
@@ -216,7 +211,6 @@
     .catch(function (err) {
       err.message += '\n  Instantiating ' + id;
       load.e = null;
-      setTimeout(onLoadHandler, 0, loader, id, err);
       throw err;
     });
 
@@ -355,19 +349,22 @@
     function done () {
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      setTimeout(onLoadHandler, 0, loader, load.id);
     }
     
     function evalError (err) {
       err.message += '\n  Evaluating ' + load.id;
       if (!load.eE)
         load.eE = err;
-      setTimeout(onLoadHandler, 0, loader, load.id, err);
       throw err;
     }
   }
 
   envGlobal.System = new SystemJS();
+
+  let baseUrl = location.href.split('#')[0].split('?')[0];
+  const lastSepIndex = baseUrl.lastIndexOf('/');
+  if (lastSepIndex !== -1)
+    baseUrl = baseUrl.substr(0, lastSepIndex + 1);
 
   /*
    * Supports loading System.register via script tag injection
@@ -388,245 +385,9 @@
     });
   };
 
-  /*
-   * Supports loading System.register in workers
-   */
-
-  if (hasSelf && typeof importScripts === 'function')
-    systemJSPrototype.instantiate = function (url) {
-      const loader = this;
-      return new Promise(function (resolve, reject) {
-        try {
-          importScripts(url);
-        }
-        catch (e) {
-          reject(e);
-        }
-        resolve(loader.execInstantiate());
-      });
-    };
-
-  /*
-   * Support for global loading
-   */
-
-  let lastGlobalProp;
-  let lastGlobalCheck = -1;
-  const instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url) {
-    // note the last defined global, debounced every 50ms
-    const now = Date.now();
-    if (now - lastGlobalCheck > 50) {
-      lastGlobalProp = Object.keys(envGlobal).pop();
-      lastGlobalCheck = now;
-    }
-    return instantiate.call(this, url);
-  };
-
-  const getRegister = systemJSPrototype.getRegister;
-  systemJSPrototype.getRegister = function () {
-    const lastRegister = getRegister.call(this);
-    if (lastRegister)
-      return lastRegister;
-    
-    // no registration -> attempt a global detection
-    // we take the global value to be the last defined new global object property
-    // if the property already existed as undefined, then no global is detected
-    const globalProp = Object.keys(envGlobal).pop();
-    lastGlobalCheck = Date.now();
-    if (lastGlobalProp === globalProp)
-      return;
-    
-    lastGlobalProp = globalProp;
-    let globalExport;
-    try {
-      globalExport = envGlobal[globalProp];
-    }
-    catch (e) {
-      return;
-    }
-
-    return [[], function (_export) {
-      return { execute: function () { _export('default', globalExport); } };
-    }];  
-  };
-
-  /*
-   * Loads WASM based on file extension detection
-   * Assumes successive instantiate will handle other files
-   */
-  const instantiate$1 = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url) {
-    if (!url.endsWith('.wasm'))
-      return instantiate$1.call(this, url);
-    
-    return fetch(url)
-    .then(function (res) {
-      if (!res.ok)
-        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
-      return WebAssembly.compileStreaming(res);
-    })
-    .then(function (module) {
-      const deps = [];
-      const setters = [];
-      const importObj = {};
-
-      // we can only set imports if supported (eg early Safari doesnt support)
-      if (WebAssembly.Module.imports)
-        WebAssembly.Module.imports(module).forEach(function (impt) {
-          const key = impt.module;
-          setters.push(function (m) {
-            importObj[key] = m;
-          });
-          if (deps.indexOf(key) === -1)
-            deps.push(key);
-        });
-
-      return [deps, function (_export) {
-        return {
-          setters: setters,
-          execute: function () {
-            _export(new WebAssembly.Instance(module, importObj).exports);
-          }
-        };
-      }];
-    });
-  };
-
-  let baseUrl = location.href.split('#')[0].split('?')[0];
-  const lastSepIndex = baseUrl.lastIndexOf('/');
-  if (lastSepIndex !== -1)
-    baseUrl = baseUrl.substr(0, lastSepIndex + 1);
-
-  /*
-   * Package name map support for SystemJS
-   * 
-   * <script type="systemjs-packagemap">{}</script>
-   * OR
-   * <script type="systemjs-packagemap" src=package.json></script>
-   * 
-   * Only supports loading the first package map
-   */
-
-  let packageMapPromise, packageMapResolve;
-  const scripts = document.getElementsByTagName('script');
-  for (let i = 0; i < scripts.length; i++) {
-    const script = scripts[i];
-    if (script.type !== 'systemjs-packagemap')
-      continue;
-
-    if (!script.src)
-      packageMapResolve = createPackageMap(JSON.parse(script.innerHTML));
-    else
-      packageMapPromise = fetch(script.src)
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (json) {
-        packageMapResolve = createPackageMap(json);
-        packageMapPromise = undefined;
-      });
-    break;
-  }
-
-  systemJSPrototype.resolve = function (id, parentUrl) {
-    const resolvedIfNotPlainOrUrl = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
-    if (resolvedIfNotPlainOrUrl)
-      return resolvedIfNotPlainOrUrl;
-
-    if (packageMapResolve)
-      return packageMapResolve(id, parentUrl);
-
-    if (packageMapPromise)
-      return packageMapPromise
-      .then(function () {
-        return packageMapResolve(id, parentUrl);
-      });
-    
-    return id;
-  };
-
-  /*
-   * Package name maps implementation
-   *
-   * Reduced implementation - only a single scope level is supported
-   * 
-   * To make lookups fast we pre-resolve the entire package name map
-   * and then match based on backtracked hash lookups
-   * 
-   * path_prefix in scopes not supported
-   * nested scopes not supported
-   */
-
-  function resolveUrl (relUrl, parentUrl) {
-    return resolveIfNotPlainOrUrl(relUrl.startsWith('./') ? relUrl : './' + json.path_prefix, parentUrl);
-  }
-
-  function createPackageMap (json) {
-    let baseUrl$$1 = json.path_prefix ? resolveUrl(json.path_prefix, baseUrl) : baseUrl;
-    if (baseUrl$$1[baseUrl$$1.length - 1] !== '/')
-      baseUrl$$1 += '/';
-      
-    const basePackages = json.packages || {};
-    const scopePackages = {};
-    if (json.scopes) {
-      for (let scopeName in json.scopes) {
-        const scope = json.scopes[scopeName];
-        if (scope.path_prefix)
-          throw new Error('Scope path_prefix not currently supported');
-        if (scope.scopes)
-          throw new Error('Nested scopes not currently supported');
-        scopePackages[resolveUrl(scopeName, baseUrl$$1)] = scope.packages || {};
-      }
-    }
-
-    function getMatch (url, matchObj) {
-      let sepIndex = url.length;
-      while ((sepIndex = url.lastIndexOf('/', sepIndex)) !== -1) {
-        const segment = url.substr(0, sepIndex);
-        if (segment in matchObj)
-          return segmnet;
-      }
-    }
-
-    function applyPackages (id, packages) {
-      const pkgName = getMatch(id, packages);
-      if (pkgName) {
-        const pkg = packages[pkgName];
-        if (pkg === id) {
-          if (typeof pkg === 'string')
-            return resolveUrl(pkgName + '/' + pkg, baseUrl$$1);
-          if (!pkg.main)
-            throw new Error('Package ' + pkgName + ' has no main');
-          return resolveUrl((pkg.path || pkgName) + '/' + pkg.main, baseUrl$$1);
-        }
-        return resolveUrl((pkg.path || pkgName) + '/' + id.substr(pkg.length), baseUrl$$1);
-      }
-    }
-
-    return function (id, parentUrl) {
-      const scope = getMatch(parentUrl, scopePackages);
-      if (scope) {
-        const packages = scopePackages[scope];
-        const packageResolution = applyPackages(id, packages);
-        if (packageResolution)
-          return packageResolution;
-      }
-      // core will throw "No resolution" on blank resolution
-      return applyPackages(id, basePackages);
-    };
-  }
-
-  systemJSPrototype.get = function (id) {
-    const load = this[REGISTRY][id];
-    if (load && load.e === null && !load.pE)
-      return load.ns;
-  };
-
-  // Delete function provided for hot-reloading use cases
-  systemJSPrototype.delete = function (id) {
-    return this.get(id) ? delete this[REGISTRY][id] : false;
+  systemJSPrototype.resolve = function (id, parent) {
+    return resolveIfNotPlainOrUrl(id, parent || baseUrl);
   };
 
 }());
-//# sourceMappingURL=system.src.js.map
+//# sourceMappingURL=s.src.js.map
