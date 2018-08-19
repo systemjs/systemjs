@@ -124,7 +124,9 @@
       throw new Error('No resolution');
     })
     .catch(function (err) {
-      throw addToError(err, '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : ''));
+      if (err && err.message)
+        err.message += '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : '');
+      throw err;
     });
   }
 
@@ -211,9 +213,38 @@
       return [registration[0], declared.setters, hoistedExports];
     })
     .catch(function (err) {
-      err = addToError(err, '\n  Loading ' + load.id);
+      if (err && err.message)
+        err.message += '\n  Loading ' + load.id;
       throw err;
     });
+
+    const linkPromise =  instantiatePromise
+    .then(function (instantiation) {
+      return Promise.all(instantiation[0].map(function (dep, i) {
+        const setter = instantiation[1][i];
+        return callResolve(loader, dep, id)
+        .then(function (depId) {
+          const depLoad = getOrCreateLoad(loader, depId);
+          // depLoad.I may be undefined for already-evaluated
+          return Promise.resolve(depLoad.I).then(function () {
+            if (setter) {
+              depLoad.i.push(setter);
+              // only run early setters when there are hoisted exports
+              if (instantiation[2] || !depLoad.I)
+                setter(depLoad.n);
+            }
+            return depLoad;
+          });
+        })
+      }))
+      .then(function (depLoads) {
+        load.d = depLoads;
+      });
+    });
+
+    // disable unhandled rejections
+    instantiatePromise.catch(function () {});
+    linkPromise.catch(function () {});
 
     // Captial letter = a promise function
     return load = loader[REGISTRY][id] = {
@@ -227,33 +258,7 @@
       // instantiate
       I: instantiatePromise,
       // link
-      L: instantiatePromise
-      .then(function (instantiation) {
-        return Promise.all(instantiation[0].map(function (dep, i) {
-          const setter = instantiation[1][i];
-          return callResolve(loader, dep, id)
-          .then(function (depId) {
-            const depLoad = getOrCreateLoad(loader, depId);
-            // depLoad.I may be undefined for already-evaluated
-            return Promise.resolve(depLoad.I).then(function () {
-              if (setter) {
-                depLoad.i.push(setter);
-                // only run early setters when there are hoisted exports
-                if (instantiation[2] || !depLoad.I)
-                  setter(depLoad.n);
-              }
-              return depLoad;
-            });
-          })
-        }))
-        .then(function (depLoads) {
-          load.d = depLoads;
-        })
-        .catch(function (err) {
-          err = addToError(err, '\n  Loading ' + load.id);
-          throw err;
-        });
-      }),
+      L: linkPromise,
 
       // On instantiate completion we have populated:
       // dependency load records
@@ -317,26 +322,20 @@
       
       let depLoadPromises;
       load.d.forEach(function (depLoad) {
-        try {
+        {
           const depLoadPromise = postOrderExec(loader, depLoad, seen);
-          if (depLoadPromise) {
-            (depLoadPromises = depLoadPromises || []).push(
-              depLoadPromise.catch(function (err) {
-                throw addToError(err, '\n  Evaluating ' + load.id);
-              })
-            );
-          }
-        }
-        catch (err) {
-          throw addToError(err, '\n  Evaluating ' + load.id);
+          if (depLoadPromise)
+            (depLoadPromises = depLoadPromises || []).push(depPromise);
         }
       });
-      if (depLoadPromises)
-        return Promise.all(depLoadPromises).then(function () {
-          // TLA trick:
-          // second time till will jump straight to evaluation part as seen
-          postOrderExec(loader, load, seen);
-        });
+      if (depLoadPromises) {
+        {
+          return Promise.all(depLoadPromises)
+          .then(function () {
+            return postOrderExec(loader, load, seen);
+          });
+        }
+      }
     }
 
     // could be a TLA race or circular
@@ -345,19 +344,20 @@
 
     try {
       const execPromise = load.e.call(nullContext);
-      if (execPromise)
-        return load.E = execPromise
-        .catch(function (err) {
-          throw addToError(err, '\n  Evaluating ' + load.id);
-        })
-        .then(function () {
+      if (execPromise) {
+        load.E = execPromise;
+        execPromise.then(function () {
           load.C = load.n;
-        });
+        })
+        .catch(function () {});
+        return execPromise;
+      }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
     }
     catch (err) {
-      throw load.eE = addToError(err, '\n  Evaluating ' + load.id);
+      load.eE = err;
+      throw err;
     }
     finally {
       load.L = load.I = undefined;
@@ -365,17 +365,11 @@
     }
   }
 
-  function addToError (err, stackMsg) {
-    const newErr = new Error((err.message || err) + stackMsg);
-    newErr.error = err;
-    return newErr;
-  }
-
   envGlobal.System = new SystemJS();
 
   let baseUrl;
   if (typeof location !== 'undefined') {
-    location.href.split('#')[0].split('?')[0];
+    baseUrl = location.href.split('#')[0].split('?')[0];
     const lastSepIndex = baseUrl.lastIndexOf('/');
     if (lastSepIndex !== -1)
       baseUrl = baseUrl.substr(0, lastSepIndex + 1);

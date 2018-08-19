@@ -315,12 +315,12 @@ describe('Loading Cases', function() {
 
     it('should throw if on syntax error', async function () {
       var err = await getImportError('./register-modules/main.js');
-      assert.equal(err, 'Error: dep error\n  Evaluating ' + testPath + 'deperror.js\n  Evaluating ' + testPath + 'main.js');
+      assert.equal(err, 'Error: dep error');
     });
 
     it('should throw what the script throws', async function () {
       var err = await getImportError('./register-modules/deperror.js');
-      assert.equal(err, 'Error: dep error\n  Evaluating ' + testPath + 'deperror.js');
+      assert.equal(err, 'Error: dep error');
     });
 
     it('404 error', async function () {
@@ -329,8 +329,6 @@ describe('Loading Cases', function() {
       var lines = err.split('\n  ');
       assert(lines[0].startsWith('Error: '));
       assert(lines[0].endsWith('open \'' + testPath.replace(/\//g, path.sep) + 'non-existent.js\''));
-      assert.equal(lines[1], 'Loading ' + testPath + 'non-existent.js');
-      assert.equal(lines[2], 'Loading ' + testPath + 'load-non-existent.js');
     });
   });
 });

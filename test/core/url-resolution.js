@@ -44,10 +44,9 @@ describe('Simple normalization tests', function () {
 });
 
 import fs from 'fs';
-var testCases = eval('(' + fs.readFileSync('test/unit/fixtures/url-resolution-cases.json') + ')');
+var testCases = eval('(' + fs.readFileSync('test/core/fixtures/url-resolution-cases.json') + ')');
 
 describe('URL resolution selected WhatWG URL spec tests', function () {
-  var run = 0;
   testCases.forEach(function (test) {
     if (typeof test === 'string')
       return;

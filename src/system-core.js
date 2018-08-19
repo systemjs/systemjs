@@ -36,7 +36,9 @@ function callResolve (loader, id, parentUrl) {
     throw new Error('No resolution');
   })
   .catch(function (err) {
-    throw addToError(err, '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : ''));
+    if (err && err.message)
+      err.message += '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : '');
+    throw err;
   });
 }
 
@@ -127,11 +129,39 @@ function getOrCreateLoad (loader, id) {
     return [registration[0], declared.setters, hoistedExports];
   })
   .catch(function (err) {
-    err = addToError(err, '\n  Loading ' + load.id);
-    if (TRACING)
-      loader.onload(load.id, err);
+    if (err && err.message)
+      err.message += '\n  Loading ' + load.id;
+    if (TRACING) loader.onload(load.id, err);
     throw err;
   });
+
+  const linkPromise =  instantiatePromise
+  .then(function (instantiation) {
+    return Promise.all(instantiation[0].map(function (dep, i) {
+      const setter = instantiation[1][i];
+      return callResolve(loader, dep, id)
+      .then(function (depId) {
+        const depLoad = getOrCreateLoad(loader, depId);
+        // depLoad.I may be undefined for already-evaluated
+        return Promise.resolve(depLoad.I).then(function () {
+          if (setter) {
+            depLoad.i.push(setter);
+            // only run early setters when there are hoisted exports
+            if (instantiation[2] || !depLoad.I)
+              setter(depLoad.n);
+          }
+          return depLoad;
+        });
+      })
+    }))
+    .then(function (depLoads) {
+      load.d = depLoads;
+    });
+  });
+
+  // disable unhandled rejections
+  instantiatePromise.catch(function () {});
+  linkPromise.catch(function () {});
 
   // Captial letter = a promise function
   return load = loader[REGISTRY][id] = {
@@ -145,35 +175,7 @@ function getOrCreateLoad (loader, id) {
     // instantiate
     I: instantiatePromise,
     // link
-    L: instantiatePromise
-    .then(function (instantiation) {
-      return Promise.all(instantiation[0].map(function (dep, i) {
-        const setter = instantiation[1][i];
-        return callResolve(loader, dep, id)
-        .then(function (depId) {
-          const depLoad = getOrCreateLoad(loader, depId);
-          // depLoad.I may be undefined for already-evaluated
-          return Promise.resolve(depLoad.I).then(function () {
-            if (setter) {
-              depLoad.i.push(setter);
-              // only run early setters when there are hoisted exports
-              if (instantiation[2] || !depLoad.I)
-                setter(depLoad.n);
-            }
-            return depLoad;
-          });
-        })
-      }))
-      .then(function (depLoads) {
-        load.d = depLoads;
-      })
-      .catch(function (err) {
-        err = addToError(err, '\n  Loading ' + load.id);
-        if (TRACING)
-          loader.onload(load.id, err);
-        throw err;
-      });
-    }),
+    L: linkPromise,
 
     // On instantiate completion we have populated:
     // dependency load records
@@ -237,28 +239,40 @@ function postOrderExec (loader, load, seen) {
     
     let depLoadPromises;
     load.d.forEach(function (depLoad) {
-      try {
-        const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise) {
-          (depLoadPromises = depLoadPromises || []).push(
-            depLoadPromise.catch(function (err) {
-              if (TRACING) loader.onload(load.id, err);
-              throw addToError(err, '\n  Evaluating ' + load.id);
-            })
-          );
+      if (TRACING) {
+        try {
+          const depLoadPromise = postOrderExec(loader, depLoad, seen);
+          if (depLoadPromise)
+            (depLoadPromises = depLoadPromises || []).push(depPromise);
+        }
+        catch (err) {
+          loader.onload(load.id, err);
+          throw err;
         }
       }
-      catch (err) {
-        if (TRACING) loader.onload(load.id, err);
-        throw addToError(err, '\n  Evaluating ' + load.id);
+      else {
+        const depLoadPromise = postOrderExec(loader, depLoad, seen);
+        if (depLoadPromise)
+          (depLoadPromises = depLoadPromises || []).push(depPromise);
       }
     });
-    if (depLoadPromises)
-      return Promise.all(depLoadPromises).then(function () {
-        // TLA trick:
-        // second time till will jump straight to evaluation part as seen
-        postOrderExec(loader, load, seen);
-      });
+    if (depLoadPromises) {
+      if (TRACING) {
+        return Promise.all(depLoadPromises)
+        .catch(function (err) { loader.onload(load.id, err); throw err; })
+        .then(function () {
+          // TLA trick:
+          // second time till will jump straight to evaluation part as seen
+          return postOrderExec(loader, load, seen);
+        });
+      }
+      else {
+        return Promise.all(depLoadPromises)
+        .then(function () {
+          return postOrderExec(loader, load, seen);
+        });
+      }
+    }
   }
 
   // could be a TLA race or circular
@@ -267,34 +281,29 @@ function postOrderExec (loader, load, seen) {
 
   try {
     const execPromise = load.e.call(nullContext);
-    if (execPromise)
-      return load.E = execPromise
-      .catch(function (err) {
-        if (TRACING) loader.onload(load.id, err);
-        throw addToError(err, '\n  Evaluating ' + load.id);
-      })
-      .then(function () {
+    if (execPromise) {
+      if (TRACING) execPromise.catch(function (err) { loader.onload(load.id, err); throw err; });
+      load.E = execPromise;
+      execPromise.then(function () {
         load.C = load.n;
         if (TRACING) loader.onload(load.id, null);
-      });
+      })
+      .catch(function () {});
+      return execPromise;
+    }
     // (should be a promise, but a minify optimization to leave out Promise.resolve)
     load.C = load.n;
     if (TRACING) loader.onload(load.id, null);
   }
   catch (err) {
     if (TRACING) loader.onload(load.id, err);
-    throw load.eE = addToError(err, '\n  Evaluating ' + load.id);
+    load.eE = err;
+    throw err;
   }
   finally {
     load.L = load.I = undefined;
     load.e = null;
   }
-}
-
-function addToError (err, stackMsg) {
-  const newErr = new Error((err.message || err) + stackMsg);
-  newErr.error = err;
-  return newErr;
 }
 
 global.System = new SystemJS();
