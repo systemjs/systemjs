@@ -9,9 +9,7 @@ export default {
   output: {
     format: 'iife',
     strict: false,
-    file: `dist/${name}.src.js`,
-    sourcemap: true,
-    sourcemapFile: `dist/${name}.js.map`,
+    file: `dist/${name}.js`,
     banner: process.env.sjs ? `/*
 * SJS ${version}
 * Minimal SystemJS Build

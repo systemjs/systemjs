@@ -16,6 +16,9 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
       relUrl.length === 1  && (relUrl += '/')) ||
       relUrl[0] === '/') {
     const parentProtocol = parentUrl.substr(0, parentUrl.indexOf(':') + 1);
+    // Disabled, but these cases will give inconsistent results for deep backtracking
+    //if (parentUrl[parentProtocol.length] !== '/')
+    //  throw new Error('Cannot resolve');
     // read pathname from parent URL
     // pathname taken to be part after leading "/"
     let pathname;

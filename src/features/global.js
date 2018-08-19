@@ -8,7 +8,7 @@ let lastGlobalProp;
 let lastGlobalCheck = -1;
 const instantiate = systemJSPrototype.instantiate;
 systemJSPrototype.instantiate = function (url) {
-  // note the last defined global, debounced every 50ms
+  // snapshot the global list, debounced every 50ms
   const now = Date.now();
   if (now - lastGlobalCheck > 50) {
     lastGlobalProp = Object.keys(global).pop();
@@ -23,9 +23,9 @@ systemJSPrototype.getRegister = function () {
   if (lastRegister)
     return lastRegister;
   
-  // no registration -> attempt a global detection
-  // we take the global value to be the last defined new global object property
-  // if the property already existed as undefined, then no global is detected
+  // no registration -> attempt a global detection as difference from snapshot
+  // when multiple globals, we take the global value to be the last defined new global object property
+  // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
   const globalProp = Object.keys(global).pop();
   lastGlobalCheck = Date.now();
   if (lastGlobalProp === globalProp)

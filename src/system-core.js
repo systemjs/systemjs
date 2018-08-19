@@ -36,8 +36,7 @@ function callResolve (loader, id, parentUrl) {
     throw new Error('No resolution');
   })
   .catch(function (err) {
-    err.message += '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : '');
-    throw err;
+    throw addToError(err, '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : ''));
   });
 }
 
@@ -67,9 +66,6 @@ systemJSPrototype.createContext = function (parentId) {
 // onLoad(id, err) provided for tracing / hot-reloading
 if (TRACING)
   systemJSPrototype.onload = function () {};
-function onLoadHandler (loader, id, err) {
-  loader.onload(id, err);
-}
 
 let lastRegister;
 systemJSPrototype.register = function (deps, declare) {
@@ -101,7 +97,7 @@ function getOrCreateLoad (loader, id) {
   })
   .then(function (registration) {
     if (!registration)
-      throw new Error('No System.register Module');
+      throw new Error('No instantiation');
     let hoistedExports = false;
     function _export (name, value) {
       hoistedExports = true;
@@ -131,10 +127,9 @@ function getOrCreateLoad (loader, id) {
     return [registration[0], declared.setters, hoistedExports];
   })
   .catch(function (err) {
-    err.message += '\n  Instantiating ' + id;
-    load.e = null;
+    err = addToError(err, '\n  Loading ' + load.id);
     if (TRACING)
-      setTimeout(onLoadHandler, 0, loader, id, err);
+      loader.onload(load.id, err);
     throw err;
   });
 
@@ -150,7 +145,8 @@ function getOrCreateLoad (loader, id) {
     // instantiate
     I: instantiatePromise,
     // link
-    L: instantiatePromise.then(function (instantiation) {
+    L: instantiatePromise
+    .then(function (instantiation) {
       return Promise.all(instantiation[0].map(function (dep, i) {
         const setter = instantiation[1][i];
         return callResolve(loader, dep, id)
@@ -166,10 +162,16 @@ function getOrCreateLoad (loader, id) {
             }
             return depLoad;
           });
-        });
+        })
       }))
       .then(function (depLoads) {
         load.d = depLoads;
+      })
+      .catch(function (err) {
+        err = addToError(err, '\n  Loading ' + load.id);
+        if (TRACING)
+          loader.onload(load.id, err);
+        throw err;
       });
     }),
 
@@ -203,7 +205,7 @@ function instantiateAll (loader, load, loaded) {
       return Promise.all(load.d.map(function (dep) {
         return instantiateAll(loader, dep, loaded);
       }));
-    });
+    })
   }
 }
 
@@ -237,54 +239,62 @@ function postOrderExec (loader, load, seen) {
     load.d.forEach(function (depLoad) {
       try {
         const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise)
-          (depLoadPromises = depLoadPromises || []).push(depLoadPromise.catch(evalError));
+        if (depLoadPromise) {
+          (depLoadPromises = depLoadPromises || []).push(
+            depLoadPromise.catch(function (err) {
+              if (TRACING) loader.onload(load.id, err);
+              throw addToError(err, '\n  Evaluating ' + load.id);
+            })
+          );
+        }
       }
-      catch (e) {
-        evalError(e);
+      catch (err) {
+        if (TRACING) loader.onload(load.id, err);
+        throw addToError(err, '\n  Evaluating ' + load.id);
       }
     });
     if (depLoadPromises)
-      return Promise.all(depLoadPromises).then(doEval);
+      return Promise.all(depLoadPromises).then(function () {
+        // TLA trick:
+        // second time till will jump straight to evaluation part as seen
+        postOrderExec(loader, load, seen);
+      });
   }
 
-  return doEval();
+  // could be a TLA race or circular
+  if (!load.e)
+    return load.E;
 
-  function doEval () {
-    // could be circular or tla
-    if (!load.e)
-      return load.E;
-  
-    try {
-      const execPromise = load.e.call(nullContext);
-      if (execPromise)
-        return load.E = execPromise.then(done, evalError);
-      done();
-    }
-    catch (err) {
-      evalError(err);
-    }
-    finally {
-      load.L = load.I = undefined;
-      load.e = null;
-    }
-  }
-
-  function done () {
+  try {
+    const execPromise = load.e.call(nullContext);
+    if (execPromise)
+      return load.E = execPromise
+      .catch(function (err) {
+        if (TRACING) loader.onload(load.id, err);
+        throw addToError(err, '\n  Evaluating ' + load.id);
+      })
+      .then(function () {
+        load.C = load.n;
+        if (TRACING) loader.onload(load.id, null);
+      });
     // (should be a promise, but a minify optimization to leave out Promise.resolve)
     load.C = load.n;
-    if (TRACING)
-      setTimeout(onLoadHandler, 0, loader, load.id);
+    if (TRACING) loader.onload(load.id, null);
   }
-  
-  function evalError (err) {
-    err.message += '\n  Evaluating ' + load.id;
-    if (!load.eE)
-      load.eE = err;
-    if (TRACING)
-      setTimeout(onLoadHandler, 0, loader, load.id, err);
-    throw err;
+  catch (err) {
+    if (TRACING) loader.onload(load.id, err);
+    throw load.eE = addToError(err, '\n  Evaluating ' + load.id);
   }
+  finally {
+    load.L = load.I = undefined;
+    load.e = null;
+  }
+}
+
+function addToError (err, stackMsg) {
+  const newErr = new Error((err.message || err) + stackMsg);
+  newErr.error = err;
+  return newErr;
 }
 
 global.System = new SystemJS();

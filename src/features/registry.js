@@ -2,8 +2,8 @@ import { systemJSPrototype, REGISTRY } from '../system-core.js';
 
 systemJSPrototype.get = function (id) {
   const load = this[REGISTRY][id];
-  if (load && load.e === null && !load.pE)
-    return load.ns;
+  if (load && load.e === null && !load.E)
+    return load.n;
 };
 
 // Delete function provided for hot-reloading use cases

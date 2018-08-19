@@ -1,0 +1,1616 @@
+{
+  "agents": [
+    "addressable",
+    "chrome",
+    "csharp",
+    "firefox",
+    "galimatias",
+    "nodejs",
+    "opera",
+    "perl",
+    "python",
+    "refimpl",
+    "ruby",
+    "rusturl",
+    "safari",
+    "spartan"
+  ],
+  "tests": [
+    {
+      "input": "http://example\t.\norg",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://example\\t.\\norg\"",
+      "index": "d7d52bebd0f43da2e9018eb3857526e8"
+    },
+    {
+      "input": "http://user:pass@foo:21/bar;par?b#c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://user:pass@foo:21/bar;par?b#c\"",
+      "index": "19b44e58a20564bc2f04aedcc43a169d"
+    },
+    {
+      "input": "http:foo.com",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http:foo.com\"",
+      "index": "6d7ba30341103fbd2b2a4a6c950a013a"
+    },
+    {
+      "input": "\t   :foo.com   \n",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"\\t   :foo.com   \\n\"",
+      "index": "072fdde05281cda0232bda7967e62580"
+    },
+    {
+      "input": " foo.com  ",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\" foo.com  \"",
+      "index": "bdeb64f2e2195988ead4e41b1fc0c221"
+    },
+    {
+      "input": "a:\t foo.com",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"a:\\t foo.com\"",
+      "index": "9533ac078736c54dd77a17f9c7b2e1fd"
+    },
+    {
+      "input": "http://f:21/ b ? d # e ",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:21/ b ? d # e \"",
+      "index": "4a20951124b6f5649b377a942023a321"
+    },
+    {
+      "input": "http://f:/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:/c\"",
+      "index": "d0c654ea07d59cfee6e6b4402db2ca6e"
+    },
+    {
+      "input": "http://f:0/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:0/c\"",
+      "index": "1eb81ab802f37681ed8bc72f75d8cdcb"
+    },
+    {
+      "input": "http://f:00000000000000/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:00000000000000/c\"",
+      "index": "fef11465ca1b5a77f367e2ea0853e755"
+    },
+    {
+      "input": "http://f:00000000000000000000080/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:00000000000000000000080/c\"",
+      "index": "1f55315f45103da1ed56e5bb2d5ffe25"
+    },
+    {
+      "input": "http://f:b/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:b/c\"",
+      "index": "eabadb2de0797e04b12e6dac49224456"
+    },
+    {
+      "input": "http://f: /c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f: /c\"",
+      "index": "f4fec18dbb0b163881bba7f1d3dcc91d"
+    },
+    {
+      "input": "http://f:\n/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:\\n/c\"",
+      "index": "65a104ac65501bd5277c181e02d5f0d5"
+    },
+    {
+      "input": "http://f:fifty-two/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:fifty-two/c\"",
+      "index": "28a09f1ba13013d487d6c52438a65ddd"
+    },
+    {
+      "input": "http://f:999999/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f:999999/c\"",
+      "index": "c6c0953a53ffe42c291b51639a11dd20"
+    },
+    {
+      "input": "http://f: 21 / b ? d # e ",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://f: 21 / b ? d # e \"",
+      "index": "8323be50cd59def5bd8e776768e4196e"
+    },
+    {
+      "input": "",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"\"",
+      "index": "63fe456f896e643258b63c3c3a3f0c8c"
+    },
+    {
+      "input": "  \t",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"  \\t\"",
+      "index": "66a0f7b607850afce2b935b8ca729911"
+    },
+    {
+      "input": ":foo.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":foo.com/\"",
+      "index": "370ae3444c5095d586946219335323c5"
+    },
+    {
+      "input": ":foo.com\\",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":foo.com\\\\\"",
+      "index": "2334b6ef76b17006a680f910fdaae428"
+    },
+    {
+      "input": ":",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":\"",
+      "index": "c7a2fab28b50f6a85d0ca076e8c36299"
+    },
+    {
+      "input": ":a",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":a\"",
+      "index": "30a90da06492178be8ab68e77fc38c72"
+    },
+    {
+      "input": ":/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":/\"",
+      "index": "1c65630ec535d8a36b7b8044bdb2a6eb"
+    },
+    {
+      "input": ":\\",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":\\\\\"",
+      "index": "57209bed1af7eb58eff9c6f0fcc60fb9"
+    },
+    {
+      "input": ":#",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":#\"",
+      "index": "a956ac8faae5e3ac7ad6a405c893a153"
+    },
+    {
+      "input": "#",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"#\"",
+      "index": "5c892a0201ca11f9a3296311aaf3af99"
+    },
+    {
+      "input": "#/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"#/\"",
+      "index": "1b50f5e9d43139b22ffa33a147844991"
+    },
+    {
+      "input": "#\\",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"#\\\\\"",
+      "index": "ff389133b5a6777886e957c326c1d4e7"
+    },
+    {
+      "input": "#;?",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"#;?\"",
+      "index": "151678feda4440df9fed0afc6a13dbd8"
+    },
+    {
+      "input": "?",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"?\"",
+      "index": "9f7822bf4f5d499ec8fc46f0254d8a64"
+    },
+    {
+      "input": "/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"/\"",
+      "index": "e0211760811f15888dc374f0281aa46c"
+    },
+    {
+      "input": ":23",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\":23\"",
+      "index": "dfd98b251518070b34f62409bb66c42e"
+    },
+    {
+      "input": "/:23",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"/:23\"",
+      "index": "f930628f1eee1e59c9c94b3ecd8d3b72"
+    },
+    {
+      "input": "::",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"::\"",
+      "index": "c4160899a35fdf8c31ecdd0447dfc8ac"
+    },
+    {
+      "input": "::23",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"::23\"",
+      "index": "7123c5320419fb7324ceb48a02410868"
+    },
+    {
+      "input": "foo://",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"foo://\"",
+      "index": "e76a639ae9627e41332668dd33ee553e"
+    },
+    {
+      "input": "http://a:b@c:29/d",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://a:b@c:29/d\"",
+      "index": "580270e4926ad929ca0518e247d260f4"
+    },
+    {
+      "input": "http::@c:29",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http::@c:29\"",
+      "index": "ca960e1dbfbf2d98ca8ed64fe041efa1"
+    },
+    {
+      "input": "http://&a:foo(b]c@d:2/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://&a:foo(b]c@d:2/\"",
+      "index": "04964b2280ea1d3df0b79c1edde92428"
+    },
+    {
+      "input": "http://::@c@d:2",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://::@c@d:2\"",
+      "index": "eb8a9212cfe5ecd2a7b12ff9d8710e10"
+    },
+    {
+      "input": "http://foo.com:b@d/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://foo.com:b@d/\"",
+      "index": "6c705d6ef8c822d9d00072e72799b692"
+    },
+    {
+      "input": "http://foo.com/\\@",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://foo.com/\\\\@\"",
+      "index": "7b43e9eddd5501c4c0fcfe21d426a653"
+    },
+    {
+      "input": "http:\\\\foo.com\\",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http:\\\\\\\\foo.com\\\\\"",
+      "index": "2aa7db2b3da1b4d35d11722ac6b54741"
+    },
+    {
+      "input": "http:\\\\a\\b:c\\d@foo.com\\",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http:\\\\\\\\a\\\\b:c\\\\d@foo.com\\\\\"",
+      "index": "94a9c06b15bcedf1a936b3ddc0ac3bd1"
+    },
+    {
+      "input": "foo:/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"foo:/\"",
+      "index": "625a99c3440f4fef2214216722536f8e"
+    },
+    {
+      "input": "foo:/bar.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"foo:/bar.com/\"",
+      "index": "94bce1e1df40015eccf327e42aac86aa"
+    },
+    {
+      "input": "foo://///////",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"foo://///////\"",
+      "index": "092fca3ab6ee929823a39a7e215391e2"
+    },
+    {
+      "input": "foo://///////bar.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"foo://///////bar.com/\"",
+      "index": "c1ff416d81e093888ae35d890102f7aa"
+    },
+    {
+      "input": "foo:////://///",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"foo:////://///\"",
+      "index": "f1ce37f6e1950302f6baa90bd7d64441"
+    },
+    {
+      "input": "c:/foo",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"c:/foo\"",
+      "index": "999fc758c3a4e38aa5c73b22c0bde803"
+    },
+    {
+      "input": "//foo/bar",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"//foo/bar\"",
+      "index": "bd245db3bb0a0a805896d54638f47955"
+    },
+    {
+      "input": "http://foo/path;a??e#f#g",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://foo/path;a??e#f#g\"",
+      "index": "730127041abe41ed4ed17e59e958603a"
+    },
+    {
+      "input": "http://foo/abcd?efgh?ijkl",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://foo/abcd?efgh?ijkl\"",
+      "index": "c3f068cbd838d23904310e19c597eade"
+    },
+    {
+      "input": "http://foo/abcd#foo?bar",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://foo/abcd#foo?bar\"",
+      "index": "1d2ab3ead8b7e015c4e799957a0abb22"
+    },
+    {
+      "input": "[61:24:74]:98",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"[61:24:74]:98\"",
+      "index": "05efba4660050aeb52cea194dfc6d841"
+    },
+    {
+      "input": "http:[61:27]/:foo",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http:[61:27]/:foo\"",
+      "index": "591a0613645a9885e543922f63d5a531"
+    },
+    {
+      "input": "http://[1::2]:3:4",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://[1::2]:3:4\"",
+      "index": "73fe5361ec002a0d4adb5a2ab3e51f56"
+    },
+    {
+      "input": "http://2001::1",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://2001::1\"",
+      "index": "96db824e63fec9d2679d720cf394f146"
+    },
+    {
+      "input": "http://2001::1]",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://2001::1]\"",
+      "index": "85201c8d8fe926478504d58f04257865"
+    },
+    {
+      "input": "http://2001::1]:80",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://2001::1]:80\"",
+      "index": "f921120f8c28b694e12c821025c2ba37"
+    },
+    {
+      "input": "http://[2001::1]",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://[2001::1]\"",
+      "index": "dc13c4987ad45f54a5ebb02f28af848d"
+    },
+    {
+      "input": "http://[2001::1]:80",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http://[2001::1]:80\"",
+      "index": "2757692299dd14e6d3857377a3e06706"
+    },
+    {
+      "input": "http:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http:/example.com/\"",
+      "index": "94ee175e700ff54a426762c1626be25c"
+    },
+    {
+      "input": "ftp:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"ftp:/example.com/\"",
+      "index": "8bb3c95bce681b48d00e3c90095fa43d"
+    },
+    {
+      "input": "https:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"https:/example.com/\"",
+      "index": "3d837d6a0e92b82e43411f1c7b6cf5d1"
+    },
+    {
+      "input": "madeupscheme:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"madeupscheme:/example.com/\"",
+      "index": "5dfad426313adc6d355ad0072b22971f"
+    },
+    {
+      "input": "file:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"file:/example.com/\"",
+      "index": "823f5dc69878a9e16f3b2442c03ee2e7"
+    },
+    {
+      "input": "ftps:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"ftps:/example.com/\"",
+      "index": "2b6f78c226bf6784ada11b7c8479afb9"
+    },
+    {
+      "input": "gopher:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"gopher:/example.com/\"",
+      "index": "9cfecf51ebf1b8ebb5abb7edea1e5966"
+    },
+    {
+      "input": "ws:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"ws:/example.com/\"",
+      "index": "3e130c3caeb1b46b737b69a14808ccf2"
+    },
+    {
+      "input": "wss:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"wss:/example.com/\"",
+      "index": "ee33c74fc75cc21ff5fe74fe1b4d5dd6"
+    },
+    {
+      "input": "data:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"data:/example.com/\"",
+      "index": "9af5a599adb88aaec65fdfcfd0e95881"
+    },
+    {
+      "input": "javascript:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"javascript:/example.com/\"",
+      "index": "ca4dfd0fb6e555088a49b64c4558c6c1"
+    },
+    {
+      "input": "mailto:/example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"mailto:/example.com/\"",
+      "index": "15341d9fabedb76142171ef51f3419b1"
+    },
+    {
+      "input": "http:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"http:example.com/\"",
+      "index": "72e579eff1b95999ea8ab06825cc9f5b"
+    },
+    {
+      "input": "ftp:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"ftp:example.com/\"",
+      "index": "af9452e59d1c5d4507a0780956cf8fbe"
+    },
+    {
+      "input": "https:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"https:example.com/\"",
+      "index": "9852793b40528f619612f6e9ee7a2e62"
+    },
+    {
+      "input": "madeupscheme:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"madeupscheme:example.com/\"",
+      "index": "2325f88b99e3c1bdcd20b5f2a5bb645a"
+    },
+    {
+      "input": "ftps:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"ftps:example.com/\"",
+      "index": "4bf4d86ddfb41f6f5006545e26e03739"
+    },
+    {
+      "input": "gopher:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"gopher:example.com/\"",
+      "index": "c56e139c47f34611bb72efab0ee643a2"
+    },
+    {
+      "input": "ws:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"ws:example.com/\"",
+      "index": "40a3cd3976a707471825d96080183ba2"
+    },
+    {
+      "input": "wss:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"wss:example.com/\"",
+      "index": "d302d5a74c36188f535e31a148eb3f34"
+    },
+    {
+      "input": "data:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"data:example.com/\"",
+      "index": "8d77b774e1ec4011f2d4aa0895bc3aff"
+    },
+    {
+      "input": "javascript:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"javascript:example.com/\"",
+      "index": "45c1e60bb603d78610539b97028c99a0"
+    },
+    {
+      "input": "mailto:example.com/",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"mailto:example.com/\"",
+      "index": "083a71850fa1518f18fc40f6da323c0c"
+    },
+    {
+      "input": "/a/b/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"/a/b/c\"",
+      "index": "2be58dc52123804f7bffa4fa706261c2"
+    },
+    {
+      "input": "/a/ /c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"/a/ /c\"",
+      "index": "54fcce3b02c40fd3d9703560b7cb133e"
+    },
+    {
+      "input": "/a%2fc",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"/a%2fc\"",
+      "index": "a30b88b46bdbe481d0c019920a7d533c"
+    },
+    {
+      "input": "/a/%2f/c",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"/a/%2f/c\"",
+      "index": "7c8e4bad9caa162590226e1eba5f0942"
+    },
+    {
+      "input": "#Î²",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"#\\u03B2\"",
+      "index": "7b83ef36820e349669972f2e33d0810d"
+    },
+    {
+      "input": "data:text/html,test#test",
+      "base": "http://example.org/foo/bar",
+      "inspect": "\"data:text/html,test#test\"",
+      "index": "6eacf58c27704e8bf111aaafa1778c4d"
+    },
+    {
+      "input": "file:c:\\foo\\bar.html",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file:c:\\\\foo\\\\bar.html\"",
+      "index": "40f76c06a8336efddfdba56c11d6dcad"
+    },
+    {
+      "input": "  File:c|////foo\\bar.html",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"  File:c|////foo\\\\bar.html\"",
+      "index": "8c35076c8cb4bac6bcd62868f2d64a85"
+    },
+    {
+      "input": "C|/foo/bar",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"C|/foo/bar\"",
+      "index": "b1430fc3798ad20c3efe4fc7502be657"
+    },
+    {
+      "input": "/C|\\foo\\bar",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"/C|\\\\foo\\\\bar\"",
+      "index": "4f239944e1101e60c3a9ede04a4f230e"
+    },
+    {
+      "input": "//C|/foo/bar",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"//C|/foo/bar\"",
+      "index": "9dc9a8fa31bdc5c8b1d2f2a4568925e1"
+    },
+    {
+      "input": "//server/file",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"//server/file\"",
+      "index": "6313a42a1e20eeee5e9da30036bb6bd2"
+    },
+    {
+      "input": "\\\\server\\file",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"\\\\\\\\server\\\\file\"",
+      "index": "7821ae0c48a3eb182c8f71aa37fb45bb"
+    },
+    {
+      "input": "/\\server/file",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"/\\\\server/file\"",
+      "index": "6072dc4ce474501f29783d48dfc7afcc"
+    },
+    {
+      "input": "file:///foo/bar.txt",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file:///foo/bar.txt\"",
+      "index": "48db81fd23345ccc4136a593103d0273"
+    },
+    {
+      "input": "file:///home/me",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file:///home/me\"",
+      "index": "4dbab424027c3e7d13f33bf4f09235db"
+    },
+    {
+      "input": "//",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"//\"",
+      "index": "ebfaa37416fdfed1b65638022fb4b7e8"
+    },
+    {
+      "input": "///",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"///\"",
+      "index": "3203d8ffc61c787df17930df14084f4c"
+    },
+    {
+      "input": "///test",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"///test\"",
+      "index": "93b31c6d1418e8e5243987fa12772fd3"
+    },
+    {
+      "input": "file://test",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file://test\"",
+      "index": "e927eb11903f858bac9ea571e9f7b098"
+    },
+    {
+      "input": "file://localhost",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file://localhost\"",
+      "index": "53d49202f186e3780799cf009f8d7daa"
+    },
+    {
+      "input": "file://localhost/",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file://localhost/\"",
+      "index": "2fcfde30f8639a7550128b4272bab259"
+    },
+    {
+      "input": "file://localhost/test",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file://localhost/test\"",
+      "index": "a4338a6f52473bcb4a5275615c63b5dd"
+    },
+    {
+      "input": "test",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"test\"",
+      "index": "ececdd962efd1c560750ca4ba2356201"
+    },
+    {
+      "input": "file:test",
+      "base": "file:///tmp/mock/path",
+      "inspect": "\"file:test\"",
+      "index": "9a4e2d350472f1d0b1e6d9ea113cc6ee"
+    },
+    {
+      "input": "http://example.com/././foo",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/././foo\"",
+      "index": "22f485f543c987d4411167ffe0e37645"
+    },
+    {
+      "input": "http://example.com/./.foo",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/./.foo\"",
+      "index": "e1d6c4e019a1277386cffdcf2d64307f"
+    },
+    {
+      "input": "http://example.com/foo/.",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/.\"",
+      "index": "2a33bb9af6fd819582d061a97c3f901e"
+    },
+    {
+      "input": "http://example.com/foo/./",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/./\"",
+      "index": "b48b8bb38e0b06ad3d0400c9ba8f127b"
+    },
+    {
+      "input": "http://example.com/foo/bar/..",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/bar/..\"",
+      "index": "1b005cdfe9f2fec052d1f813d9b5d89c"
+    },
+    {
+      "input": "http://example.com/foo/bar/../",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/bar/../\"",
+      "index": "8fc653ea6b928c0930bf787a12a1260d"
+    },
+    {
+      "input": "http://example.com/foo/..bar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/..bar\"",
+      "index": "b50b61586dba3cf334b4ec443b0d54d7"
+    },
+    {
+      "input": "http://example.com/foo/bar/../ton",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/bar/../ton\"",
+      "index": "e27195ad3c9d0bdf2dd2cce1d2a4efc2"
+    },
+    {
+      "input": "http://example.com/foo/bar/../ton/../../a",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/bar/../ton/../../a\"",
+      "index": "84a25b8dc71dab1b5c3daebf627a89d9"
+    },
+    {
+      "input": "http://example.com/foo/../../..",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/../../..\"",
+      "index": "863dbcb8b67cb0f286e838c217e62a1d"
+    },
+    {
+      "input": "http://example.com/foo/../../../ton",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/../../../ton\"",
+      "index": "a01656d8208073a2bebc26e180c164a3"
+    },
+    {
+      "input": "http://example.com/foo/%2e",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/%2e\"",
+      "index": "a78e460b47f584c59a24253d914ff257"
+    },
+    {
+      "input": "http://example.com/foo/%2e%2",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/%2e%2\"",
+      "index": "34075a44b9370cf0774ffbc109694bb8"
+    },
+    {
+      "input": "http://example.com/foo/%2e./%2e%2e/.%2e/%2e.bar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/%2e./%2e%2e/.%2e/%2e.bar\"",
+      "index": "27c205abd88d20afeb548507d821fe9b"
+    },
+    {
+      "input": "http://example.com////../..",
+      "base": "about:blank",
+      "inspect": "\"http://example.com////../..\"",
+      "index": "e1ed8b8d9114d4f40900b33c3bcff68a"
+    },
+    {
+      "input": "http://example.com/foo/bar//../..",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/bar//../..\"",
+      "index": "afc52b1dce2950f0e671e7ea748bfc7a"
+    },
+    {
+      "input": "http://example.com/foo/bar//..",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo/bar//..\"",
+      "index": "5f3c5f9655202dfb7666ee380356a5be"
+    },
+    {
+      "input": "http://example.com/foo",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo\"",
+      "index": "722780b4da3455fd303eda7b7d44f1e0"
+    },
+    {
+      "input": "http://example.com/%20foo",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/%20foo\"",
+      "index": "81b0acb2c8ff162d3de0cb639c9839b5"
+    },
+    {
+      "input": "http://example.com/foo%",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo%\"",
+      "index": "308de51647cbe5db1f4bb951f7fe791c"
+    },
+    {
+      "input": "http://example.com/foo%2",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo%2\"",
+      "index": "fd70922fc1ea8d599d189b4358e40145"
+    },
+    {
+      "input": "http://example.com/foo%2zbar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo%2zbar\"",
+      "index": "bd8ab097e24864d06c8bca30f06e4e5e"
+    },
+    {
+      "input": "http://example.com/foo%2Ã‚Â©zbar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo%2\\u00C2\\u00A9zbar\"",
+      "index": "58e1027e40f1903e69c3bf487d623388"
+    },
+    {
+      "input": "http://example.com/foo%41%7a",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo%41%7a\"",
+      "index": "409116ad964811d2084f42d0495f562a"
+    },
+    {
+      "input": "http://example.com/foo\tÂ‘%91",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo\\t\\u0091%91\"",
+      "index": "803bd79eed5260aae71c1ff41de27dbf"
+    },
+    {
+      "input": "http://example.com/foo%00%51",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo%00%51\"",
+      "index": "9dc603fb21f504d757df07f38d84e915"
+    },
+    {
+      "input": "http://example.com/(%28:%3A%29)",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/(%28:%3A%29)\"",
+      "index": "db0588a051d3251090c50cdc12194e71"
+    },
+    {
+      "input": "http://example.com/%3A%3a%3C%3c",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/%3A%3a%3C%3c\"",
+      "index": "2f8cbd9664b468d3ad94aa2de29089c1"
+    },
+    {
+      "input": "http://example.com/foo\tbar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/foo\\tbar\"",
+      "index": "a957ed525304e8b595d80e0982e6019b"
+    },
+    {
+      "input": "http://example.com\\\\foo\\\\bar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com\\\\\\\\foo\\\\\\\\bar\"",
+      "index": "d293ec43429c4f642ee73d88c74115ac"
+    },
+    {
+      "input": "http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd\"",
+      "index": "1cd5bf57f4523153222dcd5fb89e37bf"
+    },
+    {
+      "input": "http://example.com/@asdf%40",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/@asdf%40\"",
+      "index": "50bdc660b7942eaec2e9b110f4e2b635"
+    },
+    {
+      "input": "http://example.com/ä½ å¥½ä½ å¥½",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/\\u4F60\\u597D\\u4F60\\u597D\"",
+      "index": "a4293f7173f85ba6aa75f79334f61b79"
+    },
+    {
+      "input": "http://example.com/â€¥/foo",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/\\u2025/foo\"",
+      "index": "a5af8f1c792fa058c96fe9ce91da61ef"
+    },
+    {
+      "input": "http://example.com/ï»¿/foo",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/\\uFEFF/foo\"",
+      "index": "6cf3aa10f4e282a3ce5fc1333949b85d"
+    },
+    {
+      "input": "http://example.com/â€®/foo/â€­/bar",
+      "base": "about:blank",
+      "inspect": "\"http://example.com/\\u202E/foo/\\u202D/bar\"",
+      "index": "14dc62b803903b99372725460d24a442"
+    },
+    {
+      "input": "http://www.google.com/foo?bar=baz#",
+      "base": "about:blank",
+      "inspect": "\"http://www.google.com/foo?bar=baz#\"",
+      "index": "17d6cb135f522b031e22d798ee449aaf"
+    },
+    {
+      "input": "http://www.google.com/foo?bar=baz# Â»",
+      "base": "about:blank",
+      "inspect": "\"http://www.google.com/foo?bar=baz# \\u00BB\"",
+      "index": "64ccb0a586f86259452af4da4d398df3"
+    },
+    {
+      "input": "data:test# Â»",
+      "base": "about:blank",
+      "inspect": "\"data:test# \\u00BB\"",
+      "index": "34219ff51bb3c49aa7a1dccf10bada47"
+    },
+    {
+      "input": "http://[www.google.com]/",
+      "base": "about:blank",
+      "inspect": "\"http://[www.google.com]/\"",
+      "index": "5a0880921818d0133e28740c34415bc2"
+    },
+    {
+      "input": "http://www.google.com",
+      "base": "about:blank",
+      "inspect": "\"http://www.google.com\"",
+      "index": "7340d73137aa36361e969faf7cdc9b89"
+    },
+    {
+      "input": "http://192.0x00A80001",
+      "base": "about:blank",
+      "inspect": "\"http://192.0x00A80001\"",
+      "index": "be976fec3f3c60d7c2e4840632ee3cde"
+    },
+    {
+      "input": "http://www/foo%2Ehtml",
+      "base": "about:blank",
+      "inspect": "\"http://www/foo%2Ehtml\"",
+      "index": "ed320ed17a87c55518d5e0125c7776ea"
+    },
+    {
+      "input": "http://www/foo/%2E/html",
+      "base": "about:blank",
+      "inspect": "\"http://www/foo/%2E/html\"",
+      "index": "083ab7eeeb3718c508cf42948ec240f0"
+    },
+    {
+      "input": "http://user:pass@/",
+      "base": "about:blank",
+      "inspect": "\"http://user:pass@/\"",
+      "index": "0147d29add92bf29c9fa2811880e1eb3"
+    },
+    {
+      "input": "http://%25DOMAIN:foobar@foodomain.com/",
+      "base": "about:blank",
+      "inspect": "\"http://%25DOMAIN:foobar@foodomain.com/\"",
+      "index": "2e2199f57afcebb6bfbd5ca4666227ef"
+    },
+    {
+      "input": "http:\\\\www.google.com\\foo",
+      "base": "about:blank",
+      "inspect": "\"http:\\\\\\\\www.google.com\\\\foo\"",
+      "index": "efd1075117d264285cf4985f2cef64e9"
+    },
+    {
+      "input": "http://foo:80/",
+      "base": "about:blank",
+      "inspect": "\"http://foo:80/\"",
+      "index": "00a78bbc8b21fa7d28c6de22d14d1c7a"
+    },
+    {
+      "input": "http://foo:81/",
+      "base": "about:blank",
+      "inspect": "\"http://foo:81/\"",
+      "index": "97f97a2e5a4d67beb9dbb9a92492fd91"
+    },
+    {
+      "input": "httpa://foo:80/",
+      "base": "about:blank",
+      "inspect": "\"httpa://foo:80/\"",
+      "index": "5ad7beec910c665b954bd8db119953cb"
+    },
+    {
+      "input": "http://foo:-80/",
+      "base": "about:blank",
+      "inspect": "\"http://foo:-80/\"",
+      "index": "44807cdd4ef87993562bc7cb6691b4f2"
+    },
+    {
+      "input": "https://foo:443/",
+      "base": "about:blank",
+      "inspect": "\"https://foo:443/\"",
+      "index": "23a6cbb3180694b656732dd9fc2a2819"
+    },
+    {
+      "input": "https://foo:80/",
+      "base": "about:blank",
+      "inspect": "\"https://foo:80/\"",
+      "index": "7c9976d1a1e2a4386c197a64da53bad3"
+    },
+    {
+      "input": "ftp://foo:21/",
+      "base": "about:blank",
+      "inspect": "\"ftp://foo:21/\"",
+      "index": "8fd719eaea95b1f7a043fd6be26052de"
+    },
+    {
+      "input": "ftp://foo:80/",
+      "base": "about:blank",
+      "inspect": "\"ftp://foo:80/\"",
+      "index": "cb10d87128e64fac0be2f4f8bc8bbc81"
+    },
+    {
+      "input": "gopher://foo:70/",
+      "base": "about:blank",
+      "inspect": "\"gopher://foo:70/\"",
+      "index": "f04f8e442fe2898df3b3d036225f65e7"
+    },
+    {
+      "input": "gopher://foo:443/",
+      "base": "about:blank",
+      "inspect": "\"gopher://foo:443/\"",
+      "index": "f7ae1bdb940917bc17f28b55f2933a01"
+    },
+    {
+      "input": "ws://foo:80/",
+      "base": "about:blank",
+      "inspect": "\"ws://foo:80/\"",
+      "index": "379737c627f7f5a9bf599b902741f8ae"
+    },
+    {
+      "input": "ws://foo:81/",
+      "base": "about:blank",
+      "inspect": "\"ws://foo:81/\"",
+      "index": "a89a9d79544b40e9753cdc6f527d76f6"
+    },
+    {
+      "input": "ws://foo:443/",
+      "base": "about:blank",
+      "inspect": "\"ws://foo:443/\"",
+      "index": "9d41ed6d054ba90efa3dfaa08ab41a8e"
+    },
+    {
+      "input": "ws://foo:815/",
+      "base": "about:blank",
+      "inspect": "\"ws://foo:815/\"",
+      "index": "24069bad545f7e478081eec4f97df504"
+    },
+    {
+      "input": "wss://foo:80/",
+      "base": "about:blank",
+      "inspect": "\"wss://foo:80/\"",
+      "index": "521a30feed4f2054f67133d25e96c76d"
+    },
+    {
+      "input": "wss://foo:81/",
+      "base": "about:blank",
+      "inspect": "\"wss://foo:81/\"",
+      "index": "70e8e79a60d789834679e47a7c6f8f25"
+    },
+    {
+      "input": "wss://foo:443/",
+      "base": "about:blank",
+      "inspect": "\"wss://foo:443/\"",
+      "index": "cb0156dda2216638b896812f8488b27e"
+    },
+    {
+      "input": "wss://foo:815/",
+      "base": "about:blank",
+      "inspect": "\"wss://foo:815/\"",
+      "index": "d26849f916a78608164a6a0f2c5fd63a"
+    },
+    {
+      "input": "http:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"http:/example.com/\"",
+      "index": "43d1f0e78f9e36821850847fc8e68fab"
+    },
+    {
+      "input": "ftp:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"ftp:/example.com/\"",
+      "index": "0567894b028e49c0c1a8ad713018536a"
+    },
+    {
+      "input": "https:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"https:/example.com/\"",
+      "index": "7967f65db4bd5bae6d87ac9bae9798aa"
+    },
+    {
+      "input": "madeupscheme:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"madeupscheme:/example.com/\"",
+      "index": "85ea2dd16d51c9a965abd27630bc0157"
+    },
+    {
+      "input": "file:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"file:/example.com/\"",
+      "index": "aad58a581dce35e236dc7cc633397f06"
+    },
+    {
+      "input": "ftps:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"ftps:/example.com/\"",
+      "index": "5e3d8c51a823a4a20e592b63bee8cc18"
+    },
+    {
+      "input": "gopher:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"gopher:/example.com/\"",
+      "index": "3e73f0c2a6d7893087de342b51d0590e"
+    },
+    {
+      "input": "ws:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"ws:/example.com/\"",
+      "index": "cdcfb721aad39fcdbbb45f364944c036"
+    },
+    {
+      "input": "wss:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"wss:/example.com/\"",
+      "index": "4dc116b15592d80f140df605e8cf3dd1"
+    },
+    {
+      "input": "data:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"data:/example.com/\"",
+      "index": "0560c607656d1b1da173054d5fc1e7c6"
+    },
+    {
+      "input": "javascript:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"javascript:/example.com/\"",
+      "index": "4fd085e7ed2f474feb6a133944e1e43a"
+    },
+    {
+      "input": "mailto:/example.com/",
+      "base": "about:blank",
+      "inspect": "\"mailto:/example.com/\"",
+      "index": "d0f95f35a74e656716a0eedb55c43d5b"
+    },
+    {
+      "input": "http:example.com/",
+      "base": "about:blank",
+      "inspect": "\"http:example.com/\"",
+      "index": "2d755a15d124309917aecf468efc1b95"
+    },
+    {
+      "input": "ftp:example.com/",
+      "base": "about:blank",
+      "inspect": "\"ftp:example.com/\"",
+      "index": "a9128e03e0127809ba67b0af32b534ee"
+    },
+    {
+      "input": "https:example.com/",
+      "base": "about:blank",
+      "inspect": "\"https:example.com/\"",
+      "index": "7ffc426ad5ecf91c15105236117ba788"
+    },
+    {
+      "input": "madeupscheme:example.com/",
+      "base": "about:blank",
+      "inspect": "\"madeupscheme:example.com/\"",
+      "index": "066753403934493daffc1fa3da6aeeb0"
+    },
+    {
+      "input": "ftps:example.com/",
+      "base": "about:blank",
+      "inspect": "\"ftps:example.com/\"",
+      "index": "ec1c1b25d40cf9ccb3263fcb826152cb"
+    },
+    {
+      "input": "gopher:example.com/",
+      "base": "about:blank",
+      "inspect": "\"gopher:example.com/\"",
+      "index": "71825ebd8586adc4f04149c4c4fb0cdb"
+    },
+    {
+      "input": "ws:example.com/",
+      "base": "about:blank",
+      "inspect": "\"ws:example.com/\"",
+      "index": "efd97324811f0f4792a1fd69419fc24f"
+    },
+    {
+      "input": "wss:example.com/",
+      "base": "about:blank",
+      "inspect": "\"wss:example.com/\"",
+      "index": "58a7dda41b0d9e1465a60cc849d3c06b"
+    },
+    {
+      "input": "data:example.com/",
+      "base": "about:blank",
+      "inspect": "\"data:example.com/\"",
+      "index": "5245e079847c118d8fd16f5a3ca38439"
+    },
+    {
+      "input": "javascript:example.com/",
+      "base": "about:blank",
+      "inspect": "\"javascript:example.com/\"",
+      "index": "04aa5c10666471e69a3377678360d34f"
+    },
+    {
+      "input": "mailto:example.com/",
+      "base": "about:blank",
+      "inspect": "\"mailto:example.com/\"",
+      "index": "91e6610facf276a4052604d205bad159"
+    },
+    {
+      "input": "http:@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:@www.example.com\"",
+      "index": "5f3bd4f7b4d9b7d959f57b19c1e3dda4"
+    },
+    {
+      "input": "http:/@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/@www.example.com\"",
+      "index": "f9e2d7ef11ed3be0a1ac558a0a44ed24"
+    },
+    {
+      "input": "http://@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://@www.example.com\"",
+      "index": "b8f020189f3821197e4dbaa2ff701b25"
+    },
+    {
+      "input": "http:a:b@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:a:b@www.example.com\"",
+      "index": "54a533f6bb58640a7501112fc3db59c2"
+    },
+    {
+      "input": "http:/a:b@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/a:b@www.example.com\"",
+      "index": "1da02119d5a145b51ee0e101ede0b39a"
+    },
+    {
+      "input": "http://a:b@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://a:b@www.example.com\"",
+      "index": "3bb9e9ccbde9d732c6f292815cf4d466"
+    },
+    {
+      "input": "http://@pple.com",
+      "base": "about:blank",
+      "inspect": "\"http://@pple.com\"",
+      "index": "dacc356073aae38c9cb6e24cff801bc8"
+    },
+    {
+      "input": "http::b@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http::b@www.example.com\"",
+      "index": "1214e9d5c28f97f3b7c9171cdd4e0fb0"
+    },
+    {
+      "input": "http:/:b@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/:b@www.example.com\"",
+      "index": "7bea0e753a910c5950eea52385cf8226"
+    },
+    {
+      "input": "http://:b@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://:b@www.example.com\"",
+      "index": "7f74b5b2f63877053cc640350d111f99"
+    },
+    {
+      "input": "http:/:@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/:@/www.example.com\"",
+      "index": "d0ad78627367f5fe0b9028ffdf0936ba"
+    },
+    {
+      "input": "http://user@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://user@/www.example.com\"",
+      "index": "a83c4ec90c2b88eac6b3bd4e80b3acbf"
+    },
+    {
+      "input": "http:@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:@/www.example.com\"",
+      "index": "b90d3422ab3b261cfd2cbe89dd0223ae"
+    },
+    {
+      "input": "http:/@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/@/www.example.com\"",
+      "index": "d5433ff2fd02c26047f3ff18e094b296"
+    },
+    {
+      "input": "http://@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://@/www.example.com\"",
+      "index": "f7876add80e06558b39b0abe71fe76ef"
+    },
+    {
+      "input": "https:@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"https:@/www.example.com\"",
+      "index": "e45be6cd49a66019c65bbc6bffdea5e3"
+    },
+    {
+      "input": "http:a:b@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:a:b@/www.example.com\"",
+      "index": "f49968a074e219bc419992ae5d7518ed"
+    },
+    {
+      "input": "http:/a:b@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/a:b@/www.example.com\"",
+      "index": "d7b9967182d575600ce92abbcc587ce4"
+    },
+    {
+      "input": "http://a:b@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://a:b@/www.example.com\"",
+      "index": "a2f523172ecf659552daf9a018a96c35"
+    },
+    {
+      "input": "http::@/www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http::@/www.example.com\"",
+      "index": "079ffd6e6d9dd0c41c826bb11d856333"
+    },
+    {
+      "input": "http:a:@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:a:@www.example.com\"",
+      "index": "19a2b9a9e55513e4bdd3f76c75918c00"
+    },
+    {
+      "input": "http:/a:@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/a:@www.example.com\"",
+      "index": "99141a616925260f67de5746fcf2b517"
+    },
+    {
+      "input": "http://a:@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://a:@www.example.com\"",
+      "index": "b0014a43107ac93b5ec54a7b7cc18283"
+    },
+    {
+      "input": "http://www.@pple.com",
+      "base": "about:blank",
+      "inspect": "\"http://www.@pple.com\"",
+      "index": "888a05ad09f8b3e49c943e5817938bb9"
+    },
+    {
+      "input": "http:@:www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:@:www.example.com\"",
+      "index": "4a3ac7fce795b870f328ad29dcae9768"
+    },
+    {
+      "input": "http:/@:www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http:/@:www.example.com\"",
+      "index": "58c56c787a47c0f9d4764c7a4fd196b7"
+    },
+    {
+      "input": "http://@:www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://@:www.example.com\"",
+      "index": "9da40036288fd676aafd40a88514243a"
+    },
+    {
+      "input": "http://:@www.example.com",
+      "base": "about:blank",
+      "inspect": "\"http://:@www.example.com\"",
+      "index": "48a82c620e05082174e7ed3e321d44c5"
+    },
+    {
+      "input": "/",
+      "base": "http://www.example.com/test",
+      "inspect": "\"/\"",
+      "index": "3051cd020a947092a0b6c52c99560e6e"
+    },
+    {
+      "input": "/test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"/test.txt\"",
+      "index": "e5643da4666bca91b7246e1bf5f04d29"
+    },
+    {
+      "input": ".",
+      "base": "http://www.example.com/test",
+      "inspect": "\".\"",
+      "index": "4f71936dfe4c40495a5f59d77e651f65"
+    },
+    {
+      "input": "..",
+      "base": "http://www.example.com/test",
+      "inspect": "\"..\"",
+      "index": "96b8e2a9029bc7241c31a0d822ba997c"
+    },
+    {
+      "input": "test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"test.txt\"",
+      "index": "c8fef9a8b6328cbb63fe5e3c2f3a0f25"
+    },
+    {
+      "input": "./test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"./test.txt\"",
+      "index": "edc174a18efb04a266bcb025c0f7e247"
+    },
+    {
+      "input": "../test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"../test.txt\"",
+      "index": "48364ac553d4ba4ab04fb7d404f3e2e6"
+    },
+    {
+      "input": "../aaa/test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"../aaa/test.txt\"",
+      "index": "937b6f9097a50649270bf93e920772ee"
+    },
+    {
+      "input": "../../test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"../../test.txt\"",
+      "index": "da66d3e4f6013bb427e2b0decc7daaf1"
+    },
+    {
+      "input": "ä¸­/test.txt",
+      "base": "http://www.example.com/test",
+      "inspect": "\"\\u4E2D/test.txt\"",
+      "index": "8a7e208473373e28171b90372470cc5c"
+    },
+    {
+      "input": "http://www.example2.com",
+      "base": "http://www.example.com/test",
+      "inspect": "\"http://www.example2.com\"",
+      "index": "76fa307024b71b328c22808657de4d8d"
+    },
+    {
+      "input": "//www.example2.com",
+      "base": "http://www.example.com/test",
+      "inspect": "\"//www.example2.com\"",
+      "index": "1ac01776db573a06093ebb6df32cff3d"
+    },
+    {
+      "input": "http://ExAmPlE.CoM",
+      "base": "http://other.com/",
+      "inspect": "\"http://ExAmPlE.CoM\"",
+      "index": "dfd15305c053795c474f0fb4d58cd2f9"
+    },
+    {
+      "input": "http://example example.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://example example.com\"",
+      "index": "09d0e7aca56b929a83bd121db6f49ede"
+    },
+    {
+      "input": "http://Goo%20 goo%7C|.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://Goo%20 goo%7C|.com\"",
+      "index": "5e50219f7840813e957a1ba8acc616d5"
+    },
+    {
+      "input": "http://GOOÂ ã€€goo.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://GOO\\u00A0\\u3000goo.com\"",
+      "index": "5cd03f8bc3fd02789047515993147ac1"
+    },
+    {
+      "input": "http://GOOâ€‹â ï»¿goo.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://GOO\\u200B\\u2060\\uFEFFgoo.com\"",
+      "index": "71754ee779cffa9e428d8ace43d14d07"
+    },
+    {
+      "input": "http://www.fooã€‚bar.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://www.foo\\u3002bar.com\"",
+      "index": "fbfc43a49f0295f7a6628a080f6f30a1"
+    },
+    {
+      "input": "http://ï·zyx.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\uFDD0zyx.com\"",
+      "index": "39c5468f7f9889c22a19beaf34ffe6f2"
+    },
+    {
+      "input": "http://%ef%b7%90zyx.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://%ef%b7%90zyx.com\"",
+      "index": "b8599d4ba965fd63df8e6ef97685afad"
+    },
+    {
+      "input": "http://ï¼§ï½.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\uFF27\\uFF4F.com\"",
+      "index": "c15765efa8971587729617bf785274e6"
+    },
+    {
+      "input": "http://ï¼…ï¼”ï¼‘.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\uFF05\\uFF14\\uFF11.com\"",
+      "index": "fa5ead3c6338600801488876c0c4fa79"
+    },
+    {
+      "input": "http://%ef%bc%85%ef%bc%94%ef%bc%91.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://%ef%bc%85%ef%bc%94%ef%bc%91.com\"",
+      "index": "04f5e41385d99236868554b352c3667f"
+    },
+    {
+      "input": "http://ï¼…ï¼ï¼.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\uFF05\\uFF10\\uFF10.com\"",
+      "index": "8a6b4fbb845958e230b218b01d691247"
+    },
+    {
+      "input": "http://%ef%bc%85%ef%bc%90%ef%bc%90.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://%ef%bc%85%ef%bc%90%ef%bc%90.com\"",
+      "index": "40697a6395dbeac0a5686bc79b20f3a5"
+    },
+    {
+      "input": "http://ä½ å¥½ä½ å¥½",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\u4F60\\u597D\\u4F60\\u597D\"",
+      "index": "7a13de2d5645331baf26d7b188669a4e"
+    },
+    {
+      "input": "http://%zz%66%a.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://%zz%66%a.com\"",
+      "index": "c1f1b076d0f52b2bc7feb7fb1832c49a"
+    },
+    {
+      "input": "http://%25",
+      "base": "http://other.com/",
+      "inspect": "\"http://%25\"",
+      "index": "28bc21f3c576dc919824915cacdf0eab"
+    },
+    {
+      "input": "http://hello%00",
+      "base": "http://other.com/",
+      "inspect": "\"http://hello%00\"",
+      "index": "04baca11300ffd11a0b9542518ca482b"
+    },
+    {
+      "input": "http://%30%78%63%30%2e%30%32%35%30.01",
+      "base": "http://other.com/",
+      "inspect": "\"http://%30%78%63%30%2e%30%32%35%30.01\"",
+      "index": "e7349352a8cdca669acd71cba2b33573"
+    },
+    {
+      "input": "http://%30%78%63%30%2e%30%32%35%30.01%2e",
+      "base": "http://other.com/",
+      "inspect": "\"http://%30%78%63%30%2e%30%32%35%30.01%2e\"",
+      "index": "745400311668460c5f7c3eabe7d96faf"
+    },
+    {
+      "input": "http://192.168.0.257",
+      "base": "http://other.com/",
+      "inspect": "\"http://192.168.0.257\"",
+      "index": "7171eb750152f59801a7083848b40c15"
+    },
+    {
+      "input": "http://%3g%78%63%30%2e%30%32%35%30%2E.01",
+      "base": "http://other.com/",
+      "inspect": "\"http://%3g%78%63%30%2e%30%32%35%30%2E.01\"",
+      "index": "3a9d0e296b89f8926ab38f04388c4d9c"
+    },
+    {
+      "input": "http://192.168.0.1 hello",
+      "base": "http://other.com/",
+      "inspect": "\"http://192.168.0.1 hello\"",
+      "index": "92272440980d991a136ab69f643c331f"
+    },
+    {
+      "input": "http://ï¼ï¼¸ï½ƒï¼ï¼Žï¼ï¼’ï¼•ï¼ï¼Žï¼ï¼‘",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\uFF10\\uFF38\\uFF43\\uFF10\\uFF0E\\uFF10\\uFF12\\uFF15\\uFF10\\uFF0E\\uFF10\\uFF11\"",
+      "index": "e99bce2c50ae4b59e86adc036c1feda1"
+    },
+    {
+      "input": "http://[google.com]",
+      "base": "http://other.com/",
+      "inspect": "\"http://[google.com]\"",
+      "index": "12c9c128c5143bb201a503ce9fe0ef2e"
+    },
+    {
+      "input": "http://foo:ðŸ’©@example.com/bar",
+      "base": "http://other.com/",
+      "inspect": "\"http://foo:\\u1F4A9@example.com/bar\"",
+      "index": "a4f71e3c066121d983ec29b2165d5a49"
+    },
+    {
+      "input": "x",
+      "base": "test:test",
+      "inspect": "\"x\"",
+      "index": "f332d9850a06d2c8cfbee40b7348696e"
+    },
+    {
+      "input": "http://ï¿½zyx.com",
+      "base": "http://other.com/",
+      "inspect": "\"http://\\uFFFDzyx.com\"",
+      "index": "38f41cc976d750cceaf643e8d6a0bbc8"
+    }
+  ]
+}

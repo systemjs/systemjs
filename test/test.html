@@ -1,0 +1,17 @@
+<!doctype html>
+	<meta charset="utf-8">
+	<script>navigator.userAgent.match(/MSIE \d|Trident.*rv:/)&&document.write('<script src="../dist/ie11-polyfills.js"><\/script>')</script>
+
+	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
+	<script src="../node_modules/mocha/mocha.js"></script>
+
+	<script src="../dist/system.src.js"></script>
+
+	<script>
+		mocha.setup('tdd');
+
+		System.import('test-production.js')
+		.then(mocha.run);
+	</script>
+
+	<div id="mocha"></div>
