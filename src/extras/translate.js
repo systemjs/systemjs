@@ -1,30 +1,32 @@
 /*
  * Support for a "translate" loader interface
  */
-function doEvalLoad (loader, url, source, processAnonRegister) {
-  // store a global snapshot in case it turns out to be global
-  Object.keys(global).forEach(globalIterator, function (name, value) {
-    globalSnapshot[name] = value;
-  });
+(function () {
+  const systemJSPrototype = System.constructor.prototype;
 
-  (0, eval)(source + '\n//# sourceURL=' + url);
+  const instantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url) {
+    if (url.endsWith('.wasm'))
+      return instantiate.call(this, url);
 
-  // check for System.register call
-  var registered = processAnonRegister();
-  if (!registered) {
-    // no System.register -> support named AMD as anonymous
-    registerLastDefine(loader);
-    registered = processAnonRegister();
+    const loader = this;
+    return fetch(url)
+    .then(function (res) {
+      if (!res.ok)
+        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
+      return res.text();
+    })
+    .then(function (source) {
+      return loader.translate.call(this, url, source);
+    })
+    .then(function (source) {
+      (0, eval)(source + '\n//# sourceURL=' + url);
+      return loader.getRegister();
+    });
+  };
 
-    // still no registration -> attempt a global detection
-    if (!registered) {
-      var moduleValue = retrieveGlobal();
-      loader.register([], function () {
-        return {
-          exports: moduleValue
-        };
-      });
-      processAnonRegister();
-    }
-  }
-}
+  // Hookable translate function!
+  System.translate = function (_id, source) {
+    return source;
+  };
+})();

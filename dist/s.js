@@ -308,9 +308,6 @@
     if (seen[load.id])
       return;
     seen[load.id] = true;
-    
-    if (load.E)
-      return load.E;
 
     if (!load.e) {
       if (load.eE)
@@ -331,14 +328,17 @@
       return load.E = Promise.all(depLoadPromises).then(doExec);
     }
 
-    doExec();
+    return doExec();
 
     function doExec () {
       try {
+        if (load.E)
+          return load.E;
         let execPromise = load.e.call(nullContext);
         if (execPromise) {
           execPromise.then(function () {
               load.C = load.n;
+              load.E = null;
             });
           execPromise.catch(function () {});
           return load.E = execPromise;

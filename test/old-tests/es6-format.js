@@ -1,4 +1,0 @@
-"format esm";
-
-class q {
-}

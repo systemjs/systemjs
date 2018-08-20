@@ -217,9 +217,6 @@ function postOrderExec (loader, load, seen) {
   if (seen[load.id])
     return;
   seen[load.id] = true;
-  
-  if (load.E)
-    return load.E;
 
   if (!load.e) {
     if (load.eE)
@@ -233,7 +230,8 @@ function postOrderExec (loader, load, seen) {
     if (TRACING) {
       try {
         const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+        if (depLoadPromise)
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
       }
       catch (err) {
         loader.onload(load.id, err);
@@ -248,7 +246,7 @@ function postOrderExec (loader, load, seen) {
   });
   if (depLoadPromises) {
     if (TRACING)
-      return load.E = Promise.all(depLoadPromises)
+      return Promise.all(depLoadPromises)
       .then(doExec)
       .catch(function (err) {
         loader.onload(load.id, err);
@@ -257,15 +255,18 @@ function postOrderExec (loader, load, seen) {
     return load.E = Promise.all(depLoadPromises).then(doExec);
   }
 
-  doExec();
+  return doExec();
 
   function doExec () {
     try {
+      if (load.E)
+        return load.E;
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
         if (TRACING)
           execPromise = execPromise.then(function () {
             load.C = load.n;
+            load.E = null; // indicates completion
             loader.onload(load.id, null);
           }, function () {
             loader.onload(load.id, err);
@@ -274,6 +275,7 @@ function postOrderExec (loader, load, seen) {
         else
           execPromise.then(function () {
             load.C = load.n;
+            load.E = null;
           });
         execPromise.catch(function () {});
         return load.E = execPromise;

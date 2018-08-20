@@ -8,5 +8,16 @@ systemJSPrototype.get = function (id) {
 
 // Delete function provided for hot-reloading use cases
 systemJSPrototype.delete = function (id) {
-  return this.get(id) ? delete this[REGISTRY][id] : false;
+  const load = this.get(id);
+  if (!load)
+    return false;
+  // remove from importerSetters
+  // (release for gc)
+  if (load.d)
+    load.d.forEach(function (depLoad) {
+      const importerIndex = depLoad.i.indexOf(load);
+      if (importerIndex !== -1)
+        depLoad.i.splice(importerIndex, 1);
+    });
+  return delete this[REGISTRY][id];
 };

@@ -311,9 +311,6 @@
     if (seen[load.id])
       return;
     seen[load.id] = true;
-    
-    if (load.E)
-      return load.E;
 
     if (!load.e) {
       if (load.eE)
@@ -327,7 +324,8 @@
       {
         try {
           const depLoadPromise = postOrderExec(loader, depLoad, seen);
-          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+          if (depLoadPromise)
+            (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
         }
         catch (err) {
           loader.onload(load.id, err);
@@ -336,7 +334,7 @@
       }
     });
     if (depLoadPromises) {
-      return load.E = Promise.all(depLoadPromises)
+      return Promise.all(depLoadPromises)
         .then(doExec)
         .catch(function (err) {
           loader.onload(load.id, err);
@@ -345,14 +343,17 @@
       return load.E = Promise.all(depLoadPromises).then(doExec);
     }
 
-    doExec();
+    return doExec();
 
     function doExec () {
       try {
+        if (load.E)
+          return load.E;
         let execPromise = load.e.call(nullContext);
         if (execPromise) {
           execPromise = execPromise.then(function () {
               load.C = load.n;
+              load.E = null; // indicates completion
               loader.onload(load.id, null);
             }, function () {
               loader.onload(load.id, err);
@@ -663,7 +664,18 @@
 
   // Delete function provided for hot-reloading use cases
   systemJSPrototype.delete = function (id) {
-    return this.get(id) ? delete this[REGISTRY][id] : false;
+    const load = this.get(id);
+    if (!load)
+      return false;
+    // remove from importerSetters
+    // (release for gc)
+    if (load.d)
+      load.d.forEach(function (depLoad) {
+        const importerIndex = depLoad.i.indexOf(load);
+        if (importerIndex !== -1)
+          depLoad.i.splice(importerIndex, 1);
+      });
+    return delete this[REGISTRY][id];
   };
 
 }());

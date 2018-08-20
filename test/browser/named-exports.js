@@ -1,7 +1,7 @@
 suite('Named exports', function () {
+  System = new System.constructor();
 
   test('Loading an AMD module with named exports', function () {
-    System.delete(System.resolve('fixtures/amd-module.js'));
     return System.import('fixtures/amd-module.js').then(function (m) {
       assert.ok(m.default);
       assert.equal(m.dep, m.default.dep);
@@ -10,23 +10,19 @@ suite('Named exports', function () {
   });
 
   test('Loading a global with named exports support', function () {
-    System.delete(System.resolve('fixtures/global.js'));
-    delete self.jjQuery;
-    console.log('GLOBAL');
+    delete self.another;
     return System.import('fixtures/global.js').then(function (m) {
-      console.log(m);
       assert.ok(m.default);
-      assert.equal(m.default.v, '2.0..0');
+      assert.equal(m.default.some, 'thing');
     });
   });
 
   test('System.register untouched', function () {
-    /* System.delete(System.resolve('fixtures/amd-module.js'));
-    return System.import('fixtures/amd-module.js').then(function (m) {
+    return System.import('fixtures/register-default.js').then(function (m) {
       assert.ok(m.default);
-      assert.equal(m.dep, m.default.dep);
-      assert.equal(m.amd, true);
-    });*/
+      assert.equal(m.default.name, 'value');
+      assert.equal(m.name, undefined);
+    });
   });
 
 });
