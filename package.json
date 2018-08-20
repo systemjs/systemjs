@@ -29,7 +29,7 @@
     "build:systemjs": "rollup -c",
     "build:sjs": "rollup -c --environment sjs",
     "build:ie11": "cat node_modules/bluebird/js/browser/bluebird.core.js node_modules/whatwg-fetch/fetch.js | terser -c passes=2 m -o dist/ie11-polyfills.js",
-    "build:extras": "cp src/extras/* dist/extras/ && env ./minify-extras.sh",
+    "build:extras": "env ./minify-extras.sh",
     "min": "npm run min:systemjs && npm run min:sjs",
     "min:systemjs": "cd dist && terser system.js -c passes=2 -m --source-map --comments \"/SystemJS \\d/\" -o system.min.js",
     "min:sjs": "cd dist && terser s.js -c passes=2 -m --source-map --comments \"/SJS \\d/\" -o s.min.js",
