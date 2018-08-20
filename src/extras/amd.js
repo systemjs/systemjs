@@ -3,35 +3,54 @@
  */
 const global = typeof self !== 'undefined' ? self : global;
 
-const getRegister = System.prototype.getRegister;
-System.prototype.getRegister = function () {
+const systemPrototype = System.constructor.prototype;
+
+const emptyInstantiation = [[], function () { return {} }];
+
+function unsupportedRequire () {
+  throw new Error('AMD require not supported.');
+}
+
+const requireExportsModule = ['require', 'exports', 'module'];
+
+const getRegister = systemPrototype.getRegister;
+systemPrototype.getRegister = function () {
   const lastRegister = getRegister.call(this);
-  if (lastRegister)
+  if (lastRegister && lastRegister[1].length !== 0)
     return lastRegister;
   // no registration -> attempt AMD detection
   if (!amdDefineDeps)
-    return;
+    return emptyInstantiation;
   const exports = {};
   const module = { exports: exports };
   const depModules = [];
   const setters = [];
+  let splice = 0;
   for (let i = 0; i < amdDefineDeps.length; i++) {
     const id = amdDefineDeps[i];
-    if (id === 'require')
-      throw new Error('AMD require not supported.');
-    if (id === 'module') {
+    const index = setters.length;
+    if (id === 'require') {
+      depModules[i] = unsupportedRequire;
+      splice++;
+    }
+    else if (id === 'module') {
       depModules[i] = module;
+      splice++;
     }
     else if (id === 'exports') {
       depModules[i] = exports;
+      splice++;
     }
     else {
-      const index = setters.length;
       setters.push(function (ns) {
-        depModules[index] = ns.default;
+        depModules[i] = ns.default;
       });
     }
+    if (splice)
+      amdDefineDeps[index] = id;
   }
+  if (splice)
+    amdDefineDeps.length -= splice;
   const amdExec = amdDefineExec;
   return [amdDefineDeps, function (_export) {
     _export('default', exports);
@@ -46,14 +65,26 @@ System.prototype.getRegister = function () {
 let amdDefineDeps;
 let amdDefineExec;
 global.define = function (name, deps, execute) {
+  // define('', [], function () {})
   if (typeof name === 'string') {
     if (amdDefineDeps)
       throw new Error('Named AMD not supported.');
     amdDefineDeps = deps;
     amdDefineExec = execute;
   }
-  else {
+  // define([], function () {})
+  else if (name instanceof Array) {
     amdDefineDeps = name;
     amdDefineExec = deps;
+  }
+  // define({})
+  else if (typeof name === 'object') {
+    amdDefineDeps = [];
+    amdDefineExec = function () { return name };
+  }
+  // define(function () {})
+  else if (typeof name === 'function') {
+    amdDefineDeps = requireExportsModule;
+    amdDefineExec = name;
   }
 };

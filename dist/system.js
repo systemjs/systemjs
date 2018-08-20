@@ -6,6 +6,14 @@
 
   const envGlobal = hasSelf ? self : global;
 
+  let baseUrl;
+  if (typeof location !== 'undefined') {
+    baseUrl = location.href.split('#')[0].split('?')[0];
+    const lastSepIndex = baseUrl.lastIndexOf('/');
+    if (lastSepIndex !== -1)
+      baseUrl = baseUrl.substr(0, lastSepIndex + 1);
+  }
+
   const backslashRegEx = /\\/g;
   function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
     if (relUrl.indexOf('\\') !== -1)
@@ -112,27 +120,10 @@
     this[REGISTRY] = {};
   }
 
-  function callResolve (loader, id, parentUrl) {
-    return Promise.resolve()
-    .then(function () {
-      return loader.resolve(id, parentUrl);
-    })
-    .then(function (id) {
-      if (id)
-        return id;
-      throw new Error('No resolution');
-    })
-    .catch(function (err) {
-      if (err && err.message)
-        err.message += '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : '');
-      throw err;
-    });
-  }
-
   const systemJSPrototype = SystemJS.prototype;
-  systemJSPrototype.import = function (id, parent) {
+  systemJSPrototype.import = function (id, parentUrl) {
     const loader = this;
-    return callResolve(loader, id, parent)
+    return Promise.resolve(loader.resolve(id, parentUrl))
     .then(function (id) {
       const load = getOrCreateLoad(loader, id);
       return load.C || topLevelLoad(loader, load);
@@ -185,10 +176,10 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw new Error('No instantiation');
-      let hoistedExports = false;
+        throw new Error('Module did not instantiate');
       function _export (name, value) {
-        hoistedExports = true;
+        // note if we have hoisted exports (including reexports)
+        load.h = true;
         let changed = false;
         if (typeof name !== 'object') {
           if (!(name in ns) || ns[name] !== value) {
@@ -212,7 +203,7 @@
       }
       const declared = registration[1](_export, registration[1].length === 2 ? loader.createContext(id) : undefined);
       load.e = declared.execute || function () {};
-      return [registration[0], declared.setters, hoistedExports];
+      return [registration[0], declared.setters];
     })
     .catch(function (err) {
       if (err && err.message)
@@ -225,15 +216,17 @@
     .then(function (instantiation) {
       return Promise.all(instantiation[0].map(function (dep, i) {
         const setter = instantiation[1][i];
-        return callResolve(loader, dep, id)
+        return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
           const depLoad = getOrCreateLoad(loader, depId);
           // depLoad.I may be undefined for already-evaluated
-          return Promise.resolve(depLoad.I).then(function () {
+          return Promise.resolve(depLoad.I)
+          .then(function () {
             if (setter) {
               depLoad.i.push(setter);
-              // only run early setters when there are hoisted exports
-              if (instantiation[2] || !depLoad.I)
+              // only run early setters when there are hoisted exports of that module
+              // the timing works here as pending hoisted export calls will trigger through importerSetters
+              if (depLoad.h || !depLoad.I)
                 setter(depLoad.n);
             }
             return depLoad;
@@ -262,6 +255,8 @@
       I: instantiatePromise,
       // link
       L: linkPromise,
+      // whether it has hoisted exports
+      h: false,
 
       // On instantiate completion we have populated:
       // dependency load records
@@ -313,71 +308,72 @@
   // returns a promise if and only if a top-level await subgraph
   // throws on sync errors
   function postOrderExec (loader, load, seen) {
+    if (seen[load.id])
+      return;
+    seen[load.id] = true;
+    
+    if (load.E)
+      return load.E;
+
     if (!load.e) {
       if (load.eE)
         throw load.eE;
-      return load.E;
+      return;
     }
 
     // deps execute first, unless circular
-    if (!seen[load.id]) {
-      seen[load.id] = true;
-      
-      let depLoadPromises;
-      load.d.forEach(function (depLoad) {
-        {
-          try {
-            const depLoadPromise = postOrderExec(loader, depLoad, seen);
-            if (depLoadPromise)
-              (depLoadPromises = depLoadPromises || []).push(depPromise);
-          }
-          catch (err) {
-            loader.onload(load.id, err);
-            throw err;
-          }
+    let depLoadPromises;
+    load.d.forEach(function (depLoad) {
+      {
+        try {
+          const depLoadPromise = postOrderExec(loader, depLoad, seen);
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
         }
-      });
-      if (depLoadPromises) {
-        {
-          return Promise.all(depLoadPromises)
-          .catch(function (err) { loader.onload(load.id, err); throw err; })
-          .then(function () {
-            // TLA trick:
-            // second time till will jump straight to evaluation part as seen
-            return postOrderExec(loader, load, seen);
-          });
+        catch (err) {
+          loader.onload(load.id, err);
+          throw err;
         }
       }
+    });
+    if (depLoadPromises) {
+      return load.E = Promise.all(depLoadPromises)
+        .then(doExec)
+        .catch(function (err) {
+          loader.onload(load.id, err);
+          throw err;
+        });
+      return load.E = Promise.all(depLoadPromises).then(doExec);
     }
 
-    // could be a TLA race or circular
-    if (!load.e)
-      return load.E;
+    doExec();
 
-    try {
-      const execPromise = load.e.call(nullContext);
-      if (execPromise) {
-        execPromise.catch(function (err) { loader.onload(load.id, err); throw err; });
-        load.E = execPromise;
-        execPromise.then(function () {
-          load.C = load.n;
-          loader.onload(load.id, null);
-        })
-        .catch(function () {});
-        return execPromise;
+    function doExec () {
+      try {
+        let execPromise = load.e.call(nullContext);
+        if (execPromise) {
+          execPromise = execPromise.then(function () {
+              load.C = load.n;
+              loader.onload(load.id, null);
+            }, function () {
+              loader.onload(load.id, err);
+              throw err;
+            });
+          execPromise.catch(function () {});
+          return load.E = execPromise;
+        }
+        // (should be a promise, but a minify optimization to leave out Promise.resolve)
+        load.C = load.n;
+        loader.onload(load.id, null);
       }
-      // (should be a promise, but a minify optimization to leave out Promise.resolve)
-      load.C = load.n;
-      loader.onload(load.id, null);
-    }
-    catch (err) {
-      loader.onload(load.id, err);
-      load.eE = err;
-      throw err;
-    }
-    finally {
-      load.L = load.I = undefined;
-      load.e = null;
+      catch (err) {
+        loader.onload(load.id, err);
+        load.eE = err;
+        throw err;
+      }
+      finally {
+        load.L = load.I = undefined;
+        load.e = null;
+      }
     }
   }
 
@@ -392,8 +388,12 @@
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
-      script.addEventListener('error', reject);
+      script.addEventListener('error', function () { reject(new Error('Load error')); });
       script.addEventListener('load', function () {
+        // will be empty for syntax errors resulting in "Module did not instantiate" error
+        // (but the original error will show in the console)
+        // we can try and use window.onerror to get the syntax error,
+        // if theres a way to do this reliably, although that seems doubtful
         resolve(loader.getRegister());
         document.head.removeChild(script);
       });
@@ -424,18 +424,23 @@
    * Support for global loading
    */
 
+  function getLastGlobalProp () {
+    let lastProp;
+    for (let p in envGlobal)
+      if (envGlobal.hasOwnProperty(p))
+        lastProp = p;
+    return lastProp;
+  }
+
   let lastGlobalProp;
-  let lastGlobalCheck = -1;
-  const instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url) {
-    // snapshot the global list, debounced every 50ms
-    const now = Date.now();
-    if (now - lastGlobalCheck > 50) {
-      lastGlobalProp = Object.keys(envGlobal).pop();
-      lastGlobalCheck = now;
-    }
-    return instantiate.call(this, url);
+  const impt = systemJSPrototype.import;
+  systemJSPrototype.import = function (id, parentUrl) {
+    if (!lastGlobalProp)
+      lastGlobalProp = getLastGlobalProp();
+    return impt.call(this, id, parentUrl);
   };
+
+  const emptyInstantiation = [[], function () { return {} }];
 
   const getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
@@ -446,10 +451,9 @@
     // no registration -> attempt a global detection as difference from snapshot
     // when multiple globals, we take the global value to be the last defined new global object property
     // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
-    const globalProp = Object.keys(envGlobal).pop();
-    lastGlobalCheck = Date.now();
+    const globalProp = getLastGlobalProp();
     if (lastGlobalProp === globalProp)
-      return;
+      return emptyInstantiation;
     
     lastGlobalProp = globalProp;
     let globalExport;
@@ -457,22 +461,22 @@
       globalExport = envGlobal[globalProp];
     }
     catch (e) {
-      return;
+      return emptyInstantiation;
     }
 
     return [[], function (_export) {
       return { execute: function () { _export('default', globalExport); } };
-    }];  
+    }];
   };
 
   /*
    * Loads WASM based on file extension detection
    * Assumes successive instantiate will handle other files
    */
-  const instantiate$1 = systemJSPrototype.instantiate;
+  const instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url) {
     if (!url.endsWith('.wasm'))
-      return instantiate$1.call(this, url);
+      return instantiate.call(this, url);
     
     return fetch(url)
     .then(function (res) {
@@ -507,14 +511,6 @@
     });
   };
 
-  let baseUrl;
-  if (typeof location !== 'undefined') {
-    baseUrl = location.href.split('#')[0].split('?')[0];
-    const lastSepIndex = baseUrl.lastIndexOf('/');
-    if (lastSepIndex !== -1)
-      baseUrl = baseUrl.substr(0, lastSepIndex + 1);
-  }
-
   /*
    * Package name map support for SystemJS
    * 
@@ -533,34 +529,46 @@
       continue;
 
     if (!script.src)
-      packageMapResolve = createPackageMap(JSON.parse(script.innerHTML));
+      packageMapResolve = createPackageMap(JSON.parse(script.innerHTML), baseUrl);
     else
       packageMapPromise = fetch(script.src)
       .then(function (res) {
         return res.json();
       })
       .then(function (json) {
-        packageMapResolve = createPackageMap(json);
+        packageMapResolve = createPackageMap(json, script.src);
+        packageMapPromise = undefined;
+      }, function () {
+        packageMapResolve = throwBare;
         packageMapPromise = undefined;
       });
     break;
   }
+  if (!packageMapPromise)
+    packageMapResolve = throwBare;
+
+  function throwBare (id, parentUrl) {
+    throw new Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
+  }
 
   systemJSPrototype.resolve = function (id, parentUrl) {
-    const resolvedIfNotPlainOrUrl = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
+    parentUrl = parentUrl || baseUrl;
+
+    const resolvedIfNotPlainOrUrl = resolveIfNotPlainOrUrl(id, parentUrl);
     if (resolvedIfNotPlainOrUrl)
       return resolvedIfNotPlainOrUrl;
+    if (id.indexOf(':') !== -1)
+      return id;
 
-    if (packageMapResolve)
-      return packageMapResolve(id, parentUrl);
-
+    // now just left with plain
+    // (if not package map, packageMapResolve just throws)
     if (packageMapPromise)
       return packageMapPromise
       .then(function () {
         return packageMapResolve(id, parentUrl);
       });
-    
-    return id;
+
+    return packageMapResolve(id, parentUrl);
   };
 
   /*
@@ -576,16 +584,20 @@
    */
 
   function resolveUrl (relUrl, parentUrl) {
-    return resolveIfNotPlainOrUrl(relUrl.startsWith('./') ? relUrl : './' + json.path_prefix, parentUrl);
+    return resolveIfNotPlainOrUrl(relUrl, parentUrl) ||
+        relUrl.indexOf(':') !== -1 && relUrl ||
+        resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
   }
 
-  function createPackageMap (json) {
-    let baseUrl$$1 = json.path_prefix ? resolveUrl(json.path_prefix, baseUrl) : baseUrl;
-    if (baseUrl$$1[baseUrl$$1.length - 1] !== '/')
-      baseUrl$$1 += '/';
+  function createPackageMap (json, baseUrl$$1) {
+    if (json.path_prefix) {
+      baseUrl$$1 = resolveUrl(json.path_prefix, baseUrl);
+      if (baseUrl$$1[baseUrl$$1.length - 1] !== '/')
+        baseUrl$$1 += '/';
+    }
       
     const basePackages = json.packages || {};
-    const scopePackages = {};
+    const scopes = {};
     if (json.scopes) {
       for (let scopeName in json.scopes) {
         const scope = json.scopes[scopeName];
@@ -593,44 +605,53 @@
           throw new Error('Scope path_prefix not currently supported');
         if (scope.scopes)
           throw new Error('Nested scopes not currently supported');
-        scopePackages[resolveUrl(scopeName, baseUrl$$1)] = scope.packages || {};
+        scopes[resolveUrl(scopeName, baseUrl$$1)] = scope.packages || {};
       }
     }
 
-    function getMatch (url, matchObj) {
-      let sepIndex = url.length;
-      while ((sepIndex = url.lastIndexOf('/', sepIndex)) !== -1) {
-        const segment = url.substr(0, sepIndex);
+    function getMatch (path, matchObj) {
+      let sepIndex = path.length;
+      do {
+        const segment = path.substr(0, sepIndex);
         if (segment in matchObj)
-          return segmnet;
-      }
+          return segment;
+      } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
     }
 
-    function applyPackages (id, packages) {
+    function applyPackages (id, packages, baseUrl$$1) {
       const pkgName = getMatch(id, packages);
       if (pkgName) {
         const pkg = packages[pkgName];
-        if (pkg === id) {
+        if (pkgName === id) {
           if (typeof pkg === 'string')
-            return resolveUrl(pkgName + '/' + pkg, baseUrl$$1);
+            return resolveUrl(pkg, baseUrl$$1 + pkgName + '/');
           if (!pkg.main)
             throw new Error('Package ' + pkgName + ' has no main');
-          return resolveUrl((pkg.path || pkgName) + '/' + pkg.main, baseUrl$$1);
+          return resolveUrl(
+            (pkg.path ? pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/') : pkgName + '/') + pkg.main,
+            baseUrl$$1
+          );
         }
-        return resolveUrl((pkg.path || pkgName) + '/' + id.substr(pkg.length), baseUrl$$1);
+        else {
+          return resolveUrl(
+            (typeof pkg === 'string' || !pkg.path
+              ? pkgName + '/'
+              : pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/')
+            ) + id.substr(pkgName.length + 1)
+          , baseUrl$$1);
+        }
       }
     }
 
     return function (id, parentUrl) {
-      const scope = getMatch(parentUrl, scopePackages);
-      if (scope) {
-        const packages = scopePackages[scope];
-        const packageResolution = applyPackages(id, packages);
+      const scopeName = getMatch(parentUrl, scopes);
+      if (scopeName) {
+        const scopePackages = scopes[scopeName];
+        const packageResolution = applyPackages(id, scopePackages, scopeName + '/');
         if (packageResolution)
           return packageResolution;
       }
-      // core will throw "No resolution" on blank resolution
-      return applyPackages(id, basePackages);
+      return applyPackages(id, basePackages, baseUrl$$1) || throwBare(id, parentUrl);
     };
   }
 

@@ -3,6 +3,14 @@ export const hasSelf = typeof self !== 'undefined';
 const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
+export let baseUrl;
+if (typeof location !== 'undefined') {
+  baseUrl = location.href.split('#')[0].split('?')[0];
+  const lastSepIndex = baseUrl.lastIndexOf('/');
+  if (lastSepIndex !== -1)
+    baseUrl = baseUrl.substr(0, lastSepIndex + 1);
+}
+
 const backslashRegEx = /\\/g;
 export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
   if (relUrl.indexOf('\\') !== -1)

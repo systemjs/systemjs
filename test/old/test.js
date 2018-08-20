@@ -1,108 +1,29 @@
-"format global";
+function assert (assertion, message) {
+  if (!assertion)
+    throw new Error(message);
+}
 
-suite('SystemJS Standard Tests', function() {
+describe('Global script loading', function () {
 
-  function ok(assertion, message) {
-    if (!assertion)
-      throw new Error(message);
-  }
-
-  test('System version', function () {
-    ok(System.version.match(/^\d+\.\d+\.\d+(-\w+)?/));
-  });
-
-  test('Object.prototype.toString(new Module())== "[object Module]"', function () {
-    return System.import('tests/global.js').then(function () {
-      var m = System.registry.get(System.normalizeSync('tests/global.js'));
-      ok(!Symbol.toStringTag || Object.prototype.toString.call(m) == '[object Module]');
-    });
-  });
-
-  test('Error handling', function () {
-    return System.import('tests/error-loader.js').then(function () {
-      throw new Error('Should fail');
-    }, function (e) {
-      ok(true);
-    });
-  });
-
-  test('Error handling2', function () {
-    return System.import('tests/error-loader2.js').then(function () {
-      throw new Error('Should fail');
-    }, function (e) {
-      if (typeof console != 'undefined' && console.error)
-        console.error(e);
-      ok(true);
-    });
-  });
-
-  test('Eval error caching', function () {
-    var g = typeof self !== 'undefined' ? self : global;
-    return System.import('tests/eval-err.js').then(function (m) {
-      throw new Error('Should fail');
-    }, function (e) {
-      ok(g.errCnt === 1);
-
-      return System.import('tests/eval-err-parent.js')
-      .then(function (m) {
-        throw new Error('Should fail');
-      }, function (e) {
-        ok(g.errCnt === 1);
-        ok(g.peerExecuted === true);
-        ok(System.delete(System.resolveSync('tests/eval-err.js')));
-
-        return System.import('tests/eval-err.js')
-        .then(function (m) {
-          throw new Error('Should fail');
-        }, function (e) {
-          ok(g.errCnt === 2);
-        });
-      });
-    });
-  });
-
-  if (typeof process !== 'undefined')
-  test('Load error clearing', function () {
-    require('fs').unlinkSync('test/tests/error-module.js', 'exportxx function hello () {}');
-    return System.import('tests/error-module.js').then(function () {
-      throw new Error('Should not error first time');
-    }, function (err) {
-      ok(err);
-
-      require('fs').writeFileSync('test/tests/error-module.js', 'export function hello () { return "world" }');
-
-      return System.import('tests/error-module-parent.js').then(function (m) {
-        throw new Error('Should error the second time');
-      }, function (err) {
-        ok(err);
-
-        ok(System.registry.delete(System.resolveSync('tests/error-module.js')));
-        return System.import('tests/error-module-parent.js').then(function (m) {
-          ok(true);
-        });
-      });
-    });
-  });
-
-  test('Global script loading', function () {
+  it('Global script loading', function () {
     return System.import('tests/global.js').then(function (m) {
       ok(m.jjQuery && m.another, 'Global objects not defined');
     });
   });
 
-  test('Global script with var syntax', function () {
+  it('Global script with var syntax', function () {
     return System.import('tests/global-single.js').then(function (m) {
       ok(m == 'bar', 'Wrong global value');
     });
   });
 
-  test('Global script with multiple objects the same', function () {
+  it('Global script with multiple objects the same', function () {
     return System.import('tests/global-multi.js').then(function (m) {
       ok(m.jquery == 'here', 'Multi globals not detected');
     });
   });
 
-  test('Global script multiple objects different', function () {
+  it('Global script multiple objects different', function () {
     return System.import('tests/global-multi-diff.js').then(function (m) {
       ok(m.foo == 'barz');
       ok(m.baz == 'chaz');
@@ -110,19 +31,19 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Global script loading with inline shim', function () {
+  it('Global script loading with inline shim', function () {
     return System.import('tests/global-inline-dep.js').then(function (m) {
       ok(m == '1.8.3', 'Global dependency not defined');
     });
   });
 
-  test('Global script with inline exports', function () {
+  it('Global script with inline exports', function () {
     return System.import('tests/global-inline-export.js').then(function (m) {
       ok(m == 'r', 'Inline export not applied');
     });
   });
 
-  test('Global script with shim config', function () {
+  it('Global script with shim config', function () {
     System.config({
       meta: {
         'tests/global-shim-config.js': {
@@ -136,7 +57,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Global script with inaccessible properties', function () {
+  it('Global script with inaccessible properties', function () {
     Object.defineProperty(System.global, 'errorOnAccess', {
       configurable: true,
       enumerable: true,
@@ -150,7 +71,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Global script loading that detects as AMD with shim config', function () {
+  it('Global script loading that detects as AMD with shim config', function () {
     System.config({
       meta: {
         'tests/global-shim-amd.js': { format: 'global' }
@@ -162,7 +83,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Global script with exports as an array', function () {
+  it('Global script with exports as an array', function () {
     System.config({
       meta: {
         'tests/global-exports-array.js': {
@@ -178,7 +99,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Global with encapsulated execution', function () {
+  it('Global with encapsulated execution', function () {
     System.config({
       meta: {
         'tests/global-encapsulation.js': {
@@ -193,7 +114,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Meta should override meta syntax', function () {
+  it('Meta should override meta syntax', function () {
     System.config({
       meta: {
         'tests/meta-override.js': { format: 'esm' }
@@ -204,7 +125,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('SystemJS.isModule', function () {
+  it('SystemJS.isModule', function () {
     System.config({
       meta: {
         'tests/meta-override.js': { format: 'esm' }
@@ -215,7 +136,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('String encoding', function () {
+  it('String encoding', function () {
     return System.import('tests/string-encoding.js').then(function (m) {
       ok(m.pi === decodeURI('%CF%80'));
       ok(m.emoji === decodeURI('%F0%9F%90%B6'));
@@ -223,19 +144,19 @@ suite('SystemJS Standard Tests', function() {
   });
 
   if (typeof process !== 'undefined')
-  test('Importing non-ascii paths in Node', function () {
+  it('Importing non-ascii paths in Node', function () {
     return System.import('tests/副本.js').then(function (m) {
       ok(m.p === 5);
     });
   });
 
-  test('Support the empty module', function () {
+  it('Support the empty module', function () {
     return System.import('@empty').then(function (m) {
       ok(m, 'No empty module');
     });
   });
 
-  test('Global script with shim config exports', function () {
+  it('Global script with shim config exports', function () {
     System.config({
       meta: {
         'tests/global-shim-config-exports.js': {
@@ -248,7 +169,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Paths configuration', function () {
+  it('Paths configuration', function () {
     System.config({
       map: {
         'f/': 'a:',
@@ -286,7 +207,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Map configuration', function () {
+  it('Map configuration', function () {
     System.config({
       map: {
         'maptest': 'tests/map-test.js'
@@ -297,7 +218,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Map configuration subpath', function () {
+  it('Map configuration subpath', function () {
     System.config({
       map: {
         'maptest': 'tests/map-test'
@@ -308,7 +229,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Contextual map configuration', function () {
+  it('Contextual map configuration', function () {
     System.config({
       map: {
         'tests/contextual-test': {
@@ -322,7 +243,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Contextual map configuration for a package that is a file', function () {
+  it('Contextual map configuration for a package that is a file', function () {
     System.config({
       packages: {
         'tests/jquery.js': {
@@ -345,7 +266,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Relative map and package config', function () {
+  it('Relative map and package config', function () {
     System.config({
       map: {
         helloworld: './'
@@ -362,7 +283,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Package with json loader', function () {
+  it('Package with json loader', function () {
     System.config({
       paths: {
         'app/': 'tests/json-pkg/'
@@ -384,7 +305,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Package map with shim', function () {
+  it('Package map with shim', function () {
     System.config({
       packages: {
         'tests/shim-package': {
@@ -404,7 +325,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading an AMD module', function () {
+  it('Loading an AMD module', function () {
     System.config({
       meta: {
         'tests/amd-module.js': {
@@ -418,25 +339,25 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('AMD detection test', function () {
+  it('AMD detection test', function () {
     return System.import('tests/amd-module-2.js').then(function (m) {
       ok(m.amd);
     });
   });
 
-  test('AMD detection test with comments', function () {
+  it('AMD detection test with comments', function () {
     return System.import('tests/amd-module-3.js').then(function (m) {
       ok(m.amd);
     });
   });
 
-  test('AMD detection test with byte order mark (BOM)', function () {
+  it('AMD detection test with byte order mark (BOM)', function () {
     return System.import('tests/amd-module-bom.js').then(function (m) {
       ok(m.amd);
     });
   });
 
-  test('AMD with dynamic require callback', function () {
+  it('AMD with dynamic require callback', function () {
     return System.import('tests/amd-dynamic-require.js').then(function (m) {
       return new Promise(function (resolve, reject) {
         m.onCallback(function (m) {
@@ -447,7 +368,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading an AMD wildcard bundle fail if not match', function () {
+  it('Loading an AMD wildcard bundle fail if not match', function () {
     System.config({
       bundles: {
         'tests/amd-bundle.js': ['bundle-*.css']
@@ -464,7 +385,7 @@ suite('SystemJS Standard Tests', function() {
     ]);
   });
 
-  test('Loading an AMD bundle', function () {
+  it('Loading an AMD bundle', function () {
     System.config({
       map: {
         helloworld: './'
@@ -494,7 +415,7 @@ suite('SystemJS Standard Tests', function() {
     ]);
   });
 
-  test('Loading an AMD named define', function () {
+  it('Loading an AMD named define', function () {
     return System.import('tests/nameddefine.js').then(function (m1) {
       ok(m1.converter, 'Showdown not loaded');
       return System.import('another-define').then(function (m2) {
@@ -503,33 +424,33 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading an AMD bundle with an anonymous define', function () {
+  it('Loading an AMD bundle with an anonymous define', function () {
     return System.import('tests/anon-named.js').then(function (m) {
       ok(m.anon == true);
     });
   });
 
-  test('Loading an AMD bundle with multiple anonymous defines', function () {
+  it('Loading an AMD bundle with multiple anonymous defines', function () {
     return System.import('tests/multiple-anonymous.js').then(function (m) {
       ok(m.anon);
       ok(m.named === 'named');
     });
   });
 
-  test('Loading AMD CommonJS form', function () {
+  it('Loading AMD CommonJS form', function () {
     return System.import('tests/amd-cjs-module.js').then(function (m) {
       ok(m.test == 'hi', 'Not defined');
     });
   });
 
-  test('AMD contextual require toUrl', function () {
+  it('AMD contextual require toUrl', function () {
     return System.import('tests/amd-contextual.js').then(function (m) {
       ok(m.name == System.baseURL + 'tests/amd-contextual.js');
       ok(m.rel == System.baseURL + 'rel-path.js');
     });
   });
 
-  test('AMD race condition test', function () {
+  it('AMD race condition test', function () {
     System.config({
       bundles: {
         "tests/out.js": ["tests/lib/modB.js"]
@@ -558,14 +479,14 @@ suite('SystemJS Standard Tests', function() {
     return p;
   });
 
-  test('Loading a CommonJS module', function () {
+  it('Loading a CommonJS module', function () {
     return System.import('tests/common-js-module.js').then(function (m) {
       ok(m.hello == 'world', 'module value not defined');
       ok(m.first == 'this is a dep', 'dep value not defined');
     });
   });
 
-  test('CommonJS mapping test', function () {
+  it('CommonJS mapping test', function () {
     System.config({
       map: {
         // baseURI in NodeJS tests is different
@@ -581,31 +502,31 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading a CommonJS module with this', function () {
+  it('Loading a CommonJS module with this', function () {
     return System.import('tests/cjs-this.js').then(function (m) {
       ok(m.asdf == 'module value')
     });
   });
 
-  test('Falsy __useDefault CJS Module', function () {
+  it('Falsy __useDefault CJS Module', function () {
     return System.import('tests/falsy_use_default/a.js').then(function (m) {
       ok(m === 0);
     });
   });
 
-  test('CommonJS setting module.exports', function () {
+  it('CommonJS setting module.exports', function () {
     return System.import('tests/cjs-exports.js').then(function (m) {
       ok(m.e == 'export');
     });
   });
 
-  test('CommonJS detection variation 1', function () {
+  it('CommonJS detection variation 1', function () {
     return System.import('tests/commonjs-variation.js').then(function (m) {
       ok(m.e === System.registry.get('@empty'));
     });
   });
 
-  test('CommonJS detection variation 2', function () {
+  it('CommonJS detection variation 2', function () {
     return System.import('tests/commonjs-variation2.js').then(function (m) {
       // we no longer extend unenumerable properties
       ok(m.OpaqueToken);
@@ -613,19 +534,19 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('CommonJS detection test with byte order mark (BOM)', function () {
+  it('CommonJS detection test with byte order mark (BOM)', function () {
     return System.import('tests/cjs-exports-bom.js').then(function (m) {
       ok(m.foo == 'bar');
     });
   });
 
-  test('CommonJS module detection test with byte order mark (BOM)', function () {
+  it('CommonJS module detection test with byte order mark (BOM)', function () {
     return System.import('tests/cjs-module-bom.js').then(function (m) {
       ok(m.foo == 'bar');
     });
   });
 
-  test('CommonJS require variations', function () {
+  it('CommonJS require variations', function () {
     return System.import('tests/commonjs-requires.js').then(function (m) {
       ok(m.d1 == 'd');
       ok(m.d2 == 'd');
@@ -637,7 +558,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('CommonJS globals', function () {
+  it('CommonJS globals', function () {
     System.config({
       meta: {
         'tests/commonjs-globals.js': {
@@ -652,31 +573,31 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('CommonJS require.resolve', function () {
+  it('CommonJS require.resolve', function () {
     return System.import('tests/cjs-resolve.js').then(function (m) {
       ok(m.substr(m.length - 12, 12) == 'test/tests/a');
     });
   })
 
-  test('Loading a UMD module', function () {
+  it('Loading a UMD module', function () {
     return System.import('tests/umd.js').then(function (m) {
       ok(m.d == 'hi', 'module value not defined');
     });
   });
 
-  test('Loading AMD with format hint', function () {
+  it('Loading AMD with format hint', function () {
     return System.import('tests/amd-format.js').then(function (m) {
       ok(m.amd == 'amd', 'AMD not loaded');
     });
   });
 
-  test('Loading CJS with format hint', function () {
+  it('Loading CJS with format hint', function () {
     return System.import('tests/cjs-format.js').then(function (m) {
       ok(m.cjs == 'cjs', 'CJS not loaded');
     });
   });
 
-  test('CommonJS globals', function () {
+  it('CommonJS globals', function () {
     return System.import('tests/cjs-globals.js').then(function (m) {
       ok(m.filename.match(/tests\/cjs-globals\.js$/));
       ok(m.dirname.match(/\/tests$/));
@@ -684,19 +605,19 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Versions', function () {
+  it('Versions', function () {
     return System.import('tests/zero@0.js').then(function (m) {
       ok(m == '0');
     });
   });
 
-  test('Loading a module with # in the name', function () {
+  it('Loading a module with # in the name', function () {
     return System.import('tests/#.js').then(function (m) {
       ok(m == '#');
     });
   });
 
-  test('Instantiation plugin', function () {
+  it('Instantiation plugin', function () {
     System.registry.set('instantiate-plugin', System.newModule({
       fetch: function () {
         return ''
@@ -712,13 +633,13 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Locate plugin', function () {
+  it('Locate plugin', function () {
     return System.import('tests/x!tests/locate-plugin.js').then(function (m) {
       ok(m.x === 'x');
     });
   });
 
-  test('Simple compiler Plugin', function () {
+  it('Simple compiler Plugin', function () {
     System.config({
       map: {
         'coffee': 'tests/compiler-plugin.js'
@@ -730,7 +651,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Mapping a plugin argument', function () {
+  it('Mapping a plugin argument', function () {
     System.config({
       map: {
         bootstrap: 'tests/bootstrap@3.1.1',
@@ -742,7 +663,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Using pluginFirst config', function () {
+  it('Using pluginFirst config', function () {
     System.config({
       pluginFirst: true,
       map: {
@@ -758,13 +679,13 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Advanced compiler plugin', function () {
+  it('Advanced compiler plugin', function () {
     return System.import('tests/compiler-test.js!tests/advanced-plugin.js').then(function (m) {
       ok(m == 'custom fetch:' + System.baseURL + 'tests/compiler-test.js!' + System.baseURL + 'tests/advanced-plugin.js', m);
     });
   });
 
-  test('Plugin as a dependency', function () {
+  it('Plugin as a dependency', function () {
     System.config({
       map: {
         css: 'tests/css.js'
@@ -775,7 +696,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Text plugin', function () {
+  it('Text plugin', function () {
     System.config({
       meta: {
         '*.html': {
@@ -789,20 +710,20 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('AMD Circular', function () {
+  it('AMD Circular', function () {
     return System.import('tests/amd-circular1.js').then(function (m) {
       ok(m.outFunc() == 5, 'Expected execution');
     });
   });
 
-  test('CJS Circular', function () {
+  it('CJS Circular', function () {
     return System.import('tests/cjs-circular1.js').then(function (m) {
       ok(m.first == 'second value');
       ok(m.firstWas == 'first value', 'Original value');
     });
   });
 
-  test('System.register Circular', function () {
+  it('System.register Circular', function () {
     System.config({
       meta: {
         'tests/register-circular1.js': {
@@ -816,25 +737,25 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('System.register regex test', function () {
+  it('System.register regex test', function () {
     return System.import('tests/register-regex.js').then(function (m) {
       ok(true);
     });
   });
 
-  test('System.register regex test 2', function () {
+  it('System.register regex test 2', function () {
     return System.import('tests/register-regex-2.js').then(function (m) {
       ok(m);
     });
   });
 
-  test('System.register module name arg', function () {
+  it('System.register module name arg', function () {
     return System.import('tests/module-name.js').then(function (m) {
       ok(m.name == System.baseURL + 'tests/module-name.js');
     });
   });
 
-  test('System.register group linking test', function () {
+  it('System.register group linking test', function () {
     System.config({
       bundles: {
         'tests/group-test.js': ['group-a']
@@ -851,7 +772,7 @@ suite('SystemJS Standard Tests', function() {
     }
   });
 
-  test('Bundle meta', function () {
+  it('Bundle meta', function () {
     return System.import('tests/bundle-meta.js').then(function () {
       return System.import('asdf').then(function (m) {
         ok(m.bundle === 'module');
@@ -859,30 +780,30 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading AMD from a bundle', function () {
+  it('Loading AMD from a bundle', function () {
     return System.import('tree/amd').then(function (m) {
       ok(m.is == 'amd');
     });
   });
 
-  test('Loading CommonJS from a bundle', function () {
+  it('Loading CommonJS from a bundle', function () {
     return System.import('tree/cjs').then(function (m) {
       ok(m.cjs === true);
     });
   });
 
-  test('Loading a Global from a bundle', function () {
+  it('Loading a Global from a bundle', function () {
     return System.import('tree/global').then(function (m) {
       ok(m === 'output');
     });
   });
 
-  test('Loading named System.register', function () {
+  it('Loading named System.register', function () {
     return System.import('tree/third').then(function (m) {
       ok(m.some == 'exports');
     });
   });
-  test('Loading System.register from ES6', function () {
+  it('Loading System.register from ES6', function () {
     System.config({
       meta: {
         'tree/first': {
@@ -895,14 +816,14 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('AMD simplified CommonJS wrapping with an aliased require', function () {
+  it('AMD simplified CommonJS wrapping with an aliased require', function () {
     return System.import('tests/amd-simplified-cjs-aliased-require1.js').then(function (m) {
       ok(m.require2,"got dependency from aliased require");
       ok(m.require2.amdCJS,"got dependency from aliased require listed as a dependency");
     });
   });
 
-  test('Loading dynamic modules with __esModule flag set', function () {
+  it('Loading dynamic modules with __esModule flag set', function () {
     return System.import('tests/es-module-flag.js').then(function (d) {
       m = System.registry.get(System.normalizeSync('tests/es-module-flag.js'));
       ok(m.default == 'default export');
@@ -912,14 +833,14 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('ES6 named export loading of CJS', function () {
+  it('ES6 named export loading of CJS', function () {
     return System.import('tests/es-named-import-cjs.js').then(function (m) {
       ok(m.cjsFuncValue === 'named export');
     });
   });
 
   // TypeScript does not support async functions yet
-  test('Async functions', function () {
+  it('Async functions', function () {
     System.babelOptions = { stage: 0 };
     System.traceurOptions = { asyncFunctions: true };
     return System.import('tests/async.js').then(function (m) {
@@ -927,25 +848,25 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Wrapper module support', function () {
+  it('Wrapper module support', function () {
     return System.import('tests/wrapper.js').then(function (m) {
       ok(m.d == 'default1', 'Wrapper module not defined.');
     });
   });
 
-  test('ES6 plugin', function () {
+  it('ES6 plugin', function () {
     return System.import('tests/blah.js!tests/es6-plugin.js').then(function (m) {
       ok(m == 'plugin');
     });
   });
 
-  test('ES6 detection', function () {
+  it('ES6 detection', function () {
     return System.import('tests/es6-detection1.js').then(function (m) {
       ok(true);
     });
   });
 
-  test('Basic exporting & importing', function () {
+  it('Basic exporting & importing', function () {
     return Promise.all([
       System.import('tests/default1.js').then(function (m1) {
         ok(m1.default == 'default1', 'Error defining default 1');
@@ -967,7 +888,7 @@ suite('SystemJS Standard Tests', function() {
     ]);
   });
 
-  test('Export Star', function () {
+  it('Export Star', function () {
     return System.import('tests/export-star.js')
     .then(function (m) {
       ok(m.foo == 'foo');
@@ -975,7 +896,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Importing a mapped loaded module', function () {
+  it('Importing a mapped loaded module', function () {
     System.config({
       map: {
         'default1': 'tests/default1.js'
@@ -988,36 +909,36 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading empty ES6', function () {
+  it('Loading empty ES6', function () {
     return System.import('tests/empty-es6.js').then(function (m) {
       ok(m && emptyES6);
     });
   })
 
-  test('Loading ES6 with format hint', function () {
+  it('Loading ES6 with format hint', function () {
     return System.import('tests/es6-format.js');
   });
 
-  test('Loading ES6 loading AMD', function () {
+  it('Loading ES6 loading AMD', function () {
     return System.import('tests/es6-loading-amd.js').then(function (m) {
       ok(m.amd == true);
     })
   });
 
-  test('Loading AMD with import *', function () {
+  it('Loading AMD with import *', function () {
     return System.import('tests/es6-import-star-amd.js').then(function (m) {
       ok(m.g == true);
     });
   });
 
-  test('Loading ES6 and AMD', function () {
+  it('Loading ES6 and AMD', function () {
     return System.import('tests/es6-and-amd.js').then(function (m) {
       ok(m.amd_module == 'AMD Module');
       ok(m.es6_module == 'ES6 Module');
     });
   });
 
-  test('ES module deps support', function () {
+  it('ES module deps support', function () {
     System.config({
       meta: {
         'tests/esm-with-deps.js': {
@@ -1031,13 +952,13 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Module Name meta', function () {
+  it('Module Name meta', function () {
     return System.import('tests/reflection.js').then(function (m) {
       ok(m.myname == System.normalizeSync('tests/reflection.js'), 'Module name not returned');
     });
   });
 
-  test('Relative dyanamic loading', function () {
+  it('Relative dyanamic loading', function () {
     return System.import('tests/reldynamic.js').then(function (m) {
       return m.dynamicLoad();
     })
@@ -1046,37 +967,37 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('ES6 Circular', function () {
+  it('ES6 Circular', function () {
     return System.import('tests/es6-circular1.js').then(function (m) {
       ok(m.q == 3, 'Binding not allocated');
       ok(m.r == 3, 'Binding not updated');
     });
   });
 
-  test('AMD & CJS circular, ES6 Circular', function () {
+  it('AMD & CJS circular, ES6 Circular', function () {
     return System.import('tests/all-circular1.js').then(function (m) {
       ok(m.q == 4);
       ok(m.o.checkObj() == 'changed');
     });
   });
 
-  test('AMD -> System.register circular -> ES6', function () {
+  it('AMD -> System.register circular -> ES6', function () {
     return System.import('tests/all-layers1.js').then(function (m) {
       ok(m == true)
     });
   });
 
-  test('Loading an AMD module that requires another works', function () {
+  it('Loading an AMD module that requires another works', function () {
     return System.import('tests/amd-require.js');
   });
 
-  test('Loading a connected tree that connects ES and CJS modules', function () {
+  it('Loading a connected tree that connects ES and CJS modules', function () {
   	return System.import('tests/connected-tree/a.js').then(function (a){
   		ok(a.name === "a");
   	});
   });
 
-  test('Loading two bundles that have a shared dependency', function () {
+  it('Loading two bundles that have a shared dependency', function () {
     System.config({
       bundles: {
         "tests/shared-dep-bundles/a.js": ["lib/shared-dep", "lib/a"],
@@ -1120,7 +1041,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Custom loader instance System scoped', function () {
+  it('Custom loader instance System scoped', function () {
     var customSystem = new System.constructor();
 
     customSystem.config(System.getConfig());
@@ -1132,7 +1053,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   if (typeof window !== 'undefined' && window.Worker) {
-    test('Using SystemJS in a Web Worker', function () {
+    it('Using SystemJS in a Web Worker', function () {
       this.timeout(10000);
       var worker = new Worker('./tests/worker-' + System.transpiler.replace('plugin-', '') + '.js');
 
@@ -1155,14 +1076,14 @@ suite('SystemJS Standard Tests', function() {
   });
 
   // new features!!
-  test('Named imports for non-es6', function () {
+  it('Named imports for non-es6', function () {
     return System.import('tests/es6-cjs-named-export.js')
     .then(function (m) {
       ok(m.someExport == undefined);
     });
   });
 
-  test('Globals', function () {
+  it('Globals', function () {
     System.config({
       meta: {
         'tests/with-global-deps.js': {
@@ -1181,7 +1102,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Scriptload precompiled global with exports still defined', function () {
+  it('Scriptload precompiled global with exports still defined', function () {
     System.config({
       meta: {
         'tests/global-single-compiled.js': {
@@ -1196,14 +1117,14 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Multi-format deps meta', function () {
+  it('Multi-format deps meta', function () {
     return System.import('tests/amd-extra-deps.js').then(function (m) {
       ok(m.join(',') == '10,5');
     });
   });
 
 
-  test('Wildcard meta', function () {
+  it('Wildcard meta', function () {
     System.config({
       meta: {
         'tests/cs/main.js': {
@@ -1219,7 +1140,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Package configuration pathed package name', function () {
+  it('Package configuration pathed package name', function () {
     System.config({
       paths: {
         'app/': 'tests/modules/'
@@ -1237,7 +1158,7 @@ suite('SystemJS Standard Tests', function() {
     })
   });
 
-  test('Package configuration main normalization', function () {
+  it('Package configuration main normalization', function () {
     SystemJS.config({
       paths: {
         "npm:": "jspm_packages/npm/",
@@ -1254,7 +1175,7 @@ suite('SystemJS Standard Tests', function() {
     ok(System.normalizeSync('app') === System.baseURL + 'src/index.js');
   });
 
-  test('esModule meta option', function () {
+  it('esModule meta option', function () {
     System.config({
       meta: {
         'tests/es-module-meta.js': {
@@ -1268,7 +1189,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('esModule meta option for AMD', function () {
+  it('esModule meta option for AMD', function () {
     System.config({
       meta: {
         'tests/es-module-meta-amd.js': {
@@ -1282,7 +1203,7 @@ suite('SystemJS Standard Tests', function() {
     });
   })
 
-  test('Package configuration CommonJS config example', function () {
+  it('Package configuration CommonJS config example', function () {
     System.config({
       map: {
         'global-test': 'tests/testpkg/test.ts'
@@ -1327,7 +1248,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Package edge cases', function () {
+  it('Package edge cases', function () {
 
     var clonedSystem = new System.constructor();
     clonedSystem.config({
@@ -1396,7 +1317,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Base package test', function () {
+  it('Base package test', function () {
     var clonedSystem = new System.constructor();
     clonedSystem.config({
       packages: {
@@ -1409,7 +1330,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Package map circular cases', function () {
+  it('Package map circular cases', function () {
     System.config({
       map: {
         tp3: 'tests/testpkg3'
@@ -1515,7 +1436,7 @@ suite('SystemJS Standard Tests', function() {
 
   });
 
-  test('Conditional loading', function () {
+  it('Conditional loading', function () {
     System.registry.set('env', System.newModule({ 'browser': 'ie' }));
 
     return System.import('tests/branch-#{env|browser}.js')
@@ -1524,7 +1445,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Boolean conditional false', function () {
+  it('Boolean conditional false', function () {
     System.registry.set('env', System.newModule({ 'js': { 'es5': true } }));
 
     return System.import('tests/branch-boolean.js#?env|~js.es5')
@@ -1533,7 +1454,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Boolean conditional true', function () {
+  it('Boolean conditional true', function () {
     System.registry.set('env', System.newModule({ 'js': { 'es5': true } }));
 
     System.config({
@@ -1548,7 +1469,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Loading a System.registerdynamic module (not bundled)', function () {
+  it('Loading a System.registerdynamic module (not bundled)', function () {
     return System.import('tests/registerdynamic-main.js')
     .then(function (m) {
       ok(typeof m.dependency === 'function');
@@ -1556,7 +1477,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Importing a script with right integrity passes', function () {
+  it('Importing a script with right integrity passes', function () {
     System.config({
       meta: {
         'tests/csp/integrity-1.js': {
@@ -1572,7 +1493,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   if (typeof process === 'undefined' && navigator.userAgent.indexOf('Trident/7.0') === -1)
-  test('Importing a script with wrong integrity fails', function () {
+  it('Importing a script with wrong integrity fails', function () {
     System.config({
       meta: {
         'tests/csp/integrity-2.js': {
@@ -1591,20 +1512,20 @@ suite('SystemJS Standard Tests', function() {
   });
 
   if (typeof process != 'undefined') {
-    test('Loading Node core modules', function () {
+    it('Loading Node core modules', function () {
       return System.import('@node/fs')
       .then(function (m) {
         ok(m.writeFile);
       });
     });
 
-    test('No global define leak in Node', function () {
+    it('No global define leak in Node', function () {
       ok(typeof define == 'undefined');
     });
   }
 
   if (typeof WebAssembly !== 'undefined')
-  test('Loading WASM', function () {
+  it('Loading WASM', function () {
     System.config({
       wasm: true,
       map: {

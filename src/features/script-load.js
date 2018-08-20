@@ -9,8 +9,12 @@ systemJSPrototype.instantiate = function (url) {
     const script = document.createElement('script');
     script.charset = 'utf-8';
     script.async = true;
-    script.addEventListener('error', reject);
+    script.addEventListener('error', function () { reject(new Error('Load error')) });
     script.addEventListener('load', function () {
+      // will be empty for syntax errors resulting in "Module did not instantiate" error
+      // (but the original error will show in the console)
+      // we can try and use window.onerror to get the syntax error,
+      // if theres a way to do this reliably, although that seems doubtful
       resolve(loader.getRegister());
       document.head.removeChild(script);
     });

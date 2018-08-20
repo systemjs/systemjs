@@ -25,27 +25,10 @@ function SystemJS () {
   this[REGISTRY] = {};
 }
 
-function callResolve (loader, id, parentUrl) {
-  return Promise.resolve()
-  .then(function () {
-    return loader.resolve(id, parentUrl);
-  })
-  .then(function (id) {
-    if (id)
-      return id;
-    throw new Error('No resolution');
-  })
-  .catch(function (err) {
-    if (err && err.message)
-      err.message += '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : '');
-    throw err;
-  });
-}
-
 const systemJSPrototype = SystemJS.prototype;
-systemJSPrototype.import = function (id, parent) {
+systemJSPrototype.import = function (id, parentUrl) {
   const loader = this;
-  return callResolve(loader, id, parent)
+  return Promise.resolve(loader.resolve(id, parentUrl))
   .then(function (id) {
     const load = getOrCreateLoad(loader, id);
     return load.C || topLevelLoad(loader, load);
@@ -99,10 +82,10 @@ function getOrCreateLoad (loader, id) {
   })
   .then(function (registration) {
     if (!registration)
-      throw new Error('No instantiation');
-    let hoistedExports = false;
+      throw new Error('Module did not instantiate');
     function _export (name, value) {
-      hoistedExports = true;
+      // note if we have hoisted exports (including reexports)
+      load.h = true;
       let changed = false;
       if (typeof name !== 'object') {
         if (!(name in ns) || ns[name] !== value) {
@@ -126,7 +109,7 @@ function getOrCreateLoad (loader, id) {
     }
     const declared = registration[1](_export, registration[1].length === 2 ? loader.createContext(id) : undefined);
     load.e = declared.execute || function () {};
-    return [registration[0], declared.setters, hoistedExports];
+    return [registration[0], declared.setters];
   })
   .catch(function (err) {
     if (err && err.message)
@@ -139,15 +122,17 @@ function getOrCreateLoad (loader, id) {
   .then(function (instantiation) {
     return Promise.all(instantiation[0].map(function (dep, i) {
       const setter = instantiation[1][i];
-      return callResolve(loader, dep, id)
+      return Promise.resolve(loader.resolve(dep, id))
       .then(function (depId) {
         const depLoad = getOrCreateLoad(loader, depId);
         // depLoad.I may be undefined for already-evaluated
-        return Promise.resolve(depLoad.I).then(function () {
+        return Promise.resolve(depLoad.I)
+        .then(function () {
           if (setter) {
             depLoad.i.push(setter);
-            // only run early setters when there are hoisted exports
-            if (instantiation[2] || !depLoad.I)
+            // only run early setters when there are hoisted exports of that module
+            // the timing works here as pending hoisted export calls will trigger through importerSetters
+            if (depLoad.h || !depLoad.I)
               setter(depLoad.n);
           }
           return depLoad;
@@ -176,6 +161,8 @@ function getOrCreateLoad (loader, id) {
     I: instantiatePromise,
     // link
     L: linkPromise,
+    // whether it has hoisted exports
+    h: false,
 
     // On instantiate completion we have populated:
     // dependency load records
@@ -227,82 +214,83 @@ const nullContext = Object.freeze(Object.create(null));
 // returns a promise if and only if a top-level await subgraph
 // throws on sync errors
 function postOrderExec (loader, load, seen) {
+  if (seen[load.id])
+    return;
+  seen[load.id] = true;
+  
+  if (load.E)
+    return load.E;
+
   if (!load.e) {
     if (load.eE)
       throw load.eE;
-    return load.E;
+    return;
   }
 
   // deps execute first, unless circular
-  if (!seen[load.id]) {
-    seen[load.id] = true;
-    
-    let depLoadPromises;
-    load.d.forEach(function (depLoad) {
-      if (TRACING) {
-        try {
-          const depLoadPromise = postOrderExec(loader, depLoad, seen);
-          if (depLoadPromise)
-            (depLoadPromises = depLoadPromises || []).push(depPromise);
-        }
-        catch (err) {
-          loader.onload(load.id, err);
-          throw err;
-        }
-      }
-      else {
+  let depLoadPromises;
+  load.d.forEach(function (depLoad) {
+    if (TRACING) {
+      try {
         const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise)
-          (depLoadPromises = depLoadPromises || []).push(depPromise);
+        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
       }
-    });
-    if (depLoadPromises) {
-      if (TRACING) {
-        return Promise.all(depLoadPromises)
-        .catch(function (err) { loader.onload(load.id, err); throw err; })
-        .then(function () {
-          // TLA trick:
-          // second time till will jump straight to evaluation part as seen
-          return postOrderExec(loader, load, seen);
-        });
-      }
-      else {
-        return Promise.all(depLoadPromises)
-        .then(function () {
-          return postOrderExec(loader, load, seen);
-        });
+      catch (err) {
+        loader.onload(load.id, err);
+        throw err;
       }
     }
-  }
-
-  // could be a TLA race or circular
-  if (!load.e)
-    return load.E;
-
-  try {
-    const execPromise = load.e.call(nullContext);
-    if (execPromise) {
-      if (TRACING) execPromise.catch(function (err) { loader.onload(load.id, err); throw err; });
-      load.E = execPromise;
-      execPromise.then(function () {
-        load.C = load.n;
-        if (TRACING) loader.onload(load.id, null);
-      })
-      .catch(function () {});
-      return execPromise;
+    else {
+      const depLoadPromise = postOrderExec(loader, depLoad, seen);
+      if (depLoadPromise)
+        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
-    // (should be a promise, but a minify optimization to leave out Promise.resolve)
-    load.C = load.n;
-    if (TRACING) loader.onload(load.id, null);
+  });
+  if (depLoadPromises) {
+    if (TRACING)
+      return load.E = Promise.all(depLoadPromises)
+      .then(doExec)
+      .catch(function (err) {
+        loader.onload(load.id, err);
+        throw err;
+      });
+    return load.E = Promise.all(depLoadPromises).then(doExec);
   }
-  catch (err) {
-    if (TRACING) loader.onload(load.id, err);
-    load.eE = err;
-    throw err;
-  }
-  finally {
-    load.L = load.I = undefined;
-    load.e = null;
+
+  doExec();
+
+  function doExec () {
+    try {
+      let execPromise = load.e.call(nullContext);
+      if (execPromise) {
+        if (TRACING)
+          execPromise = execPromise.then(function () {
+            load.C = load.n;
+            loader.onload(load.id, null);
+          }, function () {
+            loader.onload(load.id, err);
+            throw err;
+          });
+        else
+          execPromise.then(function () {
+            load.C = load.n;
+          });
+        execPromise.catch(function () {});
+        return load.E = execPromise;
+      }
+      // (should be a promise, but a minify optimization to leave out Promise.resolve)
+      load.C = load.n;
+      if (TRACING) loader.onload(load.id, null);
+    }
+    catch (err) {
+      if (TRACING) loader.onload(load.id, err);
+      load.eE = err;
+      throw err;
+    }
+    finally {
+      load.L = load.I = undefined;
+      load.e = null;
+    }
   }
 }
 

@@ -7,6 +7,14 @@
 
   const envGlobal = hasSelf ? self : global;
 
+  let baseUrl;
+  if (typeof location !== 'undefined') {
+    baseUrl = location.href.split('#')[0].split('?')[0];
+    const lastSepIndex = baseUrl.lastIndexOf('/');
+    if (lastSepIndex !== -1)
+      baseUrl = baseUrl.substr(0, lastSepIndex + 1);
+  }
+
   const backslashRegEx = /\\/g;
   function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
     if (relUrl.indexOf('\\') !== -1)
@@ -113,27 +121,10 @@
     this[REGISTRY] = {};
   }
 
-  function callResolve (loader, id, parentUrl) {
-    return Promise.resolve()
-    .then(function () {
-      return loader.resolve(id, parentUrl);
-    })
-    .then(function (id) {
-      if (id)
-        return id;
-      throw new Error('No resolution');
-    })
-    .catch(function (err) {
-      if (err && err.message)
-        err.message += '\n  Resolving ' + id + (parentUrl ? ' to ' + parentUrl : '');
-      throw err;
-    });
-  }
-
   const systemJSPrototype = SystemJS.prototype;
-  systemJSPrototype.import = function (id, parent) {
+  systemJSPrototype.import = function (id, parentUrl) {
     const loader = this;
-    return callResolve(loader, id, parent)
+    return Promise.resolve(loader.resolve(id, parentUrl))
     .then(function (id) {
       const load = getOrCreateLoad(loader, id);
       return load.C || topLevelLoad(loader, load);
@@ -183,10 +174,10 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw new Error('No instantiation');
-      let hoistedExports = false;
+        throw new Error('Module did not instantiate');
       function _export (name, value) {
-        hoistedExports = true;
+        // note if we have hoisted exports (including reexports)
+        load.h = true;
         let changed = false;
         if (typeof name !== 'object') {
           if (!(name in ns) || ns[name] !== value) {
@@ -210,7 +201,7 @@
       }
       const declared = registration[1](_export, registration[1].length === 2 ? loader.createContext(id) : undefined);
       load.e = declared.execute || function () {};
-      return [registration[0], declared.setters, hoistedExports];
+      return [registration[0], declared.setters];
     })
     .catch(function (err) {
       if (err && err.message)
@@ -222,15 +213,17 @@
     .then(function (instantiation) {
       return Promise.all(instantiation[0].map(function (dep, i) {
         const setter = instantiation[1][i];
-        return callResolve(loader, dep, id)
+        return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
           const depLoad = getOrCreateLoad(loader, depId);
           // depLoad.I may be undefined for already-evaluated
-          return Promise.resolve(depLoad.I).then(function () {
+          return Promise.resolve(depLoad.I)
+          .then(function () {
             if (setter) {
               depLoad.i.push(setter);
-              // only run early setters when there are hoisted exports
-              if (instantiation[2] || !depLoad.I)
+              // only run early setters when there are hoisted exports of that module
+              // the timing works here as pending hoisted export calls will trigger through importerSetters
+              if (depLoad.h || !depLoad.I)
                 setter(depLoad.n);
             }
             return depLoad;
@@ -259,6 +252,8 @@
       I: instantiatePromise,
       // link
       L: linkPromise,
+      // whether it has hoisted exports
+      h: false,
 
       // On instantiate completion we have populated:
       // dependency load records
@@ -310,70 +305,59 @@
   // returns a promise if and only if a top-level await subgraph
   // throws on sync errors
   function postOrderExec (loader, load, seen) {
+    if (seen[load.id])
+      return;
+    seen[load.id] = true;
+    
+    if (load.E)
+      return load.E;
+
     if (!load.e) {
       if (load.eE)
         throw load.eE;
-      return load.E;
+      return;
     }
 
     // deps execute first, unless circular
-    if (!seen[load.id]) {
-      seen[load.id] = true;
-      
-      let depLoadPromises;
-      load.d.forEach(function (depLoad) {
-        {
-          const depLoadPromise = postOrderExec(loader, depLoad, seen);
-          if (depLoadPromise)
-            (depLoadPromises = depLoadPromises || []).push(depPromise);
-        }
-      });
-      if (depLoadPromises) {
-        {
-          return Promise.all(depLoadPromises)
-          .then(function () {
-            return postOrderExec(loader, load, seen);
-          });
-        }
+    let depLoadPromises;
+    load.d.forEach(function (depLoad) {
+      {
+        const depLoadPromise = postOrderExec(loader, depLoad, seen);
+        if (depLoadPromise)
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
       }
+    });
+    if (depLoadPromises) {
+      return load.E = Promise.all(depLoadPromises).then(doExec);
     }
 
-    // could be a TLA race or circular
-    if (!load.e)
-      return load.E;
+    doExec();
 
-    try {
-      const execPromise = load.e.call(nullContext);
-      if (execPromise) {
-        load.E = execPromise;
-        execPromise.then(function () {
-          load.C = load.n;
-        })
-        .catch(function () {});
-        return execPromise;
+    function doExec () {
+      try {
+        let execPromise = load.e.call(nullContext);
+        if (execPromise) {
+          execPromise.then(function () {
+              load.C = load.n;
+            });
+          execPromise.catch(function () {});
+          return load.E = execPromise;
+        }
+        // (should be a promise, but a minify optimization to leave out Promise.resolve)
+        load.C = load.n;
       }
-      // (should be a promise, but a minify optimization to leave out Promise.resolve)
-      load.C = load.n;
-    }
-    catch (err) {
-      load.eE = err;
-      throw err;
-    }
-    finally {
-      load.L = load.I = undefined;
-      load.e = null;
+      catch (err) {
+        load.eE = err;
+        throw err;
+      }
+      finally {
+        load.L = load.I = undefined;
+        load.e = null;
+      }
     }
   }
 
   envGlobal.System = new SystemJS();
-
-  let baseUrl;
-  if (typeof location !== 'undefined') {
-    baseUrl = location.href.split('#')[0].split('?')[0];
-    const lastSepIndex = baseUrl.lastIndexOf('/');
-    if (lastSepIndex !== -1)
-      baseUrl = baseUrl.substr(0, lastSepIndex + 1);
-  }
 
   /*
    * Supports loading System.register via script tag injection
@@ -384,8 +368,12 @@
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
-      script.addEventListener('error', reject);
+      script.addEventListener('error', function () { reject(new Error('Load error')); });
       script.addEventListener('load', function () {
+        // will be empty for syntax errors resulting in "Module did not instantiate" error
+        // (but the original error will show in the console)
+        // we can try and use window.onerror to get the syntax error,
+        // if theres a way to do this reliably, although that seems doubtful
         resolve(loader.getRegister());
         document.head.removeChild(script);
       });
@@ -395,7 +383,13 @@
   };
 
   systemJSPrototype.resolve = function (id, parentUrl) {
-    return resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
+    const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
+    if (!resolved) {
+      if (id.indexOf(':') !== -1)
+        return id;
+      throw new Error('Cannot resolve "' + id + (parentUrl ? '" in ' + parentUrl : '"'));
+    }
+    return resolved;
   };
 
 }());
