@@ -104,6 +104,18 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof Worker !== 'undefined')
+  test('Using SystemJS in a Web Worker', function () {
+    const worker = new Worker('./browser/worker.js');
+
+    return new Promise(function (resolve) {
+      worker.onmessage = function (e) {
+        assert.equal(e.data.p, 'p');
+        resolve();
+      };
+    });
+  });
+
   if (typeof WebAssembly !== 'undefined' && typeof process === 'undefined')
   test('Loading WASM', function () {
     return System.import('fixtures/wasm/example.wasm')

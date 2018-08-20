@@ -425,7 +425,7 @@
         catch (e) {
           reject(e);
         }
-        resolve(loader.execInstantiate());
+        resolve(loader.getRegister());
       });
     };
 
@@ -533,27 +533,29 @@
    */
 
   let packageMapPromise, packageMapResolve;
-  const scripts = document.getElementsByTagName('script');
-  for (let i = 0; i < scripts.length; i++) {
-    const script = scripts[i];
-    if (script.type !== 'systemjs-packagemap')
-      continue;
+  if (typeof document !== 'undefined') {
+    const scripts = document.getElementsByTagName('script');
+    for (let i = 0; i < scripts.length; i++) {
+      const script = scripts[i];
+      if (script.type !== 'systemjs-packagemap')
+        continue;
 
-    if (!script.src)
-      packageMapResolve = createPackageMap(JSON.parse(script.innerHTML), baseUrl);
-    else
-      packageMapPromise = fetch(script.src)
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (json) {
-        packageMapResolve = createPackageMap(json, script.src);
-        packageMapPromise = undefined;
-      }, function () {
-        packageMapResolve = throwBare;
-        packageMapPromise = undefined;
-      });
-    break;
+      if (!script.src)
+        packageMapResolve = createPackageMap(JSON.parse(script.innerHTML), baseUrl);
+      else
+        packageMapPromise = fetch(script.src)
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (json) {
+          packageMapResolve = createPackageMap(json, script.src);
+          packageMapPromise = undefined;
+        }, function () {
+          packageMapResolve = throwBare;
+          packageMapPromise = undefined;
+        });
+      break;
+    }
   }
   if (!packageMapPromise)
     packageMapResolve = throwBare;

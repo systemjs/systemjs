@@ -14,6 +14,6 @@ if (hasSelf && typeof importScripts === 'function')
       catch (e) {
         reject(e);
       }
-      resolve(loader.execInstantiate());
+      resolve(loader.getRegister());
     });
   };
