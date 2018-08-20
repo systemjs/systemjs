@@ -38,11 +38,8 @@ suite('AMD tests', function () {
   });
 
   test('AMD falls back to global support', function () {
-    System.delete(System.resolve('fixtures/global.js'));
-    delete self.jjQuery;
-    return System.import('fixtures/global.js').then(function (m) {
-      assert.ok(m.default);
-      assert.equal(m.default.v, '2.0..0');
+    return System.import('fixtures/global2.js').then(function (m) {
+      assert.equal(m.default, 'hi');
     });
   });
 

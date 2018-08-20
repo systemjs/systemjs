@@ -5,6 +5,8 @@ import { global } from '../common.js';
 import { systemJSPrototype } from '../system-core';
 
 function getLastGlobalProp () {
+  // alternatively Object.keys(global).pop()
+  // but this may be faster (pending benchmarks)
   let lastProp;
   for (let p in global)
     if (global.hasOwnProperty(p))
@@ -15,8 +17,7 @@ function getLastGlobalProp () {
 let lastGlobalProp;
 const impt = systemJSPrototype.import;
 systemJSPrototype.import = function (id, parentUrl) {
-  if (!lastGlobalProp)
-    lastGlobalProp = getLastGlobalProp();
+  lastGlobalProp = getLastGlobalProp();
   return impt.call(this, id, parentUrl);
 };
 
@@ -31,6 +32,7 @@ systemJSPrototype.getRegister = function () {
   // no registration -> attempt a global detection as difference from snapshot
   // when multiple globals, we take the global value to be the last defined new global object property
   // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
+  // note in Edge, deleting and re-adding a global does not change its ordering
   const globalProp = getLastGlobalProp();
   if (lastGlobalProp === globalProp)
     return emptyInstantiation;

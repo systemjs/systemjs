@@ -10,8 +10,7 @@ suite('Named exports', function () {
   });
 
   test('Loading a global with named exports support', function () {
-    delete self.another;
-    return System.import('fixtures/global.js').then(function (m) {
+    return System.import('fixtures/global3.js').then(function (m) {
       assert.ok(m.default);
       assert.equal(m.default.some, 'thing');
     });

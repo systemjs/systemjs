@@ -53,10 +53,8 @@ suite('Translate Loader', function() {
     });
 
     test('Global script loading', function () {
-      delete window.jjQuery;
-      return System.import('fixtures/global.js').then(function (m) {
-        assert.ok(m.default);
-        assert.equal(m.v, '2.0..0');
+      return System.import('fixtures/global4.js').then(function (m) {
+        assert.equal(m.default, 'global4');
       });
     });
 

@@ -5,7 +5,7 @@
 import { systemJSPrototype } from '../system-core';
 const instantiate = systemJSPrototype.instantiate;
 systemJSPrototype.instantiate = function (url) {
-  if (!url.endsWith('.wasm'))
+  if (url.slice(-5) !== '.wasm')
     return instantiate.call(this, url);
   
   return fetch(url)

@@ -328,7 +328,7 @@ describe('Loading Cases', function() {
         assert.fail('Should have failed');
       }
       catch (e) {
-        assert.equal(e.toString(), 'Error: Module did not instantiate\n  Loading x');
+        assert.equal(e.toString(), 'Error: Module x did not instantiate');
       }
     });
 
@@ -342,7 +342,6 @@ describe('Loading Cases', function() {
     it('should throw if on syntax error', async function () {
       loader.resolve = (id, parentUrl) => resolveIfNotPlainOrUrl(id, parentUrl || testPath);
       const err = await getImportError('./register-modules/main.js');
- 
       assert.equal(err, 'Error: dep error');
     });
 
@@ -353,7 +352,7 @@ describe('Loading Cases', function() {
 
     it('404 error', async function () {
       const err = await getImportError('./register-modules/load-non-existent.js');
-      assert.equal(err, 'Error: ENOENT: no such file or directory, open \'' + testPath.replace(/\//g, path.sep) + 'register-modules\\non-existent.js\'\n  Loading '.replace(/\\/g, path.sep) + testPath + 'register-modules/non-existent.js');
+      assert.equal(err, 'Error: ENOENT: no such file or directory, open \'' + testPath.replace(/\//g, path.sep) + 'register-modules\\non-existent.js\'');
     });
   });
 });

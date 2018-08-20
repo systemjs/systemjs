@@ -76,13 +76,13 @@ function getOrCreateLoad (loader, id) {
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
   
-  const instantiatePromise = Promise.resolve()
+  let instantiatePromise = Promise.resolve()
   .then(function () {
     return loader.instantiate(id);
   })
   .then(function (registration) {
     if (!registration)
-      throw new Error('Module did not instantiate');
+      throw new Error('Module ' + id + ' did not instantiate');
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;
@@ -109,16 +109,16 @@ function getOrCreateLoad (loader, id) {
     }
     const declared = registration[1](_export, registration[1].length === 2 ? loader.createContext(id) : undefined);
     load.e = declared.execute || function () {};
-    return [registration[0], declared.setters];
-  })
-  .catch(function (err) {
-    if (err && err.message)
-      err.message += '\n  Loading ' + load.id;
-    if (TRACING) loader.onload(load.id, err);
-    throw err;
+    return [registration[0], declared.setters || []];
   });
 
-  const linkPromise =  instantiatePromise
+  if (TRACING)
+    instantiatePromise = instantiatePromise.catch(function (err) {
+      loader.onload(load.id, err);
+      throw err;
+    });
+
+  const linkPromise = instantiatePromise
   .then(function (instantiation) {
     return Promise.all(instantiation[0].map(function (dep, i) {
       const setter = instantiation[1][i];
@@ -145,7 +145,6 @@ function getOrCreateLoad (loader, id) {
   });
 
   // disable unhandled rejections
-  instantiatePromise.catch(function () {});
   linkPromise.catch(function () {});
 
   // Captial letter = a promise function

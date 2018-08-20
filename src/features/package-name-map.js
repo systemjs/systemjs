@@ -101,7 +101,7 @@ function createPackageMap (json, baseUrl) {
   function getMatch (path, matchObj) {
     let sepIndex = path.length;
     do {
-      const segment = path.substr(0, sepIndex);
+      const segment = path.slice(0, sepIndex);
       if (segment in matchObj)
         return segment;
     } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
@@ -126,7 +126,7 @@ function createPackageMap (json, baseUrl) {
           (typeof pkg === 'string' || !pkg.path
             ? pkgName + '/'
             : pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/')
-          ) + id.substr(pkgName.length + 1)
+          ) + id.slice(pkgName.length + 1)
         , baseUrl);
       }
     }

@@ -57,8 +57,10 @@
         splice++;
       }
       else {
+        // needed for ie11 lack of iteration scope
+        const idx = i;
         setters.push(function (ns) {
-          depModules[i] = ns.default;
+          depModules[idx] = ns.default;
         });
       }
       if (splice)

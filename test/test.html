@@ -13,9 +13,9 @@
 	<script>
 		mocha.setup('tdd');
 
-		window.baseURL = location.href.substr(0, location.href.lastIndexOf('/') + 1);
-		window.rootURL = location.href.substr(0, location.href.length - 'test/test.html'.length);
-		window.assert = {
+		self.baseURL = location.href.substr(0, location.href.lastIndexOf('/') + 1);
+		self.rootURL = location.href.substr(0, location.href.length - 'test/test.html'.length);
+		self.assert = {
 			ok: function (val) {
 				this.equal(!!val, true);
 			},

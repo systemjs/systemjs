@@ -1,6 +1,28 @@
 suite('SystemJS Standard Tests', function() {
+  
+  test('Syntax errors', function () {
+    // mocha must ignore script errors as uncaught
+		window.onerror = undefined;
+    return System.import('fixtures/error-loader.js').then(function () {
+      assert.fail('Should fail');
+    }, function (e) {
+      assert.ok(e);
+      assert.ok(e instanceof ReferenceError);
+    });
+  });
+
+  test('Fetch errors', function () {
+    return System.import('fixtures/error-loader2.js').then(function () {
+      assert.fail('Should fail');
+    }, function (e) {
+      assert.ok(e);
+      assert.ok(e.message.indexOf('Error loading ') === 0);
+      assert.ok(e.message.indexOf('non-existent') !== -1);
+    });
+  });
+
   test('String encoding', function () {
-    return System.import('./fixtures/browser/string-encoding.js').then(function (m) {
+    return System.import('fixtures/string-encoding.js').then(function (m) {
       assert.equal(m.pi, decodeURI('%CF%80'));
       assert.equal(m.emoji, decodeURI('%F0%9F%90%B6'));
     });
@@ -56,10 +78,21 @@ suite('SystemJS Standard Tests', function() {
       scriptsToLoad.push('fixtures/globals/import' + i + '.js');
 
     return Promise.all(scriptsToLoad.map(function (s, index) {
-      return System.import(s).then(m => {
+      return System.import(s).then(function (m) {
         assert.equal(m.default, index + 1);
       });
     }));
+  });
+
+  test('Catches global script errors', function () {
+    // mocha must ignore script errors as uncaught
+		window.onerror = undefined;
+    return System.import('fixtures/eval-err.js').then(function () {
+      assert.fail('Should fail');
+    }, function (e) {
+      assert.ok(e);
+      assert.equal(e.message, 'Global eval error');
+    });
   });
 
   test('Contextual dynamic import', function () {
