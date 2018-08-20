@@ -352,7 +352,7 @@ describe('Loading Cases', function() {
 
     it('404 error', async function () {
       const err = await getImportError('./register-modules/load-non-existent.js');
-      assert.equal(err, 'Error: ENOENT: no such file or directory, open \'' + testPath.replace(/\//g, path.sep) + 'register-modules\\non-existent.js\'');
+      assert.equal(err, 'Error: ENOENT: no such file or directory, open \'' + testPath.replace(/\//g, path.sep) + 'register-modules' + path.sep + 'non-existent.js\'');
     });
   });
 });
