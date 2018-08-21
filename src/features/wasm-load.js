@@ -4,14 +4,14 @@
  */
 import { systemJSPrototype } from '../system-core';
 const instantiate = systemJSPrototype.instantiate;
-systemJSPrototype.instantiate = function (url) {
+systemJSPrototype.instantiate = function (url, parent) {
   if (url.slice(-5) !== '.wasm')
-    return instantiate.call(this, url);
+    return instantiate.call(this, url, parent);
   
   return fetch(url)
   .then(function (res) {
     if (!res.ok)
-      throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
+      throw new Error('Fetch error ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : ''));
     return WebAssembly.compileStreaming(res);
   })
   .then(function (module) {

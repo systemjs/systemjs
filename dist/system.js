@@ -160,7 +160,7 @@
     return _lastRegister;
   };
 
-  function getOrCreateLoad (loader, id) {
+  function getOrCreateLoad (loader, id, firstParentUrl) {
     let load = loader[REGISTRY][id];
     if (load)
       return load;
@@ -172,7 +172,7 @@
     
     let instantiatePromise = Promise.resolve()
     .then(function () {
-      return loader.instantiate(id);
+      return loader.instantiate(id, firstParentUrl);
     })
     .then(function (registration) {
       if (!registration)
@@ -217,7 +217,7 @@
         const setter = instantiation[1][i];
         return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
-          const depLoad = getOrCreateLoad(loader, depId);
+          const depLoad = getOrCreateLoad(loader, depId, id);
           // depLoad.I may be undefined for already-evaluated
           return Promise.resolve(depLoad.I)
           .then(function () {
@@ -389,14 +389,14 @@
       err$1 = e.error;
     });
 
-  systemJSPrototype.instantiate = function (url) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
     return new Promise(function (resolve, reject) {
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
       script.addEventListener('error', function () {
-        reject(new Error('Error loading ' + url));
+        reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
         // Note URL normalization issues are going to be a careful concern here
@@ -485,14 +485,14 @@
    * Assumes successive instantiate will handle other files
    */
   const instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url) {
+  systemJSPrototype.instantiate = function (url, parent) {
     if (url.slice(-5) !== '.wasm')
-      return instantiate.call(this, url);
+      return instantiate.call(this, url, parent);
     
     return fetch(url)
     .then(function (res) {
       if (!res.ok)
-        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText);
+        throw new Error('Fetch error ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : ''));
       return WebAssembly.compileStreaming(res);
     })
     .then(function (module) {

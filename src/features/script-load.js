@@ -11,14 +11,14 @@ if (typeof window !== 'undefined')
     err = e.error;
   });
 
-systemJSPrototype.instantiate = function (url) {
+systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   return new Promise(function (resolve, reject) {
     const script = document.createElement('script');
     script.charset = 'utf-8';
     script.async = true;
     script.addEventListener('error', function () {
-      reject(new Error('Error loading ' + url));
+      reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
     });
     script.addEventListener('load', function () {
       // Note URL normalization issues are going to be a careful concern here

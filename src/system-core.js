@@ -66,7 +66,7 @@ systemJSPrototype.getRegister = function () {
   return _lastRegister;
 };
 
-function getOrCreateLoad (loader, id) {
+function getOrCreateLoad (loader, id, firstParentUrl) {
   let load = loader[REGISTRY][id];
   if (load)
     return load;
@@ -78,7 +78,7 @@ function getOrCreateLoad (loader, id) {
   
   let instantiatePromise = Promise.resolve()
   .then(function () {
-    return loader.instantiate(id);
+    return loader.instantiate(id, firstParentUrl);
   })
   .then(function (registration) {
     if (!registration)
@@ -124,7 +124,7 @@ function getOrCreateLoad (loader, id) {
       const setter = instantiation[1][i];
       return Promise.resolve(loader.resolve(dep, id))
       .then(function (depId) {
-        const depLoad = getOrCreateLoad(loader, depId);
+        const depLoad = getOrCreateLoad(loader, depId, id);
         // depLoad.I may be undefined for already-evaluated
         return Promise.resolve(depLoad.I)
         .then(function () {

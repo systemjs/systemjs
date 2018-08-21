@@ -15,9 +15,11 @@ suite('SystemJS Standard Tests', function() {
     return System.import('fixtures/error-loader2.js').then(function () {
       assert.fail('Should fail');
     }, function (e) {
+      console.log(e.message);
       assert.ok(e);
       assert.ok(e.message.indexOf('Error loading ') === 0);
       assert.ok(e.message.indexOf('non-existent') !== -1);
+      assert.ok(e.message.indexOf('error-loader2.js') !== -1);
     });
   });
 

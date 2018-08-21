@@ -158,7 +158,7 @@
     return _lastRegister;
   };
 
-  function getOrCreateLoad (loader, id) {
+  function getOrCreateLoad (loader, id, firstParentUrl) {
     let load = loader[REGISTRY][id];
     if (load)
       return load;
@@ -170,7 +170,7 @@
     
     let instantiatePromise = Promise.resolve()
     .then(function () {
-      return loader.instantiate(id);
+      return loader.instantiate(id, firstParentUrl);
     })
     .then(function (registration) {
       if (!registration)
@@ -210,7 +210,7 @@
         const setter = instantiation[1][i];
         return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
-          const depLoad = getOrCreateLoad(loader, depId);
+          const depLoad = getOrCreateLoad(loader, depId, id);
           // depLoad.I may be undefined for already-evaluated
           return Promise.resolve(depLoad.I)
           .then(function () {
@@ -364,14 +364,14 @@
       err$1 = e.error;
     });
 
-  systemJSPrototype.instantiate = function (url) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
     return new Promise(function (resolve, reject) {
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
       script.addEventListener('error', function () {
-        reject(new Error('Error loading ' + url));
+        reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
         // Note URL normalization issues are going to be a careful concern here
@@ -391,7 +391,7 @@
     if (!resolved) {
       if (id.indexOf(':') !== -1)
         return id;
-      throw new Error('Cannot resolve "' + id + (parentUrl ? '" in ' + parentUrl : '"'));
+      throw new Error('Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
     }
     return resolved;
   };
