@@ -15,7 +15,9 @@ _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/pos
 
 SystemJS 2.0 provides two hookable base builds:
 
-1. The 1.5KB [s.js](dist/s.min.js) minimal loader:
+#### 1. s.js minimal loader
+
+The 1.5KB [s.js](dist/s.min.js) minimal loader supports:
 
   * Loads [System.register](docs/system-register.md) modules [supporting all ES module semantics](docs/system-register.md#semantics)
   * Loads and resolves URLs only, excluding support for [bare specifier names](docs/package-name-maps.md#bare-specifiers) (eg `/lodash.js` but not `lodash`)
@@ -23,7 +25,9 @@ SystemJS 2.0 provides two hookable base builds:
   * Works in IE11+ when [Promises are polyfilled](#promise-polyfill)
   * Ideal for use in [Rollup code-splitting builds](https://rollupjs.org/guide/en#experimental-code-splitting)
 
-2. The 2.5KB [system.js](dist/system.min.js) loader:
+#### 2. system.js loader
+
+The 2.5KB [system.js](dist/system.min.js) loader supports:
 
   * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows
   * Supports loading global scripts as modules, as well as [Sytem.register](docs/system-regsiter.md) modules
@@ -31,7 +35,9 @@ SystemJS 2.0 provides two hookable base builds:
   * Supports loading WASM based on the `.wasm` file extension
   * Works in IE11+ when [Fetch (for WASM) and Promises are polyfilled](#promise-polyfill)
 
-In addition, the following [pluggable extras](dist/extras) are provided:
+#### Extras
+
+The following [pluggable extras](dist/extras) are provided:
 
 * [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created)
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
