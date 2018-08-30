@@ -20,8 +20,8 @@ SystemJS 2.0 provides two hookable base builds:
   * Loads [System.register](docs/system-register.md) modules [supporting all ES module semantics](docs/system-register.md#semantics)
   * Loads and resolves URLs only, excluding support for [bare specifier names](docs/package-name-maps.md#bare-specifiers) (eg `/lodash.js` but not `lodash`)
   * Hookable loader supporting [custom extensions](docs/hooks.md)
-  * Works in IE11+ when Promises are polyfilled
-  * Ideal for use in [Rollup code-splitting builds](TODO)
+  * Works in IE11+ when [Promises are polyfilled](dist/ie11-polyfills.js)
+  * Ideal for use in [Rollup code-splitting builds](https://rollupjs.org/guide/en#experimental-code-splitting)
 
 2. The 2.5KB [system.js](dist/system.min.js) loader:
 
@@ -33,9 +33,9 @@ SystemJS 2.0 provides two hookable base builds:
 
 In addition, the following [pluggable extras](dist/extras) are provided:
 
-* AMD loading support (through `Window.define`)
-* Named exports convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
-* Translate loader support, using fetch and eval, supporting a hookable `loader.translate`
+* [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created)
+* [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
+* [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
@@ -44,8 +44,6 @@ For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 Documentation
 ---
 
-* [Getting Started](docs/getting-started.md)
-* [Workflows](docs/workflows.md)
 * [Package Name Maps](docs/package-name-maps.md)
 * [API](docs/api.md)
 * [System.register](docs/system-register.md)
@@ -74,7 +72,7 @@ Say `main.js` depends on loading `'lodash'`, then we can define a package name m
 <script type="systemjs-packagemap">
 {
   "packages": {
-    "lodash": "/path/to/lodash.js"
+    "lodash": "https://unpkg.com/lodash@4.17.10/lodash.js"
   }
 }
 </script>
@@ -90,31 +88,23 @@ Say `main.js` depends on loading `'lodash'`, then we can define a package name m
 
 ### Browser transpilation
 
-Browser transpilation workflows are no longer first-class in SystemJS, and require a little more customization to work:
+To load ES modules directly in older browsers with SystemJS we can install and use the Babel plugin:
 
 ```html
 <script src="system.js"></script>
-<script src="extras/translate.js"></script>
+<script src="extras/transform.js"></script>
+<script src="plugin-babel/dist/babel-transform.js"></script>
 <script>
-  // create a custom translator
-  System.translate = function (url, source) {
-    return Promise.resolve(someCustomTransform(source));
-  };
-</script>
-<script>
-  // main and all its dependencies will now run through translate before loading
+  // main and all its dependencies will now run through transform before loading
   System.import('/js/main.js');
 </script>
 ```
 
-An extension for in-browser Babel compilation can be created easily this way, but SystemJS does not provide the
-individual translator implementations, as this is left for third-party implementors.
-
-### Third-party extensions
+### Loader Extensions
 
 This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](TODO).
 
-* Nothing yet :)
+* [plugin-babel](https://github.com/systemjs/plugin-babel) Supports ES module transformation into System.register with Babel.
 
 ### Contributing to SystemJS
 

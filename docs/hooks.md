@@ -1,38 +1,75 @@
 ## Loader Hooks
 
+### Hooking the Loader
+
+The loader is designed to be hookable in a very light-weight way using only function extensions.
+
+The standard pattern for this is:
+
+```js
+const existingHook = System.constructor.prototype.hookName;
+System.constructor.prototype.hookName = function (args) {
+  return Promise.resolve(existingHook.call(this, args))
+  .then(function (existingHookResult) {
+    // custom hook here
+    return ...;
+  });
+};
+```
+
+When hooking the loader it is important to pay attention to the order in which hooks will apply, and to
+keep existing hooks running where they provide necessary functionality.
+
+In addition, some hooks are Promise-based, so Promise chaining
+also needs to be carefully applied only where necessary.
+
 ### Core Hooks
 
-#### createContext
+#### createContext(url) -> Object
 
-#### getRegister
+Used to populate the `import.meta` for a module, available at `_context.meta` in the [System.register module format](system-register.md).
 
-#### onload
+The default implementation is:
+
+```js
+System.constructor.prototype.createContext = function (url) {
+  return {
+    url
+  };
+};
+```
+
+#### getRegister() -> [deps: String[], declare: Function]
+
+> This hook is intended for custom module format integrations only.
+
+This function stores the last call to `System.register`, and is the companion hook for that function.
+
+It is important that this function is synchronous, as any event loop delay would result in uncertainty over which source evaluation
+resulted in this registration call.
+
+Custom module format support like AMD support is added by hooking the AMD registration in hook.
+
+#### resolve(id, parentUrl) -> Promise<String>
+
+In the minimal s.js implementation, resolve is implemented as a synchronous function, so Promise.resolve should be used when extending this loader.
+
+Resolve should return a fully-valid URL for specification compatibility, but this is not enforced.
+
+#### onload(url, error) (sync)
+
+_This hook is not available in the s.js minimal loader build._
+
+For tracing functionality this is called on completion or failure of each and every module loaded into the registry.
+
+Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
 
 ### Extras Hooks
 
-#### translate
+#### transform(url, source) -> Promise<String>
 
-### Extending the Loader
+This hook is provided by the [transform extra](../dist/extras/transform.js).
 
-Extensions to the loader are made by amending its prototype (`System.constructor.prototype`).
+The default implementation is a pass-through transform that returns the fetched source.
 
-In addition to the hooks listed here, it is also possible to extend any of the [API methods of the loader](api.md) with these hooking patterns as well.
-
-The base loader provides the initial core hooks, while extensions can also define their own hooks in the same way to provide an extensible hookable loader.
-
-Hooks can be added via a duck-typing pattern:
-
-```js
-const systemJSPrototype = System.constructor.prototype;
-const import = systemJSPrototype.import ;
-systemJSPrototype.import = function (id, parentURL) {
-  return Promise.resolve(import.call(this, id, parentURL))
-  .then(function (module) {
-    return module;
-  });
-}
-```
-
-where hook code could come before or after previous code, but care should be taken to ensure that the previous hook continues to run under its same original assumptions and constraints.
-
-Note that some hooks are sync, so should not use promise resolution.
+For an example of a transform see the [Babel plugin transform](https://github.com/systemjs/plugin-babel).
