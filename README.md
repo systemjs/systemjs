@@ -20,7 +20,7 @@ SystemJS 2.0 provides two hookable base builds:
   * Loads [System.register](docs/system-register.md) modules [supporting all ES module semantics](docs/system-register.md#semantics)
   * Loads and resolves URLs only, excluding support for [bare specifier names](docs/package-name-maps.md#bare-specifiers) (eg `/lodash.js` but not `lodash`)
   * Hookable loader supporting [custom extensions](docs/hooks.md)
-  * Works in IE11+ when [Promises are polyfilled](dist/ie11-polyfills.js)
+  * Works in IE11+ when [Promises are polyfilled](#promise-polyfill)
   * Ideal for use in [Rollup code-splitting builds](https://rollupjs.org/guide/en#experimental-code-splitting)
 
 2. The 2.5KB [system.js](dist/system.min.js) loader:
@@ -29,7 +29,7 @@ SystemJS 2.0 provides two hookable base builds:
   * Supports loading global scripts as modules, as well as [Sytem.register](docs/system-regsiter.md) modules
   * Supports [package name maps](docs/package-name-maps.md) for resolving [bare specifier names](docs/package-name-maps.md#bare-specifiers), loaded via `<script type="systemjs-packagenamemap">`
   * Supports loading WASM based on the `.wasm` file extension
-  * Supports running in Web Workers
+  * Works in IE11+ when [Fetch (for WASM) and Promises are polyfilled](#promise-polyfill)
 
 In addition, the following [pluggable extras](dist/extras) are provided:
 
@@ -97,6 +97,35 @@ To load ES modules directly in older browsers with SystemJS we can install and u
 <script>
   // main and all its dependencies will now run through transform before loading
   System.import('/js/main.js');
+</script>
+```
+
+### Polyfills for Older Browsers
+
+#### Promises
+
+Both builds of SystemJS need Promises in the environment to work, which aren't supported in older browsers like IE11.
+
+Promises can be conditionally polyfilled using, for example, [Bluebird](http://bluebirdjs.com/docs/getting-started.html) (generally the fastest Promise polyfill):
+
+```html
+<script>
+  if (typeof Promise === 'undefined')
+    document.write('<script src="node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
+</script>
+```
+
+> Generally `document.write` is not recommended when writing web applications, but for this use case
+  it works really well and will only apply in older browsers anyway.
+
+#### Fetch
+
+To support package maps in the system.js build, a fetch polyfill is need. The [GitHub polyfill](https://github.github.io/fetch/) is recommended:
+
+```html
+<script>
+  if (typeof fetch === 'undefined')
+    document.write('<script src="node_modules/whatwg-fetch/fetch.js"><\/script>');
 </script>
 ```
 

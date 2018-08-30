@@ -1,7 +1,12 @@
 <!doctype html>
 	<meta charset="utf-8">
 	<script>
-		navigator.userAgent.match(/MSIE \d|Trident.*rv:/)&&document.write('<script src="../dist/ie11-polyfills.js"><\/script>')
+  	if (typeof Promise === 'undefined')
+    	document.write('<script src="../node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
+	</script>
+	<script>
+		if (typeof fetch === 'undefined')
+			document.write('<script src="../node_modules/whatwg-fetch/fetch.js"><\/script>');
 	</script>
 
 	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
