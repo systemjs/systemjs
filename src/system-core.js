@@ -251,7 +251,8 @@ function postOrderExec (loader, load, seen) {
         loader.onload(load.id, err);
         throw err;
       });
-    return load.E = Promise.all(depLoadPromises).then(doExec);
+    else
+      return load.E = Promise.all(depLoadPromises).then(doExec);
   }
 
   return doExec();

@@ -1,5 +1,5 @@
 /*
- * Support for a "translate" loader interface
+ * Support for a "transform" loader interface
  */
 (function () {
   const systemJSPrototype = System.constructor.prototype;
@@ -17,7 +17,7 @@
       return res.text();
     })
     .then(function (source) {
-      return loader.translate.call(this, url, source);
+      return loader.transform.call(this, url, source);
     })
     .then(function (source) {
       (0, eval)(source + '\n//# sourceURL=' + url);
@@ -25,8 +25,8 @@
     });
   };
 
-  // Hookable translate function!
-  System.translate = function (_id, source) {
+  // Hookable transform function!
+  systemJSPrototype.transform = function (_id, source) {
     return source;
   };
 })();
