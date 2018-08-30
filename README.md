@@ -104,7 +104,7 @@ To load ES modules directly in older browsers with SystemJS we can install and u
 
 This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](TODO).
 
-* [plugin-babel](https://github.com/systemjs/plugin-babel) Supports ES module transformation into System.register with Babel.
+* [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
 
 ### Contributing to SystemJS
 

@@ -72,4 +72,4 @@ This hook is provided by the [transform extra](../dist/extras/transform.js).
 
 The default implementation is a pass-through transform that returns the fetched source.
 
-For an example of a transform see the [Babel plugin transform](https://github.com/systemjs/plugin-babel).
+For an example of a transform see the [Babel plugin transform](https://github.com/systemjs/systemjs-transform-babel).
