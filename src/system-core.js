@@ -37,14 +37,8 @@ systemJSPrototype.import = function (id, parentUrl) {
 
 // Hookable createContext function -> allowing eg custom import meta
 systemJSPrototype.createContext = function (parentId) {
-  const loader = this;
   return {
-    import: function (id) {
-      return loader.import(id, parentId);
-    },
-    meta: {
-      url: parentId
-    }
+    url: parentId
   };
 };
 
@@ -107,7 +101,12 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
           importerSetters[i](ns);
       return value;
     }
-    const declared = registration[1](_export, registration[1].length === 2 ? loader.createContext(id) : undefined);
+    const declared = registration[1](_export, registration[1].length === 2 ? {
+      import: function (importId) {
+        return loader.import(importId, id);
+      },
+      meta: loader.createContext(id)
+    } : undefined);
     load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
   });

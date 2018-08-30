@@ -53,7 +53,7 @@ describe('Core API', function () {
     const createContext = loader.createContext;
     loader.createContext = function (id) {
       const context = createContext(id);
-      context.meta.custom = 'yay';
+      context.custom = 'yay';
       return context;
     };
     const x = await loader.import('meta-test');
