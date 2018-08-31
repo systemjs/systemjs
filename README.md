@@ -1,5 +1,4 @@
-SystemJS 2.0
-============
+# SystemJS 2.0
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -47,16 +46,20 @@ Since all loader features are hookable, custom extensions can be easily made fol
 
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
-Documentation
----
+## Installation
+
+```
+npm install systemjs@alpha
+```
+
+## Documentation
 
 * [Package Name Maps](docs/package-name-maps.md)
 * [API](docs/api.md)
 * [System.register](docs/system-register.md)
 * [Loader Hooks](docs/hooks.md)
 
-Example Usage
----
+## Example Usage
 
 ### Loading a System.register module
 
@@ -151,8 +154,7 @@ To run the tests:
 npm run build && npm run test
 ```
 
-License
----
+## License
 
 MIT
 
