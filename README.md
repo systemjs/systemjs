@@ -7,7 +7,7 @@ SystemJS 2.0
 
 Configurable module loader enabling backwards compatibility workflows for ES modules in browsers.
 
-[Read the SystemJS 2.0 announcement post](TODO)
+[Read the SystemJS 2.0 announcement post](https://guybedford.com/systemjs-2.0-alpha)
 
 _[For the previous release see the SystemJS 0.21.x branch](https://github.com/systemjs/systemjs/tree/0.21)_
 
@@ -137,7 +137,7 @@ To support package maps in the system.js build, a fetch polyfill is need. The [G
 
 ### Loader Extensions
 
-This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](TODO).
+This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/2.0/README.md).
 
 * [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
 
