@@ -7,7 +7,7 @@ SystemJS
 
 Configurable module loader enabling dynamic ES module workflows in browsers and NodeJS.
 
-_[SystemJS 0.20 release notes](https://github.com/systemjs/systemjs/releases/tag/0.20.0)_
+_[Try out the SystemJS 2.0 alpha release](https://github.com/systemjs/systemjs/tree/2.0)_
 
 _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
