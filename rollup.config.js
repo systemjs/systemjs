@@ -1,39 +1,23 @@
-import nodeResolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
 import fs from 'fs';
 
-var version = JSON.parse(fs.readFileSync('package.json')).version;
-
-if (process.env.production)
-  version += ' Production';
-else
-  version += ' Dev';
-
-var name = `system${process.env.production ? '-production' : ''}`;
+const version = JSON.parse(fs.readFileSync('package.json')).version;
+const name = process.env.sjs ? 's' : 'system';
 
 export default {
   input: `src/${name}.js`,
-
   output: {
     format: 'iife',
-    file: `dist/${name}.src.js`,
-    sourcemap: true,
-    sourcemapFile: `dist/${name}.js.map`,
-    banner: `/*
-* SystemJS v${version}
+    strict: false,
+    file: `dist/${name}.js`,
+    banner: process.env.sjs ? `/*
+* SJS ${version}
+* Minimal SystemJS Build
+*/` : `/*
+* SystemJS ${version}
 */`
   },
-
-  plugins: [
-    nodeResolve({
-      module: false,
-      jsnext: false,
-    }),
-    replace({
-      VERSION: JSON.stringify(version)
-    })
-  ],
-
-  // skip rollup warnings (specifically the eval warning)
-  onwarn: function() {}
+  plugins: [replace({
+    TRACING: process.env.sjs ? 'false' : 'true'
+  })]
 };

@@ -1,0 +1,56 @@
+<!doctype html>
+	<meta charset="utf-8">
+	<script>
+  	if (typeof Promise === 'undefined')
+    	document.write('<script src="../node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
+	</script>
+	<script>
+		if (typeof fetch === 'undefined')
+			document.write('<script src="../node_modules/whatwg-fetch/fetch.js"><\/script>');
+	</script>
+
+	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
+	<script src="../node_modules/mocha/mocha.js"></script>
+
+	<script type="systemjs-packagemap" src="fixtures/browser/packagemap.json"></script>
+	<script src="../dist/system.js"></script>
+
+	<script>
+		mocha.setup('tdd');
+
+		self.baseURL = location.href.substr(0, location.href.lastIndexOf('/') + 1);
+		self.rootURL = location.href.substr(0, location.href.length - 'test/test.html'.length);
+		self.assert = {
+			ok: function (val) {
+				this.equal(!!val, true);
+			},
+			equal: function equal(a, b) {
+				if (a !== b)
+					throw new Error('Expected "' + a + '" to be "' + b + '"');
+			},
+			fail: function (msg) {
+				throw new Error(msg);
+			}
+		};
+
+		const extras = ['amd', 'named-exports', 'translate'];
+		function runNextExtra () {
+			mocha.suite.suites.shift();
+			const extra = extras.shift();
+			if (extra)
+				System.import('../dist/extras/' + extra + '.js')
+				.then(function () {
+					return System.import('./browser/' + extra + '.js');
+				})
+				.then(function () {
+					mocha.run(runNextExtra);
+				});
+		}
+
+		System.import('./browser/core.js')
+		.then(function () {
+			mocha.run(runNextExtra);
+		});
+	</script>
+
+	<div id="mocha"></div>
