@@ -1,8 +1,11 @@
 /*
- * Support for global loading
+ * SystemJS global script loading support
+ * Extra for the s.js build only
+ * (Included by default in system.js build)
  */
-import { global } from '../common.js';
-import { systemJSPrototype } from '../system-core';
+(function (global) {
+
+const systemJSPrototype = System.constructor.prototype;
 
 function getLastGlobalProp () {
   // alternatively Object.keys(global).pop()
@@ -50,3 +53,5 @@ systemJSPrototype.getRegister = function () {
     return { execute: function () { _export('default', globalExport) } };
   }];
 };
+
+})(typeof self !== 'undefined' ? self : global);
