@@ -219,6 +219,8 @@ function postOrderExec (loader, load, seen) {
   if (!load.e) {
     if (load.eE)
       throw load.eE;
+    if (load.E)
+      return load.E;
     return;
   }
 
@@ -258,8 +260,6 @@ function postOrderExec (loader, load, seen) {
 
   function doExec () {
     try {
-      if (load.E)
-        return load.E;
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
         if (TRACING)
@@ -277,7 +277,7 @@ function postOrderExec (loader, load, seen) {
             load.E = null;
           });
         execPromise.catch(function () {});
-        return load.E = execPromise;
+        return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
