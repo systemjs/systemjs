@@ -515,15 +515,20 @@
     };
 
   /*
-   * Support for global loading
+   * SystemJS global script loading support
+   * Extra for the s.js build only
+   * (Included by default in system.js build)
    */
+  (function (global) {
+
+  const systemJSPrototype = System.constructor.prototype;
 
   function getLastGlobalProp () {
     // alternatively Object.keys(global).pop()
     // but this may be faster (pending benchmarks)
     let lastProp;
-    for (let p in envGlobal)
-      if (envGlobal.hasOwnProperty(p))
+    for (let p in global)
+      if (global.hasOwnProperty(p))
         lastProp = p;
     return lastProp;
   }
@@ -554,7 +559,7 @@
     lastGlobalProp = globalProp;
     let globalExport;
     try {
-      globalExport = envGlobal[globalProp];
+      globalExport = global[globalProp];
     }
     catch (e) {
       return emptyInstantiation;
@@ -564,6 +569,8 @@
       return { execute: function () { _export('default', globalExport); } };
     }];
   };
+
+  })(typeof self !== 'undefined' ? self : global);
 
   /*
    * Loads WASM based on file extension detection
