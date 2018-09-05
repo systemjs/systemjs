@@ -31,7 +31,7 @@
     "build:extras": "bash minify-extras.sh",
     "min": "npm run min:systemjs && npm run min:sjs",
     "min:systemjs": "cd dist && terser system.js -c passes=2 -m --source-map --comments \"/SystemJS \\d/\" -o system.min.js",
-    "min:sjs": "cd dist && terser s.js -c passes=2 -m --source-map --comments \"/SJS \\d/\" -o s.min.js",
+    "min:sjs": "cd dist && terser s.js -c passes=2 -m --source-map -o s.min.js",
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "terser dist/system.js -c passes=2 -m | gzip -9f | wc -c",
     "footprint:sjs": "terser dist/s.js -c passes=2 -m | gzip -9f | wc -c",
