@@ -4,12 +4,17 @@
 
 import { systemJSPrototype } from '../system-core';
 
-let errUrl, err;
+let err;
 if (typeof window !== 'undefined')
   window.addEventListener('error', function (e) {
-    errUrl = e.filename;
     err = e.error;
   });
+
+const systemRegister = systemJSPrototype.register;
+systemJSPrototype.register = function (deps, declare) {
+  err = undefined;
+  systemRegister.call(this, deps, declare);
+};
 
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
@@ -21,12 +26,12 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
     });
     script.addEventListener('load', function () {
+      document.head.removeChild(script);
       // Note URL normalization issues are going to be a careful concern here
-      if (errUrl === url)
+      if (err)
         return reject(err);
       else
         resolve(loader.getRegister());
-      document.head.removeChild(script);
     });
     script.src = url;
     document.head.appendChild(script);
