@@ -289,7 +289,12 @@ function translateAndInstantiate (loader, key, source, metadata, processAnonRegi
 
       case 'json':
         // warn.call(config, '"json" module format is deprecated.');
-        var parsed = JSON.parse(source);
+        var parsed = JSON.parse(source);  
+        if (!!SystemJS.getConfig().transpiler) {
+            if (parsed['jsnext:main']) {
+                parsed.main = parsed['jsnext:main'];
+            }
+        }
         return loader.newModule({ default: parsed, __useDefault: parsed });
 
       case 'amd':
