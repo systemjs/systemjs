@@ -29,7 +29,13 @@ function fetchFetch (url, authorization, integrity, asBuffer) {
     opts.credentials = 'include';
   }
 
-  return fetch(url, opts)
+  var fetch_func;
+  if (typeof self !== 'undefined' && typeof self.systemjs_fetch !== 'undefined') {
+    fetch_func = self.systemjs_fetch;
+  } else {
+    fetch_func = fetch;
+  }
+  return fetch_func(url, opts)
   .then(function(res) {
     if (res.ok)
       return asBuffer ? res.arrayBuffer() : res.text();
