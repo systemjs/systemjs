@@ -423,7 +423,7 @@ export function detectRegisterFormat(source) {
   if (!leadingCommentAndMeta)
     return false;
   var codeStart = leadingCommentAndMeta[0].length;
-  return source.startsWith('System.register', codeStart) || source.startsWith('SystemJS.register', codeStart);
+  return source.indexOf('System.register', codeStart) !== -1 || source.indexOf('SystemJS.register', codeStart) !== -1;
 }
 
 // AMD Module Format Detection RegEx
