@@ -1,6 +1,6 @@
 /*
-    * SystemJS v0.21.4 Dev
-    */
+* SystemJS v0.21.5 Dev
+*/
 (function () {
   'use strict';
 
@@ -3694,7 +3694,7 @@
     if (!leadingCommentAndMeta)
       return false;
     var codeStart = leadingCommentAndMeta[0].length;
-    return source.startsWith('System.register', codeStart) || source.startsWith('SystemJS.register', codeStart);
+    return source.substr(codeStart, 17) === 'SystemJS.register' || source.substr(codeStart, 15) === 'System.register';
   }
 
   // AMD Module Format Detection RegEx
@@ -4034,7 +4034,7 @@
     return RegisterLoader.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
   };
 
-  SystemJSLoader.prototype.version = "0.21.4 Dev";
+  SystemJSLoader.prototype.version = "0.21.5 Dev";
 
   var System = new SystemJSLoader();
 
