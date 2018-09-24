@@ -7,7 +7,7 @@
  * 
  * Only supports loading the first package map
  */
-import { resolveIfNotPlainOrUrl, baseUrl as pageBaseUrl, createPackageMap } from '../common.js';
+import { resolveIfNotPlainOrUrl, baseUrl as pageBaseUrl, createPackageMap, throwBare } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
 let packageMapPromise, packageMapResolve;
@@ -40,10 +40,6 @@ if (typeof document !== 'undefined') {
 }
 if (!packageMapPromise)
   packageMapResolve = throwBare;
-
-function throwBare (id, parentUrl) {
-  throw new Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
-}
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || pageBaseUrl;

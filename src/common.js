@@ -178,3 +178,7 @@ export function createPackageMap (json, baseUrl) {
     return applyPackages(id, basePackages, baseUrl) || throwBare(id, parentUrl);
   };
 }
+
+export function throwBare (id, parentUrl) {
+  throw new Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
+}
