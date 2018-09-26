@@ -112,7 +112,7 @@ function resolveUrl (relUrl, parentUrl) {
 
 export function createPackageMap (json, baseUrl) {
   if (json.path_prefix) {
-    baseUrl = resolveUrl(json.path_prefix, pageBaseUrl);
+    baseUrl = resolveUrl(json.path_prefix, baseUrl);
     if (baseUrl[baseUrl.length - 1] !== '/')
       baseUrl += '/';
   }
