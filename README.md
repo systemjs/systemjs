@@ -1,100 +1,177 @@
-SystemJS
-========
+# SystemJS 2.0
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Sponsor](https://cdn.canopytax.com/images/canopy-sponsorship.svg)](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)
 
-Configurable module loader enabling dynamic ES module workflows in browsers and NodeJS.
+Configurable module loader enabling backwards compatibility workflows for ES modules in browsers.
 
-_[Try out the SystemJS 2.0 alpha release](https://github.com/systemjs/systemjs/tree/2.0)_
+[Read the SystemJS 2.0 announcement post](https://guybedford.com/systemjs-2.0-alpha)
+
+_[For the previous release see the SystemJS 0.21.x branch](https://github.com/systemjs/systemjs/tree/0.21)_
 
 _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
-* [Loads any module format](docs/module-formats.md) when running the ~15KB development build.
-* Loads ES modules compiled into the `System.register` module format for production with [exact circular reference and binding support](https://github.com/ModuleLoader/es6-module-loader/blob/v0.17.0/docs/circular-references-bindings.md)
-* Supports RequireJS-style [map](docs/getting-started.md#map-config), [paths](https://github.com/systemjs/systemjs/blob/master/docs/config-api.md#paths), and [bundles](docs/production-workflows.md#bundle-extension) configuration.
+SystemJS 2.0 provides two hookable base builds:
 
-Built with the [ES Module Loader project](https://github.com/ModuleLoader/es-module-loader), which is based on principles and APIs from the WhatWG Loader specification, modules in HTML and NodeJS.
+#### 1. s.js minimal loader
+
+The minimal [1.5KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#experimental-code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't supporting native modules, including IE11++.
+
+Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
+
+* Loads and resolves modules as URLs, throwing for bare specifier names (eg `import 'lodash'`) like the native module loader.
+* Loads System.register modules.
+* Core hookable extensible loader supporting [custom extensions](docs/hooks.md).
+
+#### 2. system.js loader
+
+The [3KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for upcoming module specifications (currently [package name maps](https://github.com/domenic/package-name-maps) and [WASM integration](https://github.com/WebAssembly/esm-integration) with module loading) as well as development and convenience features.
+
+* Support for loading [bare specifier names](docs/package-name-maps.md) through package name maps (formerly map configuration), loaded via `<script type="system-packagenamemap">` (requires a `fetch` polyfill for eg IE11).
+* Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
+* [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows
+* Supports loading WASM based on the `.wasm` file extension
+
+#### Extras
+
+The following [pluggable extras](dist/extras) are provided which can be dropped in with either the s.js or system.js loader:
+
+* [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created).
+* [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`. _(Already included in the system.js loader build)_.
+* [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
+* [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
+
+Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
-Documentation
----
+## Installation
 
-* [Getting Started](docs/getting-started.md)
-* [Module Formats](docs/module-formats.md)
-* [Production Workflows](docs/production-workflows.md)
-* [Configuration API](docs/config-api.md)
-* [System API](docs/system-api.md)
-* [Plugins](docs/plugins.md)
-* [Creating Plugins](docs/creating-plugins.md)
-* [Production Build and Resolution](docs/production-build.md)
+```
+npm install systemjs@alpha
+```
 
-Basic Use
----
+## Documentation
 
-### Browser Development
+* [Package Name Maps](docs/package-name-maps.md)
+* [API](docs/api.md)
+* [System.register](docs/system-register.md)
+* [Loader Hooks](docs/hooks.md)
+
+## Example Usage
+
+### Loading a System.register module
 
 ```html
-<script src="systemjs/dist/system.js"></script>
+<script src="system.js"></script>
 <script>
-  SystemJS.import('/js/main.js');
+  System.import('/js/main.js');
 </script>
 ```
 
-The above will support loading all module formats.
+where `main.js` is a module available in the System.register module format.
 
-**To load ES6 code with in-browser transpilation, one of the following transpiler plugins must be configured**:
+### Package Name Maps
 
-* [Babel](https://github.com/systemjs/plugin-babel)
-* [TypeScript](https://github.com/frankwallis/plugin-typescript)
-* [Traceur](http://github.com/systemjs/plugin-traceur)
-
-### Browser Production
-
-When all modules are available as either `system`, `amd` or global module formats, and no package configurations or plugins are needed, a production-only loader can be used:
+Say `main.js` depends on loading `'lodash'`, then we can define a package name map:
 
 ```html
-<script src="systemjs/dist/system-production.js"></script>
+
+<script type="systemjs-packagemap">
+{
+  "packages": {
+    "lodash": "https://unpkg.com/lodash@4.17.10/lodash.js"
+  }
+}
+</script>
+<!-- Alternatively:
+<script type="systemjs-packagemap" src="path/to/map.json">
+-->
+<!-- SystemJS must be loaded after the package map -->
+<script src="system.js"></script>
 <script>
-  SystemJS.import('/js/main.js');
+  System.import('/js/main.js');
 </script>
 ```
 
-Configuration support in the production loader includes baseURL, paths, map, depCache and wasm.
+### Browser transpilation
 
-### NodeJS
+To load ES modules directly in older browsers with SystemJS we can install and use the Babel plugin:
 
-To load modules in NodeJS, install SystemJS with:
-
-```
-  npm install systemjs
-```
-
-If transpiling ES modules, install the transpiler plugin following the instructions from the transpiler project page.
-
-We can then load modules equivalently in NodeJS as we do in the browser:
-
-```javascript
-var SystemJS = require('systemjs');
-
-// loads './app.js' from the current directory
-SystemJS.import('./app.js').then(function (m) {
-  console.log(m);
-});
+```html
+<script src="system.js"></script>
+<script src="extras/transform.js"></script>
+<script src="plugin-babel/dist/babel-transform.js"></script>
+<script>
+  // main and all its dependencies will now run through transform before loading
+  System.import('/js/main.js');
+</script>
 ```
 
-To import a module with the NodeJS module resolution, import with `import moduleName from '@node/module-name'`.
+## Compatibility with Webpack
 
-#### Running the tests
+Code-splitting builds on top of native ES modules, like Rollup offers, are an alternative to the Webpack-style chunking approach - offering a way to utilize the native module loader for loading shared and dynamic chunks instead of using a custom registry and loader as Webpack bundles include. Scope-level optimizations can be performed on ES modules when they are combined, while ensuring no duplicate code is loaded through dynamic loading and code-sharing in the module registry, using the features of the native module loader and its dynamic runtime nature.
+
+There is currently no support for SystemJS in Webpack. If building code using the `System` global in Webpack, the following config is needed to avoid rewriting:
+
+```js
+{
+  module: {
+    rules: [
+      { parser: { system: false } }
+    ]
+  }
+}
+```
+
+## Polyfills for Older Browsers
+
+### Promises
+
+Both builds of SystemJS need Promises in the environment to work, which aren't supported in older browsers like IE11.
+
+Promises can be conditionally polyfilled using, for example, [Bluebird](http://bluebirdjs.com/docs/getting-started.html) (generally the fastest Promise polyfill):
+
+```html
+<script>
+  if (typeof Promise === 'undefined')
+    document.write('<script src="node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
+</script>
+```
+
+> Generally `document.write` is not recommended when writing web applications, but for this use case
+  it works really well and will only apply in older browsers anyway.
+
+### Fetch
+
+To support package maps in the system.js build, a fetch polyfill is need. The [GitHub polyfill](https://github.github.io/fetch/) is recommended:
+
+```html
+<script>
+  if (typeof fetch === 'undefined')
+    document.write('<script src="node_modules/whatwg-fetch/fetch.js"><\/script>');
+</script>
+```
+
+## Loader Extensions
+
+This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/2.0/README.md).
+
+* [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
+* [json-plugin](https://github.com/Jamaks/systemjs2-json-plugin) JSON loader plugin
+
+## Contributing to SystemJS
+
+Project bug fixes and changes are welcome for discussion, provided the project footprint remains minimal.
+
+To run the tests:
 
 ```
-  npm run build && npm run test
+npm run build && npm run test
 ```
 
-License
----
+## License
 
 MIT
 
