@@ -10,7 +10,7 @@
       return instantiate.call(this, url, parent);
 
     const loader = this;
-    return fetch(url)
+    return fetch(url, { credentials: 'same-origin' })
     .then(function (res) {
       if (!res.ok)
         throw new Error('Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from  ' + parent : ''));

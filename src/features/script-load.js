@@ -22,6 +22,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const script = document.createElement('script');
     script.charset = 'utf-8';
     script.async = true;
+    script.crossOrigin = 'anonymous';
     script.addEventListener('error', function () {
       reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
     });
