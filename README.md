@@ -6,7 +6,7 @@
 
 Configurable module loader enabling backwards compatibility workflows for ES modules in browsers.
 
-[Read the SystemJS 2.0 announcement post](https://guybedford.com/systemjs-2.0-alpha)
+[Read the SystemJS 2.0 announcement post](https://guybedford.com/systemjs-2.0)
 
 _[For the previous release see the SystemJS 0.21.x branch](https://github.com/systemjs/systemjs/tree/0.21)_
 
