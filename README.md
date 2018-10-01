@@ -49,7 +49,7 @@ For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 ## Installation
 
 ```
-npm install systemjs@alpha
+npm install systemjs
 ```
 
 ## Documentation
