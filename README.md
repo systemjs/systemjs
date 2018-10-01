@@ -72,6 +72,10 @@ npm install systemjs@alpha
 
 where `main.js` is a module available in the System.register module format.
 
+### Bundling workflow
+
+For an example of a bundling workflow, see the Rollup Code Splitting starter project - https://github.com/rollup/rollup-starter-code-splitting.
+
 ### Package Name Maps
 
 Say `main.js` depends on loading `'lodash'`, then we can define a package name map:
