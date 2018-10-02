@@ -1,12 +1,13 @@
 {
   "name": "systemjs",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
     "url": "git://github.com/systemjs/systemjs"
   },
   "author": "Guy Bedford",
+  "mode": "esm",
   "license": "MIT",
   "files": [
     "dist"

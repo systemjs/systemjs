@@ -1,5 +1,5 @@
 /*
-* SystemJS 2.0.0
+* SystemJS 2.0.1
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -489,6 +489,7 @@
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
+      script.crossOrigin = 'anonymous';
       script.addEventListener('error', function () {
         reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });

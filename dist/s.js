@@ -1,5 +1,5 @@
 /*
-* SJS 2.0.0
+* SJS 2.0.1
 * Minimal SystemJS Build
 */
 (function () {
@@ -374,6 +374,7 @@
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
+      script.crossOrigin = 'anonymous';
       script.addEventListener('error', function () {
         reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
