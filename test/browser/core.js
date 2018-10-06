@@ -125,4 +125,12 @@ suite('SystemJS Standard Tests', function() {
       assert.equal(m.exampleExport(1), 2);
     });
   });
+
+  if (typeof WebAssembly !== 'undefined' && typeof process === 'undefined')
+  test('Loading WASM over 4KB limit', function () {
+    return System.import('fixtures/wasm/addbloated.wasm')
+    .then(function (m) {
+      assert.equal(m.addTwo(1, 1), 2);
+    });
+  });
 });

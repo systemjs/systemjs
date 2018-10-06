@@ -12,7 +12,14 @@ systemJSPrototype.instantiate = function (url, parent) {
   .then(function (res) {
     if (!res.ok)
       throw new Error(res.status + ' ' + res.statusText + ' ' + res.url + (parent ? ' loading from ' + parent : ''));
-    return WebAssembly.compileStreaming(res);
+
+    if (WebAssembly.compileStreaming)
+      return WebAssembly.compileStreaming(res);
+    
+    return res.arrayBuffer()
+    .then(function (buf) {
+      return WebAssembly.compile(buf);
+    });
   })
   .then(function (module) {
     const deps = [];
@@ -34,7 +41,10 @@ systemJSPrototype.instantiate = function (url, parent) {
       return {
         setters: setters,
         execute: function () {
-          _export(new WebAssembly.Instance(module, importObj).exports);
+          return WebAssembly.instantiate(module, importObj)
+          .then(function (instance) {
+            _export(instance.exports);
+          });
         }
       };
     }];
