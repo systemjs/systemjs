@@ -7,20 +7,42 @@
 
 const systemJSPrototype = System.constructor.prototype;
 
-function getLastGlobalProp () {
-  // alternatively Object.keys(global).pop()
-  // but this may be faster (pending benchmarks)
+// safari unpredictably lists some new globals first or second in object order
+let firstGlobalProp, secondGlobalProp, lastGlobalProp;
+function getGlobalProp () {
+  let cnt = 0;
   let lastProp;
-  for (let p in global)
-    if (global.hasOwnProperty(p))
-      lastProp = p;
-  return lastProp;
+  for (let p in global) {
+    if (!global.hasOwnProperty(p))
+      continue;
+    if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
+      return p;
+    cnt++;
+    lastProp = p;
+  }
+  if (lastProp !== lastGlobalProp)
+    return lastProp;
 }
 
-let lastGlobalProp;
+function noteGlobalProps () {
+  // alternatively Object.keys(global).pop()
+  // but this may be faster (pending benchmarks)
+  firstGlobalProp = secondGlobalProp = undefined;
+  for (let p in global) {
+    if (!global.hasOwnProperty(p))
+      continue;
+    if (!firstGlobalProp)
+      firstGlobalProp = p;
+    else if (!secondGlobalProp)
+      secondGlobalProp = p;
+    lastGlobalProp = p;
+  }
+  return lastGlobalProp;
+}
+
 const impt = systemJSPrototype.import;
 systemJSPrototype.import = function (id, parentUrl) {
-  lastGlobalProp = getLastGlobalProp();
+  noteGlobalProps();
   return impt.call(this, id, parentUrl);
 };
 
@@ -36,11 +58,10 @@ systemJSPrototype.getRegister = function () {
   // when multiple globals, we take the global value to be the last defined new global object property
   // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
   // note in Edge, deleting and re-adding a global does not change its ordering
-  const globalProp = getLastGlobalProp();
-  if (lastGlobalProp === globalProp)
+  const globalProp = getGlobalProp();
+  if (!globalProp)
     return emptyInstantiation;
   
-  lastGlobalProp = globalProp;
   let globalExport;
   try {
     globalExport = global[globalProp];
