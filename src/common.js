@@ -42,7 +42,7 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
     }
     else {
       // resolving to :/ so pathname is the /... part
-      pathname = parentUrl.slice(parentProtocol.length + 1);
+      pathname = parentUrl.slice(parentProtocol.length + (parentUrl[parentProtocol.length] === '/'));
     }
 
     if (relUrl[0] === '/')
