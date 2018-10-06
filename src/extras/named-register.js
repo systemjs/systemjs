@@ -10,16 +10,12 @@
 
   const registerRegistry = Object.create(null);
 
-  let base;
-  if (typeof location !== 'undefined')
-    base = location.origin + '/';
-
   const register = systemJSPrototype.register;
   systemJSPrototype.register = function (name, deps, declare) {
     if (typeof name !== 'string')
       return register.apply(this, arguments);
     
-    registerRegistry[base + name] = [deps, declare];
+    registerRegistry['bundle:' + name] = [deps, declare];
   };
 
   const instantiate = systemJSPrototype.instantiate;
