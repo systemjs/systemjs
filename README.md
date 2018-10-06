@@ -40,6 +40,7 @@ The following [pluggable extras](dist/extras) are provided which can be dropped 
 * [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created).
 * [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`. _(Already included in the system.js loader build)_.
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
+* [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles (deprecated in the main build), that can be imported through a `bundle:` scheme, `System.import('bundle:name')`
 * [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
