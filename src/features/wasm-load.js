@@ -41,7 +41,10 @@ systemJSPrototype.instantiate = function (url, parent) {
       return {
         setters: setters,
         execute: function () {
-          _export(new WebAssembly.Instance(module, importObj).exports);
+          return WebAssembly.instantiate(module, importObj)
+          .then(function (instance) {
+            _export(instance.exports);
+          });
         }
       };
     }];
