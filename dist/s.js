@@ -1,5 +1,5 @@
 /*
-* SJS 2.0.1
+* SJS 2.0.2
 * Minimal SystemJS Build
 */
 (function () {
@@ -46,7 +46,7 @@
       }
       else {
         // resolving to :/ so pathname is the /... part
-        pathname = parentUrl.slice(parentProtocol.length + 1);
+        pathname = parentUrl.slice(parentProtocol.length + (parentUrl[parentProtocol.length] === '/'));
       }
 
       if (relUrl[0] === '/')
