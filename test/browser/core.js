@@ -130,7 +130,7 @@ suite('SystemJS Standard Tests', function() {
   test('Loading WASM over 4KB limit', function () {
     return System.import('fixtures/wasm/addbloated.wasm')
     .then(function (m) {
-      assert.equal(m.addTwo(1), 3);
+      assert.equal(m.addTwo(1, 1), 2);
     });
   });
 });

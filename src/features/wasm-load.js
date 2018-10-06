@@ -12,7 +12,14 @@ systemJSPrototype.instantiate = function (url, parent) {
   .then(function (res) {
     if (!res.ok)
       throw new Error(res.status + ' ' + res.statusText + ' ' + res.url + (parent ? ' loading from ' + parent : ''));
-    return WebAssembly.compileStreaming(res);
+
+    if (WebAssembly.compileStreaming)
+      return WebAssembly.compileStreaming(res);
+    
+    return res.arrayBuffer()
+    .then(function (buf) {
+      return WebAssembly.compile(buf);
+    });
   })
   .then(function (module) {
     const deps = [];
