@@ -1,3 +1,6 @@
+SystemJS 2.1.0 (2018/11/01)
+* Adjust named register to no longer use "bundle:" scheme but to define bare specifier names directly in registry (#1871, bc63fbb0)
+
 SystemJS 2.0.2 (2018/10/06)
 * Add Named register extra (#1855, b34c8290)
 * Fix WASM 4KB limit and Safari instantiation (#1857, cb25b39f)
