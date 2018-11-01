@@ -1,7 +1,6 @@
-suite('Translate Loader', function() {
+suite('Transform Loader', function() {
   System = new System.constructor();
   let translateCnt = 0;
-  console.log('tf');
   System.transform = function (url, source) {
     translateCnt++;
     return source;
