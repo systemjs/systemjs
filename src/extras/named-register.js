@@ -2,8 +2,8 @@
  * SystemJS named register extension
  * Supports System.register('name', [..deps..], function (_export, _context) { ... })
  * 
- * Names are resolved origin-relative, so
- * System.register(['x']) must be imported as System.import('/x')
+ * Names are written to the registry as-is
+ * System.register('x', ...) can be imported as System.import('x')
  */
 (function () {
   const systemJSPrototype = System.constructor.prototype;
@@ -15,7 +15,15 @@
     if (typeof name !== 'string')
       return register.apply(this, arguments);
     
-    registerRegistry['bundle:' + name] = [deps, declare];
+    registerRegistry[name] = [deps, declare];
+  };
+
+  const resolve = systemJSPrototype.resolve;
+  systemJSPrototype.resolve = function (id, parentURL) {
+    if (id[0] === '/' || id[0] === '.' && (id[1] === '/' || id[1] === '.' && id[2] === '/'))
+      return resolve.call(this, id, parentURL);
+    if (registerRegistry[id])
+      return id;
   };
 
   const instantiate = systemJSPrototype.instantiate;
