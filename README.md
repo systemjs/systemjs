@@ -168,9 +168,9 @@ This list can be extended to include third-party loader extensions. Feel free to
 
 ## How is SystemJS related to jspm.io?
 
-SystemJS was initially developed as a universal module loader alongside jspm which provides a ES module CDN and package manager exploring future ES module workflows. SystemJS was the core loader enabling this experimentation of unbuilt dev workflows to production and CDN workflows for ES modules.
+SystemJS was initially developed as a universal module loader alongside jspm which provides a package manager and ES module CDN exploring native ES module workflows. SystemJS was the core loader enabling this experimentation of workflows from unbuilt development loading in browsers to production and CDN loading of ES modules.
 
-SystemJS is now used as the legacy loader for backwards compatibility in jspm.io. npm packages are available for loading in SystemJS through `https://system-dev.jspm.io/[packagename]` and `https://system-unsafe-production.jspm.io/[packagename]`. Packages here are transformed from CommonJS into the System module format with their package resolutions inlined and available for usage in all browsers. This CDN can be useful in sandboxes or dev workflows, but note it is not optimized for production loading.
+SystemJS is now used as the legacy loader for backwards compatibility in older browsers for jspm.io. All npm packages are available for loading in SystemJS through `https://system-dev.jspm.io/[packagename]` and `https://system-unsafe-production.jspm.io/[packagename]` where they are transformed from CommonJS into the System module format with their package resolutions inlined for usage in all browsers. This CDN can be useful in sandboxes or dev workflows, but note it is not optimized for production loading.
 
 ## Contributing to SystemJS
 
