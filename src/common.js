@@ -93,15 +93,11 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
 }
 
 /*
- * Package name maps implementation
- *
- * Reduced implementation - only a single scope level is supported
+ * Import maps implementation
  * 
- * To make lookups fast we pre-resolve the entire package name map
+ * To make lookups fast we pre-resolve the entire import map
  * and then match based on backtracked hash lookups
  * 
- * path_prefix in scopes not supported
- * nested scopes not supported
  */
 
 function resolveUrl (relUrl, parentUrl) {
@@ -110,73 +106,69 @@ function resolveUrl (relUrl, parentUrl) {
       resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
 }
 
-export function createPackageMap (json, baseUrl) {
-  if (json.path_prefix) {
-    baseUrl = resolveUrl(json.path_prefix, baseUrl);
-    if (baseUrl[baseUrl.length - 1] !== '/')
-      baseUrl += '/';
+function resolvePackages(pkgs) {
+  var outPkgs = {};
+  for (var p in pkgs) {
+    var value = pkgs[p];
+    // TODO package fallback support
+    if (typeof value !== 'string')
+      continue;
+    outPkgs[resolveIfNotPlainOrUrl(p) || p] = value;
   }
-    
-  const basePackages = json.packages || {};
+  return outPkgs;
+}
+
+export function parseImportMap (json, baseUrl) {
+  const imports = resolvePackages(json.imports) || {};
   const scopes = {};
   if (json.scopes) {
     for (let scopeName in json.scopes) {
       const scope = json.scopes[scopeName];
-      if (scope.path_prefix)
-        throw new Error('Scope path_prefix not currently supported');
-      if (scope.scopes)
-        throw new Error('Nested scopes not currently supported');
       let resolvedScopeName = resolveUrl(scopeName, baseUrl);
-      if (resolvedScopeName[resolvedScopeName.length - 1] === '/')
-        resolvedScopeName = resolvedScopeName.substr(0, resolvedScopeName.length - 1);
-      scopes[resolvedScopeName] = scope.packages || {};
+      if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
+        resolvedScopeName += '/';
+      scopes[resolvedScopeName] = resolvePackages(scope) || {};
     }
   }
 
-  function getMatch (path, matchObj) {
-    let sepIndex = path.length;
-    do {
-      const segment = path.slice(0, sepIndex);
-      if (segment in matchObj)
-        return segment;
-    } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
-  }
+  return { imports: imports, scopes: scopes, baseUrl: baseUrl };
+}
 
-  function applyPackages (id, packages, baseUrl) {
-    const pkgName = getMatch(id, packages);
-    if (pkgName) {
-      const pkg = packages[pkgName];
-      if (pkgName === id) {
-        if (typeof pkg === 'string')
-          return resolveUrl(pkg, baseUrl + pkgName + '/');
-        if (!pkg.main)
-          throw new Error('Package ' + pkgName + ' has no main');
-        return resolveUrl(
-          (pkg.path ? pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/') : pkgName + '/') + pkg.main,
-          baseUrl
-        );
-      }
-      else {
-        return resolveUrl(
-          (typeof pkg === 'string' || !pkg.path
-            ? pkgName + '/'
-            : pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/')
-          ) + id.slice(pkgName.length + 1)
-        , baseUrl);
-      }
-    }
-  }
+function getMatch (path, matchObj) {
+  if (matchObj[path])
+    return path;
+  let sepIndex = path.length;
+  do {
+    const segment = path.slice(0, sepIndex + 1);
+    if (segment in matchObj)
+      return segment;
+  } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
+}
 
-  return function (id, parentUrl) {
-    const scopeName = getMatch(parentUrl, scopes);
-    if (scopeName) {
-      const scopePackages = scopes[scopeName];
-      const packageResolution = applyPackages(id, scopePackages, scopeName + '/');
-      if (packageResolution)
-        return packageResolution;
-    }
-    return applyPackages(id, basePackages, baseUrl) || throwBare(id, parentUrl);
-  };
+function applyPackages (id, packages, baseUrl) {
+  const pkgName = getMatch(id, packages);
+  if (pkgName) {
+    const pkg = packages[pkgName];
+    if (pkg === null)
+
+    if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
+      console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
+    return resolveUrl(pkg + id.slice(pkgName.length), baseUrl);
+  }
+}
+
+export function resolveImportMap (id, parentUrl, importMap) {
+  const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl);
+  if (urlResolved)
+    return urlResolved;
+  const scopeName = getMatch(parentUrl, importMap.scopes);
+  if (scopeName) {
+    const scopePackages = importMap.scopes[scopeName];
+    const packageResolution = applyPackages(id, scopePackages, scopeName);
+    if (packageResolution)
+      return packageResolution;
+  }
+  return applyPackages(id, importMap.imports, importMap.baseUrl) || throwBare(id, parentUrl);
 }
 
 export function throwBare (id, parentUrl) {

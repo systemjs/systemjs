@@ -12,14 +12,14 @@
 	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
 	<script src="../node_modules/mocha/mocha.js"></script>
 
-	<script type="systemjs-packagemap" src="fixtures/browser/packagemap.json"></script>
+	<script type="systemjs-importmap" src="fixtures/browser/importmap.json"></script>
 	<script src="../dist/system.js"></script>
 
 	<script>
 		mocha.setup('tdd');
 
 		self.baseURL = location.href.substr(0, location.href.lastIndexOf('/') + 1);
-		self.rootURL = location.href.substr(0, location.href.length - 'test/test.html'.length);
+		self.rootURL = location.href.substr(0, location.href.substr(0, location.href.lastIndexOf('/')).lastIndexOf('/') + 1);
 		self.assert = {
 			ok: function (val) {
 				this.equal(!!val, true);
