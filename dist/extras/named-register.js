@@ -20,8 +20,11 @@
   systemJSPrototype.register = function (name, deps, declare) {
     if (typeof name !== 'string')
       return register.apply(this, arguments);
-    
+
     this.registerRegistry[name] = [deps, declare];
+
+    // Provide an empty module to signal success.
+    return register.call(this, [], function () { return {}; });
   };
 
   const resolve = systemJSPrototype.resolve;
