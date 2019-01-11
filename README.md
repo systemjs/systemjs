@@ -182,6 +182,10 @@ To run the tests:
 npm run build && npm run test
 ```
 
+## Changes
+
+For the 2.0 changelog, see [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 MIT

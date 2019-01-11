@@ -1,3 +1,6 @@
+SystemJS 2.1.2 (2018/01/12)
+* Fix empty bundle registration for named register extension (#1885, @paulmelnikow)
+
 SystemJS 2.1.1 (2018/11/01)
 * Add AMD named define support to named register extension / amd extension combination (#1870, 0f1adb38)
 
