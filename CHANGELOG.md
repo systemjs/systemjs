@@ -1,4 +1,7 @@
-SystemJS 2.1.2 (2018/01/12)
+SystemJS 3.0.0 (2019/01/12)
+* Implement new Import Maps specification replacing Package Name Maps (#1893)
+
+SystemJS 2.1.2 (2019/01/12)
 * Fix empty bundle registration for named register extension (#1885, @paulmelnikow)
 
 SystemJS 2.1.1 (2018/11/01)

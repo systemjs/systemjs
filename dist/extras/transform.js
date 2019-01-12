@@ -13,7 +13,7 @@
     return fetch(url, { credentials: 'same-origin' })
     .then(function (res) {
       if (!res.ok)
-        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from  ' + parent : ''));
+        throw new Error('Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : ''));
       return res.text();
     })
     .then(function (source) {

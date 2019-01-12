@@ -1,5 +1,5 @@
 /*
-* SystemJS 2.1.2
+* SystemJS 3.0.0
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -96,15 +96,11 @@
   }
 
   /*
-   * Package name maps implementation
-   *
-   * Reduced implementation - only a single scope level is supported
+   * Import maps implementation
    * 
-   * To make lookups fast we pre-resolve the entire package name map
+   * To make lookups fast we pre-resolve the entire import map
    * and then match based on backtracked hash lookups
    * 
-   * path_prefix in scopes not supported
-   * nested scopes not supported
    */
 
   function resolveUrl (relUrl, parentUrl) {
@@ -113,73 +109,69 @@
         resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
   }
 
-  function createPackageMap (json, baseUrl) {
-    if (json.path_prefix) {
-      baseUrl = resolveUrl(json.path_prefix, baseUrl);
-      if (baseUrl[baseUrl.length - 1] !== '/')
-        baseUrl += '/';
+  function resolvePackages(pkgs) {
+    var outPkgs = {};
+    for (var p in pkgs) {
+      var value = pkgs[p];
+      // TODO package fallback support
+      if (typeof value !== 'string')
+        continue;
+      outPkgs[resolveIfNotPlainOrUrl(p) || p] = value;
     }
-      
-    const basePackages = json.packages || {};
+    return outPkgs;
+  }
+
+  function parseImportMap (json, baseUrl) {
+    const imports = resolvePackages(json.imports) || {};
     const scopes = {};
     if (json.scopes) {
       for (let scopeName in json.scopes) {
         const scope = json.scopes[scopeName];
-        if (scope.path_prefix)
-          throw new Error('Scope path_prefix not currently supported');
-        if (scope.scopes)
-          throw new Error('Nested scopes not currently supported');
         let resolvedScopeName = resolveUrl(scopeName, baseUrl);
-        if (resolvedScopeName[resolvedScopeName.length - 1] === '/')
-          resolvedScopeName = resolvedScopeName.substr(0, resolvedScopeName.length - 1);
-        scopes[resolvedScopeName] = scope.packages || {};
+        if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
+          resolvedScopeName += '/';
+        scopes[resolvedScopeName] = resolvePackages(scope) || {};
       }
     }
 
-    function getMatch (path, matchObj) {
-      let sepIndex = path.length;
-      do {
-        const segment = path.slice(0, sepIndex);
-        if (segment in matchObj)
-          return segment;
-      } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
-    }
+    return { imports: imports, scopes: scopes, baseUrl: baseUrl };
+  }
 
-    function applyPackages (id, packages, baseUrl) {
-      const pkgName = getMatch(id, packages);
-      if (pkgName) {
-        const pkg = packages[pkgName];
-        if (pkgName === id) {
-          if (typeof pkg === 'string')
-            return resolveUrl(pkg, baseUrl + pkgName + '/');
-          if (!pkg.main)
-            throw new Error('Package ' + pkgName + ' has no main');
-          return resolveUrl(
-            (pkg.path ? pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/') : pkgName + '/') + pkg.main,
-            baseUrl
-          );
-        }
-        else {
-          return resolveUrl(
-            (typeof pkg === 'string' || !pkg.path
-              ? pkgName + '/'
-              : pkg.path + (pkg.path[pkg.path.length - 1] === '/' ? '' : '/')
-            ) + id.slice(pkgName.length + 1)
-          , baseUrl);
-        }
-      }
-    }
+  function getMatch (path, matchObj) {
+    if (matchObj[path])
+      return path;
+    let sepIndex = path.length;
+    do {
+      const segment = path.slice(0, sepIndex + 1);
+      if (segment in matchObj)
+        return segment;
+    } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
+  }
 
-    return function (id, parentUrl) {
-      const scopeName = getMatch(parentUrl, scopes);
-      if (scopeName) {
-        const scopePackages = scopes[scopeName];
-        const packageResolution = applyPackages(id, scopePackages, scopeName + '/');
-        if (packageResolution)
-          return packageResolution;
-      }
-      return applyPackages(id, basePackages, baseUrl) || throwBare(id, parentUrl);
-    };
+  function applyPackages (id, packages, baseUrl) {
+    const pkgName = getMatch(id, packages);
+    if (pkgName) {
+      const pkg = packages[pkgName];
+      if (pkg === null)
+
+      if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
+        console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
+      return resolveUrl(pkg + id.slice(pkgName.length), baseUrl);
+    }
+  }
+
+  function resolveImportMap (id, parentUrl, importMap) {
+    const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl);
+    if (urlResolved)
+      id = urlResolved;
+    const scopeName = getMatch(parentUrl, importMap.scopes);
+    if (scopeName) {
+      const scopePackages = importMap.scopes[scopeName];
+      const packageResolution = applyPackages(id, scopePackages, scopeName);
+      if (packageResolution)
+        return packageResolution;
+    }
+    return applyPackages(id, importMap.imports, importMap.baseUrl) || urlResolved || throwBare(id, parentUrl);
   }
 
   function throwBare (id, parentUrl) {
@@ -656,64 +648,51 @@
   };
 
   /*
-   * Package name map support for SystemJS
+   * Import map support for SystemJS
    * 
-   * <script type="systemjs-packagemap">{}</script>
+   * <script type="systemjs-importmap">{}</script>
    * OR
-   * <script type="systemjs-packagemap" src=package.json></script>
+   * <script type="systemjs-importmap" src=package.json></script>
    * 
-   * Only supports loading the first package map
+   * Only supports loading the first import map
    */
 
-  let packageMapPromise, packageMapResolve;
+  var importMap, importMapPromise;
   if (typeof document !== 'undefined') {
     const scripts = document.getElementsByTagName('script');
     for (let i = 0; i < scripts.length; i++) {
       const script = scripts[i];
-      if (script.type !== 'systemjs-packagemap')
+      if (script.type !== 'systemjs-importmap')
         continue;
 
       if (!script.src) {
-        packageMapResolve = createPackageMap(JSON.parse(script.innerHTML), baseUrl);
-        packageMapPromise = Promise.resolve();
+        importMap = parseImportMap(JSON.parse(script.innerHTML), baseUrl);
       }
       else {
-        packageMapPromise = fetch(script.src)
+        importMapPromise = fetch(script.src)
         .then(function (res) {
           return res.json();
         })
         .then(function (json) {
-          packageMapResolve = createPackageMap(json, script.src);
-          packageMapPromise = undefined;
-        }, function () {
-          packageMapResolve = throwBare;
-          packageMapPromise = undefined;
+          importMap = parseImportMap(json, script.src);
         });
       }
       break;
     }
   }
-  if (!packageMapPromise)
-    packageMapResolve = throwBare;
+
+  importMap = importMap || { imports: {}, scopes: {} };
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || baseUrl;
 
-    const resolvedIfNotPlainOrUrl = resolveIfNotPlainOrUrl(id, parentUrl);
-    if (resolvedIfNotPlainOrUrl)
-      return resolvedIfNotPlainOrUrl;
-    if (id.indexOf(':') !== -1)
-      return id;
-
-    // now just left with plain
-    // (if not package map, packageMapResolve just throws)
-    if (packageMapPromise)
-      return packageMapPromise
+    if (importMapPromise)
+      return importMapPromise
       .then(function () {
-        return packageMapResolve(id, parentUrl);
+        return resolveImportMap(id, parentUrl, importMap);
       });
 
-    return packageMapResolve(id, parentUrl);
+    return resolveImportMap(id, parentUrl, importMap);
   };
 
   systemJSPrototype.get = function (id) {

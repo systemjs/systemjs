@@ -1,4 +1,4 @@
-# SystemJS 2.0
+# SystemJS
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -12,7 +12,7 @@ _[For the previous release see the SystemJS 0.21.x branch](https://github.com/sy
 
 _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
-SystemJS 2.0 provides two hookable base builds:
+SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
 
@@ -161,7 +161,7 @@ To support import maps in the system.js build, a fetch polyfill is need. The [Gi
 
 ## Loader Extensions
 
-This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/2.0/README.md).
+This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/3.0/README.md).
 
 * [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
 * [json-plugin](https://github.com/Jamaks/systemjs2-json-plugin) JSON loader plugin
@@ -184,7 +184,7 @@ npm run build && npm run test
 
 ## Changes
 
-For the 2.0 changelog, see [CHANGELOG.md](CHANGELOG.md).
+For the changelog, see [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
