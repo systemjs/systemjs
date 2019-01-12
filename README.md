@@ -26,9 +26,9 @@ Since the ES module semantics such as live bindings, circular references, contex
 
 #### 2. system.js loader
 
-The [3KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for upcoming module specifications (currently [package name maps](https://github.com/domenic/package-name-maps) and [WASM integration](https://github.com/WebAssembly/esm-integration) with module loading) as well as development and convenience features.
+The [3KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for upcoming module specifications (currently [import maps](https://github.com/domenic/import-maps) and [WASM integration](https://github.com/WebAssembly/esm-integration) with module loading) as well as development and convenience features.
 
-* Support for loading [bare specifier names](docs/package-name-maps.md) through package name maps (formerly map configuration), loaded via `<script type="system-packagenamemap">` (requires a `fetch` polyfill for eg IE11).
+* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="system-importmap">` (requires a `fetch` polyfill for eg IE11).
 * Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows
 * Supports loading WASM based on the `.wasm` file extension
@@ -55,7 +55,7 @@ npm install systemjs
 
 ## Documentation
 
-* [Package Name Maps](docs/package-name-maps.md)
+* [Import Maps](docs/import-maps.md)
 * [API](docs/api.md)
 * [System.register](docs/system-register.md)
 * [Loader Hooks](docs/hooks.md)
@@ -77,23 +77,23 @@ where `main.js` is a module available in the System.register module format.
 
 For an example of a bundling workflow, see the Rollup Code Splitting starter project - https://github.com/rollup/rollup-starter-code-splitting.
 
-### Package Name Maps
+### Import Maps
 
-Say `main.js` depends on loading `'lodash'`, then we can define a package name map:
+Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 
 ```html
 
-<script type="systemjs-packagemap">
+<script type="systemjs-importmap">
 {
-  "packages": {
+  "imports": {
     "lodash": "https://unpkg.com/lodash@4.17.10/lodash.js"
   }
 }
 </script>
 <!-- Alternatively:
-<script type="systemjs-packagemap" src="path/to/map.json">
+<script type="systemjs-importmap" src="path/to/map.json">
 -->
-<!-- SystemJS must be loaded after the package map -->
+<!-- SystemJS must be loaded after the import map -->
 <script src="system.js"></script>
 <script>
   System.import('/js/main.js');
@@ -150,7 +150,7 @@ Promises can be conditionally polyfilled using, for example, [Bluebird](http://b
 
 ### Fetch
 
-To support package maps in the system.js build, a fetch polyfill is need. The [GitHub polyfill](https://github.github.io/fetch/) is recommended:
+To support import maps in the system.js build, a fetch polyfill is need. The [GitHub polyfill](https://github.github.io/fetch/) is recommended:
 
 ```html
 <script>
