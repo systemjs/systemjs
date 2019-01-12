@@ -10,7 +10,7 @@
 import { baseUrl as pageBaseUrl, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-let importMap, importMapPromise;
+var importMap, importMapPromise;
 if (typeof document !== 'undefined') {
   const scripts = document.getElementsByTagName('script');
   for (let i = 0; i < scripts.length; i++) {
