@@ -4,7 +4,7 @@ Import maps are the [current specification](https://github.com/domenic/import-ma
 
 This means module specifiers like `"lodash"` can be mapped to exact URLs for loading.
 
-> Note the package name maps specification is still under active development and as such this implementation will be subject to change.
+> Note the import maps specification is still under active development and as such this implementation will be subject to change.
 
 ### Loading Import Maps
 
@@ -30,9 +30,9 @@ Import maps can be loaded inline or from a separate URL using a `<script type="s
 </script>
 ```
 
-It is important that the package map is included before SystemJS itself for it to be picked up properly.
+It is important that the import map is included before SystemJS itself for it to be picked up properly.
 
-### Packages
+### Imports
 
 For base-level specifier mappings, we can use the `"imports"` property:
 
@@ -50,12 +50,12 @@ The above will resolve any `import 'lodash'` call to the path we have provided.
 
 For submodules, loading `import 'lodash/x'` will not be supported in the above.
 
-To more clearly define package folders we can use package folder mappings:
+To more clearly define import folders we can use import folder mappings:
 
 ```html
 <script type="systemjs-importmap">
 {
-  "packages": {
+  "imports": {
     "lodash": "/path/to/lodash/index.js",
     "lodash/": "/path/to/lodash/"
   }
@@ -77,7 +77,7 @@ a different version of lodash.
 This can be achieved with scoped import maps:
 
 ```html
-<script type="systemjs-packagemap">
+<script type="systemjs-importmap">
 {
   "scopes": {
     "/app": {
@@ -91,7 +91,7 @@ This can be achieved with scoped import maps:
 </script>
 ```
 
-Scopes still fallback to applying the global packages, so we only need to do this for packages that are different
+Scopes still fallback to applying the global imports, so we only need to do this for imports that are different
 from their global resolutions.
 
 #### Spec and Implemnetation Feedback
