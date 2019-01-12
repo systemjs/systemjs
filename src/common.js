@@ -160,7 +160,7 @@ function applyPackages (id, packages, baseUrl) {
 export function resolveImportMap (id, parentUrl, importMap) {
   const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl);
   if (urlResolved)
-    return urlResolved;
+    id = urlResolved;
   const scopeName = getMatch(parentUrl, importMap.scopes);
   if (scopeName) {
     const scopePackages = importMap.scopes[scopeName];
@@ -168,7 +168,7 @@ export function resolveImportMap (id, parentUrl, importMap) {
     if (packageResolution)
       return packageResolution;
   }
-  return applyPackages(id, importMap.imports, importMap.baseUrl) || throwBare(id, parentUrl);
+  return applyPackages(id, importMap.imports, importMap.baseUrl) || urlResolved || throwBare(id, parentUrl);
 }
 
 export function throwBare (id, parentUrl) {

@@ -9,7 +9,8 @@ describe('Import Maps', function () {
       "p": "t",
       "p/": "t/",
       "m": "./m/index.js",
-      "m/": "./m/"
+      "m/": "./m/",
+      "https://site.com/x": "/x.js"
     },
     scopes: {
       "/scope": {
@@ -25,6 +26,10 @@ describe('Import Maps', function () {
     catch (e) {
       assert.equal(e.message, 'Unable to resolve bare specifier "z" from https://site.com');
     }
+  });
+
+  it('Can map URLs', function () {
+    assert.equal(resolveImportMap('/x', 'https://site.com/', importMap), 'https://sample.com/x.js');
   });
 
   it('Resolves packages with main sugar', function () {
