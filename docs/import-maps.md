@@ -50,7 +50,7 @@ The above will resolve any `import 'lodash'` call to the path we have provided.
 
 For submodules, loading `import 'lodash/x'` will not be supported in the above.
 
-To more clearly define import folders we can use import folder mappings:
+To more clearly define package folders we can use import folder mappings:
 
 ```html
 <script type="systemjs-importmap">
