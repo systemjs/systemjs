@@ -1,5 +1,5 @@
 /*
-* SystemJS v0.21.5 Dev
+* SystemJS v0.21.6 Dev
 */
 (function () {
   'use strict';
@@ -3314,12 +3314,12 @@
       }
 
       if (metadata.load.scriptLoad ) {
-        if (metadata.load.pluginKey || !supportsScriptLoad) {
+        if (metadata.pluginKey || !supportsScriptLoad) {
           metadata.load.scriptLoad = false;
           warn.call(config, 'scriptLoad not supported for "' + key + '"');
         }
       }
-      else if (metadata.load.scriptLoad !== false && !metadata.load.pluginKey && supportsScriptLoad) {
+      else if (metadata.load.scriptLoad !== false && !metadata.pluginKey && supportsScriptLoad) {
         // auto script load AMD, global without deps
         if (!metadata.load.deps && !metadata.load.globals &&
             (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))
@@ -4034,7 +4034,7 @@
     return RegisterLoader.prototype.registerDynamic.call(this, key, deps, executingRequire, execute);
   };
 
-  SystemJSLoader.prototype.version = "0.21.5 Dev";
+  SystemJSLoader.prototype.version = "0.21.6 Dev";
 
   var System = new SystemJSLoader();
 

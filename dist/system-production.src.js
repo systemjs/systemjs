@@ -1,5 +1,5 @@
 /*
-* SystemJS v0.21.5 Production
+* SystemJS v0.21.6 Production
 */
 (function () {
   'use strict';
@@ -1951,7 +1951,7 @@
     return doScriptLoad(this, key, processAnonRegister);
   }
 
-  SystemJSProductionLoader.prototype.version = "0.21.5 Production";
+  SystemJSProductionLoader.prototype.version = "0.21.6 Production";
 
   var System = new SystemJSProductionLoader();
 
