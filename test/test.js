@@ -789,6 +789,41 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  if (typeof process === 'undefined') {
+    test('Disallow scriptLoad with plugin', function () {
+      System.config({
+        meta: {
+          "*.js": {
+            scriptLoad: true,
+            format: "register"
+          },
+          "tests/text-plugin.js": {
+            scriptLoad: false,
+            format: "cjs"
+          }
+        }
+      });
+      return System.import('tests/script-load-test.js!tests/text-plugin.js').then(function (m) {
+        ok(m.startsWith("define"));
+      }).finally(function () {
+
+        //Cleanup after tests
+        System.config({
+          meta: {
+            "*.js": {
+              scriptLoad: undefined,
+              format: undefined
+            },
+            "tests/text-plugin.js": {
+              scriptLoad: undefined,
+              format: undefined
+            }
+          }
+        });
+      });
+    })
+  }
+
   test('AMD Circular', function () {
     return System.import('tests/amd-circular1.js').then(function (m) {
       ok(m.outFunc() == 5, 'Expected execution');

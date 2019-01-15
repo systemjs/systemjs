@@ -42,12 +42,12 @@ export function instantiate (key, processAnonRegister) {
     }
 
     if (metadata.load.scriptLoad ) {
-      if (metadata.load.pluginKey || !supportsScriptLoad) {
+      if (metadata.pluginKey || !supportsScriptLoad) {
         metadata.load.scriptLoad = false;
         warn.call(config, 'scriptLoad not supported for "' + key + '"');
       }
     }
-    else if (metadata.load.scriptLoad !== false && !metadata.load.pluginKey && supportsScriptLoad) {
+    else if (metadata.load.scriptLoad !== false && !metadata.pluginKey && supportsScriptLoad) {
       // auto script load AMD, global without deps
       if (!metadata.load.deps && !metadata.load.globals &&
           (metadata.load.format === 'system' || metadata.load.format === 'register' || metadata.load.format === 'global' && metadata.load.exports))
