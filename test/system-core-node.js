@@ -2,14 +2,14 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import url from 'url';
 
 import './fixtures/enable-tracing';
 import { resolveIfNotPlainOrUrl } from '../src/common';
+import { pathToFileURL, URL } from '../src/features/node-common';
 import SystemLoader from '../src/system-node';
 
 
-const baseUrl = url.pathToFileURL(path.resolve('./test/') + '/');
+const baseUrl = pathToFileURL(path.resolve('./test/') + '/');
 
 
 describe('Core API - Node.js', function () {
@@ -122,7 +122,7 @@ describe('Core API - Node.js', function () {
 
 describe('Loading Cases - Node.js', function() {
   const readFile = util.promisify(fs.readFile);
-  const baseUrl = url.pathToFileURL(path.resolve('test/fixtures') + '/');
+  const baseUrl = pathToFileURL(path.resolve('test/fixtures') + '/');
   const loader = new SystemLoader({ baseUrl });
 
   // loader.resolve = (id, parent) => resolveIfNotPlainOrUrl(id, parent || baseUrl);
@@ -188,7 +188,7 @@ describe('Loading Cases - Node.js', function() {
 
     it('should support import.meta.url', async function () {
       const m = await loader.import('./register-modules/moduleUrl.js');
-      assert.equal(m.url, url.pathToFileURL(path.resolve('test/fixtures/register-modules/moduleUrl.js')));
+      assert.equal(m.url, pathToFileURL(path.resolve('test/fixtures/register-modules/moduleUrl.js')));
     });
   });
 
@@ -313,7 +313,7 @@ describe('Loading Cases - Node.js', function() {
   });
 
   describe('Errors - Node.js', function () {
-    const testUrl = url.pathToFileURL(path.resolve('test/fixtures') + '/');
+    const testUrl = pathToFileURL(path.resolve('test/fixtures') + '/');
 
     async function getImportError(module) {
       try {

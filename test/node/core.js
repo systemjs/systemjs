@@ -1,12 +1,12 @@
 import assert from 'assert';
 import path from 'path';
-import url from 'url';
 
 import '../fixtures/enable-tracing';
+import { pathToFileURL, URL } from '../../src/features/node-common';
 import NodeLoader from '../../src/system-node';
 
-const rootUrl = url.pathToFileURL('/');
-const baseUrl = url.pathToFileURL(path.resolve('./test') + '/');
+const rootUrl = pathToFileURL('/');
+const baseUrl = pathToFileURL(path.resolve('./test') + '/');
 
 const importMapConfig = new URL('./fixtures/browser/importmap.json', baseUrl);
 

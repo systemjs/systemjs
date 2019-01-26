@@ -6,7 +6,7 @@ import fs from 'fs';
 
 import isBuiltinModule from 'is-builtin-module';
 
-import { DEFAULT_BASEURL, fileExists } from './node-common';
+import { DEFAULT_BASEURL, fileExists, URL } from './node-common';
 
 const EXTENSIONS = ['.mjs', '.js', '.json'];
 

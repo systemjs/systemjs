@@ -1,14 +1,13 @@
 import { ok as assert } from 'assert';
 import fs from 'fs';
 import _path from 'path';
-import _url from 'url';
 import vm from 'vm';
 
 import stripShebang from 'strip-shebang';
 
 import { systemJSPrototype } from '../system-core.js';
 import { global } from '../common.js';
-import { DEFAULT_BASEURL, fileExists } from './node-common';
+import { DEFAULT_BASEURL, fileExists, pathToFileURL, URL } from './node-common';
 import './registry.js';
 import { createNodeResolver } from './node-resolve';
 import { createImportMapResolver } from './node-import-map';
@@ -51,7 +50,7 @@ function createFileURLReader(url) {
   try {
     read.url = new URL(url);
   } catch (err) {
-    read.url = _url.pathToFileURL(url);
+    read.url = pathToFileURL(url);
   }
 
   read.format = detectFormat(read.url);

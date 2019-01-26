@@ -19,6 +19,7 @@
     "@babel/plugin-transform-modules-systemjs": "^7.0.0-rc.1",
     "bluebird": "^3.5.1",
     "esm": "^3.0.77",
+    "file-url": "^2.0.2",
     "is-builtin-module": "^3.0.0",
     "mocha": "^5.2.0",
     "rollup": "^0.64.1",

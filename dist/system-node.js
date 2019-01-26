@@ -5,11 +5,12 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var _url = _interopDefault(require('url'));
 var fs = _interopDefault(require('fs'));
+var _path = _interopDefault(require('path'));
+var url = _interopDefault(require('url'));
+var fileUrl = _interopDefault(require('file-url'));
 var assert = require('assert');
 var isBuiltinModule = _interopDefault(require('is-builtin-module'));
-var _path = _interopDefault(require('path'));
 var vm = _interopDefault(require('vm'));
 var stripShebang = _interopDefault(require('strip-shebang'));
 
@@ -445,7 +446,23 @@ function postOrderExec (loader, load, seen) {
 
 envGlobal.System = new SystemJS();
 
-const DEFAULT_BASEURL = _url.pathToFileURL(process.cwd() + '/');
+const URL = global.URL
+  ? global.URL
+  : url.URL;
+
+
+const pathToFileURL = url.pathToFileURL
+  ? url.pathToFileURL
+  : function pathToFileURL(path) {
+    const theUrl = new URL(fileUrl(path));
+    if (path.endsWith(_path.sep)) {
+      theUrl.pathname += '/';
+    }
+    return theUrl;
+  };
+
+const DEFAULT_BASEURL = pathToFileURL(process.cwd() + '/');
+
 
 function fileExists(path) {
   try {
@@ -730,8 +747,8 @@ function createImportMapResolver({ baseUrl$$1 = DEFAULT_BASEURL, importMapConfig
 const SystemJS$1 = systemJSPrototype.constructor;
 
 
-function detectFormat(url) {
-  const ext = _path.extname(url.pathname);
+function detectFormat(url$$1) {
+  const ext = _path.extname(url$$1.pathname);
   let format = null;
 
   if (ext === '.mjs') {
@@ -740,7 +757,7 @@ function detectFormat(url) {
     format = 'json';
   } else if (ext === '.js') {
     format = 'cjs';
-  } else if (url.protocol === 'builtin:') {
+  } else if (url$$1.protocol === 'builtin:') {
     return 'builtin';
   }
 
@@ -748,7 +765,7 @@ function detectFormat(url) {
 }
 
 
-function createFileURLReader(url) {
+function createFileURLReader(url$$1) {
   let CACHED_CONTENT;
 
   function read(force = false) {
@@ -763,9 +780,9 @@ function createFileURLReader(url) {
   }
 
   try {
-    read.url = new URL(url);
+    read.url = new URL(url$$1);
   } catch (err) {
-    read.url = _url.pathToFileURL(url);
+    read.url = pathToFileURL(url$$1);
   }
 
   read.format = detectFormat(read.url);
@@ -784,14 +801,14 @@ function wrapEsModuleSource(source) {
 
 
 function loadRegisterModule(getContent, loader) {
-  const { url } = getContent;
+  const { url: url$$1 } = getContent;
   const source = getContent();
 
   const wrapper = wrapEsModuleSource(source);
 
   const runOptions = {
     displayErrors: true,
-    filename: `${url}`,
+    filename: `${url$$1}`,
     lineOffset: 0,
   };
 
@@ -804,8 +821,8 @@ function loadRegisterModule(getContent, loader) {
 
 
 function loadBuiltinModule(getContent, loader) {
-  const { url } = getContent;
-  const name = url.pathname;
+  const { url: url$$1 } = getContent;
+  const name = url$$1.pathname;
 
   const nodeModule = require(name);
 
@@ -874,13 +891,13 @@ class NodeLoader extends SystemJS$1 {
   }
 
 
-  async instantiate(url, firstParentUrl) {
-    assert.ok(url, 'missing url');
-    assert.ok(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
+  async instantiate(url$$1, firstParentUrl) {
+    assert.ok(url$$1, 'missing url');
+    assert.ok(url$$1 instanceof URL || typeof url$$1 === 'string', 'url must be a URL or string');
 
-    url = new URL(url);
+    url$$1 = new URL(url$$1);
 
-    const getContent = createFileURLReader(url);
+    const getContent = createFileURLReader(url$$1);
 
     try {
       switch(getContent.format) {
@@ -899,7 +916,7 @@ class NodeLoader extends SystemJS$1 {
       if (err instanceof ReferenceError) {
         throw err;
       }
-      throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
+      throw new Error(`Error loading ${url$$1}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
     }
 
     return this.getRegister();

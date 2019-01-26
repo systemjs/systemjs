@@ -1,7 +1,27 @@
-import url from 'url';
 import fs from 'fs';
+import _path from 'path';
+import url from 'url';
 
-export const DEFAULT_BASEURL = url.pathToFileURL(process.cwd() + '/');
+import fileUrl from 'file-url';
+
+
+export const URL = global.URL
+  ? global.URL
+  : url.URL;
+
+
+export const pathToFileURL = url.pathToFileURL
+  ? url.pathToFileURL
+  : function pathToFileURL(path) {
+    const theUrl = new URL(fileUrl(path));
+    if (path.endsWith(_path.sep)) {
+      theUrl.pathname += '/';
+    }
+    return theUrl;
+  };
+
+export const DEFAULT_BASEURL = pathToFileURL(process.cwd() + '/');
+
 
 export function fileExists(path) {
   try {

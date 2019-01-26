@@ -7,7 +7,7 @@
 import fs from 'fs';
 
 import { parseImportMap, resolveImportMap } from '../common.js';
-import { DEFAULT_BASEURL, fileExists, isURL } from './node-common.js';
+import { DEFAULT_BASEURL, fileExists, isURL, URL } from './node-common.js';
 
 
 export function createImportMapResolver({ baseUrl = DEFAULT_BASEURL, importMapConfig}) {
