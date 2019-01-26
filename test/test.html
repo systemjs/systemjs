@@ -21,14 +21,14 @@
 		self.baseURL = location.href.substr(0, location.href.lastIndexOf('/') + 1);
 		self.rootURL = location.href.substr(0, location.href.substr(0, location.href.lastIndexOf('/')).lastIndexOf('/') + 1);
 		self.assert = {
-			ok: function (val) {
-				this.equal(!!val, true);
+			ok: function ok(val) {
+				self.assert.equal(!!val, true);
 			},
 			equal: function equal(a, b) {
 				if (a !== b)
 					throw new Error('Expected "' + a + '" to be "' + b + '"');
 			},
-			fail: function (msg) {
+			fail: function fail(msg) {
 				throw new Error(msg);
 			}
 		};

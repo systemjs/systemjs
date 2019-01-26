@@ -4,7 +4,7 @@ import fs from 'fs';
 const version = JSON.parse(fs.readFileSync('package.json')).version;
 const name = process.env.sjs ? 's' : 'system';
 
-export default {
+export default [{
   input: `src/${name}.js`,
   output: {
     format: 'iife',
@@ -20,4 +20,17 @@ export default {
   plugins: [replace({
     TRACING: process.env.sjs ? 'false' : 'true'
   })]
-};
+}, {
+  input: 'src/system-node.js',
+  output: {
+    format: 'cjs',
+    strict: true,
+    file: 'dist/system-node.js',
+    banner: `/*
+* SystemJS - NodeJS ${version}
+*/`
+  },
+  plugins: [replace({
+    TRACING: process.env.sjs ? 'false' : 'true'
+  })]
+}];
