@@ -1,16 +1,15 @@
-import './fixtures/enable-tracing';
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import vm from 'vm';
+import url from 'url';
 
+import './fixtures/enable-tracing';
 import { resolveIfNotPlainOrUrl } from '../src/common';
 import SystemLoader from '../src/system-node';
-import url from "url";
 
-const cwd = process.cwd();
-const baseUrl = url.pathToFileURL(path.resolve(cwd, './test/') + '/');
+
+const baseUrl = url.pathToFileURL(path.resolve('./test/') + '/');
 
 
 describe('Core API - Node.js', function () {
