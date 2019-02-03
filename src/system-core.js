@@ -267,7 +267,7 @@ function postOrderExec (loader, load, seen) {
             load.C = load.n;
             load.E = null; // indicates completion
             loader.onload(load.id, null);
-          }, function () {
+          }, function (err) {
             loader.onload(load.id, err);
             throw err;
           });
