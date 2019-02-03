@@ -110,9 +110,19 @@ describe('Core API', function () {
       assert.equal(loader.get('x').y, 42);
     });
 
+    it('Supports System.has', function () {
+      assert.equal(loader.has('x'), true);
+    });
+
     it('Supports System.delete', function () {
       loader.delete('x');
       assert.equal(loader.get('x'), undefined);
+    });
+
+    it('Supports System.set', async function () {
+      loader.set('x', { y: 43 });
+      const x = await loader.import('x');
+      assert.equal(x.y, 43);
     });
   });
 });

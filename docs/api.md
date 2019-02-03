@@ -39,10 +39,10 @@ Resolves a module specifier relative to an optional parent URL, returning the re
 
 ### Registry API (system.js only)
 
-#### System.delete(url) -> Boolean
+#### System.delete(id) -> Boolean
 Type: `Function`
 
-Deletes a module from the registry by URL.
+Deletes a module from the registry by ID.
 
 Returns true if the module was found in the registry before deletion.
 
@@ -50,11 +50,40 @@ Returns true if the module was found in the registry before deletion.
 System.delete('http://site.com/normalized/module/name.js');
 ```
 
-#### System.get(url) -> Module
+#### System.get(id) -> Module
 Type: `Function`
 
-Retrieve a loaded module from the registry by URL.
+Retrieve a loaded module from the registry by ID.
 
 ```js
 System.get('http://site.com/normalized/module/name.js').exportedFunction();
 ```
+
+Module records with an error state will return `null`.
+
+#### System.has(id) -> Boolean
+Type: `Function`
+
+Determine if a given ID is available in the loader registry.
+
+Module records that have an error state in the registry still return `true`,
+while module records with in-progress loads will return `false`.
+
+```js
+System.get('http://site.com/normalized/module/name.js').exportedFunction();
+```
+
+#### System.set(id, module) -> Module
+Type: `Function`
+
+Sets a module in the registry by ID.
+
+```js
+System.set('http://site.com/normalized/module/name.js', {
+  exportedFunction: value
+});
+```
+
+`module` is an object of names to set as the named exports.
+
+If `module` is an existing Module Namespace, it will be used by reference.
