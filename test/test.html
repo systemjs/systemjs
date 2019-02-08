@@ -14,6 +14,7 @@
 
 	<script type="systemjs-importmap" src="fixtures/browser/importmap.json"></script>
 	<script src="../dist/system.js"></script>
+  <script src="../dist/utils/babel.js"></script>
 
 	<script>
 		mocha.setup('tdd');
@@ -33,19 +34,27 @@
 			}
 		};
 
-		const extras = ['amd', 'named-exports', 'transform', 'named-register'];
+		const extras = [
+			'amd',
+			'named-exports',
+			'transform',
+			'named-register',
+			'cjs',
+		];
+
 		function runNextExtra () {
 			mocha.suite.suites.shift();
 			const extra = extras.shift();
 			if (extra)
 				System.import('../dist/extras/' + extra + '.js')
-				.then(function () {
+				.then(function (m) {
 					return System.import('./browser/' + extra + '.js');
 				})
 				.then(function () {
 					mocha.run(runNextExtra);
 				});
 		}
+
 
 		System.import('./browser/core.js')
 		.then(function () {

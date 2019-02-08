@@ -3,7 +3,6 @@
  * Extra for the s.js build only
  * (Included by default in system.js build)
  */
-(function (global) {
 
 const systemJSPrototype = System.constructor.prototype;
 
@@ -53,7 +52,7 @@ systemJSPrototype.getRegister = function () {
   const lastRegister = getRegister.call(this);
   if (lastRegister)
     return lastRegister;
-  
+
   // no registration -> attempt a global detection as difference from snapshot
   // when multiple globals, we take the global value to be the last defined new global object property
   // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
@@ -61,7 +60,7 @@ systemJSPrototype.getRegister = function () {
   const globalProp = getGlobalProp();
   if (!globalProp)
     return emptyInstantiation;
-  
+
   let globalExport;
   try {
     globalExport = global[globalProp];
@@ -74,5 +73,3 @@ systemJSPrototype.getRegister = function () {
     return { execute: function () { _export('default', globalExport) } };
   }];
 };
-
-})(typeof self !== 'undefined' ? self : global);

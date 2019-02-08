@@ -1,7 +1,7 @@
 suite('Transform Loader', function() {
   System = new System.constructor();
   let translateCnt = 0;
-  System.transform = function (url, source) {
+  System.transform = function (context, url, source) {
     translateCnt++;
     return source;
   };

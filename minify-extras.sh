@@ -1,4 +1,4 @@
-cp src/extras/* dist/extras/
+mkdir -p dist/extras
 cd dist/extras
 rm *.min.js
 for f in *.js

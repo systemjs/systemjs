@@ -1,15 +1,83 @@
+import path from 'path';
+import url from 'url';
+
+import fileUrlFromPath from 'file-url';
+import SourceMapSupport from 'source-map-support';
+
 export const hasSelf = typeof self !== 'undefined';
 
 const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
-export let baseUrl;
-if (typeof location !== 'undefined') {
-  baseUrl = location.href.split('#')[0].split('?')[0];
-  const lastSepIndex = baseUrl.lastIndexOf('/');
-  if (lastSepIndex !== -1)
-    baseUrl = baseUrl.slice(0, lastSepIndex + 1);
+export const URL = global.URL
+  ? global.URL
+  : url.URL;
+
+export const pathToFileURL = url.pathToFileURL
+  ? url.pathToFileURL
+  : function pathToFileURL(filePath) {
+    const fileUrl = new URL(fileUrlFromPath(filePath));
+    if (!filePath.endsWith(path.sep)) {
+      fileUrl.pathname += '/';
+    }
+    return fileUrl;
+  };
+
+export const fileURLToPath = url.fileURLToPath
+  ? url.fileURLToPath
+  : function fileURLToPath(fileUrl) {
+    return fileUrl.pathname;
+  };
+
+export function urlToPath(url) {
+  url = new URL(url);
+  if (url.protocol === 'file:') {
+    return fileUrlFromPath(url);
+  }
+  return url.pathname;
 }
+
+function getDefaultBaseUrl() {
+  let url;
+
+  if (typeof location !== 'undefined') {
+    url = location.href.split('#')[0].split('?')[0];
+    const lastSepIndex = url.lastIndexOf('/');
+    if (lastSepIndex !== -1) {
+      url = url.slice(0, lastSepIndex + 1);
+    }
+  } else if (typeof process !== 'undefined') {
+    url = pathToFileURL(process.cwd() + '/');
+  }
+
+  return url;
+}
+
+export function basename(filePath) {
+  return path.basename(filePath);
+}
+
+export function dirname(filePath) {
+  return path.dirname(filePath);
+}
+
+export const sourceMapSources = {};
+
+SourceMapSupport.install({
+  retrieveSourceMap: function(source) {
+    if (!sourceMapSources[source])
+      return null;
+
+    return {
+      url: source.replace('!transpiled', ''),
+      map: sourceMapSources[source]
+    };
+  }
+});
+
+
+export const baseUrl = getDefaultBaseUrl();
+export const DEFAULT_BASEURL = baseUrl;
 
 const backslashRegEx = /\\/g;
 export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
@@ -94,10 +162,10 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
 
 /*
  * Import maps implementation
- * 
+ *
  * To make lookups fast we pre-resolve the entire import map
  * and then match based on backtracked hash lookups
- * 
+ *
  */
 
 function resolveUrl (relUrl, parentUrl) {
