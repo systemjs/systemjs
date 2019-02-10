@@ -4,7 +4,7 @@ import esRegisterFormatPlugin from '@babel/plugin-transform-modules-systemjs';
 
 import extractCjsDepsPlugin from '../utils/babel-visit-cjs-deps-plugin';
 import { compileScript } from '../utils/compile';
-import { sourceMapSources, urlToPath, basename, dirname } from '../common';
+import { sourceMapSources, basename, dirname } from '../common';
 
 
 async function createRequire(loader, url, deps, resolves) {
@@ -86,11 +86,7 @@ function babelTransform(source, options) {
 
 
 function getSourceUrl(url) {
-  url = new URL(url);
-  if (url.protocol === 'file:') {
-    return urlToPath(url);
-  }
-  return url.href;
+  return new URL(url).href;
 }
 
 
@@ -108,15 +104,14 @@ systemPrototype.transform = async function transform(context, url, source) {
     deps: [],
   };
 
-  const modulePath = urlToPath(url);
   const sourceUrl = getSourceUrl(url);
-  const transpiledPath = `${sourceUrl}!transpiled`;
+  const sourceMapSupportKey = context.sourceMapSupportKey = `${sourceUrl}!transpiled`;
 
   const options = {
     babelrc: false,
     compact: false,
     configFile: false,
-    filename: transpiledPath,
+    filename: sourceMapSupportKey,
     sourceFileName: `${sourceUrl}`,
     moduleIds: false,
     parserOpts: {
@@ -134,7 +129,7 @@ systemPrototype.transform = async function transform(context, url, source) {
   const output = await babelTransform(source, options);
 
   output.map.sources = output.map.sources.map(getSourceUrl);
-  sourceMapSources[transpiledPath] = output.map;
+  sourceMapSources[sourceMapSupportKey] = output.map;
 
   return output.code;
 };
@@ -145,23 +140,25 @@ systemPrototype.evaluate = async function evaluate(context, url, source) {
     return superEvaluate.call(this, context, url, source);
   }
 
-  const { deps, resolves } = context.cjsDeps;
-
-  const modulePath = urlToPath(url);
-  const transpiledPath = `${getSourceUrl(url)}!transpiled`;
+  const {
+    sourceMapSupportKey,
+    cjsDeps: { deps, resolves },
+  } = context;
 
   const _require = await createRequire(this, url, deps, resolves);
   const _module = createModule(_require, url);
 
   const moduleVars = {
+    System: this,
+    SystemJS: this,
     exports: _module.exports,
     require: _require,
     module: _module,
-    __filename: basename(modulePath),
-    __dirname: dirname(modulePath),
+    __filename: basename(url),
+    __dirname: dirname(url),
   };
 
-  compileScript(transpiledPath, source, moduleVars);
+  compileScript(sourceMapSupportKey, source, moduleVars);
 
 
   // Get the registration and modify the 'dependendencies' array to include
@@ -177,7 +174,7 @@ systemPrototype.evaluate = async function evaluate(context, url, source) {
     const { setters, execute } = definition(_export, _context);
 
     function wrappedExecute() {
-      execute();
+      execute.call(_module.exports);
       postExecute(_export, _module);
     }
 

@@ -370,12 +370,8 @@
 
 
   systemJSPrototype.evaluate = function (context, url, source) {
-    try {
-      const wrapped = `${source}\n//# sourceURL=${url}`;
-      (0, eval)(wrapped);
-    } catch (err) {
-      throw err;
-    }
+    const wrapped = `${source}\n//# sourceURL=${url}`;
+    (0, eval)(wrapped);
   };
 
 }());

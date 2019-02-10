@@ -1,7 +1,4 @@
-import vm from 'vm';
 import stripShebang from 'strip-shebang';
-
-const isNode = typeof self === 'undefined';
 
 
 function unzipModuleVars(moduleVars = {}) {
@@ -13,35 +10,18 @@ function unzipModuleVars(moduleVars = {}) {
 }
 
 
-export function compileScriptBrowser(sourceUrl, source, moduleVars) {
+export function compileScript(sourceUrl, source, moduleVars) {
   const { params, args } = unzipModuleVars(moduleVars);
 
+  const wrapped_before = `(function(${params.join(',')}){`;
   const wrappee = stripShebang(source);
   const wrapper_sourceUrl = sourceUrl ? `\n//# sourceURL=${sourceUrl}` : '';
+  const wrapped_after = '})';
 
-  const wrapped = `${wrappee}${wrapper_sourceUrl}`;
+  const wrapped = `${wrapped_before}${wrappee}${wrapped_after}${wrapper_sourceUrl}`;
 
-  Function(...params, wrapped)(...args);
+  const evaluated = (0, eval)(wrapped);
+  if (typeof evaluated === 'function') {
+    evaluated(...args);
+  }
 }
-
-
-export function compileScriptNode(sourceUrl, source, moduleVars) {
-  const { params, args } = unzipModuleVars(moduleVars);
-
-  const wrapper_before = `(function(${params.join(', ')}){`;
-  const wrappee = stripShebang(source);
-  const wrapper_after = '\n})';
-  const wrapper_sourceUrl = sourceUrl ? `\n//# sourceURL=${sourceUrl}` : '';
-
-  const wrapped = `${wrapper_before}${wrappee}${wrapper_after}${wrapper_sourceUrl}`;
-
-  const runOptions = {
-    displayErrors: true,
-    filename: `${sourceUrl}`,
-    lineOffset: 0,
-  };
-
-  vm.runInThisContext(wrapped, runOptions)(...args);
-}
-
-export const compileScript = isNode ? compileScriptNode : compileScriptBrowser;

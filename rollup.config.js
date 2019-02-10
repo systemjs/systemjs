@@ -57,10 +57,12 @@ export default [
       strict: false,
       globals: {
         '@babel/core': 'babel',
+        'source-map-support': 'SourceMapSupport',
       },
     },
     external: [
       '@babel/core',
+      'source-map-support',
     ],
     plugins: [
       nodeResolve({

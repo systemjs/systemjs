@@ -1,12 +1,13 @@
 var path = require('path');
 
-module.exports = {
+
+module.exports = ['babel', 'SourceMapSupport'].map(name => ({
   mode: 'production',
-  entry: './src/utils/babel.js',
+  entry: `./src/utils/${name}.js`,
   output: {
     path: path.resolve(__dirname, 'dist/utils'),
-    filename: 'babel.js',
-    library: 'babel',
+    filename: `${name}.js`,
+    library: name,
     libraryTarget: 'window',
   },
   resolve: {
@@ -21,5 +22,5 @@ module.exports = {
     Buffer: true,
     setImmediate: true,
     fs: 'empty'
-  }
-};
+  },
+}));

@@ -20,6 +20,7 @@
     "@babel/plugin-transform-destructuring": "^7.2.0",
     "@babel/plugin-transform-modules-systemjs": "^7.2.0",
     "@babel/types": "^7.3.0",
+    "ajv": "^6.8.1",
     "bluebird": "^3.5.1",
     "esm": "^3.0.77",
     "file-url": "^2.0.2",
@@ -42,8 +43,8 @@
     "whatwg-fetch": "^2.0.4"
   },
   "scripts": {
-    "build": "npm run build:babel && npm run build:systemjs && npm run build:sjs && npm run min",
-    "build:babel": "webpack",
+    "build": "npm run build:utils && npm run build:systemjs && npm run build:sjs && npm run min",
+    "build:utils": "webpack",
     "build:systemjs": "rollup -c",
     "build:sjs": "rollup -c --environment sjs",
     "clean": "rimraf dist/**/*.js dist/**/*.map",

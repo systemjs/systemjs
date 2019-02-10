@@ -9,33 +9,6 @@ export const hasSelf = typeof self !== 'undefined';
 const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
-export const URL = global.URL
-  ? global.URL
-  : url.URL;
-
-export const pathToFileURL = url.pathToFileURL
-  ? url.pathToFileURL
-  : function pathToFileURL(filePath) {
-    const fileUrl = new URL(fileUrlFromPath(filePath));
-    if (!filePath.endsWith(path.sep)) {
-      fileUrl.pathname += '/';
-    }
-    return fileUrl;
-  };
-
-export const fileURLToPath = url.fileURLToPath
-  ? url.fileURLToPath
-  : function fileURLToPath(fileUrl) {
-    return fileUrl.pathname;
-  };
-
-export function urlToPath(url) {
-  url = new URL(url);
-  if (url.protocol === 'file:') {
-    return fileUrlFromPath(url);
-  }
-  return url.pathname;
-}
 
 function getDefaultBaseUrl() {
   let url;
@@ -46,18 +19,25 @@ function getDefaultBaseUrl() {
     if (lastSepIndex !== -1) {
       url = url.slice(0, lastSepIndex + 1);
     }
-  } else if (typeof process !== 'undefined') {
-    url = pathToFileURL(process.cwd() + '/');
   }
 
   return url;
 }
 
-export function basename(filePath) {
+export let baseUrl = getDefaultBaseUrl();
+
+
+export function urlToPath(url) {
+  return new URL(url).pathname;
+}
+
+export function basename(moduleUrl) {
+  const filePath = urlToPath(moduleUrl);
   return path.basename(filePath);
 }
 
-export function dirname(filePath) {
+export function dirname(moduleUrl) {
+  const filePath = urlToPath(moduleUrl);
   return path.dirname(filePath);
 }
 
@@ -76,8 +56,6 @@ SourceMapSupport.install({
 });
 
 
-export const baseUrl = getDefaultBaseUrl();
-export const DEFAULT_BASEURL = baseUrl;
 
 const backslashRegEx = /\\/g;
 export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {

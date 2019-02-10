@@ -15,4 +15,11 @@ suite('CommonJS tests', function () {
     });
   });
 
+  test('Sourcemaps work', function () {
+    return System.import('fixtures/cjs-modules/throws.js').catch(function(err) {
+      assert.equal(typeof err.stack, 'string');
+      assert.ok(err.stack.includes('cjs-modules/throws.js:3:7)\n'));
+    });
+  });
+
 });
