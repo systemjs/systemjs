@@ -1,9 +1,9 @@
-/*
- * Named exports support for legacy module formats in SystemJS 2.0
- */
 (function () {
+  /*
+   * Named exports support for legacy module formats in SystemJS 2.0
+   */
   const systemPrototype = System.constructor.prototype;
-  
+
   // hook System.register to know the last declaration binding
   let lastRegisterDeclare;
   const systemRegister = systemPrototype.register;
@@ -19,7 +19,7 @@
     // -> dont add named exports
     if (!register || register[1] === lastRegisterDeclare || register[1].length === 0)
       return register;
-    
+
     // otherwise it was provided by a custom instantiator
     // -> extend the registration with named exports support
     const registerDeclare = register[1];
@@ -45,4 +45,6 @@
     };
     return register;
   };
-})();
+
+}());
+//# sourceMappingURL=named-exports.js.map

@@ -11,6 +11,7 @@ import { DEFAULT_BASEURL, fileExists, pathToFileURL, URL } from './node-common';
 import './registry.js';
 import { createNodeResolver } from './node-resolve';
 import { createImportMapResolver } from './node-import-map';
+import { compileScript } from '../utils/compile';
 
 const SystemJS = systemJSPrototype.constructor;
 
@@ -72,19 +73,10 @@ function loadRegisterModule(getContent, loader) {
   const { url } = getContent;
   const source = getContent();
 
-  const wrapper = wrapEsModuleSource(source);
-
-  const runOptions = {
-    displayErrors: true,
-    filename: `${url}`,
-    lineOffset: 0,
-  };
-
-  const moduleVars = [
-    loader,    /* System */
-  ];
-
-  vm.runInThisContext(wrapper, runOptions)(...moduleVars);
+  compileScript(url, source, {
+    System: loader,
+    SystemJS: loader,
+  });
 }
 
 
@@ -148,7 +140,7 @@ class NodeLoader extends SystemJS {
 
     this.resolvers = [
       createImportMapResolver(resolverConfig),
-      createNodeResolver(resolverConfig),
+      //createNodeResolver(resolverConfig),
     ];
   }
 

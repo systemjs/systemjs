@@ -5,26 +5,75 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var fs = _interopDefault(require('fs'));
-var _path = _interopDefault(require('path'));
-var url = _interopDefault(require('url'));
-var fileUrl = _interopDefault(require('file-url'));
 var assert = require('assert');
-var isBuiltinModule = _interopDefault(require('is-builtin-module'));
+var fs = _interopDefault(require('fs'));
+var path = _interopDefault(require('path'));
 var vm = _interopDefault(require('vm'));
 var stripShebang = _interopDefault(require('strip-shebang'));
+var url = _interopDefault(require('url'));
+var fileUrlFromPath = _interopDefault(require('file-url'));
+var SourceMapSupport = _interopDefault(require('source-map-support'));
+require('is-builtin-module');
+
+const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
 const hasSelf = typeof self !== 'undefined';
 
 const envGlobal = hasSelf ? self : global;
 
-let baseUrl;
-if (typeof location !== 'undefined') {
-  baseUrl = location.href.split('#')[0].split('?')[0];
-  const lastSepIndex = baseUrl.lastIndexOf('/');
-  if (lastSepIndex !== -1)
-    baseUrl = baseUrl.slice(0, lastSepIndex + 1);
+const URL = global.URL
+  ? global.URL
+  : url.URL;
+
+const pathToFileURL = url.pathToFileURL
+  ? url.pathToFileURL
+  : function pathToFileURL(filePath) {
+    const fileUrl = new URL(fileUrlFromPath(filePath));
+    if (!filePath.endsWith(path.sep)) {
+      fileUrl.pathname += '/';
+    }
+    return fileUrl;
+  };
+
+const fileURLToPath = url.fileURLToPath
+  ? url.fileURLToPath
+  : function fileURLToPath(fileUrl) {
+    return fileUrl.pathname;
+  };
+
+function getDefaultBaseUrl() {
+  let url$$1;
+
+  if (typeof location !== 'undefined') {
+    url$$1 = location.href.split('#')[0].split('?')[0];
+    const lastSepIndex = url$$1.lastIndexOf('/');
+    if (lastSepIndex !== -1) {
+      url$$1 = url$$1.slice(0, lastSepIndex + 1);
+    }
+  } else if (isNode) {
+    url$$1 = pathToFileURL(process.cwd() + '/');
+  }
+
+  return url$$1;
 }
+
+const sourceMapSources = {};
+
+SourceMapSupport.install({
+  retrieveSourceMap: function(source) {
+    if (!sourceMapSources[source])
+      return null;
+
+    return {
+      url: source.replace('!transpiled', ''),
+      map: sourceMapSources[source]
+    };
+  }
+});
+
+
+const baseUrl = getDefaultBaseUrl();
+const DEFAULT_BASEURL = baseUrl;
 
 const backslashRegEx = /\\/g;
 function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
@@ -109,10 +158,10 @@ function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
 
 /*
  * Import maps implementation
- * 
+ *
  * To make lookups fast we pre-resolve the entire import map
  * and then match based on backtracked hash lookups
- * 
+ *
  */
 
 function resolveUrl (relUrl, parentUrl) {
@@ -149,15 +198,15 @@ function parseImportMap (json, baseUrl) {
   return { imports: imports, scopes: scopes, baseUrl: baseUrl };
 }
 
-function getMatch (path, matchObj) {
-  if (matchObj[path])
-    return path;
-  let sepIndex = path.length;
+function getMatch (path$$1, matchObj) {
+  if (matchObj[path$$1])
+    return path$$1;
+  let sepIndex = path$$1.length;
   do {
-    const segment = path.slice(0, sepIndex + 1);
+    const segment = path$$1.slice(0, sepIndex + 1);
     if (segment in matchObj)
       return segment;
-  } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
+  } while ((sepIndex = path$$1.lastIndexOf('/', sepIndex - 1)) !== -1)
 }
 
 function applyPackages (id, packages, baseUrl) {
@@ -173,7 +222,7 @@ function applyPackages (id, packages, baseUrl) {
 }
 
 function resolveImportMap (id, parentUrl, importMap) {
-  const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl);
+  const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl || DEFAULT_BASEURL);
   if (urlResolved)
     id = urlResolved;
   const scopeName = getMatch(parentUrl, importMap.scopes);
@@ -446,28 +495,28 @@ function postOrderExec (loader, load, seen) {
 
 envGlobal.System = new SystemJS();
 
-const URL = global.URL
+const URL$1 = global.URL
   ? global.URL
   : url.URL;
 
 
-const pathToFileURL = url.pathToFileURL
+const pathToFileURL$1 = url.pathToFileURL
   ? url.pathToFileURL
-  : function pathToFileURL(path) {
-    const theUrl = new URL(fileUrl(path));
-    if (path.endsWith(_path.sep)) {
+  : function pathToFileURL(path$$1) {
+    const theUrl = new URL$1(fileUrlFromPath(path$$1));
+    if (path$$1.endsWith(path.sep)) {
       theUrl.pathname += '/';
     }
     return theUrl;
   };
 
-const DEFAULT_BASEURL = pathToFileURL(process.cwd() + '/');
+const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
 
 
-function fileExists(path) {
+function fileExists(path$$1) {
   try {
-    fs.accessSync(path);
-    return fs.statSync(path).isFile();
+    fs.accessSync(path$$1);
+    return fs.statSync(path$$1).isFile();
   } catch (err) {
     return false;
   }
@@ -475,13 +524,13 @@ function fileExists(path) {
 
 
 function isURL(value) {
-  if (value instanceof URL) {
+  if (value instanceof URL$1) {
     return true;
   }
 
   if (typeof value === 'string') {
     try {
-      new URL(value);
+      new URL$1(value);
       return true;
     } catch (err) {}
   }
@@ -516,200 +565,6 @@ systemJSPrototype.delete = function (id) {
 
 // This implements the logic described here:
 
-const EXTENSIONS = ['.mjs', '.js', '.json'];
-
-
-function isPath(value) {
-  if (value === '.') {
-    return true;
-  }
-  return /^\.{0,2}\//.test(value);
-}
-
-function createNodeResolver({ baseUrl = DEFAULT_BASEURL, resolveBareNames = true } = {}) {
-  const FILE_CACHE = new Map();
-  let resolveDepth = 0;
-
-  function checkFileExists(path) {
-    if (!FILE_CACHE.has(path)) {
-      FILE_CACHE.set(path, fileExists(path));
-    }
-    return FILE_CACHE.get(path);
-  }
-
-  function doPathSearch(specifier) {
-    try {
-      return doFileSearch(specifier);
-    } catch (err) {
-      // continue...
-    }
-
-    try {
-      return doDirectorySearch(specifier);
-    } catch (err) {
-      // continue...
-    }
-
-    throw new Error(`Cannot resolve '${specifier}'`);
-  }
-
-
-  function doFileSearch(specifier) {
-    if (checkFileExists(specifier)) {
-      return specifier;
-    }
-
-    const matchingExtension = EXTENSIONS.find(ext => {
-      const searchable = new URL(specifier);
-      searchable.pathname += ext;
-      return checkFileExists(searchable);
-    });
-
-    if (matchingExtension) {
-      const searchable = new URL(specifier);
-      searchable.pathname += matchingExtension;
-      return searchable;
-    }
-
-    throw new Error(`Cannot resolve '${specifier}'`);
-  }
-
-
-  function doDirectorySearch(specifier) {
-    const dir = new URL(specifier);
-
-    if (!dir.pathname.endsWith('/')) {
-      dir.pathname += '/';
-    }
-
-    let searchable = new URL('./package.json', dir);
-    if (checkFileExists(searchable)) {
-      const pkgContent = fs.readFileSync(searchable, 'utf8');
-      const pkg = JSON.parse(pkgContent);
-      if ('main' in pkg) {
-        const main = new URL(pkg.main, dir);
-        return doPackageMainSearch(main);
-      }
-    }
-
-    try {
-      return doIndexSearch(dir);
-    } catch (err) {
-      // continue...
-    }
-
-    throw new Error(`Cannot resolve directory '${specifier}'`);
-  }
-
-
-  function doPackageMainSearch(specifier) {
-    try {
-      return doFileSearch(specifier);
-    } catch (err) {
-      // continue...
-    }
-
-    try {
-      return doIndexSearch(specifier);
-    } catch (err) {
-      // continue...
-    }
-
-    throw new Error(`Cannot resolve '${specifier}`);
-  }
-
-
-  function doIndexSearch(specifier) {
-    let searchable = new URL(specifier);
-
-    if (!searchable.pathname.endsWith('/')) {
-      searchable.pathname += '/';
-    }
-
-    searchable = new URL('./index', searchable);
-
-    try {
-      return doFileSearch(searchable);
-    } catch (err) {
-      // continue...
-    }
-
-    throw new Error(`Cannot resolve index '${specifier}'`);
-  }
-
-
-  function doModuleSearch(specifier, parentUrl) {
-    if (isBuiltinModule(specifier)) {
-      return new URL(`builtin:${specifier}`);
-    }
-
-    const pkg = new URL('./', parentUrl);
-    const searchable = new URL(`./node_modules/${specifier}`, pkg);
-
-    try {
-      return doFileSearch(searchable);
-    } catch (err) {
-      // continue...
-    }
-
-    try {
-      return doDirectorySearch(searchable);
-    } catch (err) {
-      // continue...
-    }
-
-    const parent = new URL('../', pkg);
-    if (parent.href.startsWith(baseUrl.href)) {
-      // Do not search above the baseUrl.
-      try {
-        return doModuleSearch(specifier, parent);
-      } catch (err) {
-        // continue...
-      }
-    }
-
-    throw new Error(`Cannot resolve '${specifier}' from '${parentUrl}'`);
-  }
-
-
-  function resolve(specifier, parentUrl = baseUrl) {
-    try {
-      resolveDepth += 1;
-
-      assert.ok(specifier, 'missing specifier');
-      assert.ok(typeof specifier === 'string', 'specifier must be a string');
-
-      assert.ok(parentUrl, 'missing parentUrl');
-      assert.ok(parentUrl instanceof URL, 'parentUrl must be a URL');
-
-      try {
-        return new URL(specifier);
-      } catch (err) {
-        // continue...
-      }
-
-      if (isPath(specifier)) {
-        return doPathSearch(new URL(specifier, parentUrl));
-      }
-
-      if (resolveBareNames) {
-        return doModuleSearch(specifier, parentUrl);
-      }
-
-      return null;
-    } finally {
-      resolveDepth -= 1;
-      if (resolveDepth === 0) {
-        FILE_CACHE.clear();
-      }
-    }
-  }
-
-  Object.defineProperty(resolve, 'baseURL', {value: baseUrl});
-
-  return resolve;
-}
-
 /*
  * Import map support for SystemJS on Node.js
  *
@@ -717,14 +572,14 @@ function createNodeResolver({ baseUrl = DEFAULT_BASEURL, resolveBareNames = true
  */
 
 
-function createImportMapResolver({ baseUrl$$1 = DEFAULT_BASEURL, importMapConfig}) {
+function createImportMapResolver({ baseUrl: baseUrl$$1 = DEFAULT_BASEURL$1, importMapConfig}) {
   let importMapUrl;
   let importMap;
 
   if (isURL(importMapConfig)) {
-    importMapUrl = new URL(importMapConfig);
+    importMapUrl = new URL$1(importMapConfig);
   } else {
-    importMapUrl = new URL('./systemjs-importmap.json', baseUrl$$1);
+    importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl$$1);
   }
 
   if (fileExists(importMapUrl)) {
@@ -744,11 +599,57 @@ function createImportMapResolver({ baseUrl$$1 = DEFAULT_BASEURL, importMapConfig
   return resolve;
 }
 
+function unzipModuleVars(moduleVars = {}) {
+  return Object.entries(moduleVars).reduce(({ params, args }, [key, value]) => ({
+    params: [...params, key],
+    args: [...args, value],
+  }), { params: [], args: [] });
+}
+
+
+function wrapScript(sourceUrl, source, moduleVars) {
+  const { params, args } = unzipModuleVars(moduleVars);
+
+  const wrapped_before = `(function(${params.join(',')}){`;
+  const wrappee = stripShebang(source);
+  const wrapper_sourceUrl = sourceUrl ? `\n//# sourceURL=${sourceUrl}` : '';
+  const wrapped_after = '})';
+
+  return `${wrapped_before}${wrappee}${wrapped_after}${wrapper_sourceUrl}`;
+}
+
+
+function compileScriptBrowser(sourceUrl, source, moduleVars) {
+  const { args } = unzipModuleVars(moduleVars);
+  const wrapped = wrapScript(sourceUrl, source, moduleVars);
+
+  (0, eval)(wrapped)(...args);
+}
+
+
+function compileScriptNode(sourceUrl, source, moduleVars) {
+  const { args } = unzipModuleVars(moduleVars);
+  const wrapped = wrapScript(sourceUrl, source, moduleVars);
+
+  const runOptions = {
+    displayErrors: true,
+    filename: `${sourceUrl}`,
+    lineOffset: 0,
+  };
+
+  vm.runInThisContext(wrapped, runOptions)(...args);
+}
+
+
+function compileScript(sourceUrl, source, moduleVars) {
+  return (isNode? compileScriptNode : compileScriptBrowser)(sourceUrl, source, moduleVars);
+}
+
 const SystemJS$1 = systemJSPrototype.constructor;
 
 
 function detectFormat(url$$1) {
-  const ext = _path.extname(url$$1.pathname);
+  const ext = path.extname(url$$1.pathname);
   let format = null;
 
   if (ext === '.mjs') {
@@ -780,9 +681,9 @@ function createFileURLReader(url$$1) {
   }
 
   try {
-    read.url = new URL(url$$1);
+    read.url = new URL$1(url$$1);
   } catch (err) {
-    read.url = pathToFileURL(url$$1);
+    read.url = pathToFileURL$1(url$$1);
   }
 
   read.format = detectFormat(read.url);
@@ -791,32 +692,14 @@ function createFileURLReader(url$$1) {
 }
 
 
-function wrapEsModuleSource(source) {
-  const content_before = '(function (System) { ';
-  const content_actual = stripShebang(source);
-  const content_after = '\n});';
-
-  return `${content_before}${content_actual}${content_after}`;
-}
-
-
 function loadRegisterModule(getContent, loader) {
   const { url: url$$1 } = getContent;
   const source = getContent();
 
-  const wrapper = wrapEsModuleSource(source);
-
-  const runOptions = {
-    displayErrors: true,
-    filename: `${url$$1}`,
-    lineOffset: 0,
-  };
-
-  const moduleVars = [
-    loader,    /* System */
-  ];
-
-  vm.runInThisContext(wrapper, runOptions)(...moduleVars);
+  compileScript(url$$1, source, {
+    System: loader,
+    SystemJS: loader,
+  });
 }
 
 
@@ -853,10 +736,10 @@ function loadJSONModule(getContent, loader) {
 
 
 class NodeLoader extends SystemJS$1 {
-  constructor({ baseUrl$$1 = DEFAULT_BASEURL, importMapConfig } = {}) {
+  constructor({ baseUrl: baseUrl$$1 = DEFAULT_BASEURL$1, importMapConfig } = {}) {
     super();
 
-    const _baseUrl = new URL(baseUrl$$1);
+    const _baseUrl = new URL$1(baseUrl$$1);
     if (!_baseUrl.pathname.endsWith('/')) {
       _baseUrl.pathname += '/';
     }
@@ -869,7 +752,7 @@ class NodeLoader extends SystemJS$1 {
 
     this.resolvers = [
       createImportMapResolver(resolverConfig),
-      createNodeResolver(resolverConfig),
+      //createNodeResolver(resolverConfig),
     ];
   }
 
@@ -893,9 +776,9 @@ class NodeLoader extends SystemJS$1 {
 
   async instantiate(url$$1, firstParentUrl) {
     assert.ok(url$$1, 'missing url');
-    assert.ok(url$$1 instanceof URL || typeof url$$1 === 'string', 'url must be a URL or string');
+    assert.ok(url$$1 instanceof URL$1 || typeof url$$1 === 'string', 'url must be a URL or string');
 
-    url$$1 = new URL(url$$1);
+    url$$1 = new URL$1(url$$1);
 
     const getContent = createFileURLReader(url$$1);
 

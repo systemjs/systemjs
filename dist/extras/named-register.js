@@ -1,11 +1,12 @@
-/*
- * SystemJS named register extension
- * Supports System.register('name', [..deps..], function (_export, _context) { ... })
- * 
- * Names are written to the registry as-is
- * System.register('x', ...) can be imported as System.import('x')
- */
 (function () {
+  /*
+   * SystemJS named register extension
+   * Supports System.register('name', [..deps..], function (_export, _context) { ... })
+   *
+   * Names are written to the registry as-is
+   * System.register('x', ...) can be imported as System.import('x')
+   */
+
   const systemJSPrototype = System.constructor.prototype;
 
   const constructor = System.constructor;
@@ -40,4 +41,6 @@
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return this.registerRegistry[url] || instantiate.call(this, url, firstParentUrl);
   };
-})();
+
+}());
+//# sourceMappingURL=named-register.js.map

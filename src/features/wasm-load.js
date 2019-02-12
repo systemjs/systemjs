@@ -3,11 +3,13 @@
  * Assumes successive instantiate will handle other files
  */
 import { systemJSPrototype } from '../system-core';
+
+
 const instantiate = systemJSPrototype.instantiate;
 systemJSPrototype.instantiate = function (url, parent) {
   if (url.slice(-5) !== '.wasm')
     return instantiate.call(this, url, parent);
-  
+
   return fetch(url)
   .then(function (res) {
     if (!res.ok)
@@ -15,7 +17,7 @@ systemJSPrototype.instantiate = function (url, parent) {
 
     if (WebAssembly.compileStreaming)
       return WebAssembly.compileStreaming(res);
-    
+
     return res.arrayBuffer()
     .then(function (buf) {
       return WebAssembly.compile(buf);

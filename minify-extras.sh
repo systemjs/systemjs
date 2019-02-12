@@ -1,5 +1,6 @@
+#!/usr/bin/env bash
+
 mkdir -p dist/extras/
-cp src/extras/* dist/extras/
 cd dist/extras
 rm *.min.js
 for f in *.js

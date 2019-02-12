@@ -121,7 +121,7 @@ describe('SystemJS Standard Tests - Node.js', function() {
     });
   });
 
-  if (typeof Worker !== 'undefined')
+  if (typeof Worker !== 'undefined') {
     it('Using SystemJS in a Web Worker', function () {
       const worker = new Worker('./browser/worker.js');
 
@@ -132,20 +132,23 @@ describe('SystemJS Standard Tests - Node.js', function() {
         };
       });
     });
+  }
 
-  if (typeof WebAssembly !== 'undefined' && typeof process === 'undefined')
-    it('Loading WASM', function () {
+  if (typeof WebAssembly !== 'undefined') {
+    it.skip('Loading WASM', function () {
       return System.import('fixtures/wasm/example.wasm')
       .then(function (m) {
         assert.equal(m.exampleExport(1), 2);
       });
     });
+  }
 
-  if (typeof WebAssembly !== 'undefined' && typeof process === 'undefined')
-    it('Loading WASM over 4KB limit', function () {
+  if (typeof WebAssembly !== 'undefined') {
+    it.skip('Loading WASM over 4KB limit', function () {
       return System.import('fixtures/wasm/addbloated.wasm')
       .then(function (m) {
         assert.equal(m.addTwo(1, 1), 2);
       });
     });
+  }
 });
