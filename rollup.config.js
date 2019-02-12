@@ -82,6 +82,7 @@ export default [
         TRACING: process.env.sjs ? 'false' : 'true'
       }),
       ignore([
+        'file-fetch',
         'vm',
       ]),
       nodeResolve({

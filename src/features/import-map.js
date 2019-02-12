@@ -12,7 +12,7 @@
  * Only supports loading the first import map
  */
 
-import '../utils/fetch.js';
+import { fetch } from '../utils/fetch.js';
 import { DEFAULT_BASEURL, isBrowser, isNode, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { fileExists, URL } from './node-common.js';

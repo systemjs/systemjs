@@ -1,5 +1,5 @@
 suite('SystemJS Standard Tests', function() {
-  
+
   test('Syntax errors', function () {
     // mocha must ignore script errors as uncaught
 		window.onerror = undefined;
@@ -30,7 +30,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Package maps', function () {
+  test('Import-maps', function () {
     return Promise.all([
       System.resolve('a'),
       System.resolve('f'),
@@ -50,7 +50,7 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('Contextual package maps', function () {
+  test('Contextual import-maps', function () {
     return System.import('fixtures/scope-test/index.js')
     .then(function (m) {
       assert.equal(m.mapdep, 'mapdep');

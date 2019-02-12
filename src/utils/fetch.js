@@ -8,12 +8,12 @@ import fileFetch from 'file-fetch';
 
 import { global, isNode } from '../common';
 
-
 const globalFetch = global.fetch;
-global.fetch = function fetch(input, init) {
+
+export function fetch(input, init) {
   const { protocol, href } = new URL(input);
   if (isNode && protocol === 'file:') {
    return fileFetch(href, init);
   }
   return globalFetch(href, init);
-};
+}

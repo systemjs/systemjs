@@ -3,6 +3,7 @@
  */
 
 import { compileScript } from '../utils/compile';
+import { fetch } from '../utils/fetch';
 
 const systemJSPrototype = System.constructor.prototype;
 

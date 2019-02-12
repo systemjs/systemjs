@@ -23366,15 +23366,15 @@
              * "file" URLs.
              */
 
-
             const globalFetch = envGlobal.fetch;
-            envGlobal.fetch = function fetch(input, init) {
+
+            function fetch$1(input, init) {
               const { protocol, href } = new URL(input);
               if (isNode && protocol === 'file:') {
                return fileFetch(href, init);
               }
               return globalFetch(href, init);
-            };
+            }
 
             const URL$2 = global$1.URL
               ? global$1.URL
@@ -23454,7 +23454,7 @@
 
             function fetchImportMap(input) {
               if (input instanceof URL$2) {
-                return fetch(input.href).then(res => res.json());
+                return fetch$1(input.href).then(res => res.json());
               } else if (typeof input === 'object' && input !== null) {
                 return Promise.resolve(input);
               }
