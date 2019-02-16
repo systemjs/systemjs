@@ -17,12 +17,12 @@ describe('Core API', function () {
     assert(loader instanceof SystemLoader);
   });
 
-  it('Supports loading', async function () {    
+  it('Supports loading', async function () {
     loader.instantiate = x => [[], _export => ({ execute () { _export('y', 42) } })];
     const x = await loader.import('x');
     assert.equal(x.y, 42);
   });
-  
+
   it('Supports reloading cached modules', async function () {
     loader.instantiate = null;
     const x = await loader.import('x');
@@ -336,6 +336,7 @@ describe('Loading Cases', function() {
       // prototype fallback
       delete loader.resolve;
       const err = await getImportError('plain-name');
+
       assert.equal(err, 'Error: Cannot resolve "plain-name"');
     });
 

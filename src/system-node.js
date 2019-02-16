@@ -1,3 +1,3 @@
-import NodeLoader from './features/node-load.js';
-
-export default NodeLoader;
+import './features/node-load.js';
+import './features/import-map.js';
+import './features/registry.js';

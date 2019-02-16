@@ -26,14 +26,19 @@ const nodeBanner = `/*
 
 const extrasInputFiles = fs.readdirSync(path.resolve('src/extras'));
 
+const watch = {
+  clearScreen: false,
+};
+
 export default [
+  // Browser-specific bundle
   {
     input: `src/${name}.js`,
     output: {
-      format: 'iife',
-      strict: false,
       file: `dist/${name}.js`,
+      format: 'iife',
       sourcemap: true,
+      strict: false,
       banner: browserBanner,
     },
     plugins: [
@@ -53,27 +58,43 @@ export default [
       nodeGlobals(),
       nodeBuiltins(),
     ],
+    watch,
   },
 
+  // Node-specific bundle
   {
     input: 'src/system-node.js',
     output: {
-      format: 'cjs',
-      strict: true,
       file: 'dist/system-node.js',
+      format: 'cjs',
+      sourcemap: true,
+      strict: true,
       banner: nodeBanner,
+      external: [
+        'assert',
+        'file-url',
+        'fs',
+        'is-builtin-module',
+        'path',
+        'source-map-support',
+        'strip-shebang',
+        'url',
+        'vm',
+      ],
     },
     plugins: [replace({
       TRACING: process.env.sjs ? 'false' : 'true'
-    })]
+    })],
+    watch,
   },
 
+  // Extra bundles
   ...extrasInputFiles.map(file => ({
     input: `src/extras/${file}`,
     output: {
       file: `dist/extras/${file}`,
-      name: `systemjs.extras.${path.basename(file)}`,
       format: 'iife',
+      name: `systemjs.extras.${path.basename(file)}`,
       sourcemap: true,
       strict: false,
     },
@@ -94,5 +115,6 @@ export default [
       json(),
       nodeBuiltins(),
     ],
+    watch,
   })),
 ];

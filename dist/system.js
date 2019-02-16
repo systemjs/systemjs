@@ -8029,10 +8029,17 @@
 
             const hasSelf = typeof self !== 'undefined';
 
-            const envGlobal = hasSelf ? self : global$1;
+            function getGlobal () {
+              if (typeof self !== 'undefined') { return self; }
+              if (typeof window !== 'undefined') { return window; }
+              if (typeof global$1 !== 'undefined') { return global$1; }
+              throw new Error('unable to locate global object');
+            }
 
-            const URL$1 = global$1.URL
-              ? global$1.URL
+            const envGlobal = getGlobal();
+
+            const URL$1 = envGlobal.URL
+              ? envGlobal.URL
               : require$$0$1.URL;
 
             const pathToFileURL = function pathToFileURL(filePath) {
@@ -8243,7 +8250,7 @@
 
             /*
              * SystemJS Core
-             * 
+             *
              * Provides
              * - System.import
              * - System.register support for
@@ -8253,7 +8260,7 @@
              * - Symbol.toStringTag support in Module objects
              * - Hookable System.createContext to customize import.meta
              * - System.onload(id, err?) handler for tracing / hot-reloading
-             * 
+             *
              * Core comes with no System.prototype.resolve or
              * System.prototype.instantiate implementations
              */
@@ -8262,8 +8269,21 @@
             const toStringTag = hasSymbol && Symbol.toStringTag;
             const REGISTRY = hasSymbol ? Symbol() : '@';
 
-            function SystemJS () {
-              this[REGISTRY] = {};
+            /**
+             * Creates new SystemJS instance.
+             *
+             * @param {string} baseUrl
+             * @constructor
+             */
+            function SystemJS({ baseUrl: baseUrl$$1 } = {}) {
+              this[REGISTRY] = Object.create(null);
+
+              baseUrl$$1 = new URL$1(baseUrl$$1 || DEFAULT_BASEURL);
+              if (!baseUrl$$1.pathname.endsWith('/')) {
+                baseUrl$$1.pathname += '/';
+              }
+
+              Object.defineProperty(this,'baseUrl', { value: baseUrl$$1.href });
             }
 
             const systemJSPrototype = SystemJS.prototype;
@@ -8309,7 +8329,7 @@
               const ns = Object.create(null);
               if (toStringTag)
                 Object.defineProperty(ns, toStringTag, { value: 'Module' });
-              
+
               let instantiatePromise = Promise.resolve()
               .then(function () {
                 return loader.instantiate(id, firstParentUrl);
@@ -23401,6 +23421,22 @@
               }
             }
 
+
+            function isURL(value) {
+              if (value instanceof URL$2) {
+                return true;
+              }
+
+              if (typeof value === 'string') {
+                try {
+                  new URL$2(value);
+                  return true;
+                } catch (err) {}
+              }
+
+              return false;
+            }
+
             /*
              * Import map support for SystemJS
              *
@@ -23423,7 +23459,7 @@
 
                 if (importMapScript) {
                   if (importMapScript.src) {
-                    return new URL$2(importMapScript.src);
+                    return new URL$1(importMapScript.src);
                   }
                   return JSON.parse(importMapScript.innerHTML);
                 }
@@ -23433,8 +23469,13 @@
             }
 
 
-            function locateImportMapNode() {
-              const importMapUrl = new URL$2('./systemjs-importmap.json', DEFAULT_BASEURL);
+            function locateImportMapNode(baseUrl$$1, importMapUrl) {
+              if (isURL(importMapUrl)) {
+                importMapUrl = new URL$1(importMapUrl);
+              } else {
+                importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl$$1);
+              }
+
               if (fileExists(importMapUrl)) {
                 return importMapUrl;
               }
@@ -23443,17 +23484,17 @@
             }
 
 
-            function locateImportMap() {
+            function locateImportMap(baseUrl$$1, importMapUrl) {
               if (isBrowser) {
                 return locateImportMapBrowser();
               } else if (isNode) {
-                return locateImportMapNode();
+                return locateImportMapNode(baseUrl$$1, importMapUrl);
               }
             }
 
 
             function fetchImportMap(input) {
-              if (input instanceof URL$2) {
+              if (input instanceof URL$1) {
                 return fetch$1(input.href).then(res => res.json());
               } else if (typeof input === 'object' && input !== null) {
                 return Promise.resolve(input);
@@ -23463,24 +23504,61 @@
             }
 
 
-            const location$1 = locateImportMap();
-            const importMapPromise = fetchImportMap(location$1).then(data => {
-              if (data) {
-                const baseUrl$$1 = location$1 instanceof URL$2 ? location$1.href : DEFAULT_BASEURL;
-                return parseImportMap(data, baseUrl$$1);
-              } else {
-                return { imports: {}, scopes: {} };
-              }
-            });
+            function createImportMap(loader, importMapUrl) {
+              const location = locateImportMap(loader.baseUrl, importMapUrl);
+
+              return fetchImportMap(location).then(data => {
+                if (data) {
+                  const baseUrl$$1 = location instanceof URL$1 ? location.href : loader.baseUrl;
+                  return parseImportMap(data, baseUrl$$1);
+                } else {
+                  return { imports: {}, scopes: {} };
+                }
+              });
+            }
 
 
-            systemJSPrototype.resolve = function (id, parentUrl) {
-              parentUrl = parentUrl || DEFAULT_BASEURL;
+            const importMapRegistry = new WeakMap();
 
-              return importMapPromise.then(importMap => resolveImportMap(id, parentUrl, importMap));
+            function setImportMap(loader, importMap) {
+              importMapRegistry.set(loader, importMap);
+            }
+
+            function getImportMap(loader) {
+              return importMapRegistry.get(loader);
+            }
+
+
+            const constructor = systemJSPrototype.constructor;
+            function SystemJS$1({ baseUrl: baseUrl$$1, importMapUrl } = {}) {
+              constructor.call(this, { baseUrl: baseUrl$$1 });
+
+              this.registerRegistry = Object.create(null);
+              const importMap = createImportMap(this, importMapUrl);
+              setImportMap(this, importMap);
+            }
+
+            SystemJS$1.prototype = Object.create(systemJSPrototype);
+            SystemJS$1.prototype.constructor = SystemJS$1;
+
+            /**
+             * @async
+             *
+             * Resolves a module import specifier.
+             *
+             * @param {string} id - Module import specifier
+             * @param {string} [parentUrl] - The URL of the importing module.
+             *
+             * @return {Promise<string>} The resolved URL
+             */
+            SystemJS$1.prototype.resolve = function resolve(id, parentUrl) {
+              parentUrl = parentUrl || this.baseUrl;
+              return getImportMap(this).then(importMap => resolveImportMap(id, parentUrl, importMap));
             };
 
-            systemJSPrototype.get = function (id) {
+            envGlobal.System = new SystemJS$1();
+
+            systemJSPrototype.get = function get(id) {
               const load = this[REGISTRY][id];
               if (load && load.e === null && !load.E) {
                 if (load.eE)

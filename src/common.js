@@ -10,11 +10,18 @@ export const isWorker = typeof document === 'undefined' && typeof window === 'un
 
 export const hasSelf = typeof self !== 'undefined';
 
-const envGlobal = hasSelf ? self : global;
+function getGlobal () {
+  if (typeof self !== 'undefined') { return self; }
+  if (typeof window !== 'undefined') { return window; }
+  if (typeof global !== 'undefined') { return global; }
+  throw new Error('unable to locate global object');
+}
+
+const envGlobal = getGlobal();
 export { envGlobal as global };
 
-export const URL = global.URL
-  ? global.URL
+export const URL = envGlobal.URL
+  ? envGlobal.URL
   : url.URL;
 
 export const pathToFileURL = url.pathToFileURL

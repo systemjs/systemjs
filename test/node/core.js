@@ -1,21 +1,24 @@
 import assert from 'assert';
 import path from 'path';
 
-import '../fixtures/enable-tracing';
-import { pathToFileURL, URL } from '../../src/features/node-common';
-import NodeLoader from '../../src/system-node';
+import { global, URL, pathToFileURL } from '../../src/common';
+import '../../dist/system-node';
 
 const rootUrl = pathToFileURL('/');
 const baseUrl = pathToFileURL(path.resolve('./test') + '/');
 
-const importMapConfig = new URL('./fixtures/browser/importmap.json', baseUrl);
+const importMapUrl = new URL('./fixtures/browser/importmap.json', baseUrl);
 
-const System = global.System = new NodeLoader({ baseUrl , importMapConfig });
+const SystemLoader = global.System.constructor;
 
 
 describe('SystemJS Standard Tests - Node.js', function() {
   const baseURL = baseUrl.href;
   const rootURL = rootUrl.href;
+
+  beforeEach(() => {
+    global.System = new SystemLoader({ baseUrl, importMapUrl });
+  });
 
   it('Syntax errors', function () {
     return System.import('fixtures/error-loader.js').then(function () {

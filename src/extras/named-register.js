@@ -6,18 +6,21 @@
  * System.register('x', ...) can be imported as System.import('x')
  */
 
-const systemJSPrototype = System.constructor.prototype;
+import { global } from '../common';
 
-const constructor = System.constructor;
-const SystemJS = function () {
-  constructor.call(this);
+const systemJSPrototype = global.System.constructor.prototype;
+
+const constructor = global.System.constructor;
+function SystemJS(options) {
+  constructor.call(this, options);
   this.registerRegistry = Object.create(null);
-};
-SystemJS.prototype = systemJSPrototype;
-System = new SystemJS();
+}
+
+SystemJS.prototype = Object.create(systemJSPrototype);
+SystemJS.prototype.onstructor = SystemJS;
 
 const register = systemJSPrototype.register;
-systemJSPrototype.register = function (name, deps, declare) {
+SystemJS.prototype.register = function (name, deps, declare) {
   if (typeof name !== 'string')
     return register.apply(this, arguments);
 
@@ -28,7 +31,7 @@ systemJSPrototype.register = function (name, deps, declare) {
 };
 
 const resolve = systemJSPrototype.resolve;
-systemJSPrototype.resolve = function (id, parentURL) {
+SystemJS.prototype.resolve = function (id, parentURL) {
   if (id[0] === '/' || id[0] === '.' && (id[1] === '/' || id[1] === '.' && id[2] === '/'))
     return resolve.call(this, id, parentURL);
   if (id in this.registerRegistry)
@@ -37,6 +40,8 @@ systemJSPrototype.resolve = function (id, parentURL) {
 };
 
 const instantiate = systemJSPrototype.instantiate;
-systemJSPrototype.instantiate = function (url, firstParentUrl) {
+SystemJS.prototype.instantiate = function (url, firstParentUrl) {
   return this.registerRegistry[url] || instantiate.call(this, url, firstParentUrl);
 };
+
+global.System = new SystemJS();

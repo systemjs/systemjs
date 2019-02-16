@@ -1,19 +1,11 @@
 import { ok as assert } from 'assert';
 import fs from 'fs';
 import _path from 'path';
-import vm from 'vm';
-
-import stripShebang from 'strip-shebang';
 
 import { systemJSPrototype } from '../system-core.js';
-import { global } from '../common.js';
-import { DEFAULT_BASEURL, fileExists, pathToFileURL, URL } from './node-common';
-import './registry.js';
-import { createNodeResolver } from './node-resolve';
-import { createImportMapResolver } from './node-import-map';
+import { pathToFileURL, URL } from '../common.js';
+import { fileExists } from './node-common';
 import { compileScript } from '../utils/compile';
-
-const SystemJS = systemJSPrototype.constructor;
 
 
 function detectFormat(url) {
@@ -57,15 +49,6 @@ function createFileURLReader(url) {
   read.format = detectFormat(read.url);
 
   return read;
-}
-
-
-function wrapEsModuleSource(source) {
-  const content_before = '(function (System) { ';
-  const content_actual = stripShebang(source);
-  const content_after = '\n});';
-
-  return `${content_before}${content_actual}${content_after}`;
 }
 
 
@@ -123,77 +106,111 @@ function tryResolve(resolve) {
 }
 
 
-class NodeLoader extends SystemJS {
-  constructor({ baseUrl = DEFAULT_BASEURL, importMapConfig } = {}) {
-    super();
+systemJSPrototype.instantiate = function instantiate(url, firstParentUrl) {
+  assert(url, 'missing url');
+  assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
 
-    const _baseUrl = new URL(baseUrl);
-    if (!_baseUrl.pathname.endsWith('/')) {
-      _baseUrl.pathname += '/';
+  url = new URL(url);
+
+  const getContent = createFileURLReader(url);
+
+  try {
+    switch(getContent.format) {
+      case 'builtin':
+        loadBuiltinModule(getContent, this);
+        break;
+
+      case 'json':
+        loadJSONModule(getContent, this);
+        break;
+
+      default:
+        loadRegisterModule(getContent, this);
     }
-    this.baseUrl = _baseUrl;
-
-    const resolverConfig = {
-      baseUrl: this.baseUrl,
-      importMapConfig,
-    };
-
-    this.resolvers = [
-      createImportMapResolver(resolverConfig),
-      //createNodeResolver(resolverConfig),
-    ];
+  } catch (err) {
+    if (err instanceof ReferenceError) {
+      throw err;
+    }
+    throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
   }
 
-  resolve(id, parentUrl) {
-    let resolved;
-
-    for (let resolver of this.resolvers) {
-      try {
-        resolved = resolver(id, parentUrl);
-        if (resolved) {
-          return resolved;
-        }
-      } catch (err) {
-        // Do nothing. Continue...
-      }
-    }
-
-    throw new Error(`Cannot resolve "${id}"${parentUrl ? ` from ${parentUrl}` : ''}`);
-  }
+  return this.getRegister();
+};
 
 
-  async instantiate(url, firstParentUrl) {
-    assert(url, 'missing url');
-    assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
 
-    url = new URL(url);
+// class NodeLoader extends SystemJS {
+//   constructor({ baseUrl = DEFAULT_BASEURL, importMapUrl } = {}) {
+//     super(baseUrl, importMapUrl);
+//
+//     console.log('HEY THERE!');
+//
+//     // const resolverConfig = {
+//     //   baseUrl: this.baseUrl,
+//     //   importMapConfig,
+//     // };
+//
+//     // this.resolvers = [
+//     //   createImportMapResolver(resolverConfig),
+//     //   createNodeResolver(resolverConfig),
+//     // ];
+//   }
+//
+//   // resolve(id, parentUrl) {
+//   //   let resolved;
+//   //
+//   //   for (let resolver of this.resolvers) {
+//   //     try {
+//   //       resolved = resolver(id, parentUrl);
+//   //       if (resolved) {
+//   //         return resolved;
+//   //       }
+//   //     } catch (err) {
+//   //       // Do nothing. Continue...
+//   //     }
+//   //   }
+//   //
+//   //   throw new Error(`Cannot resolve "${id}"${parentUrl ? ` from ${parentUrl}` : ''}`);
+//   // }
+//
+//
+//   async instantiate(url, firstParentUrl) {
+//     assert(url, 'missing url');
+//     assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
+//
+//     url = new URL(url);
+//
+//     const getContent = createFileURLReader(url);
+//
+//     try {
+//       switch(getContent.format) {
+//         case 'builtin':
+//           loadBuiltinModule(getContent, this);
+//           break;
+//
+//         case 'json':
+//           loadJSONModule(getContent, this);
+//           break;
+//
+//         default:
+//           loadRegisterModule(getContent, this);
+//       }
+//     } catch (err) {
+//       if (err instanceof ReferenceError) {
+//         throw err;
+//       }
+//       throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
+//     }
+//
+//     return this.getRegister();
+//   }
+// }
 
-    const getContent = createFileURLReader(url);
-
-    try {
-      switch(getContent.format) {
-        case 'builtin':
-          loadBuiltinModule(getContent, this);
-          break;
-
-        case 'json':
-          loadJSONModule(getContent, this);
-          break;
-
-        default:
-          loadRegisterModule(getContent, this);
-      }
-    } catch (err) {
-      if (err instanceof ReferenceError) {
-        throw err;
-      }
-      throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
-    }
-
-    return this.getRegister();
-  }
-}
-
-global.System = new NodeLoader();
-
-export default NodeLoader;
+// SystemJS.prototype = systemJSPrototype;
+// systemJSPrototype.constructor = SystemJS;
+// global.System = new SystemJS();
+//
+//
+// global.System = new NodeLoader();
+//
+// export default NodeLoader;

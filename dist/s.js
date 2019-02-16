@@ -7441,12 +7441,17 @@
 
             const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
-            const hasSelf = typeof self !== 'undefined';
+            function getGlobal () {
+              if (typeof self !== 'undefined') { return self; }
+              if (typeof window !== 'undefined') { return window; }
+              if (typeof global$1 !== 'undefined') { return global$1; }
+              throw new Error('unable to locate global object');
+            }
 
-            const envGlobal = hasSelf ? self : global$1;
+            const envGlobal = getGlobal();
 
-            const URL = global$1.URL
-              ? global$1.URL
+            const URL = envGlobal.URL
+              ? envGlobal.URL
               : url.URL;
 
             const pathToFileURL = function pathToFileURL(filePath) {
@@ -7489,6 +7494,7 @@
 
 
             const baseUrl = getDefaultBaseUrl();
+            const DEFAULT_BASEURL = baseUrl;
 
             const backslashRegEx = /\\/g;
             function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
@@ -7573,7 +7579,7 @@
 
             /*
              * SystemJS Core
-             * 
+             *
              * Provides
              * - System.import
              * - System.register support for
@@ -7583,7 +7589,7 @@
              * - Symbol.toStringTag support in Module objects
              * - Hookable System.createContext to customize import.meta
              * - System.onload(id, err?) handler for tracing / hot-reloading
-             * 
+             *
              * Core comes with no System.prototype.resolve or
              * System.prototype.instantiate implementations
              */
@@ -7592,8 +7598,21 @@
             const toStringTag = hasSymbol && Symbol.toStringTag;
             const REGISTRY = hasSymbol ? Symbol() : '@';
 
-            function SystemJS () {
-              this[REGISTRY] = {};
+            /**
+             * Creates new SystemJS instance.
+             *
+             * @param {string} baseUrl
+             * @constructor
+             */
+            function SystemJS({ baseUrl: baseUrl$$1 } = {}) {
+              this[REGISTRY] = Object.create(null);
+
+              baseUrl$$1 = new URL(baseUrl$$1 || DEFAULT_BASEURL);
+              if (!baseUrl$$1.pathname.endsWith('/')) {
+                baseUrl$$1.pathname += '/';
+              }
+
+              Object.defineProperty(this,'baseUrl', { value: baseUrl$$1.href });
             }
 
             const systemJSPrototype = SystemJS.prototype;
@@ -7636,7 +7655,7 @@
               const ns = Object.create(null);
               if (toStringTag)
                 Object.defineProperty(ns, toStringTag, { value: 'Module' });
-              
+
               let instantiatePromise = Promise.resolve()
               .then(function () {
                 return loader.instantiate(id, firstParentUrl);
@@ -7866,8 +7885,8 @@
               });
             };
 
-            systemJSPrototype.resolve = function (id, parentUrl) {
-              const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
+            systemJSPrototype.resolve = function resolve(id, parentUrl) {
+              const resolved = resolveIfNotPlainOrUrl(id, parentUrl || this.baseUrl);
               if (!resolved) {
                 if (id.indexOf(':') !== -1)
                   return id;

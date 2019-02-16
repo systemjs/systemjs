@@ -1,6 +1,6 @@
 /*
  * SystemJS Core
- * 
+ *
  * Provides
  * - System.import
  * - System.register support for
@@ -10,19 +10,32 @@
  * - Symbol.toStringTag support in Module objects
  * - Hookable System.createContext to customize import.meta
  * - System.onload(id, err?) handler for tracing / hot-reloading
- * 
+ *
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
-import { global } from './common.js';
+import { global, DEFAULT_BASEURL, URL } from './common.js';
 export { systemJSPrototype, REGISTRY }
 
 const hasSymbol = typeof Symbol !== 'undefined';
 const toStringTag = hasSymbol && Symbol.toStringTag;
 const REGISTRY = hasSymbol ? Symbol() : '@';
 
-function SystemJS () {
-  this[REGISTRY] = {};
+/**
+ * Creates new SystemJS instance.
+ *
+ * @param {string} baseUrl
+ * @constructor
+ */
+function SystemJS({ baseUrl } = {}) {
+  this[REGISTRY] = Object.create(null);
+
+  baseUrl = new URL(baseUrl || DEFAULT_BASEURL);
+  if (!baseUrl.pathname.endsWith('/')) {
+    baseUrl.pathname += '/';
+  }
+
+  Object.defineProperty(this,'baseUrl', { value: baseUrl.href });
 }
 
 const systemJSPrototype = SystemJS.prototype;
@@ -69,7 +82,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   const ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
-  
+
   let instantiatePromise = Promise.resolve()
   .then(function () {
     return loader.instantiate(id, firstParentUrl);

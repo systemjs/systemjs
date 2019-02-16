@@ -1,6 +1,6 @@
 import { systemJSPrototype, REGISTRY } from '../system-core.js';
 
-systemJSPrototype.get = function (id) {
+systemJSPrototype.get = function get(id) {
   const load = this[REGISTRY][id];
   if (load && load.e === null && !load.E) {
     if (load.eE)

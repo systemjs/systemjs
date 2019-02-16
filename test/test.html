@@ -33,6 +33,8 @@
 			}
 		};
 
+		window.System = new System.constructor({ baseUrl: baseURL });
+
 		const extras = ['amd', 'named-exports', 'transform', 'named-register'];
 		function runNextExtra () {
 			mocha.suite.suites.shift();

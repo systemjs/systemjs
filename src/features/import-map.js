@@ -12,10 +12,10 @@
  * Only supports loading the first import map
  */
 
-import { fetch } from '../utils/fetch.js';
-import { DEFAULT_BASEURL, isBrowser, isNode, parseImportMap, resolveImportMap } from '../common.js';
+import { global, URL, isBrowser, isNode, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
-import { fileExists, URL } from './node-common.js';
+import { fetch } from '../utils/fetch.js';
+import { fileExists, isURL } from './node-common.js';
 
 
 function locateImportMapBrowser() {
@@ -35,8 +35,13 @@ function locateImportMapBrowser() {
 }
 
 
-function locateImportMapNode() {
-  const importMapUrl = new URL('./systemjs-importmap.json', DEFAULT_BASEURL);
+function locateImportMapNode(baseUrl, importMapUrl) {
+  if (isURL(importMapUrl)) {
+    importMapUrl = new URL(importMapUrl);
+  } else {
+    importMapUrl = new URL('./systemjs-importmap.json', baseUrl);
+  }
+
   if (fileExists(importMapUrl)) {
     return importMapUrl;
   }
@@ -45,11 +50,11 @@ function locateImportMapNode() {
 }
 
 
-function locateImportMap() {
+function locateImportMap(baseUrl, importMapUrl) {
   if (isBrowser) {
     return locateImportMapBrowser();
   } else if (isNode) {
-    return locateImportMapNode();
+    return locateImportMapNode(baseUrl, importMapUrl);
   }
 }
 
@@ -65,19 +70,56 @@ function fetchImportMap(input) {
 }
 
 
-const location = locateImportMap();
-const importMapPromise = fetchImportMap(location).then(data => {
-  if (data) {
-    const baseUrl = location instanceof URL ? location.href : DEFAULT_BASEURL;
-    return parseImportMap(data, baseUrl);
-  } else {
-    return { imports: {}, scopes: {} };
-  }
-});
+function createImportMap(loader, importMapUrl) {
+  const location = locateImportMap(loader.baseUrl, importMapUrl);
+
+  return fetchImportMap(location).then(data => {
+    if (data) {
+      const baseUrl = location instanceof URL ? location.href : loader.baseUrl;
+      return parseImportMap(data, baseUrl);
+    } else {
+      return { imports: {}, scopes: {} };
+    }
+  });
+}
 
 
-systemJSPrototype.resolve = function (id, parentUrl) {
-  parentUrl = parentUrl || DEFAULT_BASEURL;
+const importMapRegistry = new WeakMap();
 
-  return importMapPromise.then(importMap => resolveImportMap(id, parentUrl, importMap));
+function setImportMap(loader, importMap) {
+  importMapRegistry.set(loader, importMap);
+}
+
+function getImportMap(loader) {
+  return importMapRegistry.get(loader);
+}
+
+
+const constructor = systemJSPrototype.constructor;
+function SystemJS({ baseUrl, importMapUrl } = {}) {
+  constructor.call(this, { baseUrl });
+
+  this.registerRegistry = Object.create(null);
+  const importMap = createImportMap(this, importMapUrl);
+  setImportMap(this, importMap);
+}
+
+SystemJS.prototype = Object.create(systemJSPrototype);
+SystemJS.prototype.constructor = SystemJS;
+
+/**
+ * @async
+ *
+ * Resolves a module import specifier.
+ *
+ * @param {string} id - Module import specifier
+ * @param {string} [parentUrl] - The URL of the importing module.
+ *
+ * @return {Promise<string>} The resolved URL
+ */
+SystemJS.prototype.resolve = function resolve(id, parentUrl) {
+  parentUrl = parentUrl || this.baseUrl;
+  return getImportMap(this).then(importMap => resolveImportMap(id, parentUrl, importMap));
 };
+
+global.System = new SystemJS();

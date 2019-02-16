@@ -8,27 +8,34 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var assert = require('assert');
 var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
-var vm = _interopDefault(require('vm'));
-var stripShebang = _interopDefault(require('strip-shebang'));
 var url = _interopDefault(require('url'));
 var fileUrlFromPath = _interopDefault(require('file-url'));
 var SourceMapSupport = _interopDefault(require('source-map-support'));
-require('is-builtin-module');
+var vm = _interopDefault(require('vm'));
+var stripShebang = _interopDefault(require('strip-shebang'));
+require('isomorphic-fetch');
+var fileFetch = _interopDefault(require('file-fetch'));
 
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
-const hasSelf = typeof self !== 'undefined';
+function getGlobal () {
+  if (typeof self !== 'undefined') { return self; }
+  if (typeof window !== 'undefined') { return window; }
+  if (typeof global !== 'undefined') { return global; }
+  throw new Error('unable to locate global object');
+}
 
-const envGlobal = hasSelf ? self : global;
+const envGlobal = getGlobal();
 
-const URL = global.URL
-  ? global.URL
+const URL$1 = envGlobal.URL
+  ? envGlobal.URL
   : url.URL;
 
 const pathToFileURL = url.pathToFileURL
   ? url.pathToFileURL
   : function pathToFileURL(filePath) {
-    const fileUrl = new URL(fileUrlFromPath(filePath));
+    const fileUrl = new URL$1(fileUrlFromPath(filePath));
     if (!filePath.endsWith(path.sep)) {
       fileUrl.pathname += '/';
     }
@@ -241,7 +248,7 @@ function throwBare (id, parentUrl) {
 
 /*
  * SystemJS Core
- * 
+ *
  * Provides
  * - System.import
  * - System.register support for
@@ -251,7 +258,7 @@ function throwBare (id, parentUrl) {
  * - Symbol.toStringTag support in Module objects
  * - Hookable System.createContext to customize import.meta
  * - System.onload(id, err?) handler for tracing / hot-reloading
- * 
+ *
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
@@ -260,8 +267,21 @@ const hasSymbol = typeof Symbol !== 'undefined';
 const toStringTag = hasSymbol && Symbol.toStringTag;
 const REGISTRY = hasSymbol ? Symbol() : '@';
 
-function SystemJS () {
-  this[REGISTRY] = {};
+/**
+ * Creates new SystemJS instance.
+ *
+ * @param {string} baseUrl
+ * @constructor
+ */
+function SystemJS({ baseUrl: baseUrl$$1 } = {}) {
+  this[REGISTRY] = Object.create(null);
+
+  baseUrl$$1 = new URL$1(baseUrl$$1 || DEFAULT_BASEURL);
+  if (!baseUrl$$1.pathname.endsWith('/')) {
+    baseUrl$$1.pathname += '/';
+  }
+
+  Object.defineProperty(this,'baseUrl', { value: baseUrl$$1.href });
 }
 
 const systemJSPrototype = SystemJS.prototype;
@@ -280,6 +300,9 @@ systemJSPrototype.createContext = function (parentId) {
     url: parentId
   };
 };
+
+// onLoad(id, err) provided for tracing / hot-reloading
+systemJSPrototype.onload = function () {};
 
 let lastRegister;
 systemJSPrototype.register = function (deps, declare) {
@@ -304,7 +327,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   const ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
-  
+
   let instantiatePromise = Promise.resolve()
   .then(function () {
     return loader.instantiate(id, firstParentUrl);
@@ -345,6 +368,11 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
   });
+
+  instantiatePromise = instantiatePromise.catch(function (err) {
+      loader.onload(load.id, err);
+      throw err;
+    });
 
   const linkPromise = instantiatePromise
   .then(function (instantiation) {
@@ -457,13 +485,24 @@ function postOrderExec (loader, load, seen) {
   let depLoadPromises;
   load.d.forEach(function (depLoad) {
     {
-      const depLoadPromise = postOrderExec(loader, depLoad, seen);
-      if (depLoadPromise)
-        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+      try {
+        const depLoadPromise = postOrderExec(loader, depLoad, seen);
+        if (depLoadPromise)
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+      }
+      catch (err) {
+        loader.onload(load.id, err);
+        throw err;
+      }
     }
   });
   if (depLoadPromises) {
-    return load.E = Promise.all(depLoadPromises).then(doExec);
+    return Promise.all(depLoadPromises)
+      .then(doExec)
+      .catch(function (err) {
+        loader.onload(load.id, err);
+        throw err;
+      });
   }
 
   return doExec();
@@ -472,17 +511,23 @@ function postOrderExec (loader, load, seen) {
     try {
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
-        execPromise.then(function () {
+        execPromise = execPromise.then(function () {
             load.C = load.n;
-            load.E = null;
+            load.E = null; // indicates completion
+            loader.onload(load.id, null);
+          }, function (err) {
+            loader.onload(load.id, err);
+            throw err;
           });
         execPromise.catch(function () {});
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
+      loader.onload(load.id, null);
     }
     catch (err) {
+      loader.onload(load.id, err);
       load.eE = err;
       throw err;
     }
@@ -495,7 +540,7 @@ function postOrderExec (loader, load, seen) {
 
 envGlobal.System = new SystemJS();
 
-const URL$1 = global.URL
+const URL$2 = global.URL
   ? global.URL
   : url.URL;
 
@@ -503,7 +548,7 @@ const URL$1 = global.URL
 const pathToFileURL$1 = url.pathToFileURL
   ? url.pathToFileURL
   : function pathToFileURL(path$$1) {
-    const theUrl = new URL$1(fileUrlFromPath(path$$1));
+    const theUrl = new URL$2(fileUrlFromPath(path$$1));
     if (path$$1.endsWith(path.sep)) {
       theUrl.pathname += '/';
     }
@@ -524,79 +569,18 @@ function fileExists(path$$1) {
 
 
 function isURL(value) {
-  if (value instanceof URL$1) {
+  if (value instanceof URL$2) {
     return true;
   }
 
   if (typeof value === 'string') {
     try {
-      new URL$1(value);
+      new URL$2(value);
       return true;
     } catch (err) {}
   }
 
   return false;
-}
-
-systemJSPrototype.get = function (id) {
-  const load = this[REGISTRY][id];
-  if (load && load.e === null && !load.E) {
-    if (load.eE)
-      return null;
-    return load.n;
-  }
-};
-
-// Delete function provided for hot-reloading use cases
-systemJSPrototype.delete = function (id) {
-  const load = this.get(id);
-  if (load === undefined)
-    return false;
-  // remove from importerSetters
-  // (release for gc)
-  if (load && load.d)
-    load.d.forEach(function (depLoad) {
-      const importerIndex = depLoad.i.indexOf(load);
-      if (importerIndex !== -1)
-        depLoad.i.splice(importerIndex, 1);
-    });
-  return delete this[REGISTRY][id];
-};
-
-// This implements the logic described here:
-
-/*
- * Import map support for SystemJS on Node.js
- *
- * Only supports loading the first import map
- */
-
-
-function createImportMapResolver({ baseUrl: baseUrl$$1 = DEFAULT_BASEURL$1, importMapConfig}) {
-  let importMapUrl;
-  let importMap;
-
-  if (isURL(importMapConfig)) {
-    importMapUrl = new URL$1(importMapConfig);
-  } else {
-    importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl$$1);
-  }
-
-  if (fileExists(importMapUrl)) {
-    const importMapRaw = fs.readFileSync(importMapUrl, 'utf8');
-    const importMapData = JSON.parse(importMapRaw);
-    importMap = parseImportMap(importMapData, importMapUrl.href);
-  } else {
-    importMap = { imports: {}, scopes: {} };
-  }
-
-  function resolve(id, parentUrl = baseUrl$$1) {
-    return resolveImportMap(id, `${parentUrl}`, importMap);
-  }
-
-  Object.defineProperty(resolve, 'baseURL', {value: baseUrl$$1});
-
-  return resolve;
 }
 
 function unzipModuleVars(moduleVars = {}) {
@@ -645,9 +629,6 @@ function compileScript(sourceUrl, source, moduleVars) {
   return (isNode? compileScriptNode : compileScriptBrowser)(sourceUrl, source, moduleVars);
 }
 
-const SystemJS$1 = systemJSPrototype.constructor;
-
-
 function detectFormat(url$$1) {
   const ext = path.extname(url$$1.pathname);
   let format = null;
@@ -683,7 +664,7 @@ function createFileURLReader(url$$1) {
   try {
     read.url = new URL$1(url$$1);
   } catch (err) {
-    read.url = pathToFileURL$1(url$$1);
+    read.url = pathToFileURL(url$$1);
   }
 
   read.format = detectFormat(read.url);
@@ -735,77 +716,273 @@ function loadJSONModule(getContent, loader) {
 }
 
 
-class NodeLoader extends SystemJS$1 {
-  constructor({ baseUrl: baseUrl$$1 = DEFAULT_BASEURL$1, importMapConfig } = {}) {
-    super();
+systemJSPrototype.instantiate = function instantiate(url$$1, firstParentUrl) {
+  assert.ok(url$$1, 'missing url');
+  assert.ok(url$$1 instanceof URL$1 || typeof url$$1 === 'string', 'url must be a URL or string');
 
-    const _baseUrl = new URL$1(baseUrl$$1);
-    if (!_baseUrl.pathname.endsWith('/')) {
-      _baseUrl.pathname += '/';
+  url$$1 = new URL$1(url$$1);
+
+  const getContent = createFileURLReader(url$$1);
+
+  try {
+    switch(getContent.format) {
+      case 'builtin':
+        loadBuiltinModule(getContent, this);
+        break;
+
+      case 'json':
+        loadJSONModule(getContent, this);
+        break;
+
+      default:
+        loadRegisterModule(getContent, this);
     }
-    this.baseUrl = _baseUrl;
-
-    const resolverConfig = {
-      baseUrl: this.baseUrl,
-      importMapConfig,
-    };
-
-    this.resolvers = [
-      createImportMapResolver(resolverConfig),
-      //createNodeResolver(resolverConfig),
-    ];
+  } catch (err) {
+    if (err instanceof ReferenceError) {
+      throw err;
+    }
+    throw new Error(`Error loading ${url$$1}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
   }
 
-  resolve(id, parentUrl) {
-    let resolved;
+  return this.getRegister();
+};
 
-    for (let resolver of this.resolvers) {
-      try {
-        resolved = resolver(id, parentUrl);
-        if (resolved) {
-          return resolved;
-        }
-      } catch (err) {
-        // Do nothing. Continue...
+
+
+// class NodeLoader extends SystemJS {
+//   constructor({ baseUrl = DEFAULT_BASEURL, importMapUrl } = {}) {
+//     super(baseUrl, importMapUrl);
+//
+//     console.log('HEY THERE!');
+//
+//     // const resolverConfig = {
+//     //   baseUrl: this.baseUrl,
+//     //   importMapConfig,
+//     // };
+//
+//     // this.resolvers = [
+//     //   createImportMapResolver(resolverConfig),
+//     //   createNodeResolver(resolverConfig),
+//     // ];
+//   }
+//
+//   // resolve(id, parentUrl) {
+//   //   let resolved;
+//   //
+//   //   for (let resolver of this.resolvers) {
+//   //     try {
+//   //       resolved = resolver(id, parentUrl);
+//   //       if (resolved) {
+//   //         return resolved;
+//   //       }
+//   //     } catch (err) {
+//   //       // Do nothing. Continue...
+//   //     }
+//   //   }
+//   //
+//   //   throw new Error(`Cannot resolve "${id}"${parentUrl ? ` from ${parentUrl}` : ''}`);
+//   // }
+//
+//
+//   async instantiate(url, firstParentUrl) {
+//     assert(url, 'missing url');
+//     assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
+//
+//     url = new URL(url);
+//
+//     const getContent = createFileURLReader(url);
+//
+//     try {
+//       switch(getContent.format) {
+//         case 'builtin':
+//           loadBuiltinModule(getContent, this);
+//           break;
+//
+//         case 'json':
+//           loadJSONModule(getContent, this);
+//           break;
+//
+//         default:
+//           loadRegisterModule(getContent, this);
+//       }
+//     } catch (err) {
+//       if (err instanceof ReferenceError) {
+//         throw err;
+//       }
+//       throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
+//     }
+//
+//     return this.getRegister();
+//   }
+// }
+
+// SystemJS.prototype = systemJSPrototype;
+// systemJSPrototype.constructor = SystemJS;
+// global.System = new SystemJS();
+//
+//
+// global.System = new NodeLoader();
+//
+// export default NodeLoader;
+
+/**
+ * This polyfills Node with a version of fetch that can handle
+ * "file" URLs.
+ */
+
+const globalFetch = envGlobal.fetch;
+
+function fetch(input, init) {
+  const { protocol, href } = new URL(input);
+  if (isNode && protocol === 'file:') {
+   return fileFetch(href, init);
+  }
+  return globalFetch(href, init);
+}
+
+/*
+ * Import map support for SystemJS
+ *
+ * Browser:
+ *   <script type="systemjs-importmap">{}</script>
+ *   OR
+ *   <script type="systemjs-importmap" src=package.json></script>
+ *
+ * Node:
+ *   Place "systemjs-importmap.json" in project root folder
+ *
+ * Only supports loading the first import map
+ */
+
+
+function locateImportMapBrowser() {
+  if (typeof document !== 'undefined') {
+    const scripts = Array.from(document.getElementsByTagName('script'));
+    const importMapScript = scripts.find((script => script.type === 'systemjs-importmap'));
+
+    if (importMapScript) {
+      if (importMapScript.src) {
+        return new URL$1(importMapScript.src);
       }
+      return JSON.parse(importMapScript.innerHTML);
     }
-
-    throw new Error(`Cannot resolve "${id}"${parentUrl ? ` from ${parentUrl}` : ''}`);
   }
 
+  return undefined;
+}
 
-  async instantiate(url$$1, firstParentUrl) {
-    assert.ok(url$$1, 'missing url');
-    assert.ok(url$$1 instanceof URL$1 || typeof url$$1 === 'string', 'url must be a URL or string');
 
-    url$$1 = new URL$1(url$$1);
+function locateImportMapNode(baseUrl$$1, importMapUrl) {
+  if (isURL(importMapUrl)) {
+    importMapUrl = new URL$1(importMapUrl);
+  } else {
+    importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl$$1);
+  }
 
-    const getContent = createFileURLReader(url$$1);
+  if (fileExists(importMapUrl)) {
+    return importMapUrl;
+  }
 
-    try {
-      switch(getContent.format) {
-        case 'builtin':
-          loadBuiltinModule(getContent, this);
-          break;
+  return undefined;
+}
 
-        case 'json':
-          loadJSONModule(getContent, this);
-          break;
 
-        default:
-          loadRegisterModule(getContent, this);
-      }
-    } catch (err) {
-      if (err instanceof ReferenceError) {
-        throw err;
-      }
-      throw new Error(`Error loading ${url$$1}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
-    }
-
-    return this.getRegister();
+function locateImportMap(baseUrl$$1, importMapUrl) {
+  if (isBrowser) {
+    return locateImportMapBrowser();
+  } else if (isNode) {
+    return locateImportMapNode(baseUrl$$1, importMapUrl);
   }
 }
 
-envGlobal.System = new NodeLoader();
 
-module.exports = NodeLoader;
+function fetchImportMap(input) {
+  if (input instanceof URL$1) {
+    return fetch(input.href).then(res => res.json());
+  } else if (typeof input === 'object' && input !== null) {
+    return Promise.resolve(input);
+  }
+
+  return Promise.resolve(undefined);
+}
+
+
+function createImportMap(loader, importMapUrl) {
+  const location = locateImportMap(loader.baseUrl, importMapUrl);
+
+  return fetchImportMap(location).then(data => {
+    if (data) {
+      const baseUrl$$1 = location instanceof URL$1 ? location.href : loader.baseUrl;
+      return parseImportMap(data, baseUrl$$1);
+    } else {
+      return { imports: {}, scopes: {} };
+    }
+  });
+}
+
+
+const importMapRegistry = new WeakMap();
+
+function setImportMap(loader, importMap) {
+  importMapRegistry.set(loader, importMap);
+}
+
+function getImportMap(loader) {
+  return importMapRegistry.get(loader);
+}
+
+
+const constructor = systemJSPrototype.constructor;
+function SystemJS$1({ baseUrl: baseUrl$$1, importMapUrl } = {}) {
+  constructor.call(this, { baseUrl: baseUrl$$1 });
+
+  this.registerRegistry = Object.create(null);
+  const importMap = createImportMap(this, importMapUrl);
+  setImportMap(this, importMap);
+}
+
+SystemJS$1.prototype = Object.create(systemJSPrototype);
+SystemJS$1.prototype.constructor = SystemJS$1;
+
+/**
+ * @async
+ *
+ * Resolves a module import specifier.
+ *
+ * @param {string} id - Module import specifier
+ * @param {string} [parentUrl] - The URL of the importing module.
+ *
+ * @return {Promise<string>} The resolved URL
+ */
+SystemJS$1.prototype.resolve = function resolve(id, parentUrl) {
+  parentUrl = parentUrl || this.baseUrl;
+  return getImportMap(this).then(importMap => resolveImportMap(id, parentUrl, importMap));
+};
+
+envGlobal.System = new SystemJS$1();
+
+systemJSPrototype.get = function get(id) {
+  const load = this[REGISTRY][id];
+  if (load && load.e === null && !load.E) {
+    if (load.eE)
+      return null;
+    return load.n;
+  }
+};
+
+// Delete function provided for hot-reloading use cases
+systemJSPrototype.delete = function (id) {
+  const load = this.get(id);
+  if (load === undefined)
+    return false;
+  // remove from importerSetters
+  // (release for gc)
+  if (load && load.d)
+    load.d.forEach(function (depLoad) {
+      const importerIndex = depLoad.i.indexOf(load);
+      if (importerIndex !== -1)
+        depLoad.i.splice(importerIndex, 1);
+    });
+  return delete this[REGISTRY][id];
+};
+//# sourceMappingURL=system-node.js.map
