@@ -1669,7 +1669,7 @@
 	    }
 	  }
 
-	  function read$$1 (buf, i) {
+	  function read (buf, i) {
 	    if (indexSize === 1) {
 	      return buf[i]
 	    } else {
@@ -1681,7 +1681,7 @@
 	  if (dir) {
 	    var foundIndex = -1;
 	    for (i = byteOffset; i < arrLength; i++) {
-	      if (read$$1(arr, i) === read$$1(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+	      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
 	        if (foundIndex === -1) foundIndex = i;
 	        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
 	      } else {
@@ -1694,7 +1694,7 @@
 	    for (i = byteOffset; i >= 0; i--) {
 	      var found = true;
 	      for (var j = 0; j < valLength; j++) {
-	        if (read$$1(arr, i + j) !== read$$1(val, j)) {
+	        if (read(arr, i + j) !== read(val, j)) {
 	          found = false;
 	          break
 	        }
@@ -1765,7 +1765,7 @@
 	  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
 	}
 
-	Buffer.prototype.write = function write$$1 (string, offset, length, encoding) {
+	Buffer.prototype.write = function write (string, offset, length, encoding) {
 	  // Buffer#write(string)
 	  if (offset === undefined) {
 	    encoding = 'utf8';
@@ -4277,7 +4277,7 @@
 	 * Decode a single base 64 character code digit to an integer. Returns -1 on
 	 * failure.
 	 */
-	var decode$1 = function (charCode) {
+	var decode = function (charCode) {
 	  var bigA = 65;     // 'A'
 	  var bigZ = 90;     // 'Z'
 
@@ -4324,7 +4324,7 @@
 
 	var base64 = {
 		encode: encode$1,
-		decode: decode$1
+		decode: decode
 	};
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -4442,7 +4442,7 @@
 	 * Decodes the next base 64 VLQ value from the given string and returns the
 	 * value and the rest of the string via the out parameter.
 	 */
-	var decode$2 = function base64VLQ_decode(aStr, aIndex, aOutParam) {
+	var decode$1 = function base64VLQ_decode(aStr, aIndex, aOutParam) {
 	  var strLen = aStr.length;
 	  var result = 0;
 	  var shift = 0;
@@ -4470,7 +4470,7 @@
 
 	var base64Vlq = {
 		encode: encode$2,
-		decode: decode$2
+		decode: decode$1
 	};
 
 	var util$2 = createCommonjsModule(function (module, exports) {
@@ -7698,29 +7698,29 @@
 	});
 
 	function mapSourcePosition(position) {
-	  var sourceMap$$1 = sourceMapCache[position.source];
-	  if (!sourceMap$$1) {
+	  var sourceMap = sourceMapCache[position.source];
+	  if (!sourceMap) {
 	    // Call the (overrideable) retrieveSourceMap function to get the source map.
 	    var urlAndMap = retrieveSourceMap(position.source);
 	    if (urlAndMap) {
-	      sourceMap$$1 = sourceMapCache[position.source] = {
+	      sourceMap = sourceMapCache[position.source] = {
 	        url: urlAndMap.url,
 	        map: new SourceMapConsumer$2(urlAndMap.map)
 	      };
 
 	      // Load all sources stored inline with the source map into the file cache
 	      // to pretend like they are already loaded. They may not exist on disk.
-	      if (sourceMap$$1.map.sourcesContent) {
-	        sourceMap$$1.map.sources.forEach(function(source, i) {
-	          var contents = sourceMap$$1.map.sourcesContent[i];
+	      if (sourceMap.map.sourcesContent) {
+	        sourceMap.map.sources.forEach(function(source, i) {
+	          var contents = sourceMap.map.sourcesContent[i];
 	          if (contents) {
-	            var url = supportRelativeURL(sourceMap$$1.url, source);
+	            var url = supportRelativeURL(sourceMap.url, source);
 	            fileContentsCache[url] = contents;
 	          }
 	        });
 	      }
 	    } else {
-	      sourceMap$$1 = sourceMapCache[position.source] = {
+	      sourceMap = sourceMapCache[position.source] = {
 	        url: null,
 	        map: null
 	      };
@@ -7728,8 +7728,8 @@
 	  }
 
 	  // Resolve the source URL relative to the URL of the source map
-	  if (sourceMap$$1 && sourceMap$$1.map && typeof sourceMap$$1.map.originalPositionFor === 'function') {
-	    var originalPosition = sourceMap$$1.map.originalPositionFor(position);
+	  if (sourceMap && sourceMap.map && typeof sourceMap.map.originalPositionFor === 'function') {
+	    var originalPosition = sourceMap.map.originalPositionFor(position);
 
 	    // Only return the original position if a matching line was found. If no
 	    // matching line is found then we return position instead, which will cause
@@ -7738,7 +7738,7 @@
 	    // location in the original file.
 	    if (originalPosition.source !== null) {
 	      originalPosition.source = supportRelativeURL(
-	        sourceMap$$1.url, originalPosition.source);
+	        sourceMap.url, originalPosition.source);
 	      return originalPosition;
 	    }
 	  }
@@ -8104,27 +8104,27 @@
 	const pathToFileURL = url.pathToFileURL
 	  ? url.pathToFileURL
 	  : function pathToFileURL(filePath) {
-	    const fileUrl$$1 = new URL$1(fileUrl(filePath));
+	    const fileUrl$1 = new URL$1(fileUrl(filePath));
 	    if (!filePath.endsWith(path.sep)) {
-	      fileUrl$$1.pathname += '/';
+	      fileUrl$1.pathname += '/';
 	    }
-	    return fileUrl$$1;
+	    return fileUrl$1;
 	  };
 
 	function getDefaultBaseUrl() {
-	  let url$$1;
+	  let url;
 
 	  if (typeof location !== 'undefined') {
-	    url$$1 = location.href.split('#')[0].split('?')[0];
-	    const lastSepIndex = url$$1.lastIndexOf('/');
+	    url = location.href.split('#')[0].split('?')[0];
+	    const lastSepIndex = url.lastIndexOf('/');
 	    if (lastSepIndex !== -1) {
-	      url$$1 = url$$1.slice(0, lastSepIndex + 1);
+	      url = url.slice(0, lastSepIndex + 1);
 	    }
 	  } else if (isNode) {
-	    url$$1 = pathToFileURL(process.cwd() + '/');
+	    url = pathToFileURL(process.cwd() + '/');
 	  }
 
-	  return url$$1;
+	  return url;
 	}
 
 	const sourceMapSources = {};
@@ -10605,16 +10605,6 @@
 	  return dest;
 	};
 
-	var stream = /*#__PURE__*/Object.freeze({
-		default: Stream,
-		Readable: Readable,
-		Writable: Writable,
-		Duplex: Duplex,
-		Transform: Transform,
-		PassThrough: PassThrough,
-		Stream: Stream
-	});
-
 	var rStates = {
 	  UNSENT: 0,
 	  OPENED: 1,
@@ -11228,15 +11218,6 @@
 	  METHODS,
 	  STATUS_CODES
 	};
-
-	var http$1 = /*#__PURE__*/Object.freeze({
-		request: request,
-		get: get,
-		Agent: Agent,
-		METHODS: METHODS,
-		STATUS_CODES: STATUS_CODES,
-		default: http
-	});
 
 	var msg = {
 	  2:      'need dictionary',     /* Z_NEED_DICT       2  */
@@ -16587,7 +16568,7 @@
 	  Z_HUFFMAN_ONLY$1=           2,
 	  Z_RLE$1=                    3,
 	  Z_FIXED$2=                  4,
-	  Z_DEFAULT_STRATEGY$1=       0,
+	  Z_DEFAULT_STRATEGY=       0,
 
 	  /* Possible values of the data_type field (though see inflate()) */
 	  Z_BINARY$1=                 0,
@@ -16840,7 +16821,7 @@
 		Z_HUFFMAN_ONLY: Z_HUFFMAN_ONLY$1,
 		Z_RLE: Z_RLE$1,
 		Z_FIXED: Z_FIXED$2,
-		Z_DEFAULT_STRATEGY: Z_DEFAULT_STRATEGY$1,
+		Z_DEFAULT_STRATEGY: Z_DEFAULT_STRATEGY,
 		Z_BINARY: Z_BINARY$1,
 		Z_TEXT: Z_TEXT$1,
 		Z_UNKNOWN: Z_UNKNOWN$2,
@@ -17460,40 +17441,6 @@
 	  Zlib: Zlib$1
 	};
 
-	var zlib$1 = /*#__PURE__*/Object.freeze({
-		codes: codes,
-		createDeflate: createDeflate,
-		createInflate: createInflate,
-		createDeflateRaw: createDeflateRaw,
-		createInflateRaw: createInflateRaw,
-		createGzip: createGzip,
-		createGunzip: createGunzip,
-		createUnzip: createUnzip,
-		deflate: deflate$1,
-		deflateSync: deflateSync,
-		gzip: gzip,
-		gzipSync: gzipSync,
-		deflateRaw: deflateRaw,
-		deflateRawSync: deflateRawSync,
-		unzip: unzip,
-		unzipSync: unzipSync,
-		inflate: inflate$1,
-		inflateSync: inflateSync,
-		gunzip: gunzip,
-		gunzipSync: gunzipSync,
-		inflateRaw: inflateRaw,
-		inflateRawSync: inflateRawSync,
-		Deflate: Deflate,
-		Inflate: Inflate,
-		Gzip: Gzip,
-		Gunzip: Gunzip,
-		DeflateRaw: DeflateRaw,
-		InflateRaw: InflateRaw,
-		Unzip: Unzip,
-		Zlib: Zlib$1,
-		default: zlib
-	});
-
 	var Buffer$1 = bufferEs6.Buffer;
 
 	var safer = {};
@@ -17622,8 +17569,6 @@
 		StripBOM: StripBOM
 	};
 
-	var require$$1 = getCjsExportFromNamespace(stringDecoder);
-
 	var Buffer$2 = safer_1.Buffer;
 
 	// Export Node.js internal encodings.
@@ -17671,7 +17616,7 @@
 	//------------------------------------------------------------------------------
 
 	// We use node.js internal decoder. Its signature is the same as ours.
-	var StringDecoder$1 = require$$1.StringDecoder;
+	var StringDecoder$1 = stringDecoder.StringDecoder;
 
 	if (!StringDecoder$1.prototype.end) // Node v0.8 doesn't have this method.
 	    StringDecoder$1.prototype.end = function() {};
@@ -21202,7 +21147,7 @@
 
 	var require$$0 = getCjsExportFromNamespace(shiftjis$1);
 
-	var require$$1$1 = getCjsExportFromNamespace(eucjp$1);
+	var require$$1 = getCjsExportFromNamespace(eucjp$1);
 
 	var require$$2 = getCjsExportFromNamespace(cp936$1);
 
@@ -21273,7 +21218,7 @@
 
 	    'eucjp': {
 	        type: '_dbcs',
-	        table: function() { return require$$1$1 },
+	        table: function() { return require$$1 },
 	        encodeAdd: {'\u00a5': 0x5C, '\u203E': 0x7E},
 	    },
 
@@ -21415,10 +21360,8 @@
 	}
 	});
 
-	var require$$1$2 = getCjsExportFromNamespace(stream);
-
 	var Buffer$7 = bufferEs6.Buffer,
-	    Transform$1 = require$$1$2.Transform;
+	    Transform$1 = Stream.Transform;
 
 
 	// == Exports ==================================================================
@@ -21709,7 +21652,7 @@
 
 	        // -- Readable -------------------------------------------------------------
 	        if (iconv.supportsStreams) {
-	            var Readable = require$$1$2.Readable;
+	            var Readable = Stream.Readable;
 
 	            original.ReadableSetEncoding = Readable.prototype.setEncoding;
 	            Readable.prototype.setEncoding = function setEncoding(enc, options) {
@@ -21743,7 +21686,7 @@
 	        Buffer$8.prototype.write = original.BufferWrite;
 
 	        if (iconv.supportsStreams) {
-	            var Readable = require$$1$2.Readable;
+	            var Readable = Stream.Readable;
 
 	            Readable.prototype.setEncoding = original.ReadableSetEncoding;
 	            delete Readable.prototype.collect;
@@ -22097,7 +22040,7 @@
 
 	var convert$1 = encoding.convert;
 
-	var PassThrough$1 = require$$1$2.PassThrough;
+	var PassThrough$1 = Stream.PassThrough;
 
 
 	var body = Body;
@@ -22248,9 +22191,9 @@
 	 * @param   String  encoding  Target encoding
 	 * @return  String
 	 */
-	Body.prototype._convert = function(encoding$$1) {
+	Body.prototype._convert = function(encoding) {
 
-		encoding$$1 = encoding$$1 || 'utf-8';
+		encoding = encoding || 'utf-8';
 
 		var ct = this.headers.get('content-type');
 		var charset = 'utf-8';
@@ -22310,7 +22253,7 @@
 		// turn raw buffers into a single utf-8 buffer
 		return convert$1(
 			Buffer.concat(this._raw)
-			, encoding$$1
+			, encoding
 			, charset
 		);
 
@@ -22491,8 +22434,6 @@
 		return this._headers;
 	};
 
-	var http$2 = getCjsExportFromNamespace(http$1);
-
 	/**
 	 * response.js
 	 *
@@ -22512,17 +22453,17 @@
 	 * @param   Object  opts  Response options
 	 * @return  Void
 	 */
-	function Response(body$$1, opts) {
+	function Response(body$1, opts) {
 
 		opts = opts || {};
 
 		this.url = opts.url;
 		this.status = opts.status || 200;
-		this.statusText = opts.statusText || http$2.STATUS_CODES[this.status];
+		this.statusText = opts.statusText || http.STATUS_CODES[this.status];
 		this.headers = new headers(opts.headers);
 		this.ok = this.status >= 200 && this.status < 300;
 
-		body.call(this, body$$1, opts);
+		body.call(this, body$1, opts);
 
 	}
 
@@ -22620,8 +22561,6 @@
 		return new Request(this);
 	};
 
-	var zlib$2 = getCjsExportFromNamespace(zlib$1);
-
 	var nodeFetch = createCommonjsModule(function (module) {
 	/**
 	 * index.js
@@ -22684,55 +22623,55 @@
 
 			var send;
 			if (options.protocol === 'https:') {
-				send = http$2.request;
+				send = http.request;
 			} else {
-				send = http$2.request;
+				send = http.request;
 			}
 
 			// normalize headers
-			var headers$$1 = new headers(options.headers);
+			var headers$1 = new headers(options.headers);
 
 			if (options.compress) {
-				headers$$1.set('accept-encoding', 'gzip,deflate');
+				headers$1.set('accept-encoding', 'gzip,deflate');
 			}
 
-			if (!headers$$1.has('user-agent')) {
-				headers$$1.set('user-agent', 'node-fetch/1.0 (+https://github.com/bitinn/node-fetch)');
+			if (!headers$1.has('user-agent')) {
+				headers$1.set('user-agent', 'node-fetch/1.0 (+https://github.com/bitinn/node-fetch)');
 			}
 
-			if (!headers$$1.has('connection') && !options.agent) {
-				headers$$1.set('connection', 'close');
+			if (!headers$1.has('connection') && !options.agent) {
+				headers$1.set('connection', 'close');
 			}
 
-			if (!headers$$1.has('accept')) {
-				headers$$1.set('accept', '*/*');
+			if (!headers$1.has('accept')) {
+				headers$1.set('accept', '*/*');
 			}
 
 			// detect form data input from form-data module, this hack avoid the need to pass multipart header manually
-			if (!headers$$1.has('content-type') && options.body && typeof options.body.getBoundary === 'function') {
-				headers$$1.set('content-type', 'multipart/form-data; boundary=' + options.body.getBoundary());
+			if (!headers$1.has('content-type') && options.body && typeof options.body.getBoundary === 'function') {
+				headers$1.set('content-type', 'multipart/form-data; boundary=' + options.body.getBoundary());
 			}
 
 			// bring node-fetch closer to browser behavior by setting content-length automatically
-			if (!headers$$1.has('content-length') && /post|put|patch|delete/i.test(options.method)) {
+			if (!headers$1.has('content-length') && /post|put|patch|delete/i.test(options.method)) {
 				if (typeof options.body === 'string') {
-					headers$$1.set('content-length', Buffer.byteLength(options.body));
+					headers$1.set('content-length', Buffer.byteLength(options.body));
 				// detect form data input from form-data module, this hack avoid the need to add content-length header manually
 				} else if (options.body && typeof options.body.getLengthSync === 'function') {
 					// for form-data 1.x
 					if (options.body._lengthRetrievers && options.body._lengthRetrievers.length == 0) {
-						headers$$1.set('content-length', options.body.getLengthSync().toString());
+						headers$1.set('content-length', options.body.getLengthSync().toString());
 					// for form-data 2.x
 					} else if (options.body.hasKnownLength && options.body.hasKnownLength()) {
-						headers$$1.set('content-length', options.body.getLengthSync().toString());
+						headers$1.set('content-length', options.body.getLengthSync().toString());
 					}
 				// this is only necessary for older nodejs releases (before iojs merge)
 				} else if (options.body === undefined || options.body === null) {
-					headers$$1.set('content-length', '0');
+					headers$1.set('content-length', '0');
 				}
 			}
 
-			options.headers = headers$$1.raw();
+			options.headers = headers$1.raw();
 
 			// http.request only support string as host header, this hack make custom host header possible
 			if (options.headers.host) {
@@ -22793,18 +22732,18 @@
 				}
 
 				// normalize location header for manual redirect mode
-				var headers$$1 = new headers(res.headers);
-				if (options.redirect === 'manual' && headers$$1.has('location')) {
-					headers$$1.set('location', resolve_url(options.url, headers$$1.get('location')));
+				var headers$1 = new headers(res.headers);
+				if (options.redirect === 'manual' && headers$1.has('location')) {
+					headers$1.set('location', resolve_url(options.url, headers$1.get('location')));
 				}
 
 				// prepare response
-				var body$$1 = res.pipe(new require$$1$2.PassThrough());
+				var body = res.pipe(new Stream.PassThrough());
 				var response_options = {
 					url: options.url
 					, status: res.statusCode
 					, statusText: res.statusMessage
-					, headers: headers$$1
+					, headers: headers$1
 					, size: options.size
 					, timeout: options.timeout
 				};
@@ -22818,19 +22757,19 @@
 				// 3. no content-encoding header
 				// 4. no content response (204)
 				// 5. content not modified response (304)
-				if (!options.compress || options.method === 'HEAD' || !headers$$1.has('content-encoding') || res.statusCode === 204 || res.statusCode === 304) {
-					output = new response(body$$1, response_options);
+				if (!options.compress || options.method === 'HEAD' || !headers$1.has('content-encoding') || res.statusCode === 204 || res.statusCode === 304) {
+					output = new response(body, response_options);
 					resolve(output);
 					return;
 				}
 
 				// otherwise, check for gzip or deflate
-				var name = headers$$1.get('content-encoding');
+				var name = headers$1.get('content-encoding');
 
 				// for gzip
 				if (name == 'gzip' || name == 'x-gzip') {
-					body$$1 = body$$1.pipe(zlib$2.createGunzip());
-					output = new response(body$$1, response_options);
+					body = body.pipe(zlib.createGunzip());
+					output = new response(body, response_options);
 					resolve(output);
 					return;
 
@@ -22838,22 +22777,22 @@
 				} else if (name == 'deflate' || name == 'x-deflate') {
 					// handle the infamous raw deflate response from old servers
 					// a hack for old IIS and Apache servers
-					var raw = res.pipe(new require$$1$2.PassThrough());
+					var raw = res.pipe(new Stream.PassThrough());
 					raw.once('data', function(chunk) {
 						// see http://stackoverflow.com/questions/37519828
 						if ((chunk[0] & 0x0F) === 0x08) {
-							body$$1 = body$$1.pipe(zlib$2.createInflate());
+							body = body.pipe(zlib.createInflate());
 						} else {
-							body$$1 = body$$1.pipe(zlib$2.createInflateRaw());
+							body = body.pipe(zlib.createInflateRaw());
 						}
-						output = new response(body$$1, response_options);
+						output = new response(body, response_options);
 						resolve(output);
 					});
 					return;
 				}
 
 				// otherwise, use response as-is
-				output = new response(body$$1, response_options);
+				output = new response(body, response_options);
 				resolve(output);
 				return;
 			});

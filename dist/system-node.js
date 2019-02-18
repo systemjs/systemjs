@@ -49,19 +49,19 @@ const fileURLToPath = url.fileURLToPath
   };
 
 function getDefaultBaseUrl() {
-  let url$$1;
+  let url;
 
   if (typeof location !== 'undefined') {
-    url$$1 = location.href.split('#')[0].split('?')[0];
-    const lastSepIndex = url$$1.lastIndexOf('/');
+    url = location.href.split('#')[0].split('?')[0];
+    const lastSepIndex = url.lastIndexOf('/');
     if (lastSepIndex !== -1) {
-      url$$1 = url$$1.slice(0, lastSepIndex + 1);
+      url = url.slice(0, lastSepIndex + 1);
     }
   } else if (isNode) {
-    url$$1 = pathToFileURL(process.cwd() + '/');
+    url = pathToFileURL(process.cwd() + '/');
   }
 
-  return url$$1;
+  return url;
 }
 
 const sourceMapSources = {};
@@ -205,15 +205,15 @@ function parseImportMap (json, baseUrl) {
   return { imports: imports, scopes: scopes, baseUrl: baseUrl };
 }
 
-function getMatch (path$$1, matchObj) {
-  if (matchObj[path$$1])
-    return path$$1;
-  let sepIndex = path$$1.length;
+function getMatch (path, matchObj) {
+  if (matchObj[path])
+    return path;
+  let sepIndex = path.length;
   do {
-    const segment = path$$1.slice(0, sepIndex + 1);
+    const segment = path.slice(0, sepIndex + 1);
     if (segment in matchObj)
       return segment;
-  } while ((sepIndex = path$$1.lastIndexOf('/', sepIndex - 1)) !== -1)
+  } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
 }
 
 function applyPackages (id, packages, baseUrl) {
@@ -273,15 +273,15 @@ const REGISTRY = hasSymbol ? Symbol() : '@';
  * @param {string} baseUrl
  * @constructor
  */
-function SystemJS({ baseUrl: baseUrl$$1 } = {}) {
+function SystemJS({ baseUrl } = {}) {
   this[REGISTRY] = Object.create(null);
 
-  baseUrl$$1 = new URL$1(baseUrl$$1 || DEFAULT_BASEURL);
-  if (!baseUrl$$1.pathname.endsWith('/')) {
-    baseUrl$$1.pathname += '/';
+  baseUrl = new URL$1(baseUrl || DEFAULT_BASEURL);
+  if (!baseUrl.pathname.endsWith('/')) {
+    baseUrl.pathname += '/';
   }
 
-  Object.defineProperty(this,'baseUrl', { value: baseUrl$$1.href });
+  Object.defineProperty(this,'baseUrl', { value: baseUrl.href });
 }
 
 const systemJSPrototype = SystemJS.prototype;
@@ -300,9 +300,6 @@ systemJSPrototype.createContext = function (parentId) {
     url: parentId
   };
 };
-
-// onLoad(id, err) provided for tracing / hot-reloading
-systemJSPrototype.onload = function () {};
 
 let lastRegister;
 systemJSPrototype.register = function (deps, declare) {
@@ -368,11 +365,6 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
   });
-
-  instantiatePromise = instantiatePromise.catch(function (err) {
-      loader.onload(load.id, err);
-      throw err;
-    });
 
   const linkPromise = instantiatePromise
   .then(function (instantiation) {
@@ -485,24 +477,13 @@ function postOrderExec (loader, load, seen) {
   let depLoadPromises;
   load.d.forEach(function (depLoad) {
     {
-      try {
-        const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise)
-          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-      }
-      catch (err) {
-        loader.onload(load.id, err);
-        throw err;
-      }
+      const depLoadPromise = postOrderExec(loader, depLoad, seen);
+      if (depLoadPromise)
+        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
   });
   if (depLoadPromises) {
-    return Promise.all(depLoadPromises)
-      .then(doExec)
-      .catch(function (err) {
-        loader.onload(load.id, err);
-        throw err;
-      });
+    return load.E = Promise.all(depLoadPromises).then(doExec);
   }
 
   return doExec();
@@ -511,23 +492,17 @@ function postOrderExec (loader, load, seen) {
     try {
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
-        execPromise = execPromise.then(function () {
+        execPromise.then(function () {
             load.C = load.n;
-            load.E = null; // indicates completion
-            loader.onload(load.id, null);
-          }, function (err) {
-            loader.onload(load.id, err);
-            throw err;
+            load.E = null;
           });
         execPromise.catch(function () {});
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      loader.onload(load.id, null);
     }
     catch (err) {
-      loader.onload(load.id, err);
       load.eE = err;
       throw err;
     }
@@ -547,9 +522,9 @@ const URL$2 = global.URL
 
 const pathToFileURL$1 = url.pathToFileURL
   ? url.pathToFileURL
-  : function pathToFileURL(path$$1) {
-    const theUrl = new URL$2(fileUrlFromPath(path$$1));
-    if (path$$1.endsWith(path.sep)) {
+  : function pathToFileURL(path$1) {
+    const theUrl = new URL$2(fileUrlFromPath(path$1));
+    if (path$1.endsWith(path.sep)) {
       theUrl.pathname += '/';
     }
     return theUrl;
@@ -558,10 +533,10 @@ const pathToFileURL$1 = url.pathToFileURL
 const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
 
 
-function fileExists(path$$1) {
+function fileExists(path) {
   try {
-    fs.accessSync(path$$1);
-    return fs.statSync(path$$1).isFile();
+    fs.accessSync(path);
+    return fs.statSync(path).isFile();
   } catch (err) {
     return false;
   }
@@ -629,8 +604,8 @@ function compileScript(sourceUrl, source, moduleVars) {
   return (isNode? compileScriptNode : compileScriptBrowser)(sourceUrl, source, moduleVars);
 }
 
-function detectFormat(url$$1) {
-  const ext = path.extname(url$$1.pathname);
+function detectFormat(url) {
+  const ext = path.extname(url.pathname);
   let format = null;
 
   if (ext === '.mjs') {
@@ -639,7 +614,7 @@ function detectFormat(url$$1) {
     format = 'json';
   } else if (ext === '.js') {
     format = 'cjs';
-  } else if (url$$1.protocol === 'builtin:') {
+  } else if (url.protocol === 'builtin:') {
     return 'builtin';
   }
 
@@ -647,7 +622,7 @@ function detectFormat(url$$1) {
 }
 
 
-function createFileURLReader(url$$1) {
+function createFileURLReader(url) {
   let CACHED_CONTENT;
 
   function read(force = false) {
@@ -662,9 +637,9 @@ function createFileURLReader(url$$1) {
   }
 
   try {
-    read.url = new URL$1(url$$1);
+    read.url = new URL$1(url);
   } catch (err) {
-    read.url = pathToFileURL(url$$1);
+    read.url = pathToFileURL(url);
   }
 
   read.format = detectFormat(read.url);
@@ -674,10 +649,10 @@ function createFileURLReader(url$$1) {
 
 
 function loadRegisterModule(getContent, loader) {
-  const { url: url$$1 } = getContent;
+  const { url } = getContent;
   const source = getContent();
 
-  compileScript(url$$1, source, {
+  compileScript(url, source, {
     System: loader,
     SystemJS: loader,
   });
@@ -685,8 +660,8 @@ function loadRegisterModule(getContent, loader) {
 
 
 function loadBuiltinModule(getContent, loader) {
-  const { url: url$$1 } = getContent;
-  const name = url$$1.pathname;
+  const { url } = getContent;
+  const name = url.pathname;
 
   const nodeModule = require(name);
 
@@ -716,13 +691,13 @@ function loadJSONModule(getContent, loader) {
 }
 
 
-systemJSPrototype.instantiate = function instantiate(url$$1, firstParentUrl) {
-  assert.ok(url$$1, 'missing url');
-  assert.ok(url$$1 instanceof URL$1 || typeof url$$1 === 'string', 'url must be a URL or string');
+systemJSPrototype.instantiate = function instantiate(url, firstParentUrl) {
+  assert.ok(url, 'missing url');
+  assert.ok(url instanceof URL$1 || typeof url === 'string', 'url must be a URL or string');
 
-  url$$1 = new URL$1(url$$1);
+  url = new URL$1(url);
 
-  const getContent = createFileURLReader(url$$1);
+  const getContent = createFileURLReader(url);
 
   try {
     switch(getContent.format) {
@@ -741,7 +716,7 @@ systemJSPrototype.instantiate = function instantiate(url$$1, firstParentUrl) {
     if (err instanceof ReferenceError) {
       throw err;
     }
-    throw new Error(`Error loading ${url$$1}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
+    throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
   }
 
   return this.getRegister();
@@ -825,6 +800,82 @@ systemJSPrototype.instantiate = function instantiate(url$$1, firstParentUrl) {
 //
 // export default NodeLoader;
 
+/*
+ * SystemJS global script loading support
+ * Extra for the s.js build only
+ * (Included by default in system.js build)
+ */
+
+const systemJSPrototype$1 = System.constructor.prototype;
+
+// safari unpredictably lists some new globals first or second in object order
+let firstGlobalProp, secondGlobalProp, lastGlobalProp;
+function getGlobalProp () {
+  let cnt = 0;
+  let lastProp;
+  for (let p in envGlobal) {
+    if (!envGlobal.hasOwnProperty(p))
+      continue;
+    if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
+      return p;
+    cnt++;
+    lastProp = p;
+  }
+  if (lastProp !== lastGlobalProp)
+    return lastProp;
+}
+
+function noteGlobalProps () {
+  // alternatively Object.keys(global).pop()
+  // but this may be faster (pending benchmarks)
+  firstGlobalProp = secondGlobalProp = undefined;
+  for (let p in envGlobal) {
+    if (!envGlobal.hasOwnProperty(p))
+      continue;
+    if (!firstGlobalProp)
+      firstGlobalProp = p;
+    else if (!secondGlobalProp)
+      secondGlobalProp = p;
+    lastGlobalProp = p;
+  }
+  return lastGlobalProp;
+}
+
+const impt = systemJSPrototype$1.import;
+systemJSPrototype$1.import = function (id, parentUrl) {
+  noteGlobalProps();
+  return impt.call(this, id, parentUrl);
+};
+
+const emptyInstantiation = [[], function () { return {} }];
+
+const getRegister = systemJSPrototype$1.getRegister;
+systemJSPrototype$1.getRegister = function () {
+  const lastRegister = getRegister.call(this);
+  if (lastRegister)
+    return lastRegister;
+
+  // no registration -> attempt a global detection as difference from snapshot
+  // when multiple globals, we take the global value to be the last defined new global object property
+  // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
+  // note in Edge, deleting and re-adding a global does not change its ordering
+  const globalProp = getGlobalProp();
+  if (!globalProp)
+    return emptyInstantiation;
+
+  let globalExport;
+  try {
+    globalExport = envGlobal[globalProp];
+  }
+  catch (e) {
+    return emptyInstantiation;
+  }
+
+  return [[], function (_export) {
+    return { execute: function () { _export('default', globalExport); } };
+  }];
+};
+
 /**
  * This polyfills Node with a version of fetch that can handle
  * "file" URLs.
@@ -872,11 +923,11 @@ function locateImportMapBrowser() {
 }
 
 
-function locateImportMapNode(baseUrl$$1, importMapUrl) {
+function locateImportMapNode(baseUrl, importMapUrl) {
   if (isURL(importMapUrl)) {
     importMapUrl = new URL$1(importMapUrl);
   } else {
-    importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl$$1);
+    importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl);
   }
 
   if (fileExists(importMapUrl)) {
@@ -887,11 +938,11 @@ function locateImportMapNode(baseUrl$$1, importMapUrl) {
 }
 
 
-function locateImportMap(baseUrl$$1, importMapUrl) {
+function locateImportMap(baseUrl, importMapUrl) {
   if (isBrowser) {
     return locateImportMapBrowser();
   } else if (isNode) {
-    return locateImportMapNode(baseUrl$$1, importMapUrl);
+    return locateImportMapNode(baseUrl, importMapUrl);
   }
 }
 
@@ -912,8 +963,8 @@ function createImportMap(loader, importMapUrl) {
 
   return fetchImportMap(location).then(data => {
     if (data) {
-      const baseUrl$$1 = location instanceof URL$1 ? location.href : loader.baseUrl;
-      return parseImportMap(data, baseUrl$$1);
+      const baseUrl = location instanceof URL$1 ? location.href : loader.baseUrl;
+      return parseImportMap(data, baseUrl);
     } else {
       return { imports: {}, scopes: {} };
     }
@@ -933,8 +984,8 @@ function getImportMap(loader) {
 
 
 const constructor = systemJSPrototype.constructor;
-function SystemJS$1({ baseUrl: baseUrl$$1, importMapUrl } = {}) {
-  constructor.call(this, { baseUrl: baseUrl$$1 });
+function SystemJS$1({ baseUrl, importMapUrl } = {}) {
+  constructor.call(this, { baseUrl });
 
   this.registerRegistry = Object.create(null);
   const importMap = createImportMap(this, importMapUrl);

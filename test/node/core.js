@@ -11,10 +11,19 @@ const importMapUrl = new URL('./fixtures/browser/importmap.json', baseUrl);
 
 const SystemLoader = global.System.constructor;
 
+global.window = global;
 
 describe('SystemJS Standard Tests - Node.js', function() {
   const baseURL = baseUrl.href;
   const rootURL = rootUrl.href;
+
+  before(() => {
+    global['window'] = global;
+  });
+
+  after(() =>{
+    delete global['window'];
+  });
 
   beforeEach(() => {
     global.System = new SystemLoader({ baseUrl, importMapUrl });
@@ -85,14 +94,14 @@ describe('SystemJS Standard Tests - Node.js', function() {
     });
   });
 
-  it.skip('Global script loading', function () {
+  it('Global script loading', function () {
     return System.import('fixtures/global.js').then(function (m) {
       assert.ok(m.default);
       assert.equal(m.default.some, 'thing');
     });
   });
 
-  it.skip('Parallel Global loading', function () {
+  it('Parallel Global loading', function () {
     var scriptsToLoad = [];
     for (var i = 1; i < 11; i++)
       scriptsToLoad.push('fixtures/globals/import' + i + '.js');

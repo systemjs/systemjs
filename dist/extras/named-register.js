@@ -1649,7 +1649,7 @@
                 }
               }
 
-              function read$$1 (buf, i) {
+              function read (buf, i) {
                 if (indexSize === 1) {
                   return buf[i]
                 } else {
@@ -1661,7 +1661,7 @@
               if (dir) {
                 var foundIndex = -1;
                 for (i = byteOffset; i < arrLength; i++) {
-                  if (read$$1(arr, i) === read$$1(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+                  if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
                     if (foundIndex === -1) foundIndex = i;
                     if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
                   } else {
@@ -1674,7 +1674,7 @@
                 for (i = byteOffset; i >= 0; i--) {
                   var found = true;
                   for (var j = 0; j < valLength; j++) {
-                    if (read$$1(arr, i + j) !== read$$1(val, j)) {
+                    if (read(arr, i + j) !== read(val, j)) {
                       found = false;
                       break
                     }
@@ -1745,7 +1745,7 @@
               return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
             }
 
-            Buffer.prototype.write = function write$$1 (string, offset, length, encoding) {
+            Buffer.prototype.write = function write (string, offset, length, encoding) {
               // Buffer#write(string)
               if (offset === undefined) {
                 encoding = 'utf8';
@@ -2763,10 +2763,10 @@
             // If obj.hasOwnProperty has been overridden, then calling
             // obj.hasOwnProperty(prop) will break.
             // See: https://github.com/joyent/node/issues/1707
-            function hasOwnProperty$1(obj, prop) {
+            function hasOwnProperty(obj, prop) {
               return Object.prototype.hasOwnProperty.call(obj, prop);
             }
-            var isArray$2 = Array.isArray || function (xs) {
+            var isArray$1 = Array.isArray || function (xs) {
               return Object.prototype.toString.call(xs) === '[object Array]';
             };
             function stringifyPrimitive(v) {
@@ -2795,7 +2795,7 @@
               if (typeof obj === 'object') {
                 return map$1(objectKeys(obj), function(k) {
                   var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-                  if (isArray$2(obj[k])) {
+                  if (isArray$1(obj[k])) {
                     return map$1(obj[k], function(v) {
                       return ks + encodeURIComponent(stringifyPrimitive(v));
                     }).join(sep);
@@ -2866,9 +2866,9 @@
                 k = decodeURIComponent(kstr);
                 v = decodeURIComponent(vstr);
 
-                if (!hasOwnProperty$1(obj, k)) {
+                if (!hasOwnProperty(obj, k)) {
                   obj[k] = v;
-                } else if (isArray$2(obj[k])) {
+                } else if (isArray$1(obj[k])) {
                   obj[k].push(v);
                 } else {
                   obj[k] = [obj[k], v];
@@ -3221,7 +3221,7 @@
               }
 
               // finally, reconstruct the href based on what has been validated.
-              self.href = format$1(self);
+              self.href = format(self);
               return self;
             }
 
@@ -3232,10 +3232,10 @@
               // this way, you can call url_format() on strings
               // to clean up potentially wonky urls.
               if (isString(obj)) obj = parse$1({}, obj);
-              return format$1(obj);
+              return format(obj);
             }
 
-            function format$1(self) {
+            function format(self) {
               var auth = self.auth || '';
               if (auth) {
                 auth = encodeURIComponent(auth);
@@ -3292,7 +3292,7 @@
             }
 
             Url.prototype.format = function() {
-              return format$1(this);
+              return format(this);
             };
 
             function urlResolve(source, relative) {
@@ -3652,7 +3652,7 @@
              * Decode a single base 64 character code digit to an integer. Returns -1 on
              * failure.
              */
-            var decode$1 = function (charCode) {
+            var decode = function (charCode) {
               var bigA = 65;     // 'A'
               var bigZ = 90;     // 'Z'
 
@@ -3699,7 +3699,7 @@
 
             var base64 = {
             	encode: encode$1,
-            	decode: decode$1
+            	decode: decode
             };
 
             /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3817,7 +3817,7 @@
              * Decodes the next base 64 VLQ value from the given string and returns the
              * value and the rest of the string via the out parameter.
              */
-            var decode$2 = function base64VLQ_decode(aStr, aIndex, aOutParam) {
+            var decode$1 = function base64VLQ_decode(aStr, aIndex, aOutParam) {
               var strLen = aStr.length;
               var result = 0;
               var shift = 0;
@@ -3845,10 +3845,10 @@
 
             var base64Vlq = {
             	encode: encode$2,
-            	decode: decode$2
+            	decode: decode$1
             };
 
-            var util$1 = createCommonjsModule(function (module, exports) {
+            var util = createCommonjsModule(function (module, exports) {
             /* -*- Mode: js; js-indent-level: 2; -*- */
             /*
              * Copyright 2011 Mozilla Foundation and contributors
@@ -4338,20 +4338,20 @@
             }
             exports.computeSourceURL = computeSourceURL;
             });
-            var util_1 = util$1.getArg;
-            var util_2 = util$1.urlParse;
-            var util_3 = util$1.urlGenerate;
-            var util_4 = util$1.normalize;
-            var util_5 = util$1.join;
-            var util_6 = util$1.isAbsolute;
-            var util_7 = util$1.relative;
-            var util_8 = util$1.toSetString;
-            var util_9 = util$1.fromSetString;
-            var util_10 = util$1.compareByOriginalPositions;
-            var util_11 = util$1.compareByGeneratedPositionsDeflated;
-            var util_12 = util$1.compareByGeneratedPositionsInflated;
-            var util_13 = util$1.parseSourceMapInput;
-            var util_14 = util$1.computeSourceURL;
+            var util_1 = util.getArg;
+            var util_2 = util.urlParse;
+            var util_3 = util.urlGenerate;
+            var util_4 = util.normalize;
+            var util_5 = util.join;
+            var util_6 = util.isAbsolute;
+            var util_7 = util.relative;
+            var util_8 = util.toSetString;
+            var util_9 = util.fromSetString;
+            var util_10 = util.compareByOriginalPositions;
+            var util_11 = util.compareByGeneratedPositionsDeflated;
+            var util_12 = util.compareByGeneratedPositionsInflated;
+            var util_13 = util.parseSourceMapInput;
+            var util_14 = util.computeSourceURL;
 
             /* -*- Mode: js; js-indent-level: 2; -*- */
             /*
@@ -4402,7 +4402,7 @@
              * @param String aStr
              */
             ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
-              var sStr = hasNativeMap ? aStr : util$1.toSetString(aStr);
+              var sStr = hasNativeMap ? aStr : util.toSetString(aStr);
               var isDuplicate = hasNativeMap ? this.has(aStr) : has.call(this._set, sStr);
               var idx = this._array.length;
               if (!isDuplicate || aAllowDuplicates) {
@@ -4426,7 +4426,7 @@
               if (hasNativeMap) {
                 return this._set.has(aStr);
               } else {
-                var sStr = util$1.toSetString(aStr);
+                var sStr = util.toSetString(aStr);
                 return has.call(this._set, sStr);
               }
             };
@@ -4443,7 +4443,7 @@
                     return idx;
                 }
               } else {
-                var sStr = util$1.toSetString(aStr);
+                var sStr = util.toSetString(aStr);
                 if (has.call(this._set, sStr)) {
                   return this._set[sStr];
                 }
@@ -4499,7 +4499,7 @@
               var columnA = mappingA.generatedColumn;
               var columnB = mappingB.generatedColumn;
               return lineB > lineA || lineB == lineA && columnB >= columnA ||
-                     util$1.compareByGeneratedPositionsInflated(mappingA, mappingB) <= 0;
+                     util.compareByGeneratedPositionsInflated(mappingA, mappingB) <= 0;
             }
 
             /**
@@ -4551,7 +4551,7 @@
              */
             MappingList.prototype.toArray = function MappingList_toArray() {
               if (!this._sorted) {
-                this._array.sort(util$1.compareByGeneratedPositionsInflated);
+                this._array.sort(util.compareByGeneratedPositionsInflated);
                 this._sorted = true;
               }
               return this._array;
@@ -4587,9 +4587,9 @@
               if (!aArgs) {
                 aArgs = {};
               }
-              this._file = util$1.getArg(aArgs, 'file', null);
-              this._sourceRoot = util$1.getArg(aArgs, 'sourceRoot', null);
-              this._skipValidation = util$1.getArg(aArgs, 'skipValidation', false);
+              this._file = util.getArg(aArgs, 'file', null);
+              this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+              this._skipValidation = util.getArg(aArgs, 'skipValidation', false);
               this._sources = new ArraySet$1();
               this._names = new ArraySet$1();
               this._mappings = new MappingList$1();
@@ -4621,7 +4621,7 @@
                   if (mapping.source != null) {
                     newMapping.source = mapping.source;
                     if (sourceRoot != null) {
-                      newMapping.source = util$1.relative(sourceRoot, newMapping.source);
+                      newMapping.source = util.relative(sourceRoot, newMapping.source);
                     }
 
                     newMapping.original = {
@@ -4639,7 +4639,7 @@
                 aSourceMapConsumer.sources.forEach(function (sourceFile) {
                   var sourceRelative = sourceFile;
                   if (sourceRoot !== null) {
-                    sourceRelative = util$1.relative(sourceRoot, sourceFile);
+                    sourceRelative = util.relative(sourceRoot, sourceFile);
                   }
 
                   if (!generator._sources.has(sourceRelative)) {
@@ -4666,10 +4666,10 @@
              */
             SourceMapGenerator.prototype.addMapping =
               function SourceMapGenerator_addMapping(aArgs) {
-                var generated = util$1.getArg(aArgs, 'generated');
-                var original = util$1.getArg(aArgs, 'original', null);
-                var source = util$1.getArg(aArgs, 'source', null);
-                var name = util$1.getArg(aArgs, 'name', null);
+                var generated = util.getArg(aArgs, 'generated');
+                var original = util.getArg(aArgs, 'original', null);
+                var source = util.getArg(aArgs, 'source', null);
+                var name = util.getArg(aArgs, 'name', null);
 
                 if (!this._skipValidation) {
                   this._validateMapping(generated, original, source, name);
@@ -4706,7 +4706,7 @@
               function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
                 var source = aSourceFile;
                 if (this._sourceRoot != null) {
-                  source = util$1.relative(this._sourceRoot, source);
+                  source = util.relative(this._sourceRoot, source);
                 }
 
                 if (aSourceContent != null) {
@@ -4715,11 +4715,11 @@
                   if (!this._sourcesContents) {
                     this._sourcesContents = Object.create(null);
                   }
-                  this._sourcesContents[util$1.toSetString(source)] = aSourceContent;
+                  this._sourcesContents[util.toSetString(source)] = aSourceContent;
                 } else if (this._sourcesContents) {
                   // Remove the source file from the _sourcesContents map.
                   // If the _sourcesContents map is empty, set the property to null.
-                  delete this._sourcesContents[util$1.toSetString(source)];
+                  delete this._sourcesContents[util.toSetString(source)];
                   if (Object.keys(this._sourcesContents).length === 0) {
                     this._sourcesContents = null;
                   }
@@ -4758,7 +4758,7 @@
                 var sourceRoot = this._sourceRoot;
                 // Make "sourceFile" relative if an absolute Url is passed.
                 if (sourceRoot != null) {
-                  sourceFile = util$1.relative(sourceRoot, sourceFile);
+                  sourceFile = util.relative(sourceRoot, sourceFile);
                 }
                 // Applying the SourceMap can add and remove items from the sources and
                 // the names array.
@@ -4777,10 +4777,10 @@
                       // Copy mapping
                       mapping.source = original.source;
                       if (aSourceMapPath != null) {
-                        mapping.source = util$1.join(aSourceMapPath, mapping.source);
+                        mapping.source = util.join(aSourceMapPath, mapping.source);
                       }
                       if (sourceRoot != null) {
-                        mapping.source = util$1.relative(sourceRoot, mapping.source);
+                        mapping.source = util.relative(sourceRoot, mapping.source);
                       }
                       mapping.originalLine = original.line;
                       mapping.originalColumn = original.column;
@@ -4809,10 +4809,10 @@
                   var content = aSourceMapConsumer.sourceContentFor(sourceFile);
                   if (content != null) {
                     if (aSourceMapPath != null) {
-                      sourceFile = util$1.join(aSourceMapPath, sourceFile);
+                      sourceFile = util.join(aSourceMapPath, sourceFile);
                     }
                     if (sourceRoot != null) {
-                      sourceFile = util$1.relative(sourceRoot, sourceFile);
+                      sourceFile = util.relative(sourceRoot, sourceFile);
                     }
                     this.setSourceContent(sourceFile, content);
                   }
@@ -4901,7 +4901,7 @@
                   }
                   else {
                     if (i > 0) {
-                      if (!util$1.compareByGeneratedPositionsInflated(mapping, mappings[i - 1])) {
+                      if (!util.compareByGeneratedPositionsInflated(mapping, mappings[i - 1])) {
                         continue;
                       }
                       next += ',';
@@ -4946,9 +4946,9 @@
                     return null;
                   }
                   if (aSourceRoot != null) {
-                    source = util$1.relative(aSourceRoot, source);
+                    source = util.relative(aSourceRoot, source);
                   }
-                  var key = util$1.toSetString(source);
+                  var key = util.toSetString(source);
                   return Object.prototype.hasOwnProperty.call(this._sourcesContents, key)
                     ? this._sourcesContents[key]
                     : null;
@@ -5245,7 +5245,7 @@
             function SourceMapConsumer(aSourceMap, aSourceMapURL) {
               var sourceMap = aSourceMap;
               if (typeof aSourceMap === 'string') {
-                sourceMap = util$1.parseSourceMapInput(aSourceMap);
+                sourceMap = util.parseSourceMapInput(aSourceMap);
               }
 
               return sourceMap.sections != null
@@ -5376,7 +5376,7 @@
                 var sourceRoot = this.sourceRoot;
                 mappings.map(function (mapping) {
                   var source = mapping.source === null ? null : this._sources.at(mapping.source);
-                  source = util$1.computeSourceURL(sourceRoot, source, this._sourceMapURL);
+                  source = util.computeSourceURL(sourceRoot, source, this._sourceMapURL);
                   return {
                     source: source,
                     generatedLine: mapping.generatedLine,
@@ -5412,16 +5412,16 @@
              */
             SourceMapConsumer.prototype.allGeneratedPositionsFor =
               function SourceMapConsumer_allGeneratedPositionsFor(aArgs) {
-                var line = util$1.getArg(aArgs, 'line');
+                var line = util.getArg(aArgs, 'line');
 
                 // When there is no exact match, BasicSourceMapConsumer.prototype._findMapping
                 // returns the index of the closest mapping less than the needle. By
                 // setting needle.originalColumn to 0, we thus find the last mapping for
                 // the given line, provided such a mapping exists.
                 var needle = {
-                  source: util$1.getArg(aArgs, 'source'),
+                  source: util.getArg(aArgs, 'source'),
                   originalLine: line,
-                  originalColumn: util$1.getArg(aArgs, 'column', 0)
+                  originalColumn: util.getArg(aArgs, 'column', 0)
                 };
 
                 needle.source = this._findSourceIndex(needle.source);
@@ -5435,7 +5435,7 @@
                                               this._originalMappings,
                                               "originalLine",
                                               "originalColumn",
-                                              util$1.compareByOriginalPositions,
+                                              util.compareByOriginalPositions,
                                               binarySearch.LEAST_UPPER_BOUND);
                 if (index >= 0) {
                   var mapping = this._originalMappings[index];
@@ -5449,9 +5449,9 @@
                     // the line we found.
                     while (mapping && mapping.originalLine === originalLine) {
                       mappings.push({
-                        line: util$1.getArg(mapping, 'generatedLine', null),
-                        column: util$1.getArg(mapping, 'generatedColumn', null),
-                        lastColumn: util$1.getArg(mapping, 'lastGeneratedColumn', null)
+                        line: util.getArg(mapping, 'generatedLine', null),
+                        column: util.getArg(mapping, 'generatedColumn', null),
+                        lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
                       });
 
                       mapping = this._originalMappings[++index];
@@ -5467,9 +5467,9 @@
                            mapping.originalLine === line &&
                            mapping.originalColumn == originalColumn) {
                       mappings.push({
-                        line: util$1.getArg(mapping, 'generatedLine', null),
-                        column: util$1.getArg(mapping, 'generatedColumn', null),
-                        lastColumn: util$1.getArg(mapping, 'lastGeneratedColumn', null)
+                        line: util.getArg(mapping, 'generatedLine', null),
+                        column: util.getArg(mapping, 'generatedColumn', null),
+                        lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
                       });
 
                       mapping = this._originalMappings[++index];
@@ -5519,18 +5519,18 @@
             function BasicSourceMapConsumer(aSourceMap, aSourceMapURL) {
               var sourceMap = aSourceMap;
               if (typeof aSourceMap === 'string') {
-                sourceMap = util$1.parseSourceMapInput(aSourceMap);
+                sourceMap = util.parseSourceMapInput(aSourceMap);
               }
 
-              var version = util$1.getArg(sourceMap, 'version');
-              var sources = util$1.getArg(sourceMap, 'sources');
+              var version = util.getArg(sourceMap, 'version');
+              var sources = util.getArg(sourceMap, 'sources');
               // Sass 3.3 leaves out the 'names' array, so we deviate from the spec (which
               // requires the array) to play nice here.
-              var names = util$1.getArg(sourceMap, 'names', []);
-              var sourceRoot = util$1.getArg(sourceMap, 'sourceRoot', null);
-              var sourcesContent = util$1.getArg(sourceMap, 'sourcesContent', null);
-              var mappings = util$1.getArg(sourceMap, 'mappings');
-              var file = util$1.getArg(sourceMap, 'file', null);
+              var names = util.getArg(sourceMap, 'names', []);
+              var sourceRoot = util.getArg(sourceMap, 'sourceRoot', null);
+              var sourcesContent = util.getArg(sourceMap, 'sourcesContent', null);
+              var mappings = util.getArg(sourceMap, 'mappings');
+              var file = util.getArg(sourceMap, 'file', null);
 
               // Once again, Sass deviates from the spec and supplies the version as a
               // string rather than a number, so we use loose equality checking here.
@@ -5539,7 +5539,7 @@
               }
 
               if (sourceRoot) {
-                sourceRoot = util$1.normalize(sourceRoot);
+                sourceRoot = util.normalize(sourceRoot);
               }
 
               sources = sources
@@ -5547,14 +5547,14 @@
                 // Some source maps produce relative source paths like "./foo.js" instead of
                 // "foo.js".  Normalize these first so that future comparisons will succeed.
                 // See bugzil.la/1090768.
-                .map(util$1.normalize)
+                .map(util.normalize)
                 // Always ensure that absolute sources are internally stored relative to
                 // the source root, if the source root is absolute. Not doing this would
                 // be particularly problematic when the source root is a prefix of the
                 // source (valid, but why??). See github issue #199 and bugzil.la/1188982.
                 .map(function (source) {
-                  return sourceRoot && util$1.isAbsolute(sourceRoot) && util$1.isAbsolute(source)
-                    ? util$1.relative(sourceRoot, source)
+                  return sourceRoot && util.isAbsolute(sourceRoot) && util.isAbsolute(source)
+                    ? util.relative(sourceRoot, source)
                     : source;
                 });
 
@@ -5566,7 +5566,7 @@
               this._sources = ArraySet$2.fromArray(sources, true);
 
               this._absoluteSources = this._sources.toArray().map(function (s) {
-                return util$1.computeSourceURL(sourceRoot, s, aSourceMapURL);
+                return util.computeSourceURL(sourceRoot, s, aSourceMapURL);
               });
 
               this.sourceRoot = sourceRoot;
@@ -5586,7 +5586,7 @@
             BasicSourceMapConsumer.prototype._findSourceIndex = function(aSource) {
               var relativeSource = aSource;
               if (this.sourceRoot != null) {
-                relativeSource = util$1.relative(this.sourceRoot, relativeSource);
+                relativeSource = util.relative(this.sourceRoot, relativeSource);
               }
 
               if (this._sources.has(relativeSource)) {
@@ -5626,7 +5626,7 @@
                 smc.file = aSourceMap._file;
                 smc._sourceMapURL = aSourceMapURL;
                 smc._absoluteSources = smc._sources.toArray().map(function (s) {
-                  return util$1.computeSourceURL(smc.sourceRoot, s, aSourceMapURL);
+                  return util.computeSourceURL(smc.sourceRoot, s, aSourceMapURL);
                 });
 
                 // Because we are modifying the entries (by converting string sources and
@@ -5659,7 +5659,7 @@
                   destGeneratedMappings.push(destMapping);
                 }
 
-                quickSort$1(smc.__originalMappings, util$1.compareByOriginalPositions);
+                quickSort$1(smc.__originalMappings, util.compareByOriginalPositions);
 
                 return smc;
               };
@@ -5792,10 +5792,10 @@
                   }
                 }
 
-                quickSort$1(generatedMappings, util$1.compareByGeneratedPositionsDeflated);
+                quickSort$1(generatedMappings, util.compareByGeneratedPositionsDeflated);
                 this.__generatedMappings = generatedMappings;
 
-                quickSort$1(originalMappings, util$1.compareByOriginalPositions);
+                quickSort$1(originalMappings, util.compareByOriginalPositions);
                 this.__originalMappings = originalMappings;
               };
 
@@ -5877,8 +5877,8 @@
             BasicSourceMapConsumer.prototype.originalPositionFor =
               function SourceMapConsumer_originalPositionFor(aArgs) {
                 var needle = {
-                  generatedLine: util$1.getArg(aArgs, 'line'),
-                  generatedColumn: util$1.getArg(aArgs, 'column')
+                  generatedLine: util.getArg(aArgs, 'line'),
+                  generatedColumn: util.getArg(aArgs, 'column')
                 };
 
                 var index = this._findMapping(
@@ -5886,27 +5886,27 @@
                   this._generatedMappings,
                   "generatedLine",
                   "generatedColumn",
-                  util$1.compareByGeneratedPositionsDeflated,
-                  util$1.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
+                  util.compareByGeneratedPositionsDeflated,
+                  util.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
                 );
 
                 if (index >= 0) {
                   var mapping = this._generatedMappings[index];
 
                   if (mapping.generatedLine === needle.generatedLine) {
-                    var source = util$1.getArg(mapping, 'source', null);
+                    var source = util.getArg(mapping, 'source', null);
                     if (source !== null) {
                       source = this._sources.at(source);
-                      source = util$1.computeSourceURL(this.sourceRoot, source, this._sourceMapURL);
+                      source = util.computeSourceURL(this.sourceRoot, source, this._sourceMapURL);
                     }
-                    var name = util$1.getArg(mapping, 'name', null);
+                    var name = util.getArg(mapping, 'name', null);
                     if (name !== null) {
                       name = this._names.at(name);
                     }
                     return {
                       source: source,
-                      line: util$1.getArg(mapping, 'originalLine', null),
-                      column: util$1.getArg(mapping, 'originalColumn', null),
+                      line: util.getArg(mapping, 'originalLine', null),
+                      column: util.getArg(mapping, 'originalColumn', null),
                       name: name
                     };
                   }
@@ -5951,12 +5951,12 @@
 
                 var relativeSource = aSource;
                 if (this.sourceRoot != null) {
-                  relativeSource = util$1.relative(this.sourceRoot, relativeSource);
+                  relativeSource = util.relative(this.sourceRoot, relativeSource);
                 }
 
                 var url;
                 if (this.sourceRoot != null
-                    && (url = util$1.urlParse(this.sourceRoot))) {
+                    && (url = util.urlParse(this.sourceRoot))) {
                   // XXX: file:// URIs and absolute paths lead to unexpected behavior for
                   // many users. We can help them out when they expect file:// URIs to
                   // behave like it would if they were running a local HTTP server. See
@@ -6010,7 +6010,7 @@
              */
             BasicSourceMapConsumer.prototype.generatedPositionFor =
               function SourceMapConsumer_generatedPositionFor(aArgs) {
-                var source = util$1.getArg(aArgs, 'source');
+                var source = util.getArg(aArgs, 'source');
                 source = this._findSourceIndex(source);
                 if (source < 0) {
                   return {
@@ -6022,8 +6022,8 @@
 
                 var needle = {
                   source: source,
-                  originalLine: util$1.getArg(aArgs, 'line'),
-                  originalColumn: util$1.getArg(aArgs, 'column')
+                  originalLine: util.getArg(aArgs, 'line'),
+                  originalColumn: util.getArg(aArgs, 'column')
                 };
 
                 var index = this._findMapping(
@@ -6031,8 +6031,8 @@
                   this._originalMappings,
                   "originalLine",
                   "originalColumn",
-                  util$1.compareByOriginalPositions,
-                  util$1.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
+                  util.compareByOriginalPositions,
+                  util.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
                 );
 
                 if (index >= 0) {
@@ -6040,9 +6040,9 @@
 
                   if (mapping.source === needle.source) {
                     return {
-                      line: util$1.getArg(mapping, 'generatedLine', null),
-                      column: util$1.getArg(mapping, 'generatedColumn', null),
-                      lastColumn: util$1.getArg(mapping, 'lastGeneratedColumn', null)
+                      line: util.getArg(mapping, 'generatedLine', null),
+                      column: util.getArg(mapping, 'generatedColumn', null),
+                      lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
                     };
                   }
                 }
@@ -6108,11 +6108,11 @@
             function IndexedSourceMapConsumer(aSourceMap, aSourceMapURL) {
               var sourceMap = aSourceMap;
               if (typeof aSourceMap === 'string') {
-                sourceMap = util$1.parseSourceMapInput(aSourceMap);
+                sourceMap = util.parseSourceMapInput(aSourceMap);
               }
 
-              var version = util$1.getArg(sourceMap, 'version');
-              var sections = util$1.getArg(sourceMap, 'sections');
+              var version = util.getArg(sourceMap, 'version');
+              var sections = util.getArg(sourceMap, 'sections');
 
               if (version != this._version) {
                 throw new Error('Unsupported version: ' + version);
@@ -6131,9 +6131,9 @@
                   // See https://github.com/mozilla/source-map/issues/16
                   throw new Error('Support for url field in sections not implemented.');
                 }
-                var offset = util$1.getArg(s, 'offset');
-                var offsetLine = util$1.getArg(offset, 'line');
-                var offsetColumn = util$1.getArg(offset, 'column');
+                var offset = util.getArg(s, 'offset');
+                var offsetLine = util.getArg(offset, 'line');
+                var offsetColumn = util.getArg(offset, 'column');
 
                 if (offsetLine < lastOffset.line ||
                     (offsetLine === lastOffset.line && offsetColumn < lastOffset.column)) {
@@ -6148,7 +6148,7 @@
                     generatedLine: offsetLine + 1,
                     generatedColumn: offsetColumn + 1
                   },
-                  consumer: new SourceMapConsumer(util$1.getArg(s, 'map'), aSourceMapURL)
+                  consumer: new SourceMapConsumer(util.getArg(s, 'map'), aSourceMapURL)
                 }
               });
             }
@@ -6198,8 +6198,8 @@
             IndexedSourceMapConsumer.prototype.originalPositionFor =
               function IndexedSourceMapConsumer_originalPositionFor(aArgs) {
                 var needle = {
-                  generatedLine: util$1.getArg(aArgs, 'line'),
-                  generatedColumn: util$1.getArg(aArgs, 'column')
+                  generatedLine: util.getArg(aArgs, 'line'),
+                  generatedColumn: util.getArg(aArgs, 'column')
                 };
 
                 // Find the section containing the generated position we're trying to map
@@ -6295,7 +6295,7 @@
 
                   // Only consider this section if the requested source is in the list of
                   // sources of the consumer.
-                  if (section.consumer._findSourceIndex(util$1.getArg(aArgs, 'source')) === -1) {
+                  if (section.consumer._findSourceIndex(util.getArg(aArgs, 'source')) === -1) {
                     continue;
                   }
                   var generatedPosition = section.consumer.generatedPositionFor(aArgs);
@@ -6334,7 +6334,7 @@
                     var mapping = sectionMappings[j];
 
                     var source = section.consumer._sources.at(mapping.source);
-                    source = util$1.computeSourceURL(section.consumer.sourceRoot, source, this._sourceMapURL);
+                    source = util.computeSourceURL(section.consumer.sourceRoot, source, this._sourceMapURL);
                     this._sources.add(source);
                     source = this._sources.indexOf(source);
 
@@ -6369,8 +6369,8 @@
                   }
                 }
 
-                quickSort$1(this.__generatedMappings, util$1.compareByGeneratedPositionsDeflated);
-                quickSort$1(this.__originalMappings, util$1.compareByOriginalPositions);
+                quickSort$1(this.__generatedMappings, util.compareByGeneratedPositionsDeflated);
+                quickSort$1(this.__originalMappings, util.compareByOriginalPositions);
               };
 
             var IndexedSourceMapConsumer_1 = IndexedSourceMapConsumer;
@@ -6522,7 +6522,7 @@
                   var content = aSourceMapConsumer.sourceContentFor(sourceFile);
                   if (content != null) {
                     if (aRelativePath != null) {
-                      sourceFile = util$1.join(aRelativePath, sourceFile);
+                      sourceFile = util.join(aRelativePath, sourceFile);
                     }
                     node.setSourceContent(sourceFile, content);
                   }
@@ -6535,7 +6535,7 @@
                     node.add(code);
                   } else {
                     var source = aRelativePath
-                      ? util$1.join(aRelativePath, mapping.source)
+                      ? util.join(aRelativePath, mapping.source)
                       : mapping.source;
                     node.add(new SourceNode(mapping.originalLine,
                                             mapping.originalColumn,
@@ -6671,7 +6671,7 @@
              */
             SourceNode.prototype.setSourceContent =
               function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
-                this.sourceContents[util$1.toSetString(aSourceFile)] = aSourceContent;
+                this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
               };
 
             /**
@@ -6690,7 +6690,7 @@
 
                 var sources = Object.keys(this.sourceContents);
                 for (var i = 0, len = sources.length; i < len; i++) {
-                  aFn(util$1.fromSetString(sources[i]), this.sourceContents[sources[i]]);
+                  aFn(util.fromSetString(sources[i]), this.sourceContents[sources[i]]);
                 }
               };
 
@@ -7073,29 +7073,29 @@
             });
 
             function mapSourcePosition(position) {
-              var sourceMap$$1 = sourceMapCache[position.source];
-              if (!sourceMap$$1) {
+              var sourceMap = sourceMapCache[position.source];
+              if (!sourceMap) {
                 // Call the (overrideable) retrieveSourceMap function to get the source map.
                 var urlAndMap = retrieveSourceMap(position.source);
                 if (urlAndMap) {
-                  sourceMap$$1 = sourceMapCache[position.source] = {
+                  sourceMap = sourceMapCache[position.source] = {
                     url: urlAndMap.url,
                     map: new SourceMapConsumer$2(urlAndMap.map)
                   };
 
                   // Load all sources stored inline with the source map into the file cache
                   // to pretend like they are already loaded. They may not exist on disk.
-                  if (sourceMap$$1.map.sourcesContent) {
-                    sourceMap$$1.map.sources.forEach(function(source, i) {
-                      var contents = sourceMap$$1.map.sourcesContent[i];
+                  if (sourceMap.map.sourcesContent) {
+                    sourceMap.map.sources.forEach(function(source, i) {
+                      var contents = sourceMap.map.sourcesContent[i];
                       if (contents) {
-                        var url = supportRelativeURL(sourceMap$$1.url, source);
+                        var url = supportRelativeURL(sourceMap.url, source);
                         fileContentsCache[url] = contents;
                       }
                     });
                   }
                 } else {
-                  sourceMap$$1 = sourceMapCache[position.source] = {
+                  sourceMap = sourceMapCache[position.source] = {
                     url: null,
                     map: null
                   };
@@ -7103,8 +7103,8 @@
               }
 
               // Resolve the source URL relative to the URL of the source map
-              if (sourceMap$$1 && sourceMap$$1.map && typeof sourceMap$$1.map.originalPositionFor === 'function') {
-                var originalPosition = sourceMap$$1.map.originalPositionFor(position);
+              if (sourceMap && sourceMap.map && typeof sourceMap.map.originalPositionFor === 'function') {
+                var originalPosition = sourceMap.map.originalPositionFor(position);
 
                 // Only return the original position if a matching line was found. If no
                 // matching line is found then we return position instead, which will cause
@@ -7113,7 +7113,7 @@
                 // location in the original file.
                 if (originalPosition.source !== null) {
                   originalPosition.source = supportRelativeURL(
-                    sourceMap$$1.url, originalPosition.source);
+                    sourceMap.url, originalPosition.source);
                   return originalPosition;
                 }
               }
@@ -7477,27 +7477,27 @@
               : url.URL;
 
             const pathToFileURL = function pathToFileURL(filePath) {
-                const fileUrl$$1 = new URL(fileUrl(filePath));
+                const fileUrl$1 = new URL(fileUrl(filePath));
                 if (!filePath.endsWith(path.sep)) {
-                  fileUrl$$1.pathname += '/';
+                  fileUrl$1.pathname += '/';
                 }
-                return fileUrl$$1;
+                return fileUrl$1;
               };
 
             function getDefaultBaseUrl() {
-              let url$$1;
+              let url;
 
               if (typeof location !== 'undefined') {
-                url$$1 = location.href.split('#')[0].split('?')[0];
-                const lastSepIndex = url$$1.lastIndexOf('/');
+                url = location.href.split('#')[0].split('?')[0];
+                const lastSepIndex = url.lastIndexOf('/');
                 if (lastSepIndex !== -1) {
-                  url$$1 = url$$1.slice(0, lastSepIndex + 1);
+                  url = url.slice(0, lastSepIndex + 1);
                 }
               } else if (isNode) {
-                url$$1 = pathToFileURL(process.cwd() + '/');
+                url = pathToFileURL(process.cwd() + '/');
               }
 
-              return url$$1;
+              return url;
             }
 
             const sourceMapSources = {};

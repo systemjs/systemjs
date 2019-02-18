@@ -72,14 +72,14 @@ export default [
       banner: nodeBanner,
       external: [
         'assert',
-        'file-url',
         'fs',
-        'is-builtin-module',
         'path',
-        'source-map-support',
-        'strip-shebang',
         'url',
         'vm',
+        'file-url',
+        'is-builtin-module',
+        'source-map-support',
+        'strip-shebang',
       ],
     },
     plugins: [replace({
@@ -89,12 +89,12 @@ export default [
   },
 
   // Extra bundles
-  ...extrasInputFiles.map(file => ({
-    input: `src/extras/${file}`,
+  ...extrasInputFiles.map(filename => ({
+    input: `src/extras/${filename}`,
     output: {
-      file: `dist/extras/${file}`,
+      file: `dist/extras/${filename}`,
       format: 'iife',
-      name: `systemjs.extras.${path.basename(file)}`,
+      name: `systemjs.extras.${path.basename(filename)}`,
       sourcemap: true,
       strict: false,
     },

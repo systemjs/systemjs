@@ -1650,7 +1650,7 @@
                 }
               }
 
-              function read$$1 (buf, i) {
+              function read (buf, i) {
                 if (indexSize === 1) {
                   return buf[i]
                 } else {
@@ -1662,7 +1662,7 @@
               if (dir) {
                 var foundIndex = -1;
                 for (i = byteOffset; i < arrLength; i++) {
-                  if (read$$1(arr, i) === read$$1(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+                  if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
                     if (foundIndex === -1) foundIndex = i;
                     if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
                   } else {
@@ -1675,7 +1675,7 @@
                 for (i = byteOffset; i >= 0; i--) {
                   var found = true;
                   for (var j = 0; j < valLength; j++) {
-                    if (read$$1(arr, i + j) !== read$$1(val, j)) {
+                    if (read(arr, i + j) !== read(val, j)) {
                       found = false;
                       break
                     }
@@ -1746,7 +1746,7 @@
               return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
             }
 
-            Buffer.prototype.write = function write$$1 (string, offset, length, encoding) {
+            Buffer.prototype.write = function write (string, offset, length, encoding) {
               // Buffer#write(string)
               if (offset === undefined) {
                 encoding = 'utf8';
@@ -4207,7 +4207,7 @@
              * Decode a single base 64 character code digit to an integer. Returns -1 on
              * failure.
              */
-            var decode$1 = function (charCode) {
+            var decode = function (charCode) {
               var bigA = 65;     // 'A'
               var bigZ = 90;     // 'Z'
 
@@ -4254,7 +4254,7 @@
 
             var base64 = {
             	encode: encode$1,
-            	decode: decode$1
+            	decode: decode
             };
 
             /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -4372,7 +4372,7 @@
              * Decodes the next base 64 VLQ value from the given string and returns the
              * value and the rest of the string via the out parameter.
              */
-            var decode$2 = function base64VLQ_decode(aStr, aIndex, aOutParam) {
+            var decode$1 = function base64VLQ_decode(aStr, aIndex, aOutParam) {
               var strLen = aStr.length;
               var result = 0;
               var shift = 0;
@@ -4400,7 +4400,7 @@
 
             var base64Vlq = {
             	encode: encode$2,
-            	decode: decode$2
+            	decode: decode$1
             };
 
             var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -7520,19 +7520,19 @@
 
             var retrieveFile = handlerExec(retrieveFileHandlers);
 
-            retrieveFileHandlers.push(function(path$$1) {
+            retrieveFileHandlers.push(function(path) {
               // Trim the path to make sure there is no extra whitespace.
-              path$$1 = path$$1.trim();
-              if (/^file:/.test(path$$1)) {
+              path = path.trim();
+              if (/^file:/.test(path)) {
                 // existsSync/readFileSync can't handle file protocol, but once stripped, it works
-                path$$1 = path$$1.replace(/file:\/\/\/(\w:)?/, function(protocol, drive) {
+                path = path.replace(/file:\/\/\/(\w:)?/, function(protocol, drive) {
                   return drive ?
                     '' : // file:///C:/dir/file -> C:/dir/file
                     '/'; // file:///root-dir/file -> /root-dir/file
                 });
               }
-              if (path$$1 in fileContentsCache) {
-                return fileContentsCache[path$$1];
+              if (path in fileContentsCache) {
+                return fileContentsCache[path];
               }
 
               var contents = '';
@@ -7540,20 +7540,20 @@
                 if (!fs) {
                   // Use SJAX if we are in the browser
                   var xhr = new XMLHttpRequest();
-                  xhr.open('GET', path$$1, /** async */ false);
+                  xhr.open('GET', path, /** async */ false);
                   xhr.send(null);
                   if (xhr.readyState === 4 && xhr.status === 200) {
                     contents = xhr.responseText;
                   }
-                } else if (fs.existsSync(path$$1)) {
+                } else if (fs.existsSync(path)) {
                   // Otherwise, use the filesystem
-                  contents = fs.readFileSync(path$$1, 'utf8');
+                  contents = fs.readFileSync(path, 'utf8');
                 }
               } catch (er) {
                 /* ignore any errors */
               }
 
-              return fileContentsCache[path$$1] = contents;
+              return fileContentsCache[path] = contents;
             });
 
             // Support URLs relative to a directory, but be careful about a protocol prefix
@@ -7636,29 +7636,29 @@
             });
 
             function mapSourcePosition(position) {
-              var sourceMap$$1 = sourceMapCache[position.source];
-              if (!sourceMap$$1) {
+              var sourceMap = sourceMapCache[position.source];
+              if (!sourceMap) {
                 // Call the (overrideable) retrieveSourceMap function to get the source map.
                 var urlAndMap = retrieveSourceMap(position.source);
                 if (urlAndMap) {
-                  sourceMap$$1 = sourceMapCache[position.source] = {
+                  sourceMap = sourceMapCache[position.source] = {
                     url: urlAndMap.url,
                     map: new SourceMapConsumer$2(urlAndMap.map)
                   };
 
                   // Load all sources stored inline with the source map into the file cache
                   // to pretend like they are already loaded. They may not exist on disk.
-                  if (sourceMap$$1.map.sourcesContent) {
-                    sourceMap$$1.map.sources.forEach(function(source, i) {
-                      var contents = sourceMap$$1.map.sourcesContent[i];
+                  if (sourceMap.map.sourcesContent) {
+                    sourceMap.map.sources.forEach(function(source, i) {
+                      var contents = sourceMap.map.sourcesContent[i];
                       if (contents) {
-                        var url = supportRelativeURL(sourceMap$$1.url, source);
+                        var url = supportRelativeURL(sourceMap.url, source);
                         fileContentsCache[url] = contents;
                       }
                     });
                   }
                 } else {
-                  sourceMap$$1 = sourceMapCache[position.source] = {
+                  sourceMap = sourceMapCache[position.source] = {
                     url: null,
                     map: null
                   };
@@ -7666,8 +7666,8 @@
               }
 
               // Resolve the source URL relative to the URL of the source map
-              if (sourceMap$$1 && sourceMap$$1.map && typeof sourceMap$$1.map.originalPositionFor === 'function') {
-                var originalPosition = sourceMap$$1.map.originalPositionFor(position);
+              if (sourceMap && sourceMap.map && typeof sourceMap.map.originalPositionFor === 'function') {
+                var originalPosition = sourceMap.map.originalPositionFor(position);
 
                 // Only return the original position if a matching line was found. If no
                 // matching line is found then we return position instead, which will cause
@@ -7676,7 +7676,7 @@
                 // location in the original file.
                 if (originalPosition.source !== null) {
                   originalPosition.source = supportRelativeURL(
-                    sourceMap$$1.url, originalPosition.source);
+                    sourceMap.url, originalPosition.source);
                   return originalPosition;
                 }
               }
@@ -8043,11 +8043,11 @@
               : require$$0$1.URL;
 
             const pathToFileURL = function pathToFileURL(filePath) {
-                const fileUrl$$1 = new URL$1(fileUrl(filePath));
+                const fileUrl$1 = new URL$1(fileUrl(filePath));
                 if (!filePath.endsWith(path.sep)) {
-                  fileUrl$$1.pathname += '/';
+                  fileUrl$1.pathname += '/';
                 }
-                return fileUrl$$1;
+                return fileUrl$1;
               };
 
             function getDefaultBaseUrl() {
@@ -8207,15 +8207,15 @@
               return { imports: imports, scopes: scopes, baseUrl: baseUrl };
             }
 
-            function getMatch (path$$1, matchObj) {
-              if (matchObj[path$$1])
-                return path$$1;
-              let sepIndex = path$$1.length;
+            function getMatch (path, matchObj) {
+              if (matchObj[path])
+                return path;
+              let sepIndex = path.length;
               do {
-                const segment = path$$1.slice(0, sepIndex + 1);
+                const segment = path.slice(0, sepIndex + 1);
                 if (segment in matchObj)
                   return segment;
-              } while ((sepIndex = path$$1.lastIndexOf('/', sepIndex - 1)) !== -1)
+              } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
             }
 
             function applyPackages (id, packages, baseUrl) {
@@ -8275,15 +8275,15 @@
              * @param {string} baseUrl
              * @constructor
              */
-            function SystemJS({ baseUrl: baseUrl$$1 } = {}) {
+            function SystemJS({ baseUrl } = {}) {
               this[REGISTRY] = Object.create(null);
 
-              baseUrl$$1 = new URL$1(baseUrl$$1 || DEFAULT_BASEURL);
-              if (!baseUrl$$1.pathname.endsWith('/')) {
-                baseUrl$$1.pathname += '/';
+              baseUrl = new URL$1(baseUrl || DEFAULT_BASEURL);
+              if (!baseUrl.pathname.endsWith('/')) {
+                baseUrl.pathname += '/';
               }
 
-              Object.defineProperty(this,'baseUrl', { value: baseUrl$$1.href });
+              Object.defineProperty(this,'baseUrl', { value: baseUrl.href });
             }
 
             const systemJSPrototype = SystemJS.prototype;
@@ -8612,8 +8612,8 @@
             function getGlobalProp () {
               let cnt = 0;
               let lastProp;
-              for (let p in commonjsGlobal) {
-                if (!commonjsGlobal.hasOwnProperty(p))
+              for (let p in envGlobal) {
+                if (!envGlobal.hasOwnProperty(p))
                   continue;
                 if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
                   return p;
@@ -8628,8 +8628,8 @@
               // alternatively Object.keys(global).pop()
               // but this may be faster (pending benchmarks)
               firstGlobalProp = secondGlobalProp = undefined;
-              for (let p in commonjsGlobal) {
-                if (!commonjsGlobal.hasOwnProperty(p))
+              for (let p in envGlobal) {
+                if (!envGlobal.hasOwnProperty(p))
                   continue;
                 if (!firstGlobalProp)
                   firstGlobalProp = p;
@@ -8664,7 +8664,7 @@
 
               let globalExport;
               try {
-                globalExport = commonjsGlobal[globalProp];
+                globalExport = envGlobal[globalProp];
               }
               catch (e) {
                 return emptyInstantiation;
@@ -17107,7 +17107,7 @@
               Z_HUFFMAN_ONLY$1=           2,
               Z_RLE$1=                    3,
               Z_FIXED$2=                  4,
-              Z_DEFAULT_STRATEGY$1=       0,
+              Z_DEFAULT_STRATEGY=       0,
 
               /* Possible values of the data_type field (though see inflate()) */
               Z_BINARY$1=                 0,
@@ -17360,7 +17360,7 @@
                         Z_HUFFMAN_ONLY: Z_HUFFMAN_ONLY$1,
                         Z_RLE: Z_RLE$1,
                         Z_FIXED: Z_FIXED$2,
-                        Z_DEFAULT_STRATEGY: Z_DEFAULT_STRATEGY$1,
+                        Z_DEFAULT_STRATEGY: Z_DEFAULT_STRATEGY,
                         Z_BINARY: Z_BINARY$1,
                         Z_TEXT: Z_TEXT$1,
                         Z_UNKNOWN: Z_UNKNOWN$2,
@@ -22728,9 +22728,9 @@
              * @param   String  encoding  Target encoding
              * @return  String
              */
-            Body.prototype._convert = function(encoding$$1) {
+            Body.prototype._convert = function(encoding) {
 
-            	encoding$$1 = encoding$$1 || 'utf-8';
+            	encoding = encoding || 'utf-8';
 
             	var ct = this.headers.get('content-type');
             	var charset = 'utf-8';
@@ -22790,7 +22790,7 @@
             	// turn raw buffers into a single utf-8 buffer
             	return convert$1(
             		Buffer.concat(this._raw)
-            		, encoding$$1
+            		, encoding
             		, charset
             	);
 
@@ -22990,7 +22990,7 @@
              * @param   Object  opts  Response options
              * @return  Void
              */
-            function Response(body$$1, opts) {
+            function Response(body$1, opts) {
 
             	opts = opts || {};
 
@@ -23000,7 +23000,7 @@
             	this.headers = new headers(opts.headers);
             	this.ok = this.status >= 200 && this.status < 300;
 
-            	body.call(this, body$$1, opts);
+            	body.call(this, body$1, opts);
 
             }
 
@@ -23157,49 +23157,49 @@
             		}
 
             		// normalize headers
-            		var headers$$1 = new headers(options.headers);
+            		var headers$1 = new headers(options.headers);
 
             		if (options.compress) {
-            			headers$$1.set('accept-encoding', 'gzip,deflate');
+            			headers$1.set('accept-encoding', 'gzip,deflate');
             		}
 
-            		if (!headers$$1.has('user-agent')) {
-            			headers$$1.set('user-agent', 'node-fetch/1.0 (+https://github.com/bitinn/node-fetch)');
+            		if (!headers$1.has('user-agent')) {
+            			headers$1.set('user-agent', 'node-fetch/1.0 (+https://github.com/bitinn/node-fetch)');
             		}
 
-            		if (!headers$$1.has('connection') && !options.agent) {
-            			headers$$1.set('connection', 'close');
+            		if (!headers$1.has('connection') && !options.agent) {
+            			headers$1.set('connection', 'close');
             		}
 
-            		if (!headers$$1.has('accept')) {
-            			headers$$1.set('accept', '*/*');
+            		if (!headers$1.has('accept')) {
+            			headers$1.set('accept', '*/*');
             		}
 
             		// detect form data input from form-data module, this hack avoid the need to pass multipart header manually
-            		if (!headers$$1.has('content-type') && options.body && typeof options.body.getBoundary === 'function') {
-            			headers$$1.set('content-type', 'multipart/form-data; boundary=' + options.body.getBoundary());
+            		if (!headers$1.has('content-type') && options.body && typeof options.body.getBoundary === 'function') {
+            			headers$1.set('content-type', 'multipart/form-data; boundary=' + options.body.getBoundary());
             		}
 
             		// bring node-fetch closer to browser behavior by setting content-length automatically
-            		if (!headers$$1.has('content-length') && /post|put|patch|delete/i.test(options.method)) {
+            		if (!headers$1.has('content-length') && /post|put|patch|delete/i.test(options.method)) {
             			if (typeof options.body === 'string') {
-            				headers$$1.set('content-length', Buffer.byteLength(options.body));
+            				headers$1.set('content-length', Buffer.byteLength(options.body));
             			// detect form data input from form-data module, this hack avoid the need to add content-length header manually
             			} else if (options.body && typeof options.body.getLengthSync === 'function') {
             				// for form-data 1.x
             				if (options.body._lengthRetrievers && options.body._lengthRetrievers.length == 0) {
-            					headers$$1.set('content-length', options.body.getLengthSync().toString());
+            					headers$1.set('content-length', options.body.getLengthSync().toString());
             				// for form-data 2.x
             				} else if (options.body.hasKnownLength && options.body.hasKnownLength()) {
-            					headers$$1.set('content-length', options.body.getLengthSync().toString());
+            					headers$1.set('content-length', options.body.getLengthSync().toString());
             				}
             			// this is only necessary for older nodejs releases (before iojs merge)
             			} else if (options.body === undefined || options.body === null) {
-            				headers$$1.set('content-length', '0');
+            				headers$1.set('content-length', '0');
             			}
             		}
 
-            		options.headers = headers$$1.raw();
+            		options.headers = headers$1.raw();
 
             		// http.request only support string as host header, this hack make custom host header possible
             		if (options.headers.host) {
@@ -23260,18 +23260,18 @@
             			}
 
             			// normalize location header for manual redirect mode
-            			var headers$$1 = new headers(res.headers);
-            			if (options.redirect === 'manual' && headers$$1.has('location')) {
-            				headers$$1.set('location', resolve_url(options.url, headers$$1.get('location')));
+            			var headers$1 = new headers(res.headers);
+            			if (options.redirect === 'manual' && headers$1.has('location')) {
+            				headers$1.set('location', resolve_url(options.url, headers$1.get('location')));
             			}
 
             			// prepare response
-            			var body$$1 = res.pipe(new Stream.PassThrough());
+            			var body = res.pipe(new Stream.PassThrough());
             			var response_options = {
             				url: options.url
             				, status: res.statusCode
             				, statusText: res.statusMessage
-            				, headers: headers$$1
+            				, headers: headers$1
             				, size: options.size
             				, timeout: options.timeout
             			};
@@ -23285,19 +23285,19 @@
             			// 3. no content-encoding header
             			// 4. no content response (204)
             			// 5. content not modified response (304)
-            			if (!options.compress || options.method === 'HEAD' || !headers$$1.has('content-encoding') || res.statusCode === 204 || res.statusCode === 304) {
-            				output = new response(body$$1, response_options);
+            			if (!options.compress || options.method === 'HEAD' || !headers$1.has('content-encoding') || res.statusCode === 204 || res.statusCode === 304) {
+            				output = new response(body, response_options);
             				resolve(output);
             				return;
             			}
 
             			// otherwise, check for gzip or deflate
-            			var name = headers$$1.get('content-encoding');
+            			var name = headers$1.get('content-encoding');
 
             			// for gzip
             			if (name == 'gzip' || name == 'x-gzip') {
-            				body$$1 = body$$1.pipe(zlib.createGunzip());
-            				output = new response(body$$1, response_options);
+            				body = body.pipe(zlib.createGunzip());
+            				output = new response(body, response_options);
             				resolve(output);
             				return;
 
@@ -23309,18 +23309,18 @@
             				raw.once('data', function(chunk) {
             					// see http://stackoverflow.com/questions/37519828
             					if ((chunk[0] & 0x0F) === 0x08) {
-            						body$$1 = body$$1.pipe(zlib.createInflate());
+            						body = body.pipe(zlib.createInflate());
             					} else {
-            						body$$1 = body$$1.pipe(zlib.createInflateRaw());
+            						body = body.pipe(zlib.createInflateRaw());
             					}
-            					output = new response(body$$1, response_options);
+            					output = new response(body, response_options);
             					resolve(output);
             				});
             				return;
             			}
 
             			// otherwise, use response as-is
-            			output = new response(body$$1, response_options);
+            			output = new response(body, response_options);
             			resolve(output);
             			return;
             		});
@@ -23401,9 +23401,9 @@
               : require$$0$1.URL;
 
 
-            const pathToFileURL$1 = function pathToFileURL(path$$1) {
-                const theUrl = new URL$2(fileUrl(path$$1));
-                if (path$$1.endsWith(path.sep)) {
+            const pathToFileURL$1 = function pathToFileURL(path$1) {
+                const theUrl = new URL$2(fileUrl(path$1));
+                if (path$1.endsWith(path.sep)) {
                   theUrl.pathname += '/';
                 }
                 return theUrl;
@@ -23412,10 +23412,10 @@
             const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
 
 
-            function fileExists(path$$1) {
+            function fileExists(path) {
               try {
-                require$$3.accessSync(path$$1);
-                return require$$3.statSync(path$$1).isFile();
+                require$$3.accessSync(path);
+                return require$$3.statSync(path).isFile();
               } catch (err) {
                 return false;
               }
@@ -23469,11 +23469,11 @@
             }
 
 
-            function locateImportMapNode(baseUrl$$1, importMapUrl) {
+            function locateImportMapNode(baseUrl, importMapUrl) {
               if (isURL(importMapUrl)) {
                 importMapUrl = new URL$1(importMapUrl);
               } else {
-                importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl$$1);
+                importMapUrl = new URL$1('./systemjs-importmap.json', baseUrl);
               }
 
               if (fileExists(importMapUrl)) {
@@ -23484,11 +23484,11 @@
             }
 
 
-            function locateImportMap(baseUrl$$1, importMapUrl) {
+            function locateImportMap(baseUrl, importMapUrl) {
               if (isBrowser) {
                 return locateImportMapBrowser();
               } else if (isNode) {
-                return locateImportMapNode(baseUrl$$1, importMapUrl);
+                return locateImportMapNode(baseUrl, importMapUrl);
               }
             }
 
@@ -23509,8 +23509,8 @@
 
               return fetchImportMap(location).then(data => {
                 if (data) {
-                  const baseUrl$$1 = location instanceof URL$1 ? location.href : loader.baseUrl;
-                  return parseImportMap(data, baseUrl$$1);
+                  const baseUrl = location instanceof URL$1 ? location.href : loader.baseUrl;
+                  return parseImportMap(data, baseUrl);
                 } else {
                   return { imports: {}, scopes: {} };
                 }
@@ -23530,8 +23530,8 @@
 
 
             const constructor = systemJSPrototype.constructor;
-            function SystemJS$1({ baseUrl: baseUrl$$1, importMapUrl } = {}) {
-              constructor.call(this, { baseUrl: baseUrl$$1 });
+            function SystemJS$1({ baseUrl, importMapUrl } = {}) {
+              constructor.call(this, { baseUrl });
 
               this.registerRegistry = Object.create(null);
               const importMap = createImportMap(this, importMapUrl);
