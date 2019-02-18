@@ -1,7 +1,6 @@
 this.systemjs = this.systemjs || {};
 this.systemjs.extras = this.systemjs.extras || {};
-this.systemjs.extras.amd = this.systemjs.extras.amd || {};
-this.systemjs.extras.amd.js = (function () {
+this.systemjs.extras.amd = (function () {
 	var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 	/*

@@ -12,10 +12,10 @@
  * Only supports loading the first import map
  */
 
-import { global, URL, isBrowser, isNode, parseImportMap, resolveImportMap } from '../common.js';
+import { global, URL, isBrowser, isNode, isURL, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { fetch } from '../utils/fetch.js';
-import { fileExists, isURL } from './node-common.js';
+import { fileExists } from './node-common.js';
 
 
 function locateImportMapBrowser() {

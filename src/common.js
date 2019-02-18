@@ -34,6 +34,21 @@ export const pathToFileURL = url.pathToFileURL
     return fileUrl;
   };
 
+export function isURL(value) {
+  if (value instanceof URL) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      new URL(value);
+      return true;
+    } catch (err) {}
+  }
+
+  return false;
+}
+
 export const fileURLToPath = url.fileURLToPath
   ? url.fileURLToPath
   : function fileURLToPath(fileUrl) {

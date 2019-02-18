@@ -4,8 +4,6 @@
  * (Included by default in system.js build)
  */
 
-import { global } from '../common';
-
 const systemJSPrototype = System.constructor.prototype;
 
 // safari unpredictably lists some new globals first or second in object order

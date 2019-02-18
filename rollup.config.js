@@ -94,7 +94,7 @@ export default [
     output: {
       file: `dist/extras/${filename}`,
       format: 'iife',
-      name: `systemjs.extras.${path.basename(filename)}`,
+      name: `systemjs.extras.${path.basename(filename, '.js')}`,
       sourcemap: true,
       strict: false,
     },

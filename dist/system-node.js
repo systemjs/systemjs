@@ -42,6 +42,21 @@ const pathToFileURL = url.pathToFileURL
     return fileUrl;
   };
 
+function isURL(value) {
+  if (value instanceof URL$1) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      new URL$1(value);
+      return true;
+    } catch (err) {}
+  }
+
+  return false;
+}
+
 const fileURLToPath = url.fileURLToPath
   ? url.fileURLToPath
   : function fileURLToPath(fileUrl) {
@@ -301,9 +316,6 @@ systemJSPrototype.createContext = function (parentId) {
   };
 };
 
-// onLoad(id, err) provided for tracing / hot-reloading
-systemJSPrototype.onload = function () {};
-
 let lastRegister;
 systemJSPrototype.register = function (deps, declare) {
   lastRegister = [deps, declare];
@@ -368,11 +380,6 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
   });
-
-  instantiatePromise = instantiatePromise.catch(function (err) {
-      loader.onload(load.id, err);
-      throw err;
-    });
 
   const linkPromise = instantiatePromise
   .then(function (instantiation) {
@@ -485,24 +492,13 @@ function postOrderExec (loader, load, seen) {
   let depLoadPromises;
   load.d.forEach(function (depLoad) {
     {
-      try {
-        const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise)
-          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-      }
-      catch (err) {
-        loader.onload(load.id, err);
-        throw err;
-      }
+      const depLoadPromise = postOrderExec(loader, depLoad, seen);
+      if (depLoadPromise)
+        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
   });
   if (depLoadPromises) {
-    return Promise.all(depLoadPromises)
-      .then(doExec)
-      .catch(function (err) {
-        loader.onload(load.id, err);
-        throw err;
-      });
+    return load.E = Promise.all(depLoadPromises).then(doExec);
   }
 
   return doExec();
@@ -511,23 +507,17 @@ function postOrderExec (loader, load, seen) {
     try {
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
-        execPromise = execPromise.then(function () {
+        execPromise.then(function () {
             load.C = load.n;
-            load.E = null; // indicates completion
-            loader.onload(load.id, null);
-          }, function (err) {
-            loader.onload(load.id, err);
-            throw err;
+            load.E = null;
           });
         execPromise.catch(function () {});
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      loader.onload(load.id, null);
     }
     catch (err) {
-      loader.onload(load.id, err);
       load.eE = err;
       throw err;
     }
@@ -705,8 +695,8 @@ let firstGlobalProp, secondGlobalProp, lastGlobalProp;
 function getGlobalProp () {
   let cnt = 0;
   let lastProp;
-  for (let p in envGlobal) {
-    if (!envGlobal.hasOwnProperty(p))
+  for (let p in global) {
+    if (!global.hasOwnProperty(p))
       continue;
     if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
       return p;
@@ -721,8 +711,8 @@ function noteGlobalProps () {
   // alternatively Object.keys(global).pop()
   // but this may be faster (pending benchmarks)
   firstGlobalProp = secondGlobalProp = undefined;
-  for (let p in envGlobal) {
-    if (!envGlobal.hasOwnProperty(p))
+  for (let p in global) {
+    if (!global.hasOwnProperty(p))
       continue;
     if (!firstGlobalProp)
       firstGlobalProp = p;
@@ -757,7 +747,7 @@ systemJSPrototype$1.getRegister = function () {
 
   let globalExport;
   try {
-    globalExport = envGlobal[globalProp];
+    globalExport = global[globalProp];
   }
   catch (e) {
     return emptyInstantiation;
@@ -768,24 +758,6 @@ systemJSPrototype$1.getRegister = function () {
   }];
 };
 
-const URL$2 = global.URL
-  ? global.URL
-  : url.URL;
-
-
-const pathToFileURL$1 = url.pathToFileURL
-  ? url.pathToFileURL
-  : function pathToFileURL(path$1) {
-    const theUrl = new URL$2(fileUrlFromPath(path$1));
-    if (path$1.endsWith(path.sep)) {
-      theUrl.pathname += '/';
-    }
-    return theUrl;
-  };
-
-const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
-
-
 function fileExists(path) {
   try {
     fs.accessSync(path);
@@ -793,22 +765,6 @@ function fileExists(path) {
   } catch (err) {
     return false;
   }
-}
-
-
-function isURL(value) {
-  if (value instanceof URL$2) {
-    return true;
-  }
-
-  if (typeof value === 'string') {
-    try {
-      new URL$2(value);
-      return true;
-    } catch (err) {}
-  }
-
-  return false;
 }
 
 /*

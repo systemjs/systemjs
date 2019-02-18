@@ -8050,6 +8050,21 @@
                 return fileUrl$1;
               };
 
+            function isURL(value) {
+              if (value instanceof URL$1) {
+                return true;
+              }
+
+              if (typeof value === 'string') {
+                try {
+                  new URL$1(value);
+                  return true;
+                } catch (err) {}
+              }
+
+              return false;
+            }
+
             function getDefaultBaseUrl() {
               let url;
 
@@ -8612,8 +8627,8 @@
             function getGlobalProp () {
               let cnt = 0;
               let lastProp;
-              for (let p in envGlobal) {
-                if (!envGlobal.hasOwnProperty(p))
+              for (let p in commonjsGlobal) {
+                if (!commonjsGlobal.hasOwnProperty(p))
                   continue;
                 if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
                   return p;
@@ -8628,8 +8643,8 @@
               // alternatively Object.keys(global).pop()
               // but this may be faster (pending benchmarks)
               firstGlobalProp = secondGlobalProp = undefined;
-              for (let p in envGlobal) {
-                if (!envGlobal.hasOwnProperty(p))
+              for (let p in commonjsGlobal) {
+                if (!commonjsGlobal.hasOwnProperty(p))
                   continue;
                 if (!firstGlobalProp)
                   firstGlobalProp = p;
@@ -8664,7 +8679,7 @@
 
               let globalExport;
               try {
-                globalExport = envGlobal[globalProp];
+                globalExport = commonjsGlobal[globalProp];
               }
               catch (e) {
                 return emptyInstantiation;
@@ -23396,22 +23411,6 @@
               return globalFetch(href, init);
             }
 
-            const URL$2 = global$1.URL
-              ? global$1.URL
-              : require$$0$1.URL;
-
-
-            const pathToFileURL$1 = function pathToFileURL(path$1) {
-                const theUrl = new URL$2(fileUrl(path$1));
-                if (path$1.endsWith(path.sep)) {
-                  theUrl.pathname += '/';
-                }
-                return theUrl;
-              };
-
-            const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
-
-
             function fileExists(path) {
               try {
                 require$$3.accessSync(path);
@@ -23419,22 +23418,6 @@
               } catch (err) {
                 return false;
               }
-            }
-
-
-            function isURL(value) {
-              if (value instanceof URL$2) {
-                return true;
-              }
-
-              if (typeof value === 'string') {
-                try {
-                  new URL$2(value);
-                  return true;
-                } catch (err) {}
-              }
-
-              return false;
             }
 
             /*
