@@ -6,7 +6,6 @@
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var assert = require('assert');
-var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
 var url = _interopDefault(require('url'));
 var fileUrlFromPath = _interopDefault(require('file-url'));
@@ -15,6 +14,7 @@ var vm = _interopDefault(require('vm'));
 var stripShebang = _interopDefault(require('strip-shebang'));
 require('isomorphic-fetch');
 var fileFetch = _interopDefault(require('file-fetch'));
+var fs = _interopDefault(require('fs'));
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
@@ -301,6 +301,9 @@ systemJSPrototype.createContext = function (parentId) {
   };
 };
 
+// onLoad(id, err) provided for tracing / hot-reloading
+systemJSPrototype.onload = function () {};
+
 let lastRegister;
 systemJSPrototype.register = function (deps, declare) {
   lastRegister = [deps, declare];
@@ -365,6 +368,11 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
   });
+
+  instantiatePromise = instantiatePromise.catch(function (err) {
+      loader.onload(load.id, err);
+      throw err;
+    });
 
   const linkPromise = instantiatePromise
   .then(function (instantiation) {
@@ -477,13 +485,24 @@ function postOrderExec (loader, load, seen) {
   let depLoadPromises;
   load.d.forEach(function (depLoad) {
     {
-      const depLoadPromise = postOrderExec(loader, depLoad, seen);
-      if (depLoadPromise)
-        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+      try {
+        const depLoadPromise = postOrderExec(loader, depLoad, seen);
+        if (depLoadPromise)
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+      }
+      catch (err) {
+        loader.onload(load.id, err);
+        throw err;
+      }
     }
   });
   if (depLoadPromises) {
-    return load.E = Promise.all(depLoadPromises).then(doExec);
+    return Promise.all(depLoadPromises)
+      .then(doExec)
+      .catch(function (err) {
+        loader.onload(load.id, err);
+        throw err;
+      });
   }
 
   return doExec();
@@ -492,17 +511,23 @@ function postOrderExec (loader, load, seen) {
     try {
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
-        execPromise.then(function () {
+        execPromise = execPromise.then(function () {
             load.C = load.n;
-            load.E = null;
+            load.E = null; // indicates completion
+            loader.onload(load.id, null);
+          }, function (err) {
+            loader.onload(load.id, err);
+            throw err;
           });
         execPromise.catch(function () {});
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
+      loader.onload(load.id, null);
     }
     catch (err) {
+      loader.onload(load.id, err);
       load.eE = err;
       throw err;
     }
@@ -514,49 +539,6 @@ function postOrderExec (loader, load, seen) {
 }
 
 envGlobal.System = new SystemJS();
-
-const URL$2 = global.URL
-  ? global.URL
-  : url.URL;
-
-
-const pathToFileURL$1 = url.pathToFileURL
-  ? url.pathToFileURL
-  : function pathToFileURL(path$1) {
-    const theUrl = new URL$2(fileUrlFromPath(path$1));
-    if (path$1.endsWith(path.sep)) {
-      theUrl.pathname += '/';
-    }
-    return theUrl;
-  };
-
-const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
-
-
-function fileExists(path) {
-  try {
-    fs.accessSync(path);
-    return fs.statSync(path).isFile();
-  } catch (err) {
-    return false;
-  }
-}
-
-
-function isURL(value) {
-  if (value instanceof URL$2) {
-    return true;
-  }
-
-  if (typeof value === 'string') {
-    try {
-      new URL$2(value);
-      return true;
-    } catch (err) {}
-  }
-
-  return false;
-}
 
 function unzipModuleVars(moduleVars = {}) {
   return Object.entries(moduleVars).reduce(({ params, args }, [key, value]) => ({
@@ -604,53 +586,40 @@ function compileScript(sourceUrl, source, moduleVars) {
   return (isNode? compileScriptNode : compileScriptBrowser)(sourceUrl, source, moduleVars);
 }
 
+/**
+ * This polyfills Node with a version of fetch that can handle
+ * "file" URLs.
+ */
+
+const globalFetch = envGlobal.fetch;
+
+function fetch(input, init) {
+  const { protocol, href } = new URL(input);
+  if (isNode && protocol === 'file:') {
+   return fileFetch(href, init);
+  }
+  return globalFetch(href, init);
+}
+
 function detectFormat(url) {
   const ext = path.extname(url.pathname);
-  let format = null;
 
   if (ext === '.mjs') {
-    format = 'esm';
+    return 'esm';
   } else if (ext === '.json') {
-    format = 'json';
+    return 'json';
   } else if (ext === '.js') {
-    format = 'cjs';
+    return 'cjs';
   } else if (url.protocol === 'builtin:') {
     return 'builtin';
   }
 
-  return format;
+  return undefined;
 }
 
 
-function createFileURLReader(url) {
-  let CACHED_CONTENT;
-
-  function read(force = false) {
-    if (force === true || CACHED_CONTENT === undefined) {
-      if (fileExists(read.url)) {
-        CACHED_CONTENT = fs.readFileSync(read.url, 'utf8');
-      } else {
-        throw new Error(`File '${read.url.href}' does not exist.`);
-      }
-    }
-    return CACHED_CONTENT;
-  }
-
-  try {
-    read.url = new URL$1(url);
-  } catch (err) {
-    read.url = pathToFileURL(url);
-  }
-
-  read.format = detectFormat(read.url);
-
-  return read;
-}
-
-
-function loadRegisterModule(getContent, loader) {
-  const { url } = getContent;
-  const source = getContent();
+async function loadRegisterModule(url, loader) {
+  const source = await fetch(url).then(response => response.text());
 
   compileScript(url, source, {
     System: loader,
@@ -659,8 +628,7 @@ function loadRegisterModule(getContent, loader) {
 }
 
 
-function loadBuiltinModule(getContent, loader) {
-  const { url } = getContent;
+async function loadBuiltinModule(url, loader) {
   const name = url.pathname;
 
   const nodeModule = require(name);
@@ -678,11 +646,13 @@ function loadBuiltinModule(getContent, loader) {
 }
 
 
-function loadJSONModule(getContent, loader) {
+async function loadJSONModule(url, loader) {
+  const data = await fetch(url).then(response => response.json());
+
   const registration = [[], function declare(_export) {
     return {
       execute() {
-        _export('default', JSON.parse(getContent()));
+        _export('default', data);
       },
     };
   }];
@@ -691,26 +661,26 @@ function loadJSONModule(getContent, loader) {
 }
 
 
-systemJSPrototype.instantiate = function instantiate(url, firstParentUrl) {
+systemJSPrototype.instantiate = async function instantiate(url, firstParentUrl) {
   assert.ok(url, 'missing url');
   assert.ok(url instanceof URL$1 || typeof url === 'string', 'url must be a URL or string');
 
   url = new URL$1(url);
 
-  const getContent = createFileURLReader(url);
+  const format = detectFormat(url);
 
   try {
-    switch(getContent.format) {
+    switch(format) {
       case 'builtin':
-        loadBuiltinModule(getContent, this);
+        await loadBuiltinModule(url, this);
         break;
 
       case 'json':
-        loadJSONModule(getContent, this);
+        await loadJSONModule(url, this);
         break;
 
       default:
-        loadRegisterModule(getContent, this);
+        await loadRegisterModule(url, this);
     }
   } catch (err) {
     if (err instanceof ReferenceError) {
@@ -721,84 +691,6 @@ systemJSPrototype.instantiate = function instantiate(url, firstParentUrl) {
 
   return this.getRegister();
 };
-
-
-
-// class NodeLoader extends SystemJS {
-//   constructor({ baseUrl = DEFAULT_BASEURL, importMapUrl } = {}) {
-//     super(baseUrl, importMapUrl);
-//
-//     console.log('HEY THERE!');
-//
-//     // const resolverConfig = {
-//     //   baseUrl: this.baseUrl,
-//     //   importMapConfig,
-//     // };
-//
-//     // this.resolvers = [
-//     //   createImportMapResolver(resolverConfig),
-//     //   createNodeResolver(resolverConfig),
-//     // ];
-//   }
-//
-//   // resolve(id, parentUrl) {
-//   //   let resolved;
-//   //
-//   //   for (let resolver of this.resolvers) {
-//   //     try {
-//   //       resolved = resolver(id, parentUrl);
-//   //       if (resolved) {
-//   //         return resolved;
-//   //       }
-//   //     } catch (err) {
-//   //       // Do nothing. Continue...
-//   //     }
-//   //   }
-//   //
-//   //   throw new Error(`Cannot resolve "${id}"${parentUrl ? ` from ${parentUrl}` : ''}`);
-//   // }
-//
-//
-//   async instantiate(url, firstParentUrl) {
-//     assert(url, 'missing url');
-//     assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
-//
-//     url = new URL(url);
-//
-//     const getContent = createFileURLReader(url);
-//
-//     try {
-//       switch(getContent.format) {
-//         case 'builtin':
-//           loadBuiltinModule(getContent, this);
-//           break;
-//
-//         case 'json':
-//           loadJSONModule(getContent, this);
-//           break;
-//
-//         default:
-//           loadRegisterModule(getContent, this);
-//       }
-//     } catch (err) {
-//       if (err instanceof ReferenceError) {
-//         throw err;
-//       }
-//       throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
-//     }
-//
-//     return this.getRegister();
-//   }
-// }
-
-// SystemJS.prototype = systemJSPrototype;
-// systemJSPrototype.constructor = SystemJS;
-// global.System = new SystemJS();
-//
-//
-// global.System = new NodeLoader();
-//
-// export default NodeLoader;
 
 /*
  * SystemJS global script loading support
@@ -876,19 +768,47 @@ systemJSPrototype$1.getRegister = function () {
   }];
 };
 
-/**
- * This polyfills Node with a version of fetch that can handle
- * "file" URLs.
- */
+const URL$2 = global.URL
+  ? global.URL
+  : url.URL;
 
-const globalFetch = envGlobal.fetch;
 
-function fetch(input, init) {
-  const { protocol, href } = new URL(input);
-  if (isNode && protocol === 'file:') {
-   return fileFetch(href, init);
+const pathToFileURL$1 = url.pathToFileURL
+  ? url.pathToFileURL
+  : function pathToFileURL(path$1) {
+    const theUrl = new URL$2(fileUrlFromPath(path$1));
+    if (path$1.endsWith(path.sep)) {
+      theUrl.pathname += '/';
+    }
+    return theUrl;
+  };
+
+const DEFAULT_BASEURL$1 = pathToFileURL$1(process.cwd() + '/');
+
+
+function fileExists(path) {
+  try {
+    fs.accessSync(path);
+    return fs.statSync(path).isFile();
+  } catch (err) {
+    return false;
   }
-  return globalFetch(href, init);
+}
+
+
+function isURL(value) {
+  if (value instanceof URL$2) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      new URL$2(value);
+      return true;
+    } catch (err) {}
+  }
+
+  return false;
 }
 
 /*

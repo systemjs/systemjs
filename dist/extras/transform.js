@@ -10605,6 +10605,16 @@
 	  return dest;
 	};
 
+	var stream = /*#__PURE__*/Object.freeze({
+		default: Stream,
+		Readable: Readable,
+		Writable: Writable,
+		Duplex: Duplex,
+		Transform: Transform,
+		PassThrough: PassThrough,
+		Stream: Stream
+	});
+
 	var rStates = {
 	  UNSENT: 0,
 	  OPENED: 1,
@@ -11218,6 +11228,15 @@
 	  METHODS,
 	  STATUS_CODES
 	};
+
+	var http$1 = /*#__PURE__*/Object.freeze({
+		request: request,
+		get: get,
+		Agent: Agent,
+		METHODS: METHODS,
+		STATUS_CODES: STATUS_CODES,
+		default: http
+	});
 
 	var msg = {
 	  2:      'need dictionary',     /* Z_NEED_DICT       2  */
@@ -17441,6 +17460,40 @@
 	  Zlib: Zlib$1
 	};
 
+	var zlib$1 = /*#__PURE__*/Object.freeze({
+		codes: codes,
+		createDeflate: createDeflate,
+		createInflate: createInflate,
+		createDeflateRaw: createDeflateRaw,
+		createInflateRaw: createInflateRaw,
+		createGzip: createGzip,
+		createGunzip: createGunzip,
+		createUnzip: createUnzip,
+		deflate: deflate$1,
+		deflateSync: deflateSync,
+		gzip: gzip,
+		gzipSync: gzipSync,
+		deflateRaw: deflateRaw,
+		deflateRawSync: deflateRawSync,
+		unzip: unzip,
+		unzipSync: unzipSync,
+		inflate: inflate$1,
+		inflateSync: inflateSync,
+		gunzip: gunzip,
+		gunzipSync: gunzipSync,
+		inflateRaw: inflateRaw,
+		inflateRawSync: inflateRawSync,
+		Deflate: Deflate,
+		Inflate: Inflate,
+		Gzip: Gzip,
+		Gunzip: Gunzip,
+		DeflateRaw: DeflateRaw,
+		InflateRaw: InflateRaw,
+		Unzip: Unzip,
+		Zlib: Zlib$1,
+		default: zlib
+	});
+
 	var Buffer$1 = bufferEs6.Buffer;
 
 	var safer = {};
@@ -17569,6 +17622,8 @@
 		StripBOM: StripBOM
 	};
 
+	var require$$1 = getCjsExportFromNamespace(stringDecoder);
+
 	var Buffer$2 = safer_1.Buffer;
 
 	// Export Node.js internal encodings.
@@ -17616,7 +17671,7 @@
 	//------------------------------------------------------------------------------
 
 	// We use node.js internal decoder. Its signature is the same as ours.
-	var StringDecoder$1 = stringDecoder.StringDecoder;
+	var StringDecoder$1 = require$$1.StringDecoder;
 
 	if (!StringDecoder$1.prototype.end) // Node v0.8 doesn't have this method.
 	    StringDecoder$1.prototype.end = function() {};
@@ -21147,7 +21202,7 @@
 
 	var require$$0 = getCjsExportFromNamespace(shiftjis$1);
 
-	var require$$1 = getCjsExportFromNamespace(eucjp$1);
+	var require$$1$1 = getCjsExportFromNamespace(eucjp$1);
 
 	var require$$2 = getCjsExportFromNamespace(cp936$1);
 
@@ -21218,7 +21273,7 @@
 
 	    'eucjp': {
 	        type: '_dbcs',
-	        table: function() { return require$$1 },
+	        table: function() { return require$$1$1 },
 	        encodeAdd: {'\u00a5': 0x5C, '\u203E': 0x7E},
 	    },
 
@@ -21360,8 +21415,10 @@
 	}
 	});
 
+	var require$$1$2 = getCjsExportFromNamespace(stream);
+
 	var Buffer$7 = bufferEs6.Buffer,
-	    Transform$1 = Stream.Transform;
+	    Transform$1 = require$$1$2.Transform;
 
 
 	// == Exports ==================================================================
@@ -21652,7 +21709,7 @@
 
 	        // -- Readable -------------------------------------------------------------
 	        if (iconv.supportsStreams) {
-	            var Readable = Stream.Readable;
+	            var Readable = require$$1$2.Readable;
 
 	            original.ReadableSetEncoding = Readable.prototype.setEncoding;
 	            Readable.prototype.setEncoding = function setEncoding(enc, options) {
@@ -21686,7 +21743,7 @@
 	        Buffer$8.prototype.write = original.BufferWrite;
 
 	        if (iconv.supportsStreams) {
-	            var Readable = Stream.Readable;
+	            var Readable = require$$1$2.Readable;
 
 	            Readable.prototype.setEncoding = original.ReadableSetEncoding;
 	            delete Readable.prototype.collect;
@@ -22040,7 +22097,7 @@
 
 	var convert$1 = encoding.convert;
 
-	var PassThrough$1 = Stream.PassThrough;
+	var PassThrough$1 = require$$1$2.PassThrough;
 
 
 	var body = Body;
@@ -22434,6 +22491,8 @@
 		return this._headers;
 	};
 
+	var http$2 = getCjsExportFromNamespace(http$1);
+
 	/**
 	 * response.js
 	 *
@@ -22459,7 +22518,7 @@
 
 		this.url = opts.url;
 		this.status = opts.status || 200;
-		this.statusText = opts.statusText || http.STATUS_CODES[this.status];
+		this.statusText = opts.statusText || http$2.STATUS_CODES[this.status];
 		this.headers = new headers(opts.headers);
 		this.ok = this.status >= 200 && this.status < 300;
 
@@ -22561,6 +22620,8 @@
 		return new Request(this);
 	};
 
+	var zlib$2 = getCjsExportFromNamespace(zlib$1);
+
 	var nodeFetch = createCommonjsModule(function (module) {
 	/**
 	 * index.js
@@ -22623,9 +22684,9 @@
 
 			var send;
 			if (options.protocol === 'https:') {
-				send = http.request;
+				send = http$2.request;
 			} else {
-				send = http.request;
+				send = http$2.request;
 			}
 
 			// normalize headers
@@ -22738,7 +22799,7 @@
 				}
 
 				// prepare response
-				var body = res.pipe(new Stream.PassThrough());
+				var body = res.pipe(new require$$1$2.PassThrough());
 				var response_options = {
 					url: options.url
 					, status: res.statusCode
@@ -22768,7 +22829,7 @@
 
 				// for gzip
 				if (name == 'gzip' || name == 'x-gzip') {
-					body = body.pipe(zlib.createGunzip());
+					body = body.pipe(zlib$2.createGunzip());
 					output = new response(body, response_options);
 					resolve(output);
 					return;
@@ -22777,13 +22838,13 @@
 				} else if (name == 'deflate' || name == 'x-deflate') {
 					// handle the infamous raw deflate response from old servers
 					// a hack for old IIS and Apache servers
-					var raw = res.pipe(new Stream.PassThrough());
+					var raw = res.pipe(new require$$1$2.PassThrough());
 					raw.once('data', function(chunk) {
 						// see http://stackoverflow.com/questions/37519828
 						if ((chunk[0] & 0x0F) === 0x08) {
-							body = body.pipe(zlib.createInflate());
+							body = body.pipe(zlib$2.createInflate());
 						} else {
-							body = body.pipe(zlib.createInflateRaw());
+							body = body.pipe(zlib$2.createInflateRaw());
 						}
 						output = new response(body, response_options);
 						resolve(output);

@@ -94,14 +94,14 @@ describe('SystemJS Standard Tests - Node.js', function() {
     });
   });
 
-  it('Global script loading', function () {
+  it.skip('Global script loading', function () {
     return System.import('fixtures/global.js').then(function (m) {
       assert.ok(m.default);
       assert.equal(m.default.some, 'thing');
     });
   });
 
-  it('Parallel Global loading', function () {
+  it.skip('Parallel Global loading', function () {
     var scriptsToLoad = [];
     for (var i = 1; i < 11; i++)
       scriptsToLoad.push('fixtures/globals/import' + i + '.js');

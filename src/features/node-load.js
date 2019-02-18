@@ -1,60 +1,31 @@
 import { ok as assert } from 'assert';
-import fs from 'fs';
-import _path from 'path';
+import path from 'path';
 
 import { systemJSPrototype } from '../system-core.js';
-import { pathToFileURL, URL } from '../common.js';
-import { fileExists } from './node-common';
+import { URL } from '../common.js';
 import { compileScript } from '../utils/compile';
+import { fetch } from '../utils/fetch';
 
 
 function detectFormat(url) {
-  const ext = _path.extname(url.pathname);
-  let format = null;
+  const ext = path.extname(url.pathname);
 
   if (ext === '.mjs') {
-    format = 'esm';
+    return 'esm';
   } else if (ext === '.json') {
-    format = 'json';
+    return 'json';
   } else if (ext === '.js') {
-    format = 'cjs';
+    return 'cjs';
   } else if (url.protocol === 'builtin:') {
     return 'builtin';
   }
 
-  return format;
+  return undefined;
 }
 
 
-function createFileURLReader(url) {
-  let CACHED_CONTENT;
-
-  function read(force = false) {
-    if (force === true || CACHED_CONTENT === undefined) {
-      if (fileExists(read.url)) {
-        CACHED_CONTENT = fs.readFileSync(read.url, 'utf8');
-      } else {
-        throw new Error(`File '${read.url.href}' does not exist.`);
-      }
-    }
-    return CACHED_CONTENT;
-  }
-
-  try {
-    read.url = new URL(url);
-  } catch (err) {
-    read.url = pathToFileURL(url);
-  }
-
-  read.format = detectFormat(read.url);
-
-  return read;
-}
-
-
-function loadRegisterModule(getContent, loader) {
-  const { url } = getContent;
-  const source = getContent();
+async function loadRegisterModule(url, loader) {
+  const source = await fetch(url).then(response => response.text());
 
   compileScript(url, source, {
     System: loader,
@@ -63,8 +34,7 @@ function loadRegisterModule(getContent, loader) {
 }
 
 
-function loadBuiltinModule(getContent, loader) {
-  const { url } = getContent;
+async function loadBuiltinModule(url, loader) {
   const name = url.pathname;
 
   const nodeModule = require(name);
@@ -82,11 +52,13 @@ function loadBuiltinModule(getContent, loader) {
 }
 
 
-function loadJSONModule(getContent, loader) {
+async function loadJSONModule(url, loader) {
+  const data = await fetch(url).then(response => response.json());
+
   const registration = [[], function declare(_export) {
     return {
       execute() {
-        _export('default', JSON.parse(getContent()));
+        _export('default', data);
       },
     };
   }];
@@ -95,37 +67,26 @@ function loadJSONModule(getContent, loader) {
 }
 
 
-function tryResolve(resolve) {
-  return function(id, parentUrl) {
-    try {
-      return resolve(id, parentUrl);
-    } catch (err) {
-      return undefined;
-    }
-  }
-}
-
-
-systemJSPrototype.instantiate = function instantiate(url, firstParentUrl) {
+systemJSPrototype.instantiate = async function instantiate(url, firstParentUrl) {
   assert(url, 'missing url');
   assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
 
   url = new URL(url);
 
-  const getContent = createFileURLReader(url);
+  const format = detectFormat(url);
 
   try {
-    switch(getContent.format) {
+    switch(format) {
       case 'builtin':
-        loadBuiltinModule(getContent, this);
+        await loadBuiltinModule(url, this);
         break;
 
       case 'json':
-        loadJSONModule(getContent, this);
+        await loadJSONModule(url, this);
         break;
 
       default:
-        loadRegisterModule(getContent, this);
+        await loadRegisterModule(url, this);
     }
   } catch (err) {
     if (err instanceof ReferenceError) {
@@ -136,81 +97,3 @@ systemJSPrototype.instantiate = function instantiate(url, firstParentUrl) {
 
   return this.getRegister();
 };
-
-
-
-// class NodeLoader extends SystemJS {
-//   constructor({ baseUrl = DEFAULT_BASEURL, importMapUrl } = {}) {
-//     super(baseUrl, importMapUrl);
-//
-//     console.log('HEY THERE!');
-//
-//     // const resolverConfig = {
-//     //   baseUrl: this.baseUrl,
-//     //   importMapConfig,
-//     // };
-//
-//     // this.resolvers = [
-//     //   createImportMapResolver(resolverConfig),
-//     //   createNodeResolver(resolverConfig),
-//     // ];
-//   }
-//
-//   // resolve(id, parentUrl) {
-//   //   let resolved;
-//   //
-//   //   for (let resolver of this.resolvers) {
-//   //     try {
-//   //       resolved = resolver(id, parentUrl);
-//   //       if (resolved) {
-//   //         return resolved;
-//   //       }
-//   //     } catch (err) {
-//   //       // Do nothing. Continue...
-//   //     }
-//   //   }
-//   //
-//   //   throw new Error(`Cannot resolve "${id}"${parentUrl ? ` from ${parentUrl}` : ''}`);
-//   // }
-//
-//
-//   async instantiate(url, firstParentUrl) {
-//     assert(url, 'missing url');
-//     assert(url instanceof URL || typeof url === 'string', 'url must be a URL or string');
-//
-//     url = new URL(url);
-//
-//     const getContent = createFileURLReader(url);
-//
-//     try {
-//       switch(getContent.format) {
-//         case 'builtin':
-//           loadBuiltinModule(getContent, this);
-//           break;
-//
-//         case 'json':
-//           loadJSONModule(getContent, this);
-//           break;
-//
-//         default:
-//           loadRegisterModule(getContent, this);
-//       }
-//     } catch (err) {
-//       if (err instanceof ReferenceError) {
-//         throw err;
-//       }
-//       throw new Error(`Error loading ${url}${firstParentUrl ? ' from ' + firstParentUrl : ''}`);
-//     }
-//
-//     return this.getRegister();
-//   }
-// }
-
-// SystemJS.prototype = systemJSPrototype;
-// systemJSPrototype.constructor = SystemJS;
-// global.System = new SystemJS();
-//
-//
-// global.System = new NodeLoader();
-//
-// export default NodeLoader;
