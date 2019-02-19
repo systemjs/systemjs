@@ -9,6 +9,7 @@
   "author": "Guy Bedford",
   "mode": "esm",
   "license": "MIT",
+  "main": "dist/s.min.js",
   "files": [
     "dist"
   ],
