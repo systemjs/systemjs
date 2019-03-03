@@ -1,5 +1,5 @@
 /*
-* SJS 3.0.0
+* SJS 3.0.1
 * Minimal SystemJS Build
 */
 (function () {
@@ -229,8 +229,10 @@
       });
     });
 
-    // disable unhandled rejections
-    linkPromise.catch(function () {});
+    linkPromise.catch(function (err) {
+      load.e = null;
+      load.er = err;
+    });
 
     // Captial letter = a promise function
     return load = loader[REGISTRY][id] = {
@@ -258,7 +260,7 @@
 
       // On execution we have populated:
       // the execution error if any
-      eE: undefined,
+      er: undefined,
       // in the case of TLA, the execution promise
       E: undefined,
 
@@ -303,8 +305,8 @@
     seen[load.id] = true;
 
     if (!load.e) {
-      if (load.eE)
-        throw load.eE;
+      if (load.er)
+        throw load.er;
       if (load.E)
         return load.E;
       return;
@@ -340,7 +342,7 @@
         load.C = load.n;
       }
       catch (err) {
-        load.eE = err;
+        load.er = err;
         throw err;
       }
       finally {
@@ -356,15 +358,15 @@
    * Supports loading System.register via script tag injection
    */
 
-  let err$1;
+  let err;
   if (typeof window !== 'undefined')
     window.addEventListener('error', function (e) {
-      err$1 = e.error;
+      err = e.error;
     });
 
   const systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
-    err$1 = undefined;
+    err = undefined;
     systemRegister.call(this, deps, declare);
   };
 
@@ -381,8 +383,8 @@
       script.addEventListener('load', function () {
         document.head.removeChild(script);
         // Note URL normalization issues are going to be a careful concern here
-        if (err$1)
-          return reject(err$1);
+        if (err)
+          return reject(err);
         else
           resolve(loader.getRegister());
       });

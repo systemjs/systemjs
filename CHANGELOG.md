@@ -1,3 +1,8 @@
+SystemJS 3.0.1 (2019/03/01)
+* Ensure that instantiate errors can be cleared with loader.delete (#1902)
+* Fix undefined err bug on errors (#1898)
+* Add loader.has / loader.set API (#1899, 6b85a8c4)
+
 SystemJS 3.0.0 (2019/01/12)
 * Implement new Import Maps specification replacing Package Name Maps (#1893)
 
