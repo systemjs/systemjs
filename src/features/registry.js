@@ -36,6 +36,7 @@ systemJSPrototype.set = function (id, module) {
     E: undefined,
     C: done
   };
+  return ns;
 };
 
 systemJSPrototype.has = function (id) {

@@ -120,9 +120,10 @@ describe('Core API', function () {
     });
 
     it('Supports System.set', async function () {
-      loader.set('x', { y: 43 });
+      const _x = loader.set('x', { y: 43 });
       const x = await loader.import('x');
       assert.equal(x.y, 43);
+      assert.equal(x, _x);
     });
   });
 });
