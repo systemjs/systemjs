@@ -5,7 +5,7 @@ const toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 systemJSPrototype.get = function (id) {
   const load = this[REGISTRY][id];
   if (load && load.e === null && !load.E) {
-    if (load.eE)
+    if (load.er)
       return null;
     return load.n;
   }
@@ -32,7 +32,7 @@ systemJSPrototype.set = function (id, module) {
     h: false,
     d: [],
     e: null,
-    eE: undefined,
+    er: undefined,
     E: undefined,
     C: done
   };

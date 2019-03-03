@@ -361,6 +361,58 @@ describe('Loading Cases', function() {
       assert.equal(err, 'Error: dep error');
     });
 
+    it('Should support System.delete for retrying execution errors', async function () {
+      const loader = new SystemLoader();
+      loader.resolve = x => x;
+      let thrown = false;
+      loader.instantiate = () => {
+        loader.register([], _export => ({
+          execute () {
+            if (!thrown) {
+              thrown = true;
+              throw new Error('Execution Error');
+            }
+            _export('ok', true);
+          }
+        }));
+        return loader.getRegister();
+      };
+      try {
+        await loader.import('x');
+        assert.fail('Should have failed');
+      }
+      catch (e) {
+        assert.equal(e.toString(), 'Error: Execution Error');
+      }
+      loader.delete('x');
+      const m = await loader.import('x');
+      assert(m.ok);
+    });
+
+    it('Should always support retrying instantiation errors', async function () {
+      const loader = new SystemLoader();
+      loader.resolve = x => x;
+      let thrown = false;
+      loader.instantiate = () => {
+        if (!thrown) {
+          thrown = true;
+          throw new Error('Instantiate Error');
+        }
+        loader.register([], _export => ({ execute () { _export('ok', true) } }));
+        return loader.getRegister();
+      };
+      try {
+        await loader.import('x');
+        assert.fail('Should have failed');
+      }
+      catch (e) {
+        assert.equal(e.toString(), 'Error: Instantiate Error');
+      }
+      loader.delete('x');
+      const m = await loader.import('x');
+      assert(m.ok);
+    });
+
     it('404 error', async function () {
       const err = await getImportError('./register-modules/load-non-existent.js');
       assert.equal(err, 'Error: ENOENT: no such file or directory, open \'' + testPath.replace(/\//g, path.sep) + 'register-modules' + path.sep + 'non-existent.js\'');

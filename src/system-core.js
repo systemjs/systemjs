@@ -143,8 +143,10 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     });
   });
 
-  // disable unhandled rejections
-  linkPromise.catch(function () {});
+  linkPromise.catch(function (err) {
+    load.e = null;
+    load.er = err;
+  });
 
   // Captial letter = a promise function
   return load = loader[REGISTRY][id] = {
@@ -172,7 +174,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
 
     // On execution we have populated:
     // the execution error if any
-    eE: undefined,
+    er: undefined,
     // in the case of TLA, the execution promise
     E: undefined,
 
@@ -217,8 +219,8 @@ function postOrderExec (loader, load, seen) {
   seen[load.id] = true;
 
   if (!load.e) {
-    if (load.eE)
-      throw load.eE;
+    if (load.er)
+      throw load.er;
     if (load.E)
       return load.E;
     return;
@@ -285,7 +287,7 @@ function postOrderExec (loader, load, seen) {
     }
     catch (err) {
       if (TRACING) loader.onload(load.id, err);
-      load.eE = err;
+      load.er = err;
       throw err;
     }
     finally {
