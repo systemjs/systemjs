@@ -10,40 +10,68 @@
 import { baseUrl as pageBaseUrl, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-var importMap, importMapPromise;
-if (typeof document !== 'undefined') {
-  const scripts = document.getElementsByTagName('script');
-  for (let i = 0; i < scripts.length; i++) {
-    const script = scripts[i];
-    if (script.type !== 'systemjs-importmap')
-      continue;
+var acquiringImportMaps = true, importMapPromise;
 
-    if (!script.src) {
-      importMap = parseImportMap(JSON.parse(script.innerHTML), pageBaseUrl);
+function retrieveImportMaps() {
+  if (typeof document !== 'undefined') {
+    const scripts = document.getElementsByTagName('script');
+    let pendingMaps = []
+
+    for (let i = 0; i < scripts.length; i++) {
+      const script = scripts[i];
+      if (script.type !== 'systemjs-importmap')
+        continue;
+
+      if (!script.src) {
+        pendingMaps.push(parseImportMap(JSON.parse(script.innerHTML), pageBaseUrl));
+      }
+      else {
+        pendingMaps.push(
+          fetch(script.src)
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            return parseImportMap(data, script.src);
+          })
+        );
+      }
     }
-    else {
-      importMapPromise = fetch(script.src)
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (json) {
-        importMap = parseImportMap(json, script.src);
-      });
-    }
-    break;
+
+    const initialImportMap = { imports: {}, scopes: {} };
+
+    importMapPromise = Promise.all(pendingMaps).then(function(importMaps) {
+      return importMaps.reduce(function(finalMap, importMap) {
+        return mergeImportMap(finalMap, importMap);
+      }, initialImportMap);
+    });
   }
 }
 
-importMap = importMap || { imports: {}, scopes: {} };
+function mergeImportMap(originalMap, newMap) {
+  for (let i in newMap.imports) {
+    originalMap.imports[i] = newMap.imports[i];
+  }
+
+  for (let i in newMap.scopes) {
+    originalMap.scopes[i] = newMap.scopes[i];
+  }
+
+  originalMap.baseUrl = newMap.baseUrl;
+
+  return originalMap;
+}
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || pageBaseUrl;
 
-  if (importMapPromise)
-    return importMapPromise
-    .then(function () {
+  if (acquiringImportMaps) {
+    acquiringImportMaps = false;
+    retrieveImportMaps();
+  }
+
+  return importMapPromise
+    .then(function (importMap) {
       return resolveImportMap(id, parentUrl, importMap);
     });
-
-  return resolveImportMap(id, parentUrl, importMap);
 };
