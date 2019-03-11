@@ -15,7 +15,6 @@
  * System.prototype.instantiate implementations
  */
 import { global } from './common.js';
-export { systemJSPrototype, REGISTRY }
 
 const hasSymbol = typeof Symbol !== 'undefined';
 const toStringTag = hasSymbol && Symbol.toStringTag;
@@ -26,6 +25,8 @@ function SystemJS () {
 }
 
 const systemJSPrototype = SystemJS.prototype;
+export { systemJSPrototype, REGISTRY }
+
 systemJSPrototype.import = function (id, parentUrl) {
   const loader = this;
   return Promise.resolve(loader.resolve(id, parentUrl))
