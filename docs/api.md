@@ -70,7 +70,7 @@ Module records that have an error state in the registry still return `true`,
 while module records with in-progress loads will return `false`.
 
 ```js
-System.get('http://site.com/normalized/module/name.js').exportedFunction();
+System.has('http://site.com/normalized/module/name.js');
 ```
 
 #### System.set(id, module) -> Module
