@@ -4,64 +4,41 @@
  * <script type="systemjs-importmap">{}</script>
  * OR
  * <script type="systemjs-importmap" src=package.json></script>
+ * 
+ * Only those import maps available at the time of SystemJS initialization will be loaded
+ * and they will be loaded in DOM order.
+ * 
+ * There is no support for dynamic import maps injection currently.
  */
-import { baseUrl as pageBaseUrl, parseImportMap, resolveImportMap } from '../common.js';
+import { baseUrl, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-var importMapPromise, fetchPromises = {};
+const baseMap = Object.create(null);
+baseMap.imports = Object.create(null);
+baseMap.scopes = Object.create(null);
+let importMapPromise = Promise.resolve(baseMap);
 
-// Start downloading the import maps as soon as possible
 if (typeof document !== 'undefined') {
-  const scriptsToDownload = document.querySelectorAll('script[type="systemjs-importmap"][src]');
-
-  for (let i = 0; i < scriptsToDownload.length; i++) {
-    const script = scriptsToDownload[i]
-    fetchPromises[script.src] = fetch(script.src)
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (data) {
-        return parseImportMap(data, script.src);
-      })
-  }
-}
-
-function retrieveImportMaps() {
-  if (typeof document !== 'undefined') {
-    // We must apply/merge the import maps in the order that they appear in the dom
-    const scripts = document.querySelectorAll('script[type="systemjs-importmap"]');
-    let pendingMaps = []
-
-    for (let i = 0; i < scripts.length; i++) {
-      const script = scripts[i];
-      if (!script.src) {
-        pendingMaps.push(parseImportMap(JSON.parse(script.innerHTML), pageBaseUrl));
-      }
-      else if (fetchPromises[script.src]) {
-        pendingMaps.push(fetchPromises[script.src])
-      } else {
-        pendingMaps.push(
-          fetch(script.src)
-          .then(function (res) {
-            return res.json();
-          })
-          .then(function (data) {
-            return parseImportMap(data, script.src);
-          })
-        );
-      }
+  const importMapScripts = document.querySelectorAll('script[type="systemjs-importmap"]');
+  for (let i = 0; i < importMapScripts.length; i++) {
+    const script = importMapScripts[i];
+    if (!script.src) {
+      importMapPromise = importMapPromise.then(function (map) {
+        return mergeImportMap(map, parseImportMap(JSON.parse(script.innerHTML), baseUrl));
+      });
     }
-
-    // free the memory for this object -- we don't need it anymore after the first System.import happens
-    fetchPromises = null
-
-    const initialImportMap = { imports: {}, scopes: {} };
-
-    return Promise.all(pendingMaps).then(function(importMaps) {
-      return importMaps.reduce(function(finalMap, importMap) {
-        return mergeImportMap(finalMap, importMap);
-      }, initialImportMap);
-    });
+    else {
+      const fetchPromise = fetch(script.src);
+      importMapPromise = importMapPromise.then(function (map) {
+        return fetchPromise
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          return mergeImportMap(map, parseImportMap(data, script.src));
+        });  
+      });      
+    }
   }
 }
 
@@ -69,25 +46,17 @@ export function mergeImportMap(originalMap, newMap) {
   for (let i in newMap.imports) {
     originalMap.imports[i] = newMap.imports[i];
   }
-
   for (let i in newMap.scopes) {
     originalMap.scopes[i] = newMap.scopes[i];
   }
-
-  originalMap.baseUrl = newMap.baseUrl;
-
   return originalMap;
 }
 
 systemJSPrototype.resolve = function (id, parentUrl) {
-  parentUrl = parentUrl || pageBaseUrl;
-
-  if (!importMapPromise) {
-    importMapPromise = retrieveImportMaps();
-  }
+  parentUrl = parentUrl || baseUrl;
 
   return importMapPromise
-    .then(function (importMap) {
-      return resolveImportMap(id, parentUrl, importMap);
-    });
+  .then(function (importMap) {
+    return resolveImportMap(id, parentUrl, importMap);
+  });
 };
