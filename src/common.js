@@ -106,20 +106,20 @@ function resolveUrl (relUrl, parentUrl) {
       resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
 }
 
-function resolvePackages(pkgs) {
+function resolvePackages(pkgs, baseUrl) {
   var outPkgs = {};
   for (var p in pkgs) {
     var value = pkgs[p];
     // TODO package fallback support
     if (typeof value !== 'string')
       continue;
-    outPkgs[resolveIfNotPlainOrUrl(p) || p] = value;
+    outPkgs[resolveIfNotPlainOrUrl(p, baseUrl) || p] = value;
   }
   return outPkgs;
 }
 
 export function parseImportMap (json, baseUrl) {
-  const imports = resolvePackages(json.imports) || {};
+  const imports = resolvePackages(json.imports, baseUrl) || {};
   const scopes = {};
   if (json.scopes) {
     for (let scopeName in json.scopes) {
@@ -127,7 +127,7 @@ export function parseImportMap (json, baseUrl) {
       let resolvedScopeName = resolveUrl(scopeName, baseUrl);
       if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
         resolvedScopeName += '/';
-      scopes[resolvedScopeName] = resolvePackages(scope) || {};
+      scopes[resolvedScopeName] = resolvePackages(scope, resolvedScopeName) || {};
     }
   }
 
