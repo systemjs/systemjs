@@ -4,8 +4,8 @@ systemJSPrototype.resolve = function (id, parentUrl) {
   const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
   if (!resolved) {
     if (id.indexOf(':') !== -1)
-      return id;
+      return Promise.resolve(id);
     throw new Error('Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
   }
-  return resolved;
+  return Promise.resolve(resolved);
 };

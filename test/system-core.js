@@ -11,6 +11,7 @@ const SystemLoader = System.constructor;
 
 describe('Core API', function () {
   const loader = new SystemLoader();
+  const basicResolve = loader.resolve;
   loader.resolve = x => x;
 
   it('Should be an instance of itself', function () {
@@ -124,6 +125,13 @@ describe('Core API', function () {
       const x = await loader.import('x');
       assert.equal(x.y, 43);
       assert.equal(x, _x);
+    });
+
+    it('Supports System.resolve', async function () {
+      const resolveReturnValue = basicResolve('http://x');
+      const resolvedX = await resolveReturnValue;
+      assert(resolveReturnValue instanceof Promise);
+      assert.equal(resolvedX, 'http://x');
     });
   });
 });
