@@ -37,9 +37,6 @@
     "footprint:systemjs": "terser dist/system.js -c passes=2 -m | gzip -9f | wc -c",
     "footprint:sjs": "terser dist/s.js -c passes=2 -m | gzip -9f | wc -c",
     "test": "mocha -b -r esm",
-    "test:rebuild": "babel test/fixtures/es-modules --plugins=@babel/plugin-syntax-import-meta,@babel/plugin-transform-modules-systemjs --out-dir test/fixtures/register-modules",
-    "test:systemjs": "mocha test/test-traceur.js -u tdd --reporter dot",
-    "test:sjs": "mocha test/test-production.js -u tdd --reporter dot",
     "prepublish": "npm run build"
   }
 }
