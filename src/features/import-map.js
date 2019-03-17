@@ -20,26 +20,29 @@ let importMapPromise = Promise.resolve(baseMap);
 
 if (typeof document !== 'undefined') {
   const importMapScripts = document.querySelectorAll('script[type="systemjs-importmap"]');
-  for (let i = 0; i < importMapScripts.length; i++) {
-    const script = importMapScripts[i];
+  const mapPromises = Array.prototype.map.call(importMapScripts, function (script) {
     if (!script.src) {
-      importMapPromise = importMapPromise.then(function (map) {
-        return mergeImportMap(map, parseImportMap(JSON.parse(script.innerHTML), baseUrl));
-      });
+      return parseImportMap(JSON.parse(script.innerHTML), baseUrl);
     }
     else {
-      const fetchPromise = fetch(script.src);
-      importMapPromise = importMapPromise.then(function (map) {
-        return fetchPromise
-        .then(function (res) {
-          return res.json();
-        })
-        .then(function (data) {
-          return mergeImportMap(map, parseImportMap(data, script.src));
-        });  
-      });      
+      return fetch(script.src)
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        return parseImportMap(data, script.src);
+      })
+      .catch(function (err) {
+        console.error(`Failed to load import map at url '${script.src}'.`, err);
+        throw err;
+      });
     }
-  }
+  });
+  importMapPromise = Promise.all(mapPromises).then(function(values) {
+    return values.reduce(function(mergedMap, map) {
+      return mergeImportMap(mergedMap, map);
+    }, baseMap);
+  });
 }
 
 export function mergeImportMap(originalMap, newMap) {
