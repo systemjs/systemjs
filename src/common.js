@@ -113,7 +113,7 @@ function resolvePackages(pkgs, baseUrl) {
     // TODO package fallback support
     if (typeof value !== 'string')
       continue;
-    outPkgs[resolveIfNotPlainOrUrl(p, baseUrl) || p] = value;
+    outPkgs[resolveIfNotPlainOrUrl(p, baseUrl) || p] = resolveUrl(value, baseUrl);
   }
   return outPkgs;
 }
@@ -131,7 +131,7 @@ export function parseImportMap (json, baseUrl) {
     }
   }
 
-  return { imports: imports, scopes: scopes, baseUrl: baseUrl };
+  return { imports: imports, scopes: scopes };
 }
 
 function getMatch (path, matchObj) {
@@ -145,7 +145,7 @@ function getMatch (path, matchObj) {
   } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
 }
 
-function applyPackages (id, packages, baseUrl) {
+function applyPackages (id, packages) {
   const pkgName = getMatch(id, packages);
   if (pkgName) {
     const pkg = packages[pkgName];
@@ -153,7 +153,7 @@ function applyPackages (id, packages, baseUrl) {
 
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
       console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
-    return resolveUrl(pkg + id.slice(pkgName.length), baseUrl);
+    return pkg + id.slice(pkgName.length);
   }
 }
 
@@ -164,11 +164,11 @@ export function resolveImportMap (id, parentUrl, importMap) {
   const scopeName = getMatch(parentUrl, importMap.scopes);
   if (scopeName) {
     const scopePackages = importMap.scopes[scopeName];
-    const packageResolution = applyPackages(id, scopePackages, scopeName);
+    const packageResolution = applyPackages(id, scopePackages);
     if (packageResolution)
       return packageResolution;
   }
-  return applyPackages(id, importMap.imports, importMap.baseUrl) || urlResolved || throwBare(id, parentUrl);
+  return applyPackages(id, importMap.imports) || urlResolved || throwBare(id, parentUrl);
 }
 
 export function throwBare (id, parentUrl) {

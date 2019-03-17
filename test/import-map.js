@@ -1,23 +1,30 @@
+import './fixtures/enable-tracing.js';
 import { parseImportMap, resolveImportMap } from '../src/common.js';
 import assert from 'assert';
+import { mergeImportMap } from '../src/features/import-map.js';
 
 describe('Import Maps', function () {
-  const importMap = parseImportMap({
-    imports: {
-      "x": "/y",
-      "x/": "/src/x/",
-      "p": "t",
-      "p/": "t/",
-      "m": "./m/index.js",
-      "m/": "./m/",
-      "https://site.com/x": "/x.js"
-    },
-    scopes: {
-      "/scope": {
-        "x/": "y/"
+  let importMap
+
+  beforeEach(function () {
+    importMap = parseImportMap({
+      imports: {
+        "x": "/y",
+        "x/": "/src/x/",
+        "p": "t",
+        "p/": "t/",
+        "m": "./m/index.js",
+        "m/": "./m/",
+        "https://site.com/x": "/x.js",
+        "r": "r"
+      },
+      scopes: {
+        "/scope": {
+          "x/": "y/"
+        }
       }
-    }
-  }, 'https://sample.com/src/');
+    }, 'https://sample.com/src/');
+  });
 
   it('Throws for unknown', function () {
     try {
@@ -65,8 +72,52 @@ describe('Import Maps', function () {
     assert.equal(resolveImportMap('x', 'https://sample.com/scope/y', importMap), 'https://sample.com/y');
   });
 
-  it ('Resolves scoped package subpaths', function () {
+  it('Resolves scoped package subpaths', function () {
     assert.equal(resolveImportMap('x/sub', 'https://sample.com/scope/y', importMap), 'https://sample.com/scope/y/sub');
+  });
+
+  it('Overrides package resolution when two import maps define the same module', function () {
+    const secondMap = parseImportMap({
+      imports: {
+        r: 'overridden-r',
+      }
+    }, 'https://sample.com/src/');
+    const finalMap = mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('r', 'https://site.com', finalMap), 'https://sample.com/src/overridden-r');
+  });
+
+  it('Adds to an existing import map when there are two import maps', function () {
+    const secondMap = parseImportMap({
+      imports: {
+        g: 'g',
+      }
+    }, 'https://sample.com/src/');
+    const finalMap = mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('g', 'https://site.com', finalMap), 'https://sample.com/src/g');
+  });
+
+  it('Overrides an import map scope when two import maps define the same scope', function () {
+    const secondMap = parseImportMap({
+      scopes: {
+        "/scope": {
+          "x/": "z/"
+        }
+      }
+    }, 'https://sample.com/src/');
+    const finalMap = mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('x/file.js', 'https://sample.com/scope/something', finalMap), 'https://sample.com/scope/z/file.js');
+  });
+
+  it('Adds an import map scope when two import maps are merged', function () {
+    const secondMap = parseImportMap({
+      scopes: {
+        "/other-scope": {
+          "f": "/other-scope-path/f.js"
+        }
+      }
+    }, 'https://sample.com/src/');
+    const finalMap = mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('f', 'https://sample.com/other-scope/something', finalMap), 'https://sample.com/other-scope-path/f.js');
   });
 
 });
