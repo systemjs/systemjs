@@ -1,5 +1,5 @@
 /*
-* SystemJS 3.0.1
+* SystemJS 3.0.2
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -109,20 +109,20 @@
         resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
   }
 
-  function resolvePackages(pkgs) {
+  function resolvePackages(pkgs, baseUrl) {
     var outPkgs = {};
     for (var p in pkgs) {
       var value = pkgs[p];
       // TODO package fallback support
       if (typeof value !== 'string')
         continue;
-      outPkgs[resolveIfNotPlainOrUrl(p) || p] = value;
+      outPkgs[resolveIfNotPlainOrUrl(p, baseUrl) || p] = resolveUrl(value, baseUrl);
     }
     return outPkgs;
   }
 
   function parseImportMap (json, baseUrl) {
-    const imports = resolvePackages(json.imports) || {};
+    const imports = resolvePackages(json.imports, baseUrl) || {};
     const scopes = {};
     if (json.scopes) {
       for (let scopeName in json.scopes) {
@@ -130,11 +130,11 @@
         let resolvedScopeName = resolveUrl(scopeName, baseUrl);
         if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
           resolvedScopeName += '/';
-        scopes[resolvedScopeName] = resolvePackages(scope) || {};
+        scopes[resolvedScopeName] = resolvePackages(scope, resolvedScopeName) || {};
       }
     }
 
-    return { imports: imports, scopes: scopes, baseUrl: baseUrl };
+    return { imports: imports, scopes: scopes };
   }
 
   function getMatch (path, matchObj) {
@@ -148,7 +148,7 @@
     } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
   }
 
-  function applyPackages (id, packages, baseUrl) {
+  function applyPackages (id, packages) {
     const pkgName = getMatch(id, packages);
     if (pkgName) {
       const pkg = packages[pkgName];
@@ -156,22 +156,22 @@
 
       if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
         console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
-      return resolveUrl(pkg + id.slice(pkgName.length), baseUrl);
+      return pkg + id.slice(pkgName.length);
     }
   }
 
   function resolveImportMap (id, parentUrl, importMap) {
-    const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl);
+    const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl) || id.indexOf(':') !== -1 && id;
     if (urlResolved)
       id = urlResolved;
     const scopeName = getMatch(parentUrl, importMap.scopes);
     if (scopeName) {
       const scopePackages = importMap.scopes[scopeName];
-      const packageResolution = applyPackages(id, scopePackages, scopeName);
+      const packageResolution = applyPackages(id, scopePackages);
       if (packageResolution)
         return packageResolution;
     }
-    return applyPackages(id, importMap.imports, importMap.baseUrl) || urlResolved || throwBare(id, parentUrl);
+    return applyPackages(id, importMap.imports) || urlResolved || throwBare(id, parentUrl);
   }
 
   function throwBare (id, parentUrl) {
@@ -656,45 +656,58 @@
    * OR
    * <script type="systemjs-importmap" src=package.json></script>
    * 
-   * Only supports loading the first import map
+   * Only those import maps available at the time of SystemJS initialization will be loaded
+   * and they will be loaded in DOM order.
+   * 
+   * There is no support for dynamic import maps injection currently.
    */
 
-  var importMap, importMapPromise;
-  if (typeof document !== 'undefined') {
-    const scripts = document.getElementsByTagName('script');
-    for (let i = 0; i < scripts.length; i++) {
-      const script = scripts[i];
-      if (script.type !== 'systemjs-importmap')
-        continue;
+  const baseMap = Object.create(null);
+  baseMap.imports = Object.create(null);
+  baseMap.scopes = Object.create(null);
+  let importMapPromise = Promise.resolve(baseMap);
 
+  if (typeof document !== 'undefined') {
+    const importMapScripts = document.querySelectorAll('script[type="systemjs-importmap"]');
+    for (let i = 0; i < importMapScripts.length; i++) {
+      const script = importMapScripts[i];
       if (!script.src) {
-        importMap = parseImportMap(JSON.parse(script.innerHTML), baseUrl);
-      }
-      else {
-        importMapPromise = fetch(script.src)
-        .then(function (res) {
-          return res.json();
-        })
-        .then(function (json) {
-          importMap = parseImportMap(json, script.src);
+        importMapPromise = importMapPromise.then(function (map) {
+          return mergeImportMap(map, parseImportMap(JSON.parse(script.innerHTML), baseUrl));
         });
       }
-      break;
+      else {
+        const fetchPromise = fetch(script.src);
+        importMapPromise = importMapPromise.then(function (map) {
+          return fetchPromise
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            return mergeImportMap(map, parseImportMap(data, script.src));
+          });  
+        });      
+      }
     }
   }
 
-  importMap = importMap || { imports: {}, scopes: {} };
+  function mergeImportMap(originalMap, newMap) {
+    for (let i in newMap.imports) {
+      originalMap.imports[i] = newMap.imports[i];
+    }
+    for (let i in newMap.scopes) {
+      originalMap.scopes[i] = newMap.scopes[i];
+    }
+    return originalMap;
+  }
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || baseUrl;
 
-    if (importMapPromise)
-      return importMapPromise
-      .then(function () {
-        return resolveImportMap(id, parentUrl, importMap);
-      });
-
-    return resolveImportMap(id, parentUrl, importMap);
+    return importMapPromise
+    .then(function (importMap) {
+      return resolveImportMap(id, parentUrl, importMap);
+    });
   };
 
   const toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
