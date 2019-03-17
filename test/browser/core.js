@@ -30,6 +30,13 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+
+  test('Import full URL', function () {
+    return System.import(window.location.href.substr(0, window.location.href.lastIndexOf('/')) + '/fixtures/browser/string-encoding.js').then(function () {
+      assert.ok(true);
+    });
+  });
+
   test('Package maps', function () {
     return Promise.all([
       System.resolve('a'),

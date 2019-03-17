@@ -158,7 +158,7 @@ function applyPackages (id, packages) {
 }
 
 export function resolveImportMap (id, parentUrl, importMap) {
-  const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl);
+  const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl) || id.indexOf(':') !== -1 && id;
   if (urlResolved)
     id = urlResolved;
   const scopeName = getMatch(parentUrl, importMap.scopes);
