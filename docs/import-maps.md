@@ -22,7 +22,7 @@ Import maps can be loaded inline or from a separate URL using a `<script type="s
     "lodash/": "/path/to/lodash/"
   },
   "scopes": {
-    "/path/to/lodash": {
+    "/path/to/lodash/": {
       "lodash-dependency": "/path/to/scoped/package.js"
     }
   }
@@ -80,10 +80,10 @@ This can be achieved with scoped import maps:
 <script type="systemjs-importmap">
 {
   "scopes": {
-    "/app": {
+    "/app/": {
       "lodash": "/path/to/lodash@2.0.0.js"
     },
-    "/lib/x": {
+    "/lib/x/": {
       "lodash": "/path/to/lodash@1.0.0.js"
     }
   }

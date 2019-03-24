@@ -19,7 +19,7 @@ describe('Import Maps', function () {
         "r": "r"
       },
       scopes: {
-        "/scope": {
+        "/scope/": {
           "x/": "y/"
         }
       }
