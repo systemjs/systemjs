@@ -1,5 +1,18 @@
 suite('AMD tests', function () {
 
+  test('Multiple Errors', function () {
+    window.onerror = undefined;
+    return System.import('fixtures/amd-error.js').then(function (m) {
+      assert.fail('Should fail');
+    }, function (err) {
+      assert.ok(err);
+      return System.import('fixtures/amd-ok.js')
+      .then(function (m) {
+        assert.ok(m);
+      });
+    });
+  });
+
   test('Loading an AMD module', function () {
     return System.import('fixtures/amd-module.js').then(function (m) {
       assert.ok(m.default);

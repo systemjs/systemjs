@@ -29,10 +29,13 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     script.addEventListener('load', function () {
       document.head.removeChild(script);
       // Note URL normalization issues are going to be a careful concern here
-      if (err)
-        return reject(err);
-      else
+      if (err) {
+        reject(err);
+        return err = undefined;
+      }
+      else {
         resolve(loader.getRegister());
+      }
     });
     script.src = url;
     document.head.appendChild(script);
