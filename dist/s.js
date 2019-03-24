@@ -383,10 +383,13 @@
       script.addEventListener('load', function () {
         document.head.removeChild(script);
         // Note URL normalization issues are going to be a careful concern here
-        if (err)
-          return reject(err);
-        else
+        if (err) {
+          reject(err);
+          return err = undefined;
+        }
+        else {
           resolve(loader.getRegister());
+        }
       });
       script.src = url;
       document.head.appendChild(script);
@@ -397,10 +400,10 @@
     const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
     if (!resolved) {
       if (id.indexOf(':') !== -1)
-        return id;
+        return Promise.resolve(id);
       throw new Error('Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
     }
-    return resolved;
+    return Promise.resolve(resolved);
   };
 
 }());

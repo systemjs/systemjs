@@ -13,10 +13,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.0.0-rc.1",
-    "@babel/core": "^7.0.0-rc.1",
-    "@babel/plugin-syntax-import-meta": "^7.0.0-rc.1",
-    "@babel/plugin-transform-modules-systemjs": "^7.0.0-rc.1",
     "bluebird": "^3.5.1",
     "esm": "^3.0.77",
     "mocha": "^5.2.0",

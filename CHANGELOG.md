@@ -1,3 +1,7 @@
+SystemJS 3.1.0 (2019/03/24)
+* Ensure resolve always returns a promise (https://github.com/systemjs/systemjs/commits/42ea052e9a97, @joeldenning)
+* Fix error handling for AMD scripts (https://github.com/systemjs/systemjs/commits/56d515a2885ebce6b)
+
 SystemJS 3.0.2 (2019/03/17)
 * Support for multiple import maps ([#1912](https://github.com/systemjs/systemjs/pull/1912), @joeldenning)
 * Bug fix to URL imports when not applied by package map ([#a0d53c95](https://github.com/systemjs/systemjs/commits/a0d53c956b751c))
