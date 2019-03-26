@@ -59,3 +59,18 @@ systemJSPrototype.delete = function (id) {
     });
   return delete this[REGISTRY][id];
 };
+
+systemJSPrototype[Symbol && Symbol.iterator ? Symbol.iterator : '@@iterator'] = function() {
+  const keys = Object.keys(this[REGISTRY]);
+  let index = 0;
+  return {
+    next() {
+      if (index === keys.length) {
+        return {done: true};
+      } else {
+        const key = keys[index++];
+        return {done: false, value: [key, this[REGISTRY][key]]};
+      }
+    }
+  }
+}

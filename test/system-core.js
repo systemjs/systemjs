@@ -133,6 +133,18 @@ describe('Core API', function () {
       assert(resolveReturnValue instanceof Promise);
       assert.equal(resolvedX, 'http://x');
     });
+
+    it('Supports iteration', async function () {
+      loader.set('h', {a: 'b'});
+      await loader.import('h');
+
+      let atLeastOneModule = false;
+      for (let entry of loader) {
+        atLeastOneModule = true;
+      }
+
+      assert(atLeastOneModule);
+    })
   });
 });
 
