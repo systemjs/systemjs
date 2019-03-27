@@ -87,3 +87,14 @@ System.set('http://site.com/normalized/module/name.js', {
 `module` is an object of names to set as the named exports.
 
 If `module` is an existing Module Namespace, it will be used by reference.
+
+#### System[Symbol.iterator]() -> Iterator
+Type: `Function`
+
+Allows you to iterate over the System module registry. Each value will be an array with two values: a key and the module.
+
+```js
+for (let entry of System) {
+  console.log(entry); // ['http://localhost/path-to-file.js', {exportName: 'exportedValue'}]
+}
+```
