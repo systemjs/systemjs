@@ -88,13 +88,14 @@ System.set('http://site.com/normalized/module/name.js', {
 
 If `module` is an existing Module Namespace, it will be used by reference.
 
-#### System[Symbol.iterator]() -> Iterator
+#### System.entries() -> Array
 Type: `Function`
 
-Allows you to iterate over the System module registry. Each value will be an array with two values: a key and the module.
+Allows you to retrieve all modules in the System registry. Each value will be an array with two values: a key and the module. Also available
+at `System[Symbol.iterator]`.
 
 ```js
-for (let entry of System) {
+System.entries().forEach((key, value) => {
   console.log(entry); // ['http://localhost/path-to-file.js', {exportName: 'exportedValue'}]
-}
+});
 ```

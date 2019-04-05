@@ -138,12 +138,21 @@ describe('Core API', function () {
       loader.set('h', {a: 'b'});
       await loader.import('h');
 
-      let atLeastOneModule = false;
+      let foundH = false;
       for (let entry of loader) {
-        atLeastOneModule = true;
+        if (entry[0] === 'h' && entry[1].a === 'b') {
+          foundH = true
+        }
       }
 
-      assert(atLeastOneModule);
+      assert(foundH);
+    });
+
+    it('Supports System.entries', async function () {
+      loader.set('i', {a: 'b'});
+      await loader.import('i');
+
+      assert(loader.entries().some(entry => entry[0] === 'i' && entry[1].a === 'b'));
     })
   });
 });

@@ -60,18 +60,23 @@ systemJSPrototype.delete = function (id) {
   return delete this[REGISTRY][id];
 };
 
-systemJSPrototype[Symbol && Symbol.iterator ? Symbol.iterator : '@@iterator'] = function() {
-  const registry = this[REGISTRY]
-  const keys = Object.keys(registry);
-  let index = 0;
-  return {
-    next() {
-      if (index === keys.length) {
-        return {done: true};
-      } else {
+systemJSPrototype.entries = function() {
+  const registry = this[REGISTRY];
+  return Object.keys(registry).map(function (key) {
+    return [key, registry[key].n];
+  });
+}
+
+if (typeof Symbol !== 'undefined') {
+  systemJSPrototype[Symbol.iterator] = function () {
+    const registry = this[REGISTRY]
+    const keys = Object.keys(registry);
+    let index = 0;
+    return {
+      next() {
         const key = keys[index++];
-        return {done: false, value: [key, registry[key]]};
+        return { done: index > keys.length, value: key && [key, registry[key].n] };
       }
-    }
+    };
   }
 }
