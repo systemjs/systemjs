@@ -60,7 +60,7 @@ systemJSPrototype.delete = function (id) {
   return delete this[REGISTRY][id];
 };
 
-systemJSPrototype.entries = function() {
+systemJSPrototype.entries = function () {
   const registry = this[REGISTRY];
   return Object.keys(registry).map(function (key) {
     return [key, registry[key].n];

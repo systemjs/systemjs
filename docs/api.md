@@ -98,4 +98,8 @@ at `System[Symbol.iterator]`.
 System.entries().forEach((key, value) => {
   console.log(entry); // ['http://localhost/path-to-file.js', {exportName: 'exportedValue'}]
 });
+
+for (let entry of System) {
+  console.log(entry); // ['http://localhost/path-to-file.js', {exportName: 'exportedValue'}]
+}
 ```
