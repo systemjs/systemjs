@@ -141,7 +141,7 @@ describe('Core API', function () {
       let foundH = false;
       for (let entry of loader) {
         if (entry[0] === 'h' && entry[1].a === 'b') {
-          foundH = true
+          foundH = true;
         }
       }
 

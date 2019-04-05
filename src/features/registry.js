@@ -69,7 +69,7 @@ systemJSPrototype.entries = function() {
 
 if (typeof Symbol !== 'undefined') {
   systemJSPrototype[Symbol.iterator] = function () {
-    const registry = this[REGISTRY]
+    const registry = this[REGISTRY];
     const keys = Object.keys(registry);
     let index = 0;
     return {
