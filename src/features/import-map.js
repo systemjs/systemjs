@@ -17,29 +17,14 @@ const baseMap = Object.create(null);
 baseMap.imports = Object.create(null);
 baseMap.scopes = Object.create(null);
 let importMapPromise = Promise.resolve(baseMap);
+let acquiringImportMaps = typeof document !== 'undefined';
 
-if (typeof document !== 'undefined') {
-  const importMapScripts = document.querySelectorAll('script[type="systemjs-importmap"]');
-  for (let i = 0; i < importMapScripts.length; i++) {
-    const script = importMapScripts[i];
-    if (!script.src) {
-      importMapPromise = importMapPromise.then(function (map) {
-        return mergeImportMap(map, parseImportMap(JSON.parse(script.innerHTML), baseUrl));
-      });
-    }
-    else {
-      const fetchPromise = fetch(script.src);
-      importMapPromise = importMapPromise.then(function (map) {
-        return fetchPromise
-        .then(function (res) {
-          return res.json();
-        })
-        .then(function (data) {
-          return mergeImportMap(map, parseImportMap(data, script.src));
-        });  
-      });      
-    }
-  }
+if (acquiringImportMaps) {
+  document.querySelectorAll('script[type="systemjs-importmap"][src]').forEach(function (script) {
+    script._j = fetch(script.src).then(function (resp) {
+      return resp.json();
+    });
+  });
 }
 
 export function mergeImportMap(originalMap, newMap) {
@@ -54,6 +39,18 @@ export function mergeImportMap(originalMap, newMap) {
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
+
+  if (acquiringImportMaps) {
+    acquiringImportMaps = false;
+    document.querySelectorAll('script[type="systemjs-importmap"]').forEach(function (script) {
+      importMapPromise = importMapPromise.then(function (map) {
+        return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
+        .then(function (json) {
+          return mergeImportMap(map, parseImportMap(json, script.src || baseUrl));
+        });
+      });
+    });
+  }
 
   return importMapPromise
   .then(function (importMap) {
