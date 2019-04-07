@@ -60,23 +60,19 @@ systemJSPrototype.delete = function (id) {
   return delete this[REGISTRY][id];
 };
 
-systemJSPrototype.entries = function () {
-  const registry = this[REGISTRY];
-  return Object.keys(registry).map(function (key) {
-    return [key, registry[key].n];
-  });
-}
+const iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
 
-if (typeof Symbol !== 'undefined') {
-  systemJSPrototype[Symbol.iterator] = function () {
-    const registry = this[REGISTRY];
-    const keys = Object.keys(registry);
-    let index = 0;
-    return {
-      next() {
-        const key = keys[index++];
-        return { done: index > keys.length, value: key && [key, registry[key].n] };
-      }
-    };
-  }
-}
+systemJSPrototype.entries = function () {
+  const registry = this[REGISTRY], keys = Object.keys(registry);
+  let index = 0;
+  return {
+    next () {
+      const key = keys[index++];
+      return {
+        done: index > keys.length,
+        value: key && [key, registry[key].n]
+      };
+    },
+    [iterator]: function() { return this }
+  };
+};

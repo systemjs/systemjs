@@ -143,7 +143,7 @@ describe('Core API', function () {
       await loader.import('h');
 
       let foundH = false;
-      for (let entry of loader) {
+      for (let entry of loader.entries()) {
         if (entry[0] === 'h' && entry[1].a === 'b') {
           foundH = true;
         }
@@ -156,7 +156,7 @@ describe('Core API', function () {
       loader.set('i', {a: 'b'});
       await loader.import('i');
 
-      assert(loader.entries().some(entry => entry[0] === 'i' && entry[1].a === 'b'));
+      assert([...loader.entries()].some(entry => entry[0] === 'i' && entry[1].a === 'b'));
     })
   });
 });
