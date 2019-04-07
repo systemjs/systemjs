@@ -1,4 +1,4 @@
-import './fixtures/enable-tracing';
+import './fixtures/tracing.js';
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
@@ -62,6 +62,7 @@ describe('Core API', function () {
   });
 
   it('Supports tracing loads', async function () {
+    global.TRACING = true;
     loader.instantiate = x => [[], _export => ({ execute () { _export('y', 42) } })];
     const loaded = [];
     loader.onload = function (x) {
@@ -71,9 +72,11 @@ describe('Core API', function () {
     assert.equal(z.y, 42);
     assert.equal(loaded.length, 1);
     assert.equal(loaded[0], 'z');
+    global.TRACING = false;
   });
 
   it('Supports tracing load failures', async function () {
+    global.TRACING = true;
     loader.instantiate = x => { throw new Error('Problem') };
     const errors = [];
     loader.onload = function (_id, err) {
@@ -86,6 +89,7 @@ describe('Core API', function () {
     catch (e) {
       assert.equal(e.err, errors[0].err);
     }
+    global.TRACING = false;
   });
 
   it('Caches load failures', async function () {
@@ -273,6 +277,47 @@ describe('Loading Cases', function() {
     it('Should support top-level await', async function () {
       const m = await loader.import('./tla/main.js');
       assert.equal(m.passed, true);
+    });
+    it('should support async graphs', async function () {
+      const loader = new SystemLoader();
+      loader.resolve = function (id) { return id };
+      loader.instantiate = function (id) {
+        if (id === 'main') {
+          return [
+            ['dep'],
+            function(_export, _context) {
+              var value
+              return {
+                setters: [
+                  function(dep) {
+                    value = dep.default
+                  },
+                ],
+                execute: async function() {
+                  _export('default', value);
+                },
+              }
+            },
+          ]
+        }
+      
+        if (id === 'dep') {
+          return [
+            [],
+            function(_export, _context) {
+              return {
+                setters: [],
+                execute: async function() {
+                  _export("default", 42)
+                },
+              }
+            },
+          ]
+        }
+      };
+      
+      const m = await loader.import('main');
+      assert.equal(m.default, 42);
     });
   });
 

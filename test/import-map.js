@@ -1,4 +1,4 @@
-import './fixtures/enable-tracing.js';
+import './fixtures/tracing.js';
 import { parseImportMap, resolveImportMap } from '../src/common.js';
 import assert from 'assert';
 import { mergeImportMap } from '../src/features/import-map.js';

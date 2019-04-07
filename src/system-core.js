@@ -255,7 +255,7 @@ function postOrderExec (loader, load, seen) {
         throw err;
       });
     else
-      return load.E = Promise.all(depLoadPromises).then(doExec);
+      return Promise.all(depLoadPromises).then(doExec);
   }
 
   return doExec();
@@ -274,11 +274,10 @@ function postOrderExec (loader, load, seen) {
             throw err;
           });
         else
-          execPromise.then(function () {
+          execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null;
-          });
-        execPromise.catch(function () {});
+          }, function () {});
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
