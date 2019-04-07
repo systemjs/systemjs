@@ -63,14 +63,17 @@ systemJSPrototype.delete = function (id) {
 const iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
 
 systemJSPrototype.entries = function () {
-  const registry = this[REGISTRY], keys = Object.keys(registry);
-  let index = 0;
+  const loader = this, keys = Object.keys(loader[REGISTRY]);
+  let index = 0, ns, key;
   return {
     next () {
-      const key = keys[index++];
+      while (
+        (key = keys[index++]) !== undefined && 
+        (ns = loader.get(key)) === undefined
+      );
       return {
-        done: index > keys.length,
-        value: key && [key, registry[key].n]
+        done: key === undefined,
+        value: key !== undefined && [key, ns]
       };
     },
     [iterator]: function() { return this }
