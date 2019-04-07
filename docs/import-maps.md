@@ -94,7 +94,7 @@ This can be achieved with scoped import maps:
 Scopes still fallback to applying the global imports, so we only need to do this for imports that are different
 from their global resolutions.
 
-#### Spec and Implemnetation Feedback
+#### Spec and Implementation Feedback
 
 Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on
 the spec.
