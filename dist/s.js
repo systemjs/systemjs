@@ -1,5 +1,5 @@
 /*
-* SJS 3.1.0
+* SJS 3.1.1
 * Minimal SystemJS Build
 */
 (function () {
@@ -322,7 +322,7 @@
       }
     });
     if (depLoadPromises) {
-      return load.E = Promise.all(depLoadPromises).then(doExec);
+      return Promise.all(depLoadPromises).then(doExec);
     }
 
     return doExec();
@@ -331,11 +331,10 @@
       try {
         let execPromise = load.e.call(nullContext);
         if (execPromise) {
-          execPromise.then(function () {
+          execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null;
-            });
-          execPromise.catch(function () {});
+            }, function () {});
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)

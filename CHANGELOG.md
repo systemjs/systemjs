@@ -1,3 +1,8 @@
+SystemJS 3.1.1 (2019/04/07)
+* Fix a Promise chaining bug with top-level await in s.js (https://github.com/systemjs/systemjs/issues/1921, https://github.com/systemjs/systemjs/commits/cc44badb954)
+* Support registry iteration (https://github.com/systemjs/systemjs/issues/1918, 984dcd1c0fe, 532fdbddede7c2, 1af0f13f58, @joeldenning)
+* Support late loading of import maps (https://github.com/systemjs/systemjs/issues/1916, @joeldenning)
+
 SystemJS 3.1.0 (2019/03/24)
 * Ensure resolve always returns a promise (https://github.com/systemjs/systemjs/commits/42ea052e9a97, @joeldenning)
 * Fix error handling for AMD scripts (https://github.com/systemjs/systemjs/commits/56d515a2885ebce6b)
