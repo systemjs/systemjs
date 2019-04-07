@@ -137,6 +137,27 @@ describe('Core API', function () {
       assert(resolveReturnValue instanceof Promise);
       assert.equal(resolvedX, 'http://x');
     });
+
+    it('Supports iteration', async function () {
+      loader.set('h', {a: 'b'});
+      await loader.import('h');
+
+      let foundH = false;
+      for (let entry of loader) {
+        if (entry[0] === 'h' && entry[1].a === 'b') {
+          foundH = true;
+        }
+      }
+
+      assert(foundH);
+    });
+
+    it('Supports System.entries', async function () {
+      loader.set('i', {a: 'b'});
+      await loader.import('i');
+
+      assert(loader.entries().some(entry => entry[0] === 'i' && entry[1].a === 'b'));
+    })
   });
 });
 

@@ -87,3 +87,19 @@ System.set('http://site.com/normalized/module/name.js', {
 `module` is an object of names to set as the named exports.
 
 If `module` is an existing Module Namespace, it will be used by reference.
+
+#### System.entries() -> Array
+Type: `Function`
+
+Allows you to retrieve all modules in the System registry. Each value will be an array with two values: a key and the module. Also available
+at `System[Symbol.iterator]`.
+
+```js
+System.entries().forEach((key, value) => {
+  console.log(entry); // ['http://localhost/path-to-file.js', {exportName: 'exportedValue'}]
+});
+
+for (let entry of System) {
+  console.log(entry); // ['http://localhost/path-to-file.js', {exportName: 'exportedValue'}]
+}
+```

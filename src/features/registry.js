@@ -59,3 +59,24 @@ systemJSPrototype.delete = function (id) {
     });
   return delete this[REGISTRY][id];
 };
+
+systemJSPrototype.entries = function () {
+  const registry = this[REGISTRY];
+  return Object.keys(registry).map(function (key) {
+    return [key, registry[key].n];
+  });
+}
+
+if (typeof Symbol !== 'undefined') {
+  systemJSPrototype[Symbol.iterator] = function () {
+    const registry = this[REGISTRY];
+    const keys = Object.keys(registry);
+    let index = 0;
+    return {
+      next() {
+        const key = keys[index++];
+        return { done: index > keys.length, value: key && [key, registry[key].n] };
+      }
+    };
+  }
+}
