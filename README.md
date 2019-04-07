@@ -82,7 +82,7 @@ For an example of a bundling workflow, see the Rollup Code Splitting starter pro
 Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 
 ```html
-
+<script src="system.js"></script>
 <script type="systemjs-importmap">
 {
   "imports": {
@@ -93,8 +93,6 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 <!-- Alternatively:
 <script type="systemjs-importmap" src="path/to/map.json">
 -->
-<!-- SystemJS must be loaded after the import map -->
-<script src="system.js"></script>
 <script>
   System.import('/js/main.js');
 </script>

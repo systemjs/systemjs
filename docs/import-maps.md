@@ -30,7 +30,7 @@ Import maps can be loaded inline or from a separate URL using a `<script type="s
 </script>
 ```
 
-It is important that the import map is included before SystemJS itself for it to be picked up properly.
+> The import map is fixed as soon as the first `System.resolve` (or indirectly through `System.import`) is called. At this point no new import maps can be loaded currently, although this is under specification discussion at https://github.com/WICG/import-maps/issues/92.
 
 ### Imports
 
