@@ -1,6 +1,6 @@
 /*
  * SystemJS Core
- * 
+ *
  * Provides
  * - System.import
  * - System.register support for
@@ -10,7 +10,7 @@
  * - Symbol.toStringTag support in Module objects
  * - Hookable System.createContext to customize import.meta
  * - System.onload(id, err?) handler for tracing / hot-reloading
- * 
+ *
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
@@ -69,7 +69,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   const ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
-  
+
   let instantiatePromise = Promise.resolve()
   .then(function () {
     return loader.instantiate(id, firstParentUrl);
@@ -88,13 +88,21 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
         }
       }
       else {
-        for (let p in name) {
-          let value = name[p];
-          if (!(p in ns) || ns[p] !== value) {
-            ns[p] = value;
+        const exportedNs = name;
+        Object.getOwnPropertyNames(exportedNs).forEach(name => {
+          const descriptor = Object.getOwnPropertyDescriptor(exportedNs, name)
+          if ('get' in descriptor) {
+            Object.defineProperty(ns, name, descriptor);
             changed = true;
           }
-        }
+          else {
+            const value = descriptor.value;
+            if (!(name in ns) || ns[name] !== value) {
+              ns[name] = value;
+              changed = true;
+            }
+          }
+        })
       }
       if (changed)
         for (let i = 0; i < importerSetters.length; i++)
