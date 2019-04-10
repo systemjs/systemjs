@@ -65,7 +65,6 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   if (load)
     return load;
 
-
   const importerSetters = [];
   const ns = Object.create(null);
   if (toStringTag)

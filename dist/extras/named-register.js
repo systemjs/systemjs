@@ -29,7 +29,6 @@
 
   const resolve = systemJSPrototype.resolve;
   systemJSPrototype.resolve = function (id, parentURL) {
-    console.log('namedRegistry resolve', id)
     if (id[0] === '/' || id[0] === '.' && (id[1] === '/' || id[1] === '.' && id[2] === '/'))
       return resolve.call(this, id, parentURL);
     if (id in this.registerRegistry)
