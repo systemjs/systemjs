@@ -116,7 +116,9 @@ To load ES modules directly in older browsers with SystemJS we can install and u
 
 Code-splitting builds on top of native ES modules, like Rollup offers, are an alternative to the Webpack-style chunking approach - offering a way to utilize the native module loader for loading shared and dynamic chunks instead of using a custom registry and loader as Webpack bundles include. Scope-level optimizations can be performed on ES modules when they are combined, while ensuring no duplicate code is loaded through dynamic loading and code-sharing in the module registry, using the features of the native module loader and its dynamic runtime nature.
 
-There is currently no support for SystemJS in Webpack. If building code using the `System` global in Webpack, the following config is needed to avoid rewriting:
+It will soon be possible to emit SystemJS modules from Webpack builds using the `output.libraryTarget = "system"` configuration, which [has been merged pending release](https://github.com/webpack/webpack/pull/8864).
+
+If building code using the `System` global in Webpack, the following config is needed to avoid rewriting:
 
 ```js
 {
