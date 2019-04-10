@@ -27,13 +27,9 @@ function SystemJS () {
 
 const systemJSPrototype = SystemJS.prototype;
 systemJSPrototype.import = function (id, parentUrl) {
-  console.group('import', id)
   const loader = this;
-  console.log('this.resolve', this.resolve)
   return Promise.resolve(loader.resolve(id, parentUrl))
   .then(function (id) {
-    console.log('id matters', id)
-    console.groupEnd()
     const load = getOrCreateLoad(loader, id);
     return load.C || topLevelLoad(loader, load);
   });
@@ -65,21 +61,16 @@ systemJSPrototype.getRegister = function () {
 };
 
 function getOrCreateLoad (loader, id, firstParentUrl) {
-  console.log('loader', loader)
-  console.log('REGISTRY', REGISTRY)
-  console.log('id', id)
   let load = loader[REGISTRY][id];
-  console.log('load', load)
   if (load)
     return load;
 
-  console.log('no load')
 
   const importerSetters = [];
   const ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
-  
+
   let instantiatePromise = Promise.resolve()
   .then(function () {
     return loader.instantiate(id, firstParentUrl);

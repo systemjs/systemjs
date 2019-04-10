@@ -168,8 +168,6 @@ export function resolveImportMap (id, parentUrl, importMap) {
     if (packageResolution)
       return packageResolution;
   }
-  const packages = applyPackages(id, importMap.imports)
-  console.log('packages', packages)
   return applyPackages(id, importMap.imports) || urlResolved || throwBare(id, parentUrl);
 }
 
