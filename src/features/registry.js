@@ -1,4 +1,5 @@
 import { systemJSPrototype, REGISTRY } from '../system-core.js';
+import { importMapResolve } from './import-map.js'
 
 const toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
@@ -79,3 +80,11 @@ systemJSPrototype.entries = function () {
     [iterator]: function() { return this }
   };
 };
+
+systemJSPrototype.resolve = function (id, parentUrl) {
+  if (this.has(id)) {
+    return Promise.resolve(id)
+  } else {
+    return importMapResolve(id, parentUrl)
+  }
+}

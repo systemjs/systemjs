@@ -37,7 +37,7 @@ export function mergeImportMap(originalMap, newMap) {
   return originalMap;
 }
 
-systemJSPrototype.resolve = function (id, parentUrl) {
+export function importMapResolve (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
 
   if (acquiringImportMaps) {

@@ -1,6 +1,7 @@
 import { systemJSPrototype } from '../system-core.js';
 import { resolveIfNotPlainOrUrl, baseUrl } from '../common.js';
 systemJSPrototype.resolve = function (id, parentUrl) {
+  // console.log*'basic-resolve'
   const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
   if (!resolved) {
     if (id.indexOf(':') !== -1)
