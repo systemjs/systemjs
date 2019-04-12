@@ -161,7 +161,7 @@
     const ns = Object.create(null);
     if (toStringTag)
       Object.defineProperty(ns, toStringTag, { value: 'Module' });
-
+    
     let instantiatePromise = Promise.resolve()
     .then(function () {
       return loader.instantiate(id, firstParentUrl);

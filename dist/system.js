@@ -246,7 +246,7 @@
     const ns = Object.create(null);
     if (toStringTag)
       Object.defineProperty(ns, toStringTag, { value: 'Module' });
-
+    
     let instantiatePromise = Promise.resolve()
     .then(function () {
       return loader.instantiate(id, firstParentUrl);
@@ -688,7 +688,7 @@
     return originalMap;
   }
 
-  function importMapResolve (id, parentUrl) {
+  systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || baseUrl;
 
     if (acquiringImportMaps) {
@@ -707,7 +707,7 @@
     .then(function (importMap) {
       return resolveImportMap(id, parentUrl, importMap);
     });
-  }
+  };
 
   const toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
@@ -787,14 +787,6 @@
       },
       [iterator]: function() { return this }
     };
-  };
-
-  systemJSPrototype.resolve = function (id, parentUrl) {
-    if (this.has(id)) {
-      return Promise.resolve(id)
-    } else {
-      return importMapResolve(id, parentUrl)
-    }
   };
 
 }());
