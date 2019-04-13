@@ -277,7 +277,7 @@ function postOrderExec (loader, load, seen) {
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null;
-          }, function () {});
+          });
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
