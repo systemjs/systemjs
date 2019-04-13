@@ -1,3 +1,6 @@
+SystemJS 3.1.2 (2019/04/13)
+* Fix an async execution bug in s.js (https://github.com/systemjs/systemjs/issues/1924, https://github.com/systemjs/systemjs/commits/c274caa172b03b24)
+
 SystemJS 3.1.1 (2019/04/07)
 * Fix a Promise chaining bug with top-level await in s.js (https://github.com/systemjs/systemjs/issues/1921, https://github.com/systemjs/systemjs/commits/cc44badb954)
 * Support registry iteration (https://github.com/systemjs/systemjs/issues/1918, 984dcd1c0fe, 532fdbddede7c2, 1af0f13f58, @joeldenning)

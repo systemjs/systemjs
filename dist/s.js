@@ -1,5 +1,5 @@
 /*
-* SJS 3.1.1
+* SJS 3.1.2
 * Minimal SystemJS Build
 */
 (function () {
@@ -334,7 +334,7 @@
           execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null;
-            }, function () {});
+            });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
