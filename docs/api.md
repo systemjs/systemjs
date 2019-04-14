@@ -97,5 +97,5 @@ Allows you to retrieve all modules in the System registry. Each value will be an
 for (const [id, ns] of System.entries()) {
   console.log(id); // 'http://localhost/path-to-file.js'
   console.log(ns); // { exportName: 'value' }
-});
+};
 ```
