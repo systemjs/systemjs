@@ -116,7 +116,7 @@ To load ES modules directly in older browsers with SystemJS we can install and u
 
 Code-splitting builds on top of native ES modules, like Rollup offers, are an alternative to the Webpack-style chunking approach - offering a way to utilize the native module loader for loading shared and dynamic chunks instead of using a custom registry and loader as Webpack bundles include. Scope-level optimizations can be performed on ES modules when they are combined, while ensuring no duplicate code is loaded through dynamic loading and code-sharing in the module registry, using the features of the native module loader and its dynamic runtime nature.
 
-It is now possible to compile webpack bundles to System.register format, by modifying your webpack config:
+As of webpack@4.30.0, it is now possible to compile webpack bundles to System.register format, by modifying your webpack config:
 
 ```js
 {
