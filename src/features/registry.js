@@ -66,7 +66,7 @@ systemJSPrototype.entries = function () {
   const loader = this, keys = Object.keys(loader[REGISTRY]);
   let index = 0, ns, key;
   return {
-    next () {
+    next: function () {
       while (
         (key = keys[index++]) !== undefined && 
         (ns = loader.get(key)) === undefined
