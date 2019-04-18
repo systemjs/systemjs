@@ -26,6 +26,7 @@ suite('AMD tests', function () {
       assert.ok(m.default);
       assert.equal(m.default.test, 'hi');
       assert.equal(m.default.dep.amd, 'dep');
+      assert.equal(m.default.mod.amd, true);
     });
   });
 
