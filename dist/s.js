@@ -1,5 +1,5 @@
 /*
-* SJS 3.1.2
+* SJS 3.1.3
 * Minimal SystemJS Build
 */
 (function () {
@@ -394,6 +394,24 @@
       document.head.appendChild(script);
     });
   };
+
+  /*
+   * Supports loading System.register in workers
+   */
+
+  if (hasSelf && typeof importScripts === 'function')
+    systemJSPrototype.instantiate = function (url) {
+      const loader = this;
+      return new Promise(function (resolve, reject) {
+        try {
+          importScripts(url);
+        }
+        catch (e) {
+          reject(e);
+        }
+        resolve(loader.getRegister());
+      });
+    };
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);

@@ -1,3 +1,7 @@
+SystemJS 3.1.3 (2019/04/18)
+* Add Web Worker support to the s.js build (https://github.com/systemjs/systemjs/commits/cbea1530a194d7)
+* Fix an IE11 bug due to object shorthand (https://github.com/systemjs/systemjs/commits/551b2e8ec7bda1)
+
 SystemJS 3.1.2 (2019/04/13)
 * Fix an async execution bug in s.js (https://github.com/systemjs/systemjs/issues/1924, https://github.com/systemjs/systemjs/commits/c274caa172b03b24)
 
