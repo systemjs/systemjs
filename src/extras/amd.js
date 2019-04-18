@@ -109,7 +109,7 @@
       }
       else {
         if (System.registerRegistry)
-          System.registerRegistry[name] = createAMDRegister(deps, execute);
+          System.registerRegistry[name] = createAMDRegister([].concat(deps), execute);
         name = deps;
         deps = execute;
       }
