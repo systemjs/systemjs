@@ -1,5 +1,5 @@
 /*
-* SystemJS 3.1.3
+* SystemJS 3.1.4
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -774,7 +774,7 @@
   systemJSPrototype.entries = function () {
     const loader = this, keys = Object.keys(loader[REGISTRY]);
     let index = 0, ns, key;
-    return {
+    const result = {
       next: function () {
         while (
           (key = keys[index++]) !== undefined && 
@@ -784,9 +784,12 @@
           done: key === undefined,
           value: key !== undefined && [key, ns]
         };
-      },
-      [iterator]: function() { return this }
+      }
     };
+
+    result[iterator] = function() { return this };
+
+    return result;
   };
 
 }());

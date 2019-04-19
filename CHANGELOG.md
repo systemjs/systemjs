@@ -1,3 +1,7 @@
+SystemJS 3.1.4 (2019/04/19)
+* Further IE11 bug fixes (https://github.com/systemjs/systemjs/commits/4c2ec2f6f6a662, https://github.com/systemjs/systemjs/pull/1936 @joeldenning)
+* Fix AMD define mutation bug (https://github.com/systemjs/systemjs/commits/0ec9da6b46d38da, https://github.com/systemjs/systemjs/issues/1932)
+
 SystemJS 3.1.3 (2019/04/18)
 * Add Web Worker support to the s.js build (https://github.com/systemjs/systemjs/commits/cbea1530a194d7)
 * Fix an IE11 bug due to object shorthand (https://github.com/systemjs/systemjs/commits/551b2e8ec7bda1)
