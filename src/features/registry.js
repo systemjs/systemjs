@@ -65,7 +65,7 @@ const iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
 systemJSPrototype.entries = function () {
   const loader = this, keys = Object.keys(loader[REGISTRY]);
   let index = 0, ns, key;
-  return {
+  const result = {
     next: function () {
       while (
         (key = keys[index++]) !== undefined && 
@@ -75,7 +75,10 @@ systemJSPrototype.entries = function () {
         done: key === undefined,
         value: key !== undefined && [key, ns]
       };
-    },
-    [iterator]: function() { return this }
+    }
   };
+
+  result[iterator] = function() { return this };
+
+  return result;
 };
