@@ -1,5 +1,5 @@
 /*
-* SystemJS 3.1.4
+* SystemJS 3.1.5
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -671,7 +671,7 @@
   let acquiringImportMaps = typeof document !== 'undefined';
 
   if (acquiringImportMaps) {
-    document.querySelectorAll('script[type="systemjs-importmap"][src]').forEach(function (script) {
+    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
       script._j = fetch(script.src).then(function (resp) {
         return resp.json();
       });
@@ -693,7 +693,7 @@
 
     if (acquiringImportMaps) {
       acquiringImportMaps = false;
-      document.querySelectorAll('script[type="systemjs-importmap"]').forEach(function (script) {
+      Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
         importMapPromise = importMapPromise.then(function (map) {
           return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
           .then(function (json) {
