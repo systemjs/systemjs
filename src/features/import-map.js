@@ -20,11 +20,12 @@ let importMapPromise = Promise.resolve(baseMap);
 let acquiringImportMaps = typeof document !== 'undefined';
 
 if (acquiringImportMaps) {
-  document.querySelectorAll('script[type="systemjs-importmap"][src]').forEach(function (script) {
-    script._j = fetch(script.src).then(function (resp) {
+  var im_scripts = document.querySelectorAll('script[type="systemjs-importmap"][src]');
+  for (var i = 0; i < im_scripts.length; i++) {
+    im_scripts[i]._j = fetch(im_scripts[i].src).then(function (resp) {
       return resp.json();
     });
-  });
+  };
 }
 
 export function mergeImportMap(originalMap, newMap) {
@@ -42,14 +43,15 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 
   if (acquiringImportMaps) {
     acquiringImportMaps = false;
-    document.querySelectorAll('script[type="systemjs-importmap"]').forEach(function (script) {
+    var im_scripts = document.querySelectorAll('script[type="systemjs-importmap"][src]');
+    for (var i = 0; i < im_scripts.length; i++) {
       importMapPromise = importMapPromise.then(function (map) {
-        return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
+        return (im_scripts[i]._j || im_scripts[i].src && fetch(im_scripts[i].src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(im_scripts[i].innerHTML)))
         .then(function (json) {
-          return mergeImportMap(map, parseImportMap(json, script.src || baseUrl));
+          return mergeImportMap(map, parseImportMap(json, im_scripts[i].src || baseUrl));
         });
       });
-    });
+    };
   }
 
   return importMapPromise
