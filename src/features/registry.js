@@ -78,9 +78,7 @@ systemJSPrototype.entries = function () {
     }
   };
 
-  if (iterator) {
-    result[iterator] = function() { return this };
-  }
+  result[iterator] = function() { return this };
 
   return result;
 };
