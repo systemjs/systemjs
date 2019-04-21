@@ -7,7 +7,7 @@
     "url": "git://github.com/systemjs/systemjs"
   },
   "author": "Guy Bedford",
-  "mode": "esm",
+  "type": "module",
   "license": "MIT",
   "files": [
     "dist"
