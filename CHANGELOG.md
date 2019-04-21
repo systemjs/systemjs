@@ -1,3 +1,6 @@
+SystemJS 3.1.6 (2019/04/21)
+* Add "type": "module" package.json property
+
 SystemJS 3.1.5 (2019/04/19)
 * Fix Import Maps in IE11 (https://github.com/systemjs/systemjs/commits/2cd549b68824447a, @kouts)
 
