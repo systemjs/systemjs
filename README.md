@@ -174,11 +174,9 @@ This list can be extended to include third-party loader extensions. Feel free to
 * [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
 * [json-plugin](https://github.com/Jamaks/systemjs2-json-plugin) JSON loader plugin
 
-## How is SystemJS related to jspm.io?
+## How is SystemJS related to jspm?
 
-SystemJS was initially developed as a universal module loader alongside jspm which provides a package manager and ES module CDN exploring native ES module workflows. SystemJS was the core loader enabling this experimentation of workflows from unbuilt development loading in browsers to production and CDN loading of ES modules.
-
-SystemJS is now used as the legacy loader for backwards compatibility in older browsers for jspm.io. All npm packages are available for loading in SystemJS through `https://system-dev.jspm.io/[packagename]` and `https://system-unsafe-production.jspm.io/[packagename]` where they are transformed from CommonJS into the System module format with their package resolutions inlined for usage in all browsers. This CDN can be useful in sandboxes or dev workflows, but note it is not optimized for production loading.
+SystemJS was developed as a universal module loader alongside [jspm](https://jspm.org) which provides a package manager and ES module CDN exploring native ES module workflows. Initially, SystemJS was the core loader enabling this experimentation of workflows from unbuilt development loading in browsers to production and the CDN loading of ES modules but is now used primarily as a [loader for backwards-compatibility in older browsers](https://jspm.org/docs/guide#systemjs-legacy-browser-support).
 
 ## Contributing to SystemJS
 
