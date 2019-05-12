@@ -39,7 +39,7 @@
         // needed for ie11 lack of iteration scope
         const idx = i;
         setters.push(function (ns) {
-          depModules[idx] = ns.default;
+          depModules[idx] = ns.__useDefault ? ns.default : ns;
         });
       }
       if (splice)
@@ -49,7 +49,7 @@
       amdDefineDeps.length -= splice;
     const amdExec = amdDefineExec;
     return [amdDefineDeps, function (_export) {
-      _export('default', exports);
+      _export({ default: exports, __useDefault: true });
       return {
         setters: setters,
         execute: function () {

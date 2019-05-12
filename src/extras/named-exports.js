@@ -29,6 +29,8 @@
       const declaration = registerDeclare.call(this, function (name, value) {
         if (name === 'default')
           defaultExport = value;
+        if (name === '__useDefault')
+          return;
         _export(name, value);
       }, _context);
       // hook the execute function
