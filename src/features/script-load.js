@@ -20,12 +20,12 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   if (url.endsWith('.json')) {
     return fetch(url).then(function (resp) {
-      return resp.json()
+      return resp.json();
     }).then(function (json) {
       return [[], function(_export) {
-        return {execute: function() {_export('default', json)}}
+        return {execute: function() {_export('default', json)}};
       }];
-    })
+    });
   } else {
     return new Promise(function (resolve, reject) {
       const script = document.createElement('script');
