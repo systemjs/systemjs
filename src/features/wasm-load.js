@@ -11,7 +11,7 @@ systemJSPrototype.instantiate = function (url, parent) {
   return fetch(url)
   .then(function (res) {
     if (!res.ok)
-      throw new Error(res.status + ' ' + res.statusText + ' ' + res.url + (parent ? ' loading from ' + parent : ''));
+      throw Error(res.status + ' ' + res.statusText + ' ' + res.url + (parent ? ' loading from ' + parent : ''));
 
     if (WebAssembly.compileStreaming)
       return WebAssembly.compileStreaming(res);
