@@ -4,7 +4,14 @@ const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
 export let baseUrl;
-if (typeof location !== 'undefined') {
+
+if (typeof document !== 'undefined') {
+  const baseEl = document.head.querySelector('base[href]');
+  if (baseEl)
+    baseUrl = baseEl.href;
+}
+
+if (!baseUrl && typeof location !== 'undefined') {
   baseUrl = location.href.split('#')[0].split('?')[0];
   const lastSepIndex = baseUrl.lastIndexOf('/');
   if (lastSepIndex !== -1)
@@ -94,10 +101,10 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
 
 /*
  * Import maps implementation
- * 
+ *
  * To make lookups fast we pre-resolve the entire import map
  * and then match based on backtracked hash lookups
- * 
+ *
  */
 
 function resolveUrl (relUrl, parentUrl) {
@@ -174,3 +181,4 @@ export function resolveImportMap (id, parentUrl, importMap) {
 export function throwBare (id, parentUrl) {
   throw new Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
 }
+

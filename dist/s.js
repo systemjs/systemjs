@@ -8,7 +8,14 @@
   const envGlobal = hasSelf ? self : global;
 
   let baseUrl;
-  if (typeof location !== 'undefined') {
+
+  if (typeof document !== 'undefined') {
+    const baseEl = document.head.querySelector('base[href]');
+    if (baseEl)
+      baseUrl = baseEl.href;
+  }
+
+  if (!baseUrl && typeof location !== 'undefined') {
     baseUrl = location.href.split('#')[0].split('?')[0];
     const lastSepIndex = baseUrl.lastIndexOf('/');
     if (lastSepIndex !== -1)
