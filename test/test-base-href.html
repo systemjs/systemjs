@@ -1,0 +1,48 @@
+<!doctype html>
+	<head>
+		<base href="/test/fixtures/browser/">
+	</head>
+	<meta charset="utf-8">
+	<script>
+  	if (typeof Promise === 'undefined')
+    	document.write('<script src="../node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
+	</script>
+	<script>
+		if (typeof fetch === 'undefined')
+			document.write('<script src="../node_modules/whatwg-fetch/fetch.js"><\/script>');
+	</script>
+
+	<link rel="stylesheet" type="text/css" href="../../../../node_modules/mocha/mocha.css"/>
+	<script src="../../../../node_modules/mocha/mocha.js"></script>
+
+	<script type="systemjs-importmap">
+		{
+			"imports": {
+				"base-href-bare": "./base-href-bare.js"
+			}
+		}
+	</script>
+	<script src="../../../../dist/system.js"></script>
+
+	<script>
+		mocha.setup('tdd');
+
+		self.assert = {
+			ok: function (val) {
+				this.equal(!!val, true);
+			},
+			equal: function equal(a, b) {
+				if (a !== b)
+					throw new Error('Expected "' + a + '" to be "' + b + '"');
+			},
+			fail: function (msg) {
+				throw new Error(msg);
+			}
+		};
+
+		System.import('../../browser/base-href.js').then(function () {
+			mocha.run();
+		});
+	</script>
+
+	<div id="mocha"></div>

@@ -6,7 +6,7 @@ export { envGlobal as global };
 export let baseUrl;
 
 if (typeof document !== 'undefined') {
-  const baseEl = document.head.querySelector('base[href]');
+  const baseEl = document.querySelector('base[href]');
   if (baseEl)
     baseUrl = baseEl.href;
 }
