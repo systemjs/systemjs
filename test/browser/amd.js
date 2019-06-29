@@ -21,6 +21,14 @@ suite('AMD tests', function () {
     });
   });
 
+  test('Loading an AMD module with ES module dep', function () {
+    return System.import('fixtures/amd-module-esm-dep.js').then(function (m) {
+      assert.ok(m.default);
+      assert.equal(m.default.esm, 'export');
+      assert.equal('default' in m.default, false);
+    });
+  });
+
   test('Loading AMD exports dependency', function () {
     return System.import('fixtures/amd-exports.js').then(function (m) {
       assert.ok(m.default);
