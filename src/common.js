@@ -33,7 +33,7 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
     const parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
     // Disabled, but these cases will give inconsistent results for deep backtracking
     //if (parentUrl[parentProtocol.length] !== '/')
-    //  throw new Error('Cannot resolve');
+    //  throw Error('Cannot resolve');
     // read pathname from parent URL
     // pathname taken to be part after leading "/"
     let pathname;
@@ -179,6 +179,6 @@ export function resolveImportMap (id, parentUrl, importMap) {
 }
 
 export function throwBare (id, parentUrl) {
-  throw new Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
+  throw Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
 }
 

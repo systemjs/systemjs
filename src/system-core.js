@@ -76,7 +76,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   })
   .then(function (registration) {
     if (!registration)
-      throw new Error('Module ' + id + ' did not instantiate');
+      throw Error('Module ' + id + ' did not instantiate');
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;
