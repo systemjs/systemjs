@@ -20,10 +20,10 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   if (url.endsWith('.json')) {
     return fetch(url).then(function (resp) {
-      return resp.json();
-    }).then(function (json) {
+      return resp.text();
+    }).then(function (source) {
       return [[], function(_export) {
-        return {execute: function() {_export('default', json)}};
+        return {execute: function() {_export('default', JSON.parse(source))}};
       }];
     });
   } else {

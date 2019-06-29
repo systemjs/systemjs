@@ -113,6 +113,24 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('JSON modules', function () {
+    return System.import('fixtures/json.json').then(function (m) {
+      assert.equal(m.default.json, 'module');
+    })
+    .then(function () {
+      return System.import('fixtures/json-error.json');
+    })
+    .catch(function (err) {
+      assert.ok(err instanceof SyntaxError);
+    })
+    .then(function () {
+      return System.import('fixtures/json-error.json');
+    })
+    .catch(function (err) {
+      assert.ok(err instanceof SyntaxError);
+    });
+  });
+
   if (typeof Worker !== 'undefined')
   test('Using SystemJS in a Web Worker', function () {
     const worker = new Worker('./browser/worker.js');
