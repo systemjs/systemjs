@@ -33,7 +33,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       script.async = true;
       script.crossOrigin = 'anonymous';
       script.addEventListener('error', function () {
-        reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
         document.head.removeChild(script);
