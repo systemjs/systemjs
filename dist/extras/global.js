@@ -71,7 +71,11 @@ systemJSPrototype.getRegister = function () {
   }
 
   return [[], function (_export) {
-    return { execute: function () { _export('default', globalExport) } };
+    return {
+      execute: function () {
+        _export({ default: globalExport, __useDefault: true });
+      }
+    };
   }];
 };
 

@@ -1,5 +1,5 @@
 /*
-* SJS 3.1.6
+* SJS 4.0.0
 * Minimal SystemJS Build
 */
 (function () {
@@ -8,7 +8,14 @@
   const envGlobal = hasSelf ? self : global;
 
   let baseUrl;
-  if (typeof location !== 'undefined') {
+
+  if (typeof document !== 'undefined') {
+    const baseEl = document.querySelector('base[href]');
+    if (baseEl)
+      baseUrl = baseEl.href;
+  }
+
+  if (!baseUrl && typeof location !== 'undefined') {
     baseUrl = location.href.split('#')[0].split('?')[0];
     const lastSepIndex = baseUrl.lastIndexOf('/');
     if (lastSepIndex !== -1)
@@ -30,7 +37,7 @@
       const parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
       // Disabled, but these cases will give inconsistent results for deep backtracking
       //if (parentUrl[parentProtocol.length] !== '/')
-      //  throw new Error('Cannot resolve');
+      //  throw Error('Cannot resolve');
       // read pathname from parent URL
       // pathname taken to be part after leading "/"
       let pathname;
@@ -168,7 +175,7 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw new Error('Module ' + id + ' did not instantiate');
+        throw Error('Module ' + id + ' did not instantiate');
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
@@ -371,28 +378,38 @@
 
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
-    return new Promise(function (resolve, reject) {
-      const script = document.createElement('script');
-      script.charset = 'utf-8';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.addEventListener('error', function () {
-        reject(new Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+    if (url.endsWith('.json')) {
+      return fetch(url).then(function (resp) {
+        return resp.text();
+      }).then(function (source) {
+        return [[], function(_export) {
+          return {execute: function() {_export('default', JSON.parse(source));}};
+        }];
       });
-      script.addEventListener('load', function () {
-        document.head.removeChild(script);
-        // Note URL normalization issues are going to be a careful concern here
-        if (err) {
-          reject(err);
-          return err = undefined;
-        }
-        else {
-          resolve(loader.getRegister());
-        }
+    } else {
+      return new Promise(function (resolve, reject) {
+        const script = document.createElement('script');
+        script.charset = 'utf-8';
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.addEventListener('error', function () {
+          reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+        });
+        script.addEventListener('load', function () {
+          document.head.removeChild(script);
+          // Note URL normalization issues are going to be a careful concern here
+          if (err) {
+            reject(err);
+            return err = undefined;
+          }
+          else {
+            resolve(loader.getRegister());
+          }
+        });
+        script.src = url;
+        document.head.appendChild(script);
       });
-      script.src = url;
-      document.head.appendChild(script);
-    });
+    }
   };
 
   /*
@@ -418,7 +435,7 @@
     if (!resolved) {
       if (id.indexOf(':') !== -1)
         return Promise.resolve(id);
-      throw new Error('Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
+      throw Error('Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
     }
     return Promise.resolve(resolved);
   };

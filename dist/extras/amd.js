@@ -7,7 +7,7 @@
   const emptyInstantiation = [[], function () { return {} }];
 
   function unsupportedRequire () {
-    throw new Error('AMD require not supported.');
+    throw Error('AMD require not supported.');
   }
 
   function emptyFn () {}
@@ -39,7 +39,7 @@
         // needed for ie11 lack of iteration scope
         const idx = i;
         setters.push(function (ns) {
-          depModules[idx] = ns.default;
+          depModules[idx] = ns.__useDefault ? ns.default : ns;
         });
       }
       if (splice)
@@ -49,7 +49,7 @@
       amdDefineDeps.length -= splice;
     const amdExec = amdDefineExec;
     return [amdDefineDeps, function (_export) {
-      _export('default', exports);
+      _export({ default: exports, __useDefault: true });
       return {
         setters: setters,
         execute: function () {
@@ -101,7 +101,7 @@
     if (typeof name === 'string') {
       if (amdDefineDeps) {
         if (!System.registerRegistry)
-          throw new Error('Include the named register extension for SystemJS named AMD support.');
+          throw Error('Include the named register extension for SystemJS named AMD support.');
         System.registerRegistry[name] = createAMDRegister(deps, execute);
         amdDefineDeps = [];
         amdDefineExec = emptyFn;

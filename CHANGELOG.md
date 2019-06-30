@@ -1,3 +1,9 @@
+SystemJS 4.0.0 (2019/06/29)
+* Support `<base href>` setting baseURL (https://github.com/systemjs/systemjs/pull/1957, @LarsDenBakker)
+* Use `Error` over `new Error` to reduce footprint (https://github.com/systemjs/systemjs/pull/1951, @joeldenning)
+* Support AMD importing ESM with an internal interop signifier (https://github.com/systemjs/systemjs/pull/1941)
+* Support JSON module imports (https://github.com/systemjs/systemjs/pull/1950, @joeldenning)
+
 SystemJS 3.1.6 (2019/04/21)
 * Add "type": "module" package.json property
 

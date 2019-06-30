@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "3.1.6",
+  "version": "4.0.0",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
@@ -14,7 +14,7 @@
   ],
   "devDependencies": {
     "bluebird": "^3.5.1",
-    "esm": "^3.0.77",
+    "esm": "^3.2.25",
     "mocha": "^5.2.0",
     "rollup": "^0.64.1",
     "rollup-plugin-replace": "^2.0.0",
