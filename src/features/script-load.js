@@ -4,10 +4,10 @@
 
 import { systemJSPrototype } from '../system-core';
 
-let err;
+let errEvt;
 if (typeof window !== 'undefined')
   window.addEventListener('error', function (e) {
-    err = e.error;
+    errEvt = e;
   });
 
 const systemRegister = systemJSPrototype.register;
@@ -37,10 +37,11 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       });
       script.addEventListener('load', function () {
         document.head.removeChild(script);
-        // Note URL normalization issues are going to be a careful concern here
-        if (err) {
-          reject(err);
-          return err = undefined;
+        // Note that if an error occurs that isn't caught by this if statement,
+        // that getRegister will return null and a "did not instantiate" error will be thrown.
+        if (errEvt && errEvt.filename === url) {
+          reject(errEvt.error);
+          errEvt = undefined;
         }
         else {
           resolve(loader.getRegister());
