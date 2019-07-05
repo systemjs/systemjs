@@ -10,8 +10,6 @@ systemJSPrototype.register = function (deps, declare) {
   systemRegister.call(this, deps, declare);
 };
 
-const hasWindow = typeof window !== 'undefined'
-
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   if (url.endsWith('.json')) {
@@ -25,21 +23,24 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   } else {
     return new Promise(function (resolve, reject) {
       let err;
-      if (hasWindow)
-        window.addEventListener('error', windowErrorListener);
+
+      function windowErrorListener(evt) {
+        if (evt.filename === url)
+          err = evt.error;
+      }
+
+      window.addEventListener('error', windowErrorListener);
 
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
       script.crossOrigin = 'anonymous';
       script.addEventListener('error', function () {
-        if (hasWindow)
-          window.removeEventListener('error', windowErrorListener);
+        window.removeEventListener('error', windowErrorListener);
         reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
-        if (hasWindow)
-          window.removeEventListener('error', windowErrorListener);
+        window.removeEventListener('error', windowErrorListener);
         document.head.removeChild(script);
         // Note that if an error occurs that isn't caught by this if statement,
         // that getRegister will return null and a "did not instantiate" error will be thrown.
@@ -52,11 +53,6 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       });
       script.src = url;
       document.head.appendChild(script);
-
-      function windowErrorListener(evt) {
-        if (evt.filename === url)
-          err = evt.error;
-      }
     });
   }
 };
