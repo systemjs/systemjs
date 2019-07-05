@@ -4,17 +4,13 @@
 
 import { systemJSPrototype } from '../system-core';
 
-let errEvt;
-if (typeof window !== 'undefined')
-  window.addEventListener('error', function (e) {
-    errEvt = e;
-  });
-
 const systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
   err = undefined;
   systemRegister.call(this, deps, declare);
 };
+
+const hasWindow = typeof window !== 'undefined'
 
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
@@ -28,20 +24,27 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     });
   } else {
     return new Promise(function (resolve, reject) {
+      let err;
+      if (hasWindow)
+        window.addEventListener('error', windowErrorListener);
+
       const script = document.createElement('script');
       script.charset = 'utf-8';
       script.async = true;
       script.crossOrigin = 'anonymous';
       script.addEventListener('error', function () {
+        if (hasWindow)
+          window.removeEventListener('error', windowErrorListener);
         reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
+        if (hasWindow)
+          window.removeEventListener('error', windowErrorListener);
         document.head.removeChild(script);
         // Note that if an error occurs that isn't caught by this if statement,
         // that getRegister will return null and a "did not instantiate" error will be thrown.
-        if (errEvt && errEvt.filename === url) {
-          reject(errEvt.error);
-          errEvt = undefined;
+        if (err) {
+          reject(err);
         }
         else {
           resolve(loader.getRegister());
@@ -49,6 +52,11 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       });
       script.src = url;
       document.head.appendChild(script);
+
+      function windowErrorListener(evt) {
+        if (evt.filename === url)
+          err = evt.error;
+      }
     });
   }
 };
