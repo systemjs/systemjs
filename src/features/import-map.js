@@ -46,7 +46,9 @@ systemJSPrototype.resolve = function (id, parentUrl) {
       importMapPromise = importMapPromise.then(function (map) {
         return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
         .then(function (json) {
-          return mergeImportMap(map, parseImportMap(json, script.src || baseUrl));
+          const scriptMap = parseImportMap(json, script.src || baseUrl);
+          script.importmap = scriptMap;
+          return mergeImportMap(map, scriptMap);
         });
       });
     });
