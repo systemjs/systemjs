@@ -1,5 +1,5 @@
 /*
-* SystemJS 4.0.0
+* SystemJS 4.0.1
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -471,12 +471,6 @@
    * Supports loading System.register via script tag injection
    */
 
-  let err;
-  if (typeof window !== 'undefined')
-    window.addEventListener('error', function (e) {
-      err = e.error;
-    });
-
   const systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
     err = undefined;
@@ -485,7 +479,7 @@
 
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
-    if (url.endsWith('.json')) {
+    if (url.substr(-5) === '.json') {
       return fetch(url).then(function (resp) {
         return resp.text();
       }).then(function (source) {
@@ -495,19 +489,30 @@
       });
     } else {
       return new Promise(function (resolve, reject) {
+        let err;
+
+        function windowErrorListener(evt) {
+          if (evt.filename === url)
+            err = evt.error;
+        }
+
+        window.addEventListener('error', windowErrorListener);
+
         const script = document.createElement('script');
         script.charset = 'utf-8';
         script.async = true;
         script.crossOrigin = 'anonymous';
         script.addEventListener('error', function () {
+          window.removeEventListener('error', windowErrorListener);
           reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
         });
         script.addEventListener('load', function () {
+          window.removeEventListener('error', windowErrorListener);
           document.head.removeChild(script);
-          // Note URL normalization issues are going to be a careful concern here
+          // Note that if an error occurs that isn't caught by this if statement,
+          // that getRegister will return null and a "did not instantiate" error will be thrown.
           if (err) {
             reject(err);
-            return err = undefined;
           }
           else {
             resolve(loader.getRegister());

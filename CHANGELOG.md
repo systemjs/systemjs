@@ -1,3 +1,7 @@
+SystemJS 4.0.1 (2019/07/06)
+* Fix IE11 regression related to loading json files (https://github.com/systemjs/systemjs/pull/1963, @joeldenning)
+* Fix bug where System.import() rejected incorrectly, due to unrelated errors (https://github.com/systemjs/systemjs/pull/1963)
+
 SystemJS 4.0.0 (2019/06/29)
 * Support `<base href>` setting baseURL (https://github.com/systemjs/systemjs/pull/1957, @LarsDenBakker)
 * Use `Error` over `new Error` to reduce footprint (https://github.com/systemjs/systemjs/pull/1951, @joeldenning)
