@@ -12,7 +12,7 @@ systemJSPrototype.register = function (deps, declare) {
 
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
-  if (url.endsWith('.json')) {
+  if (url.substr(-5) === '.json') {
     return fetch(url).then(function (resp) {
       return resp.text();
     }).then(function (source) {
