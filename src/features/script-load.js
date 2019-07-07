@@ -6,7 +6,6 @@ import { systemJSPrototype } from '../system-core';
 
 const systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
-  err = undefined;
   systemRegister.call(this, deps, declare);
 };
 
