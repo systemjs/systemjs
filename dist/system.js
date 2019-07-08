@@ -1,5 +1,5 @@
 /*
-* SystemJS 4.0.1
+* SystemJS 4.0.2
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -473,7 +473,6 @@
 
   const systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
-    err = undefined;
     systemRegister.call(this, deps, declare);
   };
 

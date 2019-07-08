@@ -1,3 +1,6 @@
+SystemJS 4.0.2 (2019/07/08)
+* Fix bug thrown in strict mode. (https://github.com/systemjs/systemjs/commit/21933c378d2750e187699c5e7be2aea8eab57833 @joeldenning)
+
 SystemJS 4.0.1 (2019/07/06)
 * Fix IE11 regression related to loading json files (https://github.com/systemjs/systemjs/pull/1963, @joeldenning)
 * Fix bug where System.import() rejected incorrectly, due to unrelated errors (https://github.com/systemjs/systemjs/pull/1961 @joeldenning)

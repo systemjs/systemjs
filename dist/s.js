@@ -1,5 +1,5 @@
 /*
-* SJS 4.0.1
+* SJS 4.0.2
 * Minimal SystemJS Build
 */
 (function () {
@@ -366,7 +366,6 @@
 
   const systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
-    err = undefined;
     systemRegister.call(this, deps, declare);
   };
 
