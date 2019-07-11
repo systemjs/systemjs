@@ -5,7 +5,7 @@ SystemJS 4.0.1 (2019/07/06)
 * Fix IE11 regression related to loading json files (https://github.com/systemjs/systemjs/pull/1963, @joeldenning)
 * Fix bug where System.import() rejected incorrectly, due to unrelated errors (https://github.com/systemjs/systemjs/pull/1961 @joeldenning)
 
-SystemJS 4.0.0 (2019/06/29)
+**SystemJS 4.0.0 (2019/06/29) - Major Changes**
 * Support `<base href>` setting baseURL (https://github.com/systemjs/systemjs/pull/1957, @LarsDenBakker)
 * Use `Error` over `new Error` to reduce footprint (https://github.com/systemjs/systemjs/pull/1951, @joeldenning)
 * Support AMD importing ESM with an internal interop signifier (https://github.com/systemjs/systemjs/pull/1941)
@@ -46,7 +46,7 @@ SystemJS 3.0.1 (2019/03/01)
 * Fix undefined err bug on errors ([#1898](https://github.com/systemjs/systemjs/pull/1898))
 * Add loader.has / loader.set API ([#1899](https://github.com/systemjs/systemjs/pull/1899), 6b85a8c4)
 
-SystemJS 3.0.0 (2019/01/12)
+**SystemJS 3.0.0 (2019/01/12) - Major Changes**
 * Implement new Import Maps specification replacing Package Name Maps ([#1893](https://github.com/systemjs/systemjs/pull/1893))
 
 SystemJS 2.1.2 (2019/01/12)
