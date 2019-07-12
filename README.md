@@ -42,6 +42,12 @@ The following [pluggable extras](dist/extras) are provided which can be dropped 
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
 * [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles which can then be imported as `System.import('name')` (as well as AMD named define support)
 * [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
+* [Import __useDefault](dist/extras/import-use-default.js) provides better interop with AMD modules who export a default value and rely on the
+  non-spec-compliant `__esModule` flag. The "import use default" extra does not cause all modules to always forcibly use the default value, but
+  only modules with a `__useDefault` property on them. The AMD loading extra defines the `__useDefault` property for all AMD modules, so
+  this extra is intended to be used in conjunction with the AMD loading extra. Doing so avoids the need for
+  `System.import('a.js').then(m => m.default.default)` on AMD modules that export a default value. See
+  [original issue](https://github.com/systemjs/systemjs/issues/1967) for more information.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
