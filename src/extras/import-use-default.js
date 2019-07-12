@@ -1,8 +1,6 @@
 /*
- * Support for interop-ing with older-style AMD modules that export
+ * Support for interop-ing with AMD modules that export
  * a default value and __esModule, instead of exporting a flat object of values.
- * 
- * See https://github.com/systemjs/systemjs/issues/1967
  */
 (function () {
   const systemPrototype = System.constructor.prototype;
