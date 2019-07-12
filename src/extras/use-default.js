@@ -1,6 +1,6 @@
 /*
- * Support for interop-ing with AMD modules that export
- * a default value and __esModule, instead of exporting a flat object of values.
+ * Interop for AMD modules to return the direct AMD binding instead of a
+ * `{ default: amdModule }` object from `System.import`
  */
 (function () {
   const systemPrototype = System.constructor.prototype;
