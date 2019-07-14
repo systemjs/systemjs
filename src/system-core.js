@@ -148,7 +148,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     load.er = err;
   });
 
-  // Captial letter = a promise function
+  // Capital letter = a promise function
   return load = loader[REGISTRY][id] = {
     id: id,
     // importerSetters, the setters functions registered to this dependency
