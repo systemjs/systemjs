@@ -1,5 +1,9 @@
+SystemJS 4.1.0 (2019/07/14)
+* Added a new "Use Default" extra. (https://github.com/systemjs/systemjs/pull/1969)
+* Fix typo in comment. (https://github.com/systemjs/systemjs/pull/1970 @kouts)
+
 SystemJS 4.0.2 (2019/07/08)
-* Fix bug thrown in strict mode. (https://github.com/systemjs/systemjs/commit/21933c378d2750e187699c5e7be2aea8eab57833 @joeldenning)
+* Fix bug thrown in strict mode. (https://github.com/systemjs/systemjs/pull/1966 @joeldenning)
 
 SystemJS 4.0.1 (2019/07/06)
 * Fix IE11 regression related to loading json files (https://github.com/systemjs/systemjs/pull/1963, @joeldenning)
