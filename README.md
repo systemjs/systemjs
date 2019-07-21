@@ -174,7 +174,7 @@ To support import maps in the system.js build, a fetch polyfill is need. The [Gi
 This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/3.0/README.md).
 
 * [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
-* [json-plugin](https://github.com/Jamaks/systemjs2-json-plugin) JSON loader plugin
+* [systemjs-css-extra](https://github.com/systemjs/systemjs-css-extra) CSS loader plugin
 
 ## How is SystemJS related to jspm?
 
