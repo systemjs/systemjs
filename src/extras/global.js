@@ -14,7 +14,7 @@ function getGlobalProp () {
   let lastProp;
   for (let p in global) {
     // do not check frames cause it could be removed during import
-    if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.frames.length))
+    if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length))
       continue;
     if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
       return p;
