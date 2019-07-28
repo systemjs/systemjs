@@ -73,7 +73,7 @@ describe('Import Maps', function () {
   });
 
   it('Resolves scoped package subpaths', function () {
-    assert.equal(resolveImportMap('x/sub', 'https://sample.com/scope/y', importMap), 'https://sample.com/scope/y/sub');
+    assert.equal(resolveImportMap('x/sub', 'https://sample.com/scope/y', importMap), 'https://sample.com/src/y/sub');
   });
 
   it('Overrides package resolution when two import maps define the same module', function () {
@@ -105,7 +105,7 @@ describe('Import Maps', function () {
       }
     }, 'https://sample.com/src/');
     const finalMap = mergeImportMap(importMap, secondMap);
-    assert.equal(resolveImportMap('x/file.js', 'https://sample.com/scope/something', finalMap), 'https://sample.com/scope/z/file.js');
+    assert.equal(resolveImportMap('x/file.js', 'https://sample.com/scope/something', finalMap), 'https://sample.com/src/z/file.js');
   });
 
   it('Adds an import map scope when two import maps are merged', function () {

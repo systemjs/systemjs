@@ -134,7 +134,7 @@ export function parseImportMap (json, baseUrl) {
       let resolvedScopeName = resolveUrl(scopeName, baseUrl);
       if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
         resolvedScopeName += '/';
-      scopes[resolvedScopeName] = resolvePackages(scope, resolvedScopeName) || {};
+      scopes[resolvedScopeName] = resolvePackages(scope, baseUrl) || {};
     }
   }
 
