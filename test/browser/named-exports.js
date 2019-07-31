@@ -9,6 +9,14 @@ suite('Named exports', function () {
     });
   });
 
+  test('Loading an AMD exports module with named exports', function () {
+    return System.import('fixtures/amd-exports.js').then(function (m) {
+      assert.ok(m.default);
+      assert.equal(m.dep, m.default.dep);
+      assert.equal(m.test, 'hi');
+    });
+  });
+
   test('Loading a global with named exports support', function () {
     return System.import('fixtures/global3.js').then(function (m) {
       assert.ok(m.default);

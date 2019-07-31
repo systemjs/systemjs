@@ -25,12 +25,14 @@
     const registerDeclare = register[1];
     register[1] = function (_export, _context) {
       // hook the _export function to note the default export
-      let defaultExport;
+      let defaultExport, hasDefaultExport = false;
       const declaration = registerDeclare.call(this, function (name, value) {
-        if (name === 'default')
+        if (typeof name === 'object' && name.__useDefault)
+          defaultExport = name.default, hasDefaultExport = true;
+        else if (name === 'default')
           defaultExport = value;
-        if (name === '__useDefault')
-          return;
+        else if (name === '__useDefault')
+          hasDefaultExport = true;
         _export(name, value);
       }, _context);
       // hook the execute function
@@ -40,7 +42,7 @@
           execute.call(this);
           // do a bulk export of the default export object
           // to export all its names as named exports
-          if (typeof defaultExport === 'object')
+          if (hasDefaultExport && typeof defaultExport === 'object')
             _export(defaultExport);
         };
       return declaration;
