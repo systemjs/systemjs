@@ -1,3 +1,7 @@
+SystemJS 4.1.1 (2019/07/30)
+* Fix bug in named exports extra with AMD exports (https://github.com/systemjs/systemjs/pull/1978)
+* Ensure that global frames are not detected in global extra (https://github.com/systemjs/systemjs/pull/1973, @kduret)
+
 SystemJS 4.1.0 (2019/07/14)
 * Added a new "Use Default" extra. (https://github.com/systemjs/systemjs/pull/1969)
 * Fix typo in comment. (https://github.com/systemjs/systemjs/pull/1970 @kouts)

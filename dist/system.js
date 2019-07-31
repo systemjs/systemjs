@@ -1,5 +1,5 @@
 /*
-* SystemJS 4.0.2
+* SystemJS 4.1.1
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -556,7 +556,8 @@
     let cnt = 0;
     let lastProp;
     for (let p in global) {
-      if (!global.hasOwnProperty(p))
+      // do not check frames cause it could be removed during import
+      if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length))
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
@@ -572,7 +573,8 @@
     // but this may be faster (pending benchmarks)
     firstGlobalProp = secondGlobalProp = undefined;
     for (let p in global) {
-      if (!global.hasOwnProperty(p))
+      // do not check frames cause it could be removed during import
+      if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length))
         continue;
       if (!firstGlobalProp)
         firstGlobalProp = p;
