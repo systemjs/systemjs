@@ -11,8 +11,8 @@
   },
   "scopes": {
     "scope-test": {
-      "maptest": "../contextual-map-dep.js",
-      "maptest/": "../contextual-map-dep/"
+      "maptest": "./contextual-map-dep.js",
+      "maptest/": "./contextual-map-dep/"
     },
     "wasm": {
       "example": "./example.js"
