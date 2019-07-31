@@ -1,3 +1,6 @@
+**SystemJS 5.0.0 (2019/07/30) - Major Change**
+* Import map scopes now resolve relative to the base, not the scope (https://github.com/systemjs/systemjs/pull/1975)
+
 SystemJS 4.1.1 (2019/07/30)
 * Fix bug in named exports extra with AMD exports (https://github.com/systemjs/systemjs/pull/1978)
 * Ensure that global frames are not detected in global extra (https://github.com/systemjs/systemjs/pull/1973, @kduret)
