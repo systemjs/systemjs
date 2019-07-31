@@ -134,7 +134,7 @@ export function parseImportMap (json, baseUrl) {
       let resolvedScopeName = resolveUrl(scopeName, baseUrl);
       if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
         resolvedScopeName += '/';
-      scopes[resolvedScopeName] = resolvePackages(scope, resolvedScopeName) || {};
+      scopes[resolvedScopeName] = resolvePackages(scope, baseUrl) || {};
     }
   }
 
@@ -156,8 +156,7 @@ function applyPackages (id, packages) {
   const pkgName = getMatch(id, packages);
   if (pkgName) {
     const pkg = packages[pkgName];
-    if (pkg === null)
-
+    if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
       console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
     return pkg + id.slice(pkgName.length);
