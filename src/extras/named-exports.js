@@ -46,7 +46,7 @@
             for (let name in defaultExport) {
               // default is not a named export
               if (name !== 'default') {
-                _export(name, defaultExport[name])
+                _export(name, defaultExport[name]);
               }
             }
         };
