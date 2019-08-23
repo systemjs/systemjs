@@ -18,4 +18,11 @@ suite('Named System.register', function() {
       assert.equal(m.default.a, 'b');
     });
   });
+
+  test('Loading a single named System.register module', function () {
+    return System.import('./fixtures/browser/single-named-module.js').then(function (m) {
+      assert.equal(Object.keys(m).length, 1);
+      assert.equal(m.b, 'c')
+    })
+  });
 });

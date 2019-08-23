@@ -16,15 +16,14 @@
   SystemJS.prototype = systemJSPrototype;
   System = new SystemJS();
 
+  let lastNamedDefine;
+
   const register = systemJSPrototype.register;
   systemJSPrototype.register = function (name, deps, declare) {
     if (typeof name !== 'string')
       return register.apply(this, arguments);
 
-    this.registerRegistry[name] = [deps, declare];
-
-    // Provide an empty module to signal success.
-    return register.call(this, [], function () { return {}; });
+    this.registerRegistry[name] = lastNamedDefine = [deps, declare];
   };
 
   const resolve = systemJSPrototype.resolve;
@@ -40,4 +39,14 @@
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return this.registerRegistry[url] || instantiate.call(this, url, firstParentUrl);
   };
+
+  const getRegister = systemJSPrototype.getRegister;
+  systemJSPrototype.getRegister = function () {
+    let result = getRegister.apply(this, arguments);
+    if (!result || result.isEmpty) {
+      result = lastNamedDefine;
+    }
+    lastNamedDefine = null;
+    return result;
+  }
 })();

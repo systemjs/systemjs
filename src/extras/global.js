@@ -49,6 +49,7 @@ systemJSPrototype.import = function (id, parentUrl) {
 };
 
 const emptyInstantiation = [[], function () { return {} }];
+emptyInstantiation.isEmpty = true;
 
 const getRegister = systemJSPrototype.getRegister;
 systemJSPrototype.getRegister = function () {
