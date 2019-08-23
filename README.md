@@ -100,19 +100,22 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 </script>
 ```
 
-### Browser transpilation
 
-To load ES modules directly in older browsers with SystemJS we can install and use the Babel plugin:
+## Community Projects
 
-```html
-<script src="system.js"></script>
-<script src="extras/transform.js"></script>
-<script src="plugin-babel/dist/babel-transform.js"></script>
-<script>
-  // main and all its dependencies will now run through transform before loading
-  System.import('/js/main.js');
-</script>
-```
+A list of projects that use or work with SystemJS in providing modular browser workflows.
+
+* [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
+* [js-env](https://github.com/jsenv/jsenv-core) - Collection of development tools providing a unified workflow to write JavaScript for the web, node.js or both at the same time.
+* [jspm.io](https://jspm.io) - `https://system-dev.jspm.io/[name]` provides a CDN serving npm modules for SystemJS.
+* [jspm.org](https://jspm.org) - Package manager for native modules, using SystemJS for backwards compatibility.
+
+## Loader Extensions
+
+This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/3.0/README.md).
+
+* [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
+* [systemjs-css-extra](https://github.com/systemjs/systemjs-css-extra) CSS loader plugin
 
 ## Compatibility with Webpack
 
@@ -168,17 +171,6 @@ To support import maps in the system.js build, a fetch polyfill is need. The [Gi
     document.write('<script src="node_modules/whatwg-fetch/fetch.js"><\/script>');
 </script>
 ```
-
-## Loader Extensions
-
-This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/3.0/README.md).
-
-* [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
-* [systemjs-css-extra](https://github.com/systemjs/systemjs-css-extra) CSS loader plugin
-
-## How is SystemJS related to jspm?
-
-SystemJS was developed as a universal module loader alongside [jspm](https://jspm.org) which provides a package manager and ES module CDN exploring native ES module workflows. Initially, SystemJS was the core loader enabling this experimentation of workflows from unbuilt development loading in browsers to production and the CDN loading of ES modules but is now used primarily as a [loader for backwards-compatibility in older browsers](https://jspm.org/docs/guide#systemjs-legacy-browser-support).
 
 ## Contributing to SystemJS
 
