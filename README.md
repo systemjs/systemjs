@@ -106,6 +106,7 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 A list of projects that use or work with SystemJS in providing modular browser workflows.
 
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
+* [import map overrides](https://github.com/joeldenning/import-map-overrides/) - Dynamically inject an import map stored in local storage so that you can override the URL for any module. Can be useful for running development modules on localhost against the server.
 * [js-env](https://github.com/jsenv/jsenv-core) - Collection of development tools providing a unified workflow to write JavaScript for the web, node.js or both at the same time.
 * [jspm.io](https://jspm.io) - `https://system-dev.jspm.io/[name]` provides a CDN serving npm modules for SystemJS.
 * [jspm.org](https://jspm.org) - Package manager for native modules, using SystemJS for backwards compatibility.
