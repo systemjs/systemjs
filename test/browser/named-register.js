@@ -22,7 +22,7 @@ suite('Named System.register', function() {
   test('Loading a single named System.register module', function () {
     return System.import('./fixtures/browser/single-named-module.js').then(function (m) {
       assert.equal(Object.keys(m).length, 1);
-      assert.equal(m.b, 'c')
-    })
+      assert.equal(m.b, 'c');
+    });
   });
 });
