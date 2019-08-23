@@ -13,12 +13,8 @@
 import { baseUrl, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-const baseMap = Object.create(null);
-baseMap.imports = Object.create(null);
-baseMap.scopes = Object.create(null);
-let importMapPromise = Promise.resolve(baseMap);
+let finalMap = {imports: {}, scopes: {}};
 let acquiringImportMaps = typeof document !== 'undefined';
-
 if (acquiringImportMaps) {
   Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
     script._j = fetch(script.src).then(function (resp) {
@@ -37,23 +33,23 @@ export function mergeImportMap(originalMap, newMap) {
   return originalMap;
 }
 
+systemJSPrototype.prepareImport = function () {
+  if (acquiringImportMaps) {
+    acquiringImportMaps = false;
+    return Promise.all(Array.prototype.map.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+      return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
+      .then(function (json) {
+        return mergeImportMap(finalMap || baseMap, parseImportMap(json, script.src || baseUrl));
+      })
+      .then(function (map) {
+        finalMap = map;
+      });
+    }));
+  }
+}
+
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
 
-  if (acquiringImportMaps) {
-    acquiringImportMaps = false;
-    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-      importMapPromise = importMapPromise.then(function (map) {
-        return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
-        .then(function (json) {
-          return mergeImportMap(map, parseImportMap(json, script.src || baseUrl));
-        });
-      });
-    });
-  }
-
-  return importMapPromise
-  .then(function (importMap) {
-    return resolveImportMap(id, parentUrl, importMap);
-  });
+  return resolveImportMap(id, parentUrl, finalMap);
 };

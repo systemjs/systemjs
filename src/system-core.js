@@ -26,9 +26,15 @@ function SystemJS () {
 }
 
 const systemJSPrototype = SystemJS.prototype;
+
+systemJSPrototype.prepareImport = function () {}
+
 systemJSPrototype.import = function (id, parentUrl) {
   const loader = this;
-  return Promise.resolve(loader.resolve(id, parentUrl))
+  return Promise.resolve(loader.prepareImport())
+  .then(function() {
+    return loader.resolve(id, parentUrl);
+  })
   .then(function (id) {
     const load = getOrCreateLoad(loader, id);
     return load.C || topLevelLoad(loader, load);
