@@ -3,8 +3,8 @@
 [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) are supported in both
 s.js and system.js.
 
-Note that the term CSS Modules refers to two separate things: (1) the browser spec, or (2) the webpack / postcss plugin. The
-CSS modules implemented by SystemJS are the browser spec.
+Note that the term CSS Modules refers to two separate things: (1) the browser spec, or (2) the webpack / postcss plugin.
+The CSS modules implemented by SystemJS are the browser spec.
 
 ## Example
 ```css

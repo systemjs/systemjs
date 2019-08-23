@@ -25,7 +25,8 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     }).then(function (source) {
       return [[], function (_export) {
         return {
-          execute: function() {
+          execute: function () {
+            // Relies on a Constructable Stylesheet polyfill
             const stylesheet = new CSSStyleSheet();
             stylesheet.replaceSync(source);
             _export('default', stylesheet);
