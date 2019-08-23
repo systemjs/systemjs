@@ -158,4 +158,10 @@ suite('SystemJS Standard Tests', function() {
       assert.equal(m.addTwo(1, 1), 2);
     });
   });
+
+  test('should load a css module', async function () {
+    const m = await System.import('./css-modules/a.css')
+    assert.ok(m);
+    assert.ok(m.default instanceof CSSStyleSheet);
+  });
 });

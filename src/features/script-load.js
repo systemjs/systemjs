@@ -15,8 +15,22 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return fetch(url).then(function (resp) {
       return resp.text();
     }).then(function (source) {
-      return [[], function(_export) {
+      return [[], function (_export) {
         return {execute: function() {_export('default', JSON.parse(source))}};
+      }];
+    });
+  } else if (url.substr(-4) === '.css') {
+    return fetch(url).then(function (resp) {
+      return resp.text();
+    }).then(function (source) {
+      return [[], function (_export) {
+        return {
+          execute: function() {
+            const stylesheet = new CSSStyleSheet();
+            stylesheet.replaceSync(source);
+            _export('default', stylesheet);
+          }
+        };
       }];
     });
   } else {
