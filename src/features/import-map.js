@@ -38,11 +38,11 @@ systemJSPrototype.prepareImport = function () {
     acquiringImportMaps = false;
     let importMapPromise = Promise.resolve(finalMap);
     Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-      importMapPromise = importMapPromise.then(function (originalMap) {
+      importMapPromise = importMapPromise.then(function (map) {
         return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
-          .then(function (json) {
-            return mergeImportMap(originalMap, parseImportMap(json, script.src || baseUrl))
-          });
+        .then(function (json) {
+          return mergeImportMap(map, parseImportMap(json, script.src || baseUrl))
+        });
       });
     });
     return importMapPromise;
