@@ -27,7 +27,7 @@ function SystemJS () {
 
 const systemJSPrototype = SystemJS.prototype;
 
-systemJSPrototype.prepareImport = function () {}
+systemJSPrototype.prepareImport = function () {};
 
 systemJSPrototype.import = function (id, parentUrl) {
   const loader = this;

@@ -13,7 +13,7 @@
 import { baseUrl, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-let finalMap = {imports: {}, scopes: {}};
+const finalMap = {imports: {}, scopes: {}};
 let acquiringImportMaps = typeof document !== 'undefined';
 if (acquiringImportMaps) {
   Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
@@ -30,7 +30,6 @@ export function mergeImportMap(originalMap, newMap) {
   for (let i in newMap.scopes) {
     originalMap.scopes[i] = newMap.scopes[i];
   }
-  return originalMap;
 }
 
 systemJSPrototype.prepareImport = function () {
@@ -39,11 +38,8 @@ systemJSPrototype.prepareImport = function () {
     return Promise.all(Array.prototype.map.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
       return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
       .then(function (json) {
-        return mergeImportMap(finalMap || baseMap, parseImportMap(json, script.src || baseUrl));
+        mergeImportMap(finalMap, parseImportMap(json, script.src || baseUrl));
       })
-      .then(function (map) {
-        finalMap = map;
-      });
     }));
   }
 }
