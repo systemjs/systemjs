@@ -18,7 +18,7 @@ SystemJS supports loading javascript modules that are in the following formats:
 
 [JSON modules](https://github.com/whatwg/html/pull/4407) are supported in both s.js and system.js.
 
-## Example
+### Example
 
 **file.json**
 ```json
