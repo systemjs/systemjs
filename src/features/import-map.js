@@ -30,17 +30,22 @@ export function mergeImportMap(originalMap, newMap) {
   for (let i in newMap.scopes) {
     originalMap.scopes[i] = newMap.scopes[i];
   }
+  return originalMap;
 }
 
 systemJSPrototype.prepareImport = function () {
   if (acquiringImportMaps) {
     acquiringImportMaps = false;
-    return Promise.all(Array.prototype.map.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-      return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
-      .then(function (json) {
-        mergeImportMap(finalMap, parseImportMap(json, script.src || baseUrl));
-      })
-    }));
+    let importMapPromise = Promise.resolve(finalMap);
+    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+      importMapPromise = importMapPromise.then(function (originalMap) {
+        return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
+          .then(function (json) {
+            return mergeImportMap(originalMap, parseImportMap(json, script.src || baseUrl))
+          });
+      });
+    });
+    return importMapPromise;
   }
 }
 
