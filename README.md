@@ -61,8 +61,7 @@ npm install systemjs
 * [API](docs/api.md)
 * [System.register](docs/system-register.md)
 * [Loader Hooks](docs/hooks.md)
-* [JSON modules](docs/json-modules.md)
-* [CSS modules](docs/css-modules.md)
+* [Module Types](docs/module-types.md)
 
 ## Example Usage
 
