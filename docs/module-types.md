@@ -62,7 +62,7 @@ System.import('file.css').then(function (module) {
 });
 ```
 
-### Constructed Style Sheets Polyfill
+### Constructable Style Sheets Polyfill
 
 CSS modules export a [Constructable Stylesheet](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet) instance as their
 default export when imported.
