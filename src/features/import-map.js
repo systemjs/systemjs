@@ -13,12 +13,13 @@
 import { baseUrl, parseImportMap, resolveImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-const finalMap = {imports: {}, scopes: {}};
+const importMap = { imports: {}, scopes: {} };
 let acquiringImportMaps = typeof document !== 'undefined';
+
 if (acquiringImportMaps) {
   Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
-    script._j = fetch(script.src).then(function (resp) {
-      return resp.json();
+    script._j = fetch(script.src).then(function (res) {
+      return res.json();
     });
   });
 }
@@ -30,27 +31,25 @@ export function mergeImportMap(originalMap, newMap) {
   for (let i in newMap.scopes) {
     originalMap.scopes[i] = newMap.scopes[i];
   }
-  return originalMap;
 }
 
 systemJSPrototype.prepareImport = function () {
   if (acquiringImportMaps) {
     acquiringImportMaps = false;
-    let importMapPromise = Promise.resolve(finalMap);
+    let importMapPromise = Promise.resolve();
     Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-      importMapPromise = importMapPromise.then(function (map) {
-        return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
+      importMapPromise = importMapPromise.then(function () {
+        return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
         .then(function (json) {
-          return mergeImportMap(map, parseImportMap(json, script.src || baseUrl));
+          mergeImportMap(importMap, parseImportMap(json, script.src || baseUrl));
         });
       });
     });
     return importMapPromise;
   }
-}
+};
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
-
-  return resolveImportMap(id, parentUrl, finalMap);
+  return resolveImportMap(id, parentUrl, importMap);
 };
