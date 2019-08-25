@@ -12,12 +12,15 @@ systemJSPrototype.register = function (deps, declare) {
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   if (url.substr(-5) === '.json') {
-    return fetch(url).then(function (resp) {
-      return resp.text();
-    }).then(function (source) {
-      return [[], function(_export) {
-        return {execute: function() {_export('default', JSON.parse(source))}};
-      }];
+    return loadDynamicModule(url, function (_export, source) {
+      _export('default', JSON.parse(source));
+    });
+  } else if (url.substr(-4) === '.css') {
+    return loadDynamicModule(url, function (_export, source) {
+      // Relies on a Constructable Stylesheet polyfill
+      const stylesheet = new CSSStyleSheet();
+      stylesheet.replaceSync(source);
+      _export('default', stylesheet);
     });
   } else {
     return new Promise(function (resolve, reject) {
@@ -55,3 +58,13 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     });
   }
 };
+
+function loadDynamicModule (url, createExec) {
+  return fetch(url).then(function (resp) {
+    return resp.text();
+  }).then(function (source) {
+    return [[], function (_export) {
+      return {execute: createExec(_export, source)};
+    }];
+  });
+}
