@@ -9,7 +9,7 @@
  * - System.getRegister to get the registration
  * - Symbol.toStringTag support in Module objects
  * - Hookable System.createContext to customize import.meta
- * - System.onload(id, err?) handler for tracing / hot-reloading
+ * - System.onload(err, id, deps) handler for tracing / hot-reloading
  * 
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
@@ -48,9 +48,17 @@ systemJSPrototype.createContext = function (parentId) {
   };
 };
 
-// onLoad(id, err) provided for tracing / hot-reloading
+// onLoad(err, id, deps) provided for tracing / hot-reloading
 if (TRACING)
   systemJSPrototype.onload = function () {};
+function loadToId (load) {
+  return load.id;
+}
+function triggerOnload (loader, load, err) {
+  loader.onload(err, load.id, load.d && load.d.map(loadToId));
+  if (err)
+    throw err;
+}
 
 let lastRegister;
 systemJSPrototype.register = function (deps, declare) {
@@ -119,8 +127,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
 
   if (TRACING)
     instantiatePromise = instantiatePromise.catch(function (err) {
-      loader.onload(load.id, err);
-      throw err;
+      triggerOnload(loader, load, err);
     });
 
   const linkPromise = instantiatePromise
@@ -238,12 +245,15 @@ function postOrderExec (loader, load, seen) {
     if (TRACING) {
       try {
         const depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise)
+        if (depLoadPromise) {
+          depLoadPromise.catch(function (err) {
+            triggerOnload(loader, load, err);
+          });
           (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+        }
       }
       catch (err) {
-        loader.onload(load.id, err);
-        throw err;
+        triggerOnload(loader, load, err);
       }
     }
     else {
@@ -252,17 +262,8 @@ function postOrderExec (loader, load, seen) {
         (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
   });
-  if (depLoadPromises) {
-    if (TRACING)
-      return Promise.all(depLoadPromises)
-      .then(doExec)
-      .catch(function (err) {
-        loader.onload(load.id, err);
-        throw err;
-      });
-    else
-      return Promise.all(depLoadPromises).then(doExec);
-  }
+  if (depLoadPromises)
+    return Promise.all(depLoadPromises).then(doExec);
 
   return doExec();
 
@@ -274,10 +275,9 @@ function postOrderExec (loader, load, seen) {
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null; // indicates completion
-            loader.onload(load.id, null);
+            triggerOnload(loader, load, null);
           }, function (err) {
-            loader.onload(load.id, err);
-            throw err;
+            triggerOnload(loader, load, err);
           });
         else
           execPromise = execPromise.then(function () {
@@ -288,10 +288,10 @@ function postOrderExec (loader, load, seen) {
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      if (TRACING) loader.onload(load.id, null);
+      if (TRACING) triggerOnload(loader, load, null);
     }
     catch (err) {
-      if (TRACING) loader.onload(load.id, err);
+      if (TRACING) triggerOnload(loader, load, err);
       load.er = err;
       throw err;
     }
