@@ -61,53 +61,56 @@ describe('Core API', function () {
     assert.equal(x.meta.custom, 'yay');
   });
 
-  it('Supports tracing loads', async function () {
-    global.TRACING = true;
-    loader.instantiate = x => [[], _export => ({ execute () { _export('y', 42) } })];
-    const loaded = [];
-    loader.onload = function (x) {
-      loaded.push(x);
-    };
-    const z = await loader.import('z');
-    assert.equal(z.y, 42);
-    assert.equal(loaded.length, 1);
-    assert.equal(loaded[0], 'z');
-    global.TRACING = false;
-  });
+  describe('Tracing API', function () {
+    it('Supports tracing loads', async function () {
+      global.TRACING = true;
+      loader.instantiate = x => [[], _export => ({ execute () { _export('y', 42) } })];
+      const loaded = [];
+      loader.onload = function (err, x) {
+        loaded.push(x);
+      };
+      const z = await loader.import('z');
+      assert.equal(z.y, 42);
+      assert.equal(loaded.length, 1);
+      assert.equal(loaded[0], 'z');
+      global.TRACING = false;
+    });
 
-  it('Supports tracing load failures', async function () {
-    global.TRACING = true;
-    loader.instantiate = x => { throw new Error('Problem') };
-    const errors = [];
-    loader.onload = function (_id, err) {
-      errors.push(err);
-    };
-    try {
-      await loader.import('f');
-      assert.fail('Should have caught');
-    }
-    catch (e) {
-      assert.equal(e.err, errors[0].err);
-    }
-    global.TRACING = false;
-  });
+    it('Supports tracing load failures', async function () {
+      global.TRACING = true;
+      loader.instantiate = x => { throw new Error('Problem') };
+      const errors = [];
+      loader.onload = function (err, id, deps) {
+        console.log(err);
+        errors.push(err);
+      };
+      try {
+        await loader.import('f');
+        assert.fail('Should have caught');
+      }
+      catch (e) {
+        assert.equal(e.err, errors[0].err);
+      }
+      global.TRACING = false;
+    });
 
-  it('Caches load failures', async function () {
-    let err;
-    try {
-      await loader.import('f');
-      assert.fail('Should have caught');
-    }
-    catch (e) {
-      err = e;
-    }
-    try {
-      await loader.import('f');
-      assert.fail('Should have caught');
-    }
-    catch (e) {
-      assert.equal(e, err);
-    }
+    it('Caches load failures', async function () {
+      let err;
+      try {
+        await loader.import('f');
+        assert.fail('Should have caught');
+      }
+      catch (e) {
+        err = e;
+      }
+      try {
+        await loader.import('f');
+        assert.fail('Should have caught');
+      }
+      catch (e) {
+        assert.equal(e, err);
+      }
+    });
   });
 
   describe('Registry API', function () {
