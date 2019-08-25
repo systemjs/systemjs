@@ -1,24 +1,22 @@
 # Module Types
 
-Both system.js and s.js support loading javascript modules, json modules, and css modules.
-
-## Limitations
-
-The browser spec calls for checking a module's mime type to know whether it is JSON, CSS, or Javascript. SystemJS does not do that,
-since it has to choose upfront whether to append a script element (for JS modules) or make a fetch request (for a JSON/CSS module).
-So instead of the mime type, the file extension is used to determine the type of the module.
-
 SystemJS supports loading modules that are in the following formats:
 
-| Module Format | s.js | system.js |
-| ------------- | ---- | --------- |
-| [System.register](/docs/system-register.md) | :heavy_check_mark: | :heavy_check_mark: |
-| [JSON Modules](https://github.com/whatwg/html/pull/4407) | :heavy_check_mark: | :heavy_check_mark: |
-| [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) | :heavy_check_mark: | :heavy_check_mark: |
-| [Web Assembly](https://github.com/WebAssembly/esm-integration/tree/master/proposals/esm-integration) | :x: | :heavy_check_mark: |
-| Global variable | [global extra](/README.md#extras) | :heavy_check_mark: |
-| [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
-| [UMD](https://github.com/umdjs/umd) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
+| Module Format | s.js | system.js | File Extension |
+| ------------- | ---- | --------- | -------------- |
+| [System.register](/docs/system-register.md) | :heavy_check_mark: | :heavy_check_mark: | * |
+| [JSON Modules](https://github.com/whatwg/html/pull/4407) | :heavy_check_mark: | :heavy_check_mark: | *.json |
+| [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) | :heavy_check_mark: | :heavy_check_mark: | *.css |
+| [Web Assembly](https://github.com/WebAssembly/esm-integration/tree/master/proposals/esm-integration) | :x: | :heavy_check_mark: | *.wasm |
+| Global variable | [global extra](/README.md#extras) | :heavy_check_mark: | * |
+| [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) | * |
+| [UMD](https://github.com/umdjs/umd) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) | * |
+
+### File Extension Limitations
+
+When loading JSON modules, CSS modules and Web Assembly modules, the browser specifications require interpreting these modules based on checking their MIME type. Since SystemJS has to choose upfront whether to append a script element (for JS modules) or make a fetch request (for a JSON/CSS/Wasm module), it needs to know the module type upfront at resolution time.
+
+Instead of reading the MIME type, the file extension is thus used specifically for the JSON, CSS and Web Assembly module cases.
 
 ## JSON Modules
 
