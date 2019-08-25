@@ -22,6 +22,8 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       stylesheet.replaceSync(source);
       _export('default', stylesheet);
     });
+  } else if (url.substr(-5) === '.html') {
+    return Promise.reject(Error("HTML modules are not yet implemented - " + url));
   } else {
     return new Promise(function (resolve, reject) {
       let err;
