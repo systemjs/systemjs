@@ -11,18 +11,18 @@ systemJSPrototype.register = function (deps, declare) {
 
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
-  if (url.substr(-5) === '.json') {
+  if (url.slice(-5) === '.json') {
     return loadDynamicModule(url, function (_export, source) {
       _export('default', JSON.parse(source));
     });
-  } else if (url.substr(-4) === '.css') {
+  } else if (url.slice(-4) === '.css') {
     return loadDynamicModule(url, function (_export, source) {
       // Relies on a Constructable Stylesheet polyfill
       const stylesheet = new CSSStyleSheet();
       stylesheet.replaceSync(source);
       _export('default', stylesheet);
     });
-  } else if (url.substr(-5) === '.html') {
+  } else if (url.slice(-5) === '.html') {
     return Promise.reject(Error("Error loading " + url + ". '.html' modules not implemented."));
   } else {
     return new Promise(function (resolve, reject) {
