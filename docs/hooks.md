@@ -62,7 +62,7 @@ _This hook is not available in the s.js minimal loader build._
 
 For tracing functionality this is called on completion or failure of each and every module loaded into the registry.
 
-`err` is defined for any module load error - instantiation (including fetch) errors, execution errors and dependency errors.
+`err` is defined for any module load error at instantiation (including fetch and resolution errors), execution or dependency execution.
 
 `deps` is available for errored modules that did not error on instantiation.
 
