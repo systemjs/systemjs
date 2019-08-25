@@ -164,4 +164,16 @@ suite('SystemJS Standard Tests', function() {
     assert.ok(m);
     assert.ok(m.default instanceof CSSStyleSheet);
   });
+
+  test('should throw when trying to load an HTML module', function () {
+    return System.import('/a.html')
+      .then(
+        function () {
+          throw Error("Loading html modules isn't implemented, but attempting to do so didn't throw an Error");
+        },
+        function (err) {
+          assert.ok(err.message.indexOf("'.html' modules not implemented.") !== -1);
+        }
+      );
+  });
 });
