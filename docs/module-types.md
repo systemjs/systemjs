@@ -5,18 +5,18 @@ Both system.js and s.js support loading javascript modules, json modules, and cs
 ## Limitations
 
 The browser spec calls for checking a module's mime type to know whether it is JSON, CSS, or Javascript. SystemJS does not do that,
-since it has to choose upfront whether to append a script element (for js modules) or make a fetch request (for a JSON/CSS module).
+since it has to choose upfront whether to append a script element (for JS modules) or make a fetch request (for a JSON/CSS module).
 So instead of the mime type, the file extension is used to determine the type of the module.
 
-## Javascript modules
-
-SystemJS supports loading javascript modules that are in the following formats:
+SystemJS supports loading modules that are in the following formats:
 
 | Module Format | s.js | system.js |
 | ------------- | ---- | --------- |
 | [System.register](/docs/system-register.md) | :heavy_check_mark: | :heavy_check_mark: |
+| [JSON Modules](https://github.com/whatwg/html/pull/4407) | :heavy_check_mark: | :heavy_check_mark: |
+| [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) | :heavy_check_mark: | :heavy_check_mark: |
+| [Web Assembly](https://github.com/WebAssembly/esm-integration/tree/master/proposals/esm-integration) | :x: | :heavy_check_mark: |
 | Global variable | [global extra](/README.md#extras) | :heavy_check_mark: |
-| [ESM](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) | [transform extra](/README.md#extras) | [transform extra](/README.md#extras) |
 | [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
 | [UMD](https://github.com/umdjs/umd) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
 
@@ -69,20 +69,10 @@ default export when imported.
 
 Currently these are only available in new versions of Chromium based browsers (e.g., Chrome 73+), so usage in any other browsers will require a polyfill, such as the one at https://www.npmjs.com/package/construct-style-sheets-polyfill.
 
-_Note that this polyfill does not currently work in IE11._
-
 The polyfill can be conditionally loaded with an approach like:
 
 ```html
-<script src="system.js"></script>
-<script>
-  try { new CSSStyleSheet() }
-  catch (e) {
-    document.head.appendChild(Object.assign(document.createElement('script'), {
-      src: 'https://unpkg.com/browse/construct-style-sheets-polyfill@2.1.0/adoptedStyleSheets.min.js'
-    }));
-  }
-</script>
+<script defer src="https://unpkg.com/construct-style-sheets-polyfill@2.1.0/adoptedStyleSheets.min.js"></script>
 ```
 
-If the polyfill is not included, CSS modules will not work in other browsers.
+_Note that this polyfill does not currently work in IE11._
