@@ -141,6 +141,15 @@ export function parseImportMap (json, baseUrl) {
   return { imports: imports, scopes: scopes };
 }
 
+export function mergeImportMap(originalMap, newMap) {
+  for (let i in newMap.imports) {
+    originalMap.imports[i] = newMap.imports[i];
+  }
+  for (let i in newMap.scopes) {
+    originalMap.scopes[i] = newMap.scopes[i];
+  }
+}
+
 function getMatch (path, matchObj) {
   if (matchObj[path])
     return path;

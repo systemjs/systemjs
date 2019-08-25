@@ -50,9 +50,9 @@ resulted in this registration call.
 
 Custom module format support like AMD support is added by hooking the AMD registration in hook.
 
-#### resolve(id, parentUrl) -> Promise<String>
+#### resolve(id, parentUrl) -> String
 
-In the minimal s.js implementation, resolve is implemented as a synchronous function, so Promise.resolve should be used when extending this loader.
+In both s.js and system.js, resolve is implemented as a synchronous function.
 
 Resolve should return a fully-valid URL for specification compatibility, but this is not enforced.
 
