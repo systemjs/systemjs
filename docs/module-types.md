@@ -16,7 +16,8 @@ SystemJS supports loading javascript modules that are in the following formats:
 | ------------- | ---- | --------- |
 | [System.register](/docs/system-register.md) | :heavy_check_mark: | :heavy_check_mark: |
 | Global variable | [global extra](/README.md#extras) | :heavy_check_mark: |
-| [ESM](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) | [transform extra](/README.md#extras) | [transform extra](/README.md#extras) | | [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
+| [ESM](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) | [transform extra](/README.md#extras) | [transform extra](/README.md#extras) |
+| [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
 | [UMD](https://github.com/umdjs/umd) | [AMD extra](/README.md#extras) | [AMD extra](/README.md#extras) |
 
 ## JSON Modules
