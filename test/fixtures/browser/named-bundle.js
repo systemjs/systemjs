@@ -1,4 +1,4 @@
-System.register('a', ['./b'], function (exports) {
+System.register('a', ['b'], function (exports) {
   var b;
   return {
     setters: [function (m) {

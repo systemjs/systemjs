@@ -15,7 +15,7 @@
       "maptest/": "./contextual-map-dep/"
     },
     "wasm": {
-      "example": "./example.js"
+      "example": "./wasm/example.js"
     }
   }
 }
