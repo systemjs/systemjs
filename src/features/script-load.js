@@ -23,7 +23,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       _export('default', stylesheet);
     });
   } else if (url.substr(-5) === '.html') {
-    return Promise.reject(Error("HTML modules are not yet implemented - " + url));
+    return Promise.reject(Error("Error loading " + url + ". '.html' modules not implemented."));
   } else {
     return new Promise(function (resolve, reject) {
       let err;
