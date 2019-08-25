@@ -10,7 +10,7 @@
  * 
  * There is no support for dynamic import maps injection currently.
  */
-import { baseUrl, parseImportMap, resolveImportMap } from '../common.js';
+import { baseUrl, parseImportMap, resolveImportMap, mergeImportMap } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
 const importMap = { imports: {}, scopes: {} };
@@ -22,15 +22,6 @@ if (acquiringImportMaps) {
       return res.json();
     });
   });
-}
-
-export function mergeImportMap(originalMap, newMap) {
-  for (let i in newMap.imports) {
-    originalMap.imports[i] = newMap.imports[i];
-  }
-  for (let i in newMap.scopes) {
-    originalMap.scopes[i] = newMap.scopes[i];
-  }
 }
 
 systemJSPrototype.prepareImport = function () {

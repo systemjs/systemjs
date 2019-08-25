@@ -1,7 +1,6 @@
 import './fixtures/tracing.js';
-import { parseImportMap, resolveImportMap } from '../src/common.js';
+import { parseImportMap, resolveImportMap, mergeImportMap } from '../src/common.js';
 import assert from 'assert';
-import { mergeImportMap } from '../src/features/import-map.js';
 
 describe('Import Maps', function () {
   let importMap
@@ -82,8 +81,8 @@ describe('Import Maps', function () {
         r: 'overridden-r',
       }
     }, 'https://sample.com/src/');
-    const finalMap = mergeImportMap(importMap, secondMap);
-    assert.equal(resolveImportMap('r', 'https://site.com', finalMap), 'https://sample.com/src/overridden-r');
+    mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('r', 'https://site.com', importMap), 'https://sample.com/src/overridden-r');
   });
 
   it('Adds to an existing import map when there are two import maps', function () {
@@ -92,8 +91,8 @@ describe('Import Maps', function () {
         g: 'g',
       }
     }, 'https://sample.com/src/');
-    const finalMap = mergeImportMap(importMap, secondMap);
-    assert.equal(resolveImportMap('g', 'https://site.com', finalMap), 'https://sample.com/src/g');
+    mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('g', 'https://site.com', importMap), 'https://sample.com/src/g');
   });
 
   it('Overrides an import map scope when two import maps define the same scope', function () {
@@ -104,8 +103,8 @@ describe('Import Maps', function () {
         }
       }
     }, 'https://sample.com/src/');
-    const finalMap = mergeImportMap(importMap, secondMap);
-    assert.equal(resolveImportMap('x/file.js', 'https://sample.com/scope/something', finalMap), 'https://sample.com/src/z/file.js');
+    mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('x/file.js', 'https://sample.com/scope/something', importMap), 'https://sample.com/src/z/file.js');
   });
 
   it('Adds an import map scope when two import maps are merged', function () {
@@ -116,8 +115,8 @@ describe('Import Maps', function () {
         }
       }
     }, 'https://sample.com/src/');
-    const finalMap = mergeImportMap(importMap, secondMap);
-    assert.equal(resolveImportMap('f', 'https://sample.com/other-scope/something', finalMap), 'https://sample.com/other-scope-path/f.js');
+    mergeImportMap(importMap, secondMap);
+    assert.equal(resolveImportMap('f', 'https://sample.com/other-scope/something', importMap), 'https://sample.com/other-scope-path/f.js');
   });
 
 });
