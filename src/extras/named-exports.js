@@ -7,12 +7,9 @@
   // hook System.register to know the last declaration binding
   let lastRegisterDeclare;
   const systemRegister = systemPrototype.register;
-  systemPrototype.register = function () {
-    const isNamedRegister = arguments.length === 3
-    const deps = isNamedRegister ? arguments[1] : arguments[0];
-    const declare = isNamedRegister ? arguments[2] : arguments[1];
-    lastRegisterDeclare = declare;
-    systemRegister.call(this, deps, declare);
+  systemPrototype.register = function (name, deps, declare) {
+    lastRegisterDeclare = typeof name === 'string' ? declare : deps;
+    systemRegister.apply(this, arguments);
   };
 
   const getRegister = systemPrototype.getRegister;
