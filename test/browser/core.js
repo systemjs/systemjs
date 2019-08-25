@@ -172,7 +172,7 @@ suite('SystemJS Standard Tests', function() {
           throw Error("Loading html modules isn't implemented, but attempting to do so didn't throw an Error");
         },
         function (err) {
-          assert.ok(err.message.indexOf('HTML modules are not yet implemented') === 0);
+          assert.ok(err.message.indexOf("'.html' modules not implemented.") !== -1);
         }
       );
   });
