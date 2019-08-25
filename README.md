@@ -103,8 +103,9 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 
 ## Community Projects
 
-A list of projects that use or work with SystemJS in providing modular browser workflows.
+A list of projects that use or work with SystemJS in providing modular browser workflows. [Post a PR](https://github.com/systemjs/systemjs/edit/master/README.md).
 
+* [es-dev-server](https://github.com/open-wc/open-wc/tree/master/packages/es-dev-server) - A web server for developing without a build step.
 * [import map overrides](https://github.com/joeldenning/import-map-overrides/) - Dynamically inject an import map stored in local storage so that you can override the URL for any module. Can be useful for running development modules on localhost against the server.
 * [js-env](https://github.com/jsenv/jsenv-core) - Collection of development tools providing a unified workflow to write JavaScript for the web, node.js or both at the same time.
 * [jspm.io](https://jspm.io) - `https://system-dev.jspm.io/[name]` provides a CDN serving npm modules for SystemJS.
@@ -113,7 +114,7 @@ A list of projects that use or work with SystemJS in providing modular browser w
 
 ## Loader Extensions
 
-This list can be extended to include third-party loader extensions. Feel free to [post a PR to share your work](https://github.com/systemjs/systemjs/edit/3.0/README.md).
+This list can be extended to include third-party loader extensions. [Post a PR](https://github.com/systemjs/systemjs/edit/master/README.md).
 
 * [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
 * [systemjs-css-extra](https://github.com/systemjs/systemjs-css-extra) CSS loader plugin
