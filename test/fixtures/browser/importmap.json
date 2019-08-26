@@ -1,6 +1,7 @@
 {
   "imports": {
     "fixtures/": "./",
+    "fixturesbase/": "../",
     "a": "/b",
     "a/": "./a/",
     "f": "a:",

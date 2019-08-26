@@ -12,11 +12,11 @@ systemJSPrototype.register = function (deps, declare) {
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   if (url.slice(-5) === '.json') {
-    return loadDynamicModule(url, function (_export, source) {
+    return loadDynamicModule(function (_export, source) {
       _export('default', JSON.parse(source));
     });
   } else if (url.slice(-4) === '.css') {
-    return loadDynamicModule(url, function (_export, source) {
+    return loadDynamicModule(function (_export, source) {
       // Relies on a Constructable Stylesheet polyfill
       const stylesheet = new CSSStyleSheet();
       stylesheet.replaceSync(source);
@@ -41,7 +41,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       script.crossOrigin = 'anonymous';
       script.addEventListener('error', function () {
         window.removeEventListener('error', windowErrorListener);
-        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+        reject(loadError(''));
       });
       script.addEventListener('load', function () {
         window.removeEventListener('error', windowErrorListener);
@@ -59,14 +59,25 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       document.head.appendChild(script);
     });
   }
+  function loadError (msg) {
+    return Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '') + msg);
+  }
+  function loadDynamicModule (createExec) {
+    return fetch(url).then(function (res) {
+      if (!res.ok)
+        throw loadError(', ' + res.statusText);
+      return res.text().then(function (source) {
+        const contentType = res.headers.get('content-type');
+        // if the resource is sent as application/javascript, support eval-based execution
+        if (contentType && contentType.match(/^application\/javascript(;|$)/)) {
+          (0, eval)(source);
+          return loader.getRegister();
+        }
+        return [[], function (_export) {
+          return {execute: createExec(_export, source)};
+        }];
+      });
+    });
+  }  
 };
 
-function loadDynamicModule (url, createExec) {
-  return fetch(url).then(function (resp) {
-    return resp.text();
-  }).then(function (source) {
-    return [[], function (_export) {
-      return {execute: createExec(_export, source)};
-    }];
-  });
-}

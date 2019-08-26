@@ -160,9 +160,16 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('should load a css module', async function () {
-    const m = await System.import('./css-modules/a.css')
+    const m = await System.import('fixturesbase/css-modules/a.css');
     assert.ok(m);
     assert.ok(m.default instanceof CSSStyleSheet);
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, m.default];
+  });
+
+  test('should support application/javascript css module override', async function () {
+    const m = await System.import('fixturesbase/css-modules/javascript.css');
+    assert.ok(!m);
+    assert.ok(m.css, 'module');
   });
 
   test('should throw when trying to load an HTML module', function () {

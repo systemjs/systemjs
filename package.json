@@ -17,6 +17,7 @@
     "construct-style-sheets-polyfill": "^2.1.0",
     "esm": "^3.2.25",
     "mocha": "^5.2.0",
+    "opn": "^6.0.0",
     "rollup": "^0.64.1",
     "rollup-plugin-replace": "^2.0.0",
     "terser": "^3.8.1",
@@ -33,7 +34,8 @@
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "terser dist/system.js -c passes=2 -m | gzip -9f | wc -c",
     "footprint:sjs": "terser dist/s.js -c passes=2 -m | gzip -9f | wc -c",
-    "test": "mocha -b -r esm",
+    "test": "mocha -b -r esm && npm run test-browser",
+    "test-browser": "node test/server.js",
     "prepublish": "npm run build"
   }
 }
