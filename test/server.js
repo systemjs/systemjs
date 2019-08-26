@@ -18,18 +18,21 @@ const mimes = {
   '.wasm': 'application/wasm'
 };
 
-let failTimeout;
-let noBrowserTimeout = setTimeout(function () {
-  console.log('No browser requests made to server, closing.');
-  process.exit(0);
-}, 10000);
+let failTimeout, browserTimeout;
+
+function setBrowserTimeout () {
+  if (browserTimeout)
+    clearTimeout(browserTimeout);
+  browserTimeout = setTimeout(() => {
+    console.log('No browser requests made to server, closing.');
+    process.exit(0);
+  }, 10000);
+}
+
+setBrowserTimeout();
 
 http.createServer(async function (req, res) {
-  console.log(req.url);
-  if (noBrowserTimeout) {
-    clearTimeout(noBrowserTimeout);
-    noBrowserTimeout = null;
-  }
+  setBrowserTimeout();
   if (req.url === '/done') {
     console.log('Tests completed successfully.');
     process.exit();
@@ -37,9 +40,7 @@ http.createServer(async function (req, res) {
   }
   else if (req.url === '/error') {
     console.log('\033[31mTest failures found.\033[0m');
-    failTimeout = setTimeout(function () {
-      process.exit(1)
-    }, 30000);
+    failTimeout = setTimeout(() => process.exit(1), 30000);
   }
   else if (failTimeout) {
     clearTimeout(failTimeout);
