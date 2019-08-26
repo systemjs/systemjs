@@ -19,8 +19,16 @@ const mimes = {
 };
 
 let failTimeout;
+let noBrowserTimeout = setTimeout(function () {
+  console.log('No browser requests made to server, closing.');
+  process.exit(0);
+}, 10000);
 
 http.createServer(async function (req, res) {
+  if (noBrowserTimeout) {
+    clearTimeout(noBrowserTimeout);
+    noBrowserTimeout = null;
+  }
   if (req.url === '/done') {
     console.log('Tests completed successfully.');
     process.exit();
