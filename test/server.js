@@ -25,6 +25,7 @@ let noBrowserTimeout = setTimeout(function () {
 }, 10000);
 
 http.createServer(async function (req, res) {
+  console.log(req.url);
   if (noBrowserTimeout) {
     clearTimeout(noBrowserTimeout);
     noBrowserTimeout = null;
