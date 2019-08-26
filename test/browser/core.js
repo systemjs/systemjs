@@ -168,7 +168,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('should support application/javascript css module override', async function () {
     const m = await System.import('fixturesbase/css-modules/javascript.css');
-    assert.ok(!m);
+    assert.ok(m);
     assert.ok(m.css, 'module');
   });
 

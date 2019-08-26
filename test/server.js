@@ -18,6 +18,8 @@ const mimes = {
   '.wasm': 'application/wasm'
 };
 
+let failTimeout;
+
 http.createServer(async function (req, res) {
   if (req.url === '/done') {
     console.log('Tests completed successfully.');
@@ -26,6 +28,13 @@ http.createServer(async function (req, res) {
   }
   else if (req.url === '/error') {
     console.log('\033[31mTest failures found.\033[0m');
+    failTimeout = setTimeout(function () {
+      process.exit(1)
+    }, 30000);
+  }
+  else if (failTimeout) {
+    clearTimeout(failTimeout);
+    failTimeout = null;
   }
 
   const url = new URL(req.url[0] === '/' ? req.url.slice(1) : req.url, systemJSURL);
