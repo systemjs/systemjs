@@ -8,7 +8,7 @@
 		if (typeof fetch === 'undefined')
 			document.write('<script src="../node_modules/whatwg-fetch/fetch.js"><\/script>');
 	</script>
-	<script src="../node_modules/construct-style-sheets-polyfill/adoptedStyleSheets.js"></script>
+	<script defer src="../node_modules/construct-style-sheets-polyfill/adoptedStyleSheets.js"></script>
 	<script>
 		// TODO IE11 URL polyfill testing
 		// if (typeof URL === 'undefined')
@@ -40,7 +40,9 @@
 		};
 
 		const extras = ['amd', 'named-exports', 'transform', 'named-register'];
-		function runNextExtra () {
+		let failCnt = 0;
+		function runNextExtra (failures) {
+			failCnt += failures;
 			mocha.suite.suites.shift();
 			const extra = extras.shift();
 			if (extra)
@@ -51,6 +53,8 @@
 				.then(function () {
 					mocha.run(runNextExtra);
 				});
+			else
+				fetch(failCnt ? '/error' : '/done');
 		}
 
 		System.import('./browser/core.js')
