@@ -33,25 +33,21 @@ Since the ES module semantics such as live bindings, circular references, contex
 The [3KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for upcoming module specifications (currently [import maps](https://github.com/domenic/import-maps) and [Wasm integration](https://github.com/WebAssembly/esm-integration) with module loading) as well as development and convenience features.
 
 * Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="system-importmap">` (requires a `fetch` polyfill for eg IE11).
-* Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
+* Includes the [module types](docs/module-types.md) extra for loading Wasm, CSS and JSON modules.
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
-* Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 
 #### Extras
 
 The following [pluggable extras](dist/extras) can be dropped in with either the s.js or system.js loader:
 
 * [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created).
+* [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`.
+* [Module Types](dist/extras/module-types.js) extra is included by default in the system.js build but can be added to s.js loader for `.css`, `.wasm` and `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications (_included by default in system.js build_).
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
 * [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles which can then be imported as `System.import('name')` (as well as AMD named define support)
 * [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
 * [Use default](dist/extras/use-default.js) provides a convenience interop for AMD modules to return the direct AMD
   binding instead of a `{ default: amdModule }` object from `System.import`.
-
-The following extras are included in system.js loader by default, and can be added to the s.js loader for a smaller tailored footprint:
-
-* [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`.
-* [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
