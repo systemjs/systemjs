@@ -11,73 +11,38 @@ systemJSPrototype.register = function (deps, declare) {
 
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
-  if (url.slice(-5) === '.json') {
-    return loadDynamicModule(function (_export, source) {
-      _export('default', JSON.parse(source));
-    });
-  } else if (url.slice(-4) === '.css') {
-    return loadDynamicModule(function (_export, source) {
-      // Relies on a Constructable Stylesheet polyfill
-      const stylesheet = new CSSStyleSheet();
-      stylesheet.replaceSync(source);
-      _export('default', stylesheet);
-    });
-  } else if (url.slice(-5) === '.html') {
-    return Promise.reject(Error("Error loading " + url + ". '.html' modules not implemented."));
-  } else {
-    return new Promise(function (resolve, reject) {
-      let err;
+  return new Promise(function (resolve, reject) {
+    let err;
 
-      function windowErrorListener(evt) {
-        if (evt.filename === url)
-          err = evt.error;
+    function windowErrorListener(evt) {
+      if (evt.filename === url)
+        err = evt.error;
+    }
+
+    window.addEventListener('error', windowErrorListener);
+
+    const script = document.createElement('script');
+    script.charset = 'utf-8';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.addEventListener('error', function () {
+      window.removeEventListener('error', windowErrorListener);
+      reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+    });
+    script.addEventListener('load', function () {
+      window.removeEventListener('error', windowErrorListener);
+      document.head.removeChild(script);
+      // Note that if an error occurs that isn't caught by this if statement,
+      // that getRegister will return null and a "did not instantiate" error will be thrown.
+      if (err) {
+        reject(err);
       }
-
-      window.addEventListener('error', windowErrorListener);
-
-      const script = document.createElement('script');
-      script.charset = 'utf-8';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.addEventListener('error', function () {
-        window.removeEventListener('error', windowErrorListener);
-        reject(loadError(''));
-      });
-      script.addEventListener('load', function () {
-        window.removeEventListener('error', windowErrorListener);
-        document.head.removeChild(script);
-        // Note that if an error occurs that isn't caught by this if statement,
-        // that getRegister will return null and a "did not instantiate" error will be thrown.
-        if (err) {
-          reject(err);
-        }
-        else {
-          resolve(loader.getRegister());
-        }
-      });
-      script.src = url;
-      document.head.appendChild(script);
+      else {
+        resolve(loader.getRegister());
+      }
     });
-  }
-  function loadError (msg) {
-    return Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '') + msg);
-  }
-  function loadDynamicModule (createExec) {
-    return fetch(url).then(function (res) {
-      if (!res.ok)
-        throw loadError(', ' + res.statusText);
-      return res.text().then(function (source) {
-        const contentType = res.headers.get('content-type');
-        // if the resource is sent as application/javascript, support eval-based execution
-        if (contentType && contentType.match(/^application\/javascript(;|$)/)) {
-          (0, eval)(source);
-          return loader.getRegister();
-        }
-        return [[], function (_export) {
-          return {execute: createExec(_export, source)};
-        }];
-      });
-    });
-  }  
+    script.src = url;
+    document.head.appendChild(script);
+  });
 };
 

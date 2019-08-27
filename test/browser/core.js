@@ -15,8 +15,8 @@ suite('SystemJS Standard Tests', function() {
     return System.import('fixtures/error-loader2.js').then(function () {
       assert.fail('Should fail');
     }, function (e) {
-      console.log(e.message);
       assert.ok(e);
+      console.log(e);
       assert.ok(e.message.indexOf('Error loading ') === 0);
       assert.ok(e.message.indexOf('non-existent') !== -1);
       assert.ok(e.message.indexOf('error-loader2.js') !== -1);
@@ -173,14 +173,10 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('should throw when trying to load an HTML module', function () {
-    return System.import('/a.html')
-      .then(
-        function () {
-          throw Error("Loading html modules isn't implemented, but attempting to do so didn't throw an Error");
-        },
-        function (err) {
-          assert.ok(err.message.indexOf("'.html' modules not implemented.") !== -1);
-        }
-      );
+    return System.import('/test/test.html').then(function () {
+      throw Error("Loading html modules isn't implemented, but attempting to do so didn't throw an Error");
+    }, function (err) {
+      assert.ok(err.message.indexOf("'.html' modules not implemented") !== -1);
+    });
   });
 });
