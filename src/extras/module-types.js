@@ -37,11 +37,12 @@ systemJSPrototype.instantiate = function (url, parent) {
         if (WebAssembly.Module.imports)
           WebAssembly.Module.imports(module).forEach(function (impt) {
             const key = impt.module;
-            setters.push(function (m) {
-              importObj[key] = m;
-            });
-            if (deps.indexOf(key) === -1)
+            if (deps.indexOf(key) === -1) {
               deps.push(key);
+              setters.push(function (m) {
+                importObj[key] = m;
+              });
+            }
           });
     
         return [deps, function (_export) {
