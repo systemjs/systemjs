@@ -12,6 +12,10 @@ _[For the previous release see the SystemJS 0.21.x branch](https://github.com/sy
 
 _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
+For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
+
+## Overview
+
 SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
@@ -21,7 +25,7 @@ The minimal [1.5KB s.js loader](dist/s.min.js) provides a workflow where code wr
 Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
 
 * Loads and resolves modules as URLs, throwing for bare specifier names (eg `import 'lodash'`) like the native module loader.
-* Loads System.register, JSON, and CSS modules.
+* Loads System.register modules.
 * Core hookable extensible loader supporting [custom extensions](docs/hooks.md).
 
 #### 2. system.js loader
@@ -30,25 +34,26 @@ The [3KB system.js loader](dist/system.min.js) loader builds on the s.js core an
 
 * Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="system-importmap">` (requires a `fetch` polyfill for eg IE11).
 * Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
-* [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows
-* Supports loading WASM based on the `.wasm` file extension
+* [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
+* Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 
 #### Extras
 
-The following [pluggable extras](dist/extras) are provided which can be dropped in with either the s.js or system.js loader:
+The following [pluggable extras](dist/extras) can be dropped in with either the s.js or system.js loader:
 
 * [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created).
-* [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`. _(Already included in the system.js loader build)_.
-* [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
 * [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles which can then be imported as `System.import('name')` (as well as AMD named define support)
 * [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
 * [Use default](dist/extras/use-default.js) provides a convenience interop for AMD modules to return the direct AMD
   binding instead of a `{ default: amdModule }` object from `System.import`.
 
-Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
+The following extras are included in system.js loader by default, and can be added to the s.js loader for a smaller tailored footprint:
 
-For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
+* [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`.
+* [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
+
+Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
 ## Installation
 
