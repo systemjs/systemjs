@@ -10,10 +10,10 @@
  * 
  * There is no support for dynamic import maps injection currently.
  */
-import { baseUrl, parseImportMap, resolveImportMap, mergeImportMap } from '../common.js';
+import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-const importMap = { imports: {}, scopes: {} };
+let importMap = { imports: {}, scopes: {} };
 let acquiringImportMaps = typeof document !== 'undefined';
 
 if (acquiringImportMaps) {
@@ -32,7 +32,7 @@ systemJSPrototype.prepareImport = function () {
       importMapPromise = importMapPromise.then(function () {
         return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
         .then(function (json) {
-          mergeImportMap(importMap, parseImportMap(json, script.src || baseUrl));
+          importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
         });
       });
     });
@@ -42,5 +42,9 @@ systemJSPrototype.prepareImport = function () {
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
-  return resolveImportMap(id, parentUrl, importMap);
+  return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
 };
+
+function throwUnresolved (id, parentUrl) {
+  throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+}

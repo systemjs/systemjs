@@ -11,11 +11,11 @@
     "g/": "https://site.com/"
   },
   "scopes": {
-    "scope-test": {
+    "scope-test/": {
       "maptest": "./contextual-map-dep.js",
       "maptest/": "./contextual-map-dep/"
     },
-    "wasm": {
+    "wasm/": {
       "example": "./wasm/example.js"
     }
   }
