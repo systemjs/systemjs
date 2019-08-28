@@ -1,11 +1,13 @@
 export const hasSelf = typeof self !== 'undefined';
 
+export const hasDocument = typeof document !== 'undefined';
+
 const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
 export let baseUrl;
 
-if (typeof document !== 'undefined') {
+if (hasDocument) {
   const baseEl = document.querySelector('base[href]');
   if (baseEl)
     baseUrl = baseEl.href;
