@@ -17,7 +17,7 @@ systemJSPrototype.instantiate = function (url, parent) {
       });
     case '.html':
       return getSourceRes().then(function (res) {
-        return maybeJSFallback(res) || loadError("'.html' modules not implemented");
+        return maybeJSFallback(res) || htmlModule(res);
       });
     case '.json':
       return loadDynamicModule(function (_export, source) {
@@ -88,5 +88,66 @@ systemJSPrototype.instantiate = function (url, parent) {
   }
   function loadError (msg) {
     throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
+  }
+  function htmlModule(res) {
+    return res.text().then(function (source) {
+      const doc = new DOMParser().parseFromString(source, 'text/html');
+      const moduleScripts = doc.querySelectorAll('script');
+
+      return Promise.all(Array.prototype.slice.call(moduleScripts).map(function (htmlScript) {
+        if (htmlScript.type !== 'module') {
+          loadError("All JS modules within an HTML module must have type 'module'");
+        } else if (htmlScript.src) {
+          loadError("All JS modules within an HTML module must be inline");
+        } else {
+          const script = document.createElement('script');
+          script.text = htmlScript.text;
+          script.type = 'text/javascript';
+          document.head.appendChild(script);
+          document.head.removeChild(script);
+          return loader.getRegister();
+        }
+      })).then(function (declarations) {
+        const depNames = declarations.reduce(function (result, declaration) {
+          return result.concat(declaration[0]);
+        }, []);
+
+        return [depNames, function(_export, _context) {
+          _context.meta.document = doc;
+
+          let defaultAlreadyExported = false;
+
+          const registers = declarations.map(function (declaration) {
+            return declaration[1](protectedExport, _context);
+          });
+
+          return {
+            setters: registers.reduce(function (allSetters, register) {
+              return allSetters.concat(register.setters);
+            }, []),
+            execute: function() {
+              registers.forEach(function (register) {
+                register.execute();
+              });
+
+              if (!defaultAlreadyExported) {
+                _export('default', doc);
+              }
+            }
+          };
+
+          function protectedExport(name, value) {
+            if (name === 'default') {
+              if (defaultAlreadyExported) {
+                throw Error("Only one HTML module inline script can export default");
+              } else {
+                defaultAlreadyExported = true;
+              }
+            }
+            _export(name, value);
+          }
+        }];
+      });
+    });
   }
 };
