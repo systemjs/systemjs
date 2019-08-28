@@ -13,10 +13,9 @@
 import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-let importMap = { imports: {}, scopes: {} };
-let acquiringImportMaps = typeof document !== 'undefined';
+let importMap = { imports: {}, scopes: {} }, importMapPromise;
 
-if (acquiringImportMaps) {
+if (typeof document !== 'undefined') {
   Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
     script._j = fetch(script.src).then(function (res) {
       return res.json();
@@ -25,19 +24,19 @@ if (acquiringImportMaps) {
 }
 
 systemJSPrototype.prepareImport = function () {
-  if (acquiringImportMaps) {
-    acquiringImportMaps = false;
-    let importMapPromise = Promise.resolve();
-    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-      importMapPromise = importMapPromise.then(function () {
-        return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
-        .then(function (json) {
-          importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
+  if (!importMapPromise) {
+    importMapPromise = Promise.resolve();
+    if (typeof document !== 'undefined')
+      Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+        importMapPromise = importMapPromise.then(function () {
+          return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
+          .then(function (json) {
+            importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
+          });
         });
       });
-    });
-    return importMapPromise;
   }
+  return importMapPromise;
 };
 
 systemJSPrototype.resolve = function (id, parentUrl) {
