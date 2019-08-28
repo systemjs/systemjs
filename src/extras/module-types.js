@@ -125,7 +125,7 @@ systemJSPrototype.instantiate = function (url, parent) {
             setters: registers.reduce(function (allSetters, register) {
               return allSetters.concat(register.setters);
             }, []),
-            execute: function() {
+            execute: function () {
               registers.forEach(function (register) {
                 register.execute();
               });
