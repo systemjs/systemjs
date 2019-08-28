@@ -92,9 +92,8 @@ systemJSPrototype.instantiate = function (url, parent) {
   function htmlModule(res) {
     return res.text().then(function (source) {
       const doc = new DOMParser().parseFromString(source, 'text/html');
-      const moduleScripts = doc.querySelectorAll('script');
 
-      return Promise.all(Array.prototype.slice.call(moduleScripts).map(function (htmlScript) {
+      return Promise.all(Array.prototype.slice.call(doc.querySelectorAll('script')).map(function (htmlScript) {
         if (htmlScript.type !== 'module') {
           loadError("All JS modules within an HTML module must have type 'module'");
         } else if (htmlScript.src) {
@@ -102,7 +101,6 @@ systemJSPrototype.instantiate = function (url, parent) {
         } else {
           const script = document.createElement('script');
           script.text = htmlScript.text;
-          script.type = 'text/javascript';
           document.head.appendChild(script);
           document.head.removeChild(script);
           return loader.getRegister();
