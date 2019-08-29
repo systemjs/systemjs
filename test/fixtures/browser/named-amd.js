@@ -1,4 +1,4 @@
-define('c', ['exports', './d'], function (exports, b) {
+define('c', ['exports', 'd'], function (exports, b) {
   exports.a = b.b;
 });
 
