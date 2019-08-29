@@ -1,3 +1,12 @@
+**SystemJS 6.0.0 (2019/08/29) - Major Changes**
+* Cascading import maps implementation (https://github.com/systemjs/systemjs/pull/2009)
+* New module types extra for CSS, JSON and Wasm (https://github.com/systemjs/systemjs/pull/2006)
+* CSS modules implementation (https://github.com/systemjs/systemjs/pull/1997)
+* Deps argument added to onload hook (https://github.com/systemjs/systemjs/pull/1998)
+* System.resolve is now synchronous by default (https://github.com/systemjs/systemjs/pull/1996, @joeldenning)
+* The first named System.regiser in a bundle will now define the bundle module itself (https://github.com/systemjs/systemjs/pull/1984, @joeldenning)
+* Named exports extra fix not to alter the default export (https://github.com/systemjs/systemjs/pull/1983, @joeldenning)
+
 **SystemJS 5.0.0 (2019/07/30) - Major Change**
 * Import map scopes now resolve relative to the base, not the scope (https://github.com/systemjs/systemjs/pull/1975)
 

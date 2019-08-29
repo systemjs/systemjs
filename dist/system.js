@@ -1,14 +1,16 @@
 /*
-* SystemJS 5.0.0
+* SystemJS 6.0.0
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
+
+  const hasDocument = typeof document !== 'undefined';
 
   const envGlobal = hasSelf ? self : global;
 
   let baseUrl;
 
-  if (typeof document !== 'undefined') {
+  if (hasDocument) {
     const baseEl = document.querySelector('base[href]');
     if (baseEl)
       baseUrl = baseEl.href;
@@ -111,37 +113,42 @@
    */
 
   function resolveUrl (relUrl, parentUrl) {
-    return resolveIfNotPlainOrUrl(relUrl, parentUrl) ||
-        relUrl.indexOf(':') !== -1 && relUrl ||
-        resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
+    return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
   }
 
-  function resolvePackages(pkgs, baseUrl) {
-    var outPkgs = {};
-    for (var p in pkgs) {
-      var value = pkgs[p];
-      // TODO package fallback support
-      if (typeof value !== 'string')
+  function objectAssign (to, from) {
+    for (let p in from)
+      to[p] = from[p];
+    return to;
+  }
+
+  function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
+    for (let p in packages) {
+      const rhs = packages[p];
+      // package fallbacks not currently supported
+      if (typeof rhs !== 'string')
         continue;
-      outPkgs[resolveIfNotPlainOrUrl(p, baseUrl) || p] = resolveUrl(value, baseUrl);
+      const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
+      if (!mapped)
+        targetWarning(p, rhs, 'bare specifier did not resolve');
+      else
+        outPackages[p] = mapped;
     }
-    return outPkgs;
   }
 
-  function parseImportMap (json, baseUrl) {
-    const imports = resolvePackages(json.imports, baseUrl) || {};
-    const scopes = {};
-    if (json.scopes) {
-      for (let scopeName in json.scopes) {
-        const scope = json.scopes[scopeName];
-        let resolvedScopeName = resolveUrl(scopeName, baseUrl);
-        if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
-          resolvedScopeName += '/';
-        scopes[resolvedScopeName] = resolvePackages(scope, baseUrl) || {};
-      }
-    }
+  function resolveAndComposeImportMap (json, baseUrl, parentMap) {
+    const outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
 
-    return { imports: imports, scopes: scopes };
+    if (json.imports)
+      resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
+
+    if (json.scopes)
+      for (let s in json.scopes) {
+        const resolvedScope = resolveUrl(s, baseUrl);
+        resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
+      }
+
+    return outMap;
   }
 
   function getMatch (path, matchObj) {
@@ -161,27 +168,25 @@
       const pkg = packages[pkgName];
       if (pkg === null) return;
       if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-        console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
-      return pkg + id.slice(pkgName.length);
+        targetWarning(pkgName, pkg, "should have a trailing '/'");
+      else
+        return pkg + id.slice(pkgName.length);
     }
   }
 
-  function resolveImportMap (id, parentUrl, importMap) {
-    const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl) || id.indexOf(':') !== -1 && id;
-    if (urlResolved)
-      id = urlResolved;
-    const scopeName = getMatch(parentUrl, importMap.scopes);
-    if (scopeName) {
-      const scopePackages = importMap.scopes[scopeName];
-      const packageResolution = applyPackages(id, scopePackages);
+  function targetWarning (match, target, msg) {
+    console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
+  }
+
+  function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
+    let scopeUrl = parentUrl && getMatch(parentUrl, importMap.scopes);
+    while (scopeUrl) {
+      const packageResolution = applyPackages(resolvedOrPlain, importMap.scopes[scopeUrl]);
       if (packageResolution)
         return packageResolution;
+      scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
     }
-    return applyPackages(id, importMap.imports) || urlResolved || throwBare(id, parentUrl);
-  }
-
-  function throwBare (id, parentUrl) {
-    throw Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
+    return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
   }
 
   /*
@@ -195,7 +200,7 @@
    * - System.getRegister to get the registration
    * - Symbol.toStringTag support in Module objects
    * - Hookable System.createContext to customize import.meta
-   * - System.onload(id, err?) handler for tracing / hot-reloading
+   * - System.onload(err, id, deps) handler for tracing / hot-reloading
    * 
    * Core comes with no System.prototype.resolve or
    * System.prototype.instantiate implementations
@@ -210,9 +215,15 @@
   }
 
   const systemJSPrototype = SystemJS.prototype;
+
+  systemJSPrototype.prepareImport = function () {};
+
   systemJSPrototype.import = function (id, parentUrl) {
     const loader = this;
-    return Promise.resolve(loader.resolve(id, parentUrl))
+    return Promise.resolve(loader.prepareImport())
+    .then(function() {
+      return loader.resolve(id, parentUrl);
+    })
     .then(function (id) {
       const load = getOrCreateLoad(loader, id);
       return load.C || topLevelLoad(loader, load);
@@ -226,8 +237,16 @@
     };
   };
 
-  // onLoad(id, err) provided for tracing / hot-reloading
+  // onLoad(err, id, deps) provided for tracing / hot-reloading
   systemJSPrototype.onload = function () {};
+  function loadToId (load) {
+    return load.id;
+  }
+  function triggerOnload (loader, load, err) {
+    loader.onload(err, load.id, load.d && load.d.map(loadToId));
+    if (err)
+      throw err;
+  }
 
   let lastRegister;
   systemJSPrototype.register = function (deps, declare) {
@@ -295,8 +314,7 @@
     });
 
     instantiatePromise = instantiatePromise.catch(function (err) {
-        loader.onload(load.id, err);
-        throw err;
+        triggerOnload(loader, load, err);
       });
 
     const linkPromise = instantiatePromise
@@ -414,23 +432,20 @@
       {
         try {
           const depLoadPromise = postOrderExec(loader, depLoad, seen);
-          if (depLoadPromise)
+          if (depLoadPromise) {
+            depLoadPromise.catch(function (err) {
+              triggerOnload(loader, load, err);
+            });
             (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+          }
         }
         catch (err) {
-          loader.onload(load.id, err);
-          throw err;
+          triggerOnload(loader, load, err);
         }
       }
     });
-    if (depLoadPromises) {
-      return Promise.all(depLoadPromises)
-        .then(doExec)
-        .catch(function (err) {
-          loader.onload(load.id, err);
-          throw err;
-        });
-    }
+    if (depLoadPromises)
+      return Promise.all(depLoadPromises).then(doExec);
 
     return doExec();
 
@@ -441,19 +456,18 @@
           execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
-              loader.onload(load.id, null);
+              triggerOnload(loader, load, null);
             }, function (err) {
-              loader.onload(load.id, err);
-              throw err;
+              triggerOnload(loader, load, err);
             });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        loader.onload(load.id, null);
+        triggerOnload(loader, load, null);
       }
       catch (err) {
-        loader.onload(load.id, err);
+        triggerOnload(loader, load, err);
         load.er = err;
         throw err;
       }
@@ -477,49 +491,39 @@
 
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
-    if (url.substr(-5) === '.json') {
-      return fetch(url).then(function (resp) {
-        return resp.text();
-      }).then(function (source) {
-        return [[], function(_export) {
-          return {execute: function() {_export('default', JSON.parse(source));}};
-        }];
-      });
-    } else {
-      return new Promise(function (resolve, reject) {
-        let err;
+    return new Promise(function (resolve, reject) {
+      let err;
 
-        function windowErrorListener(evt) {
-          if (evt.filename === url)
-            err = evt.error;
+      function windowErrorListener(evt) {
+        if (evt.filename === url)
+          err = evt.error;
+      }
+
+      window.addEventListener('error', windowErrorListener);
+
+      const script = document.createElement('script');
+      script.charset = 'utf-8';
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.addEventListener('error', function () {
+        window.removeEventListener('error', windowErrorListener);
+        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+      });
+      script.addEventListener('load', function () {
+        window.removeEventListener('error', windowErrorListener);
+        document.head.removeChild(script);
+        // Note that if an error occurs that isn't caught by this if statement,
+        // that getRegister will return null and a "did not instantiate" error will be thrown.
+        if (err) {
+          reject(err);
         }
-
-        window.addEventListener('error', windowErrorListener);
-
-        const script = document.createElement('script');
-        script.charset = 'utf-8';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        script.addEventListener('error', function () {
-          window.removeEventListener('error', windowErrorListener);
-          reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
-        });
-        script.addEventListener('load', function () {
-          window.removeEventListener('error', windowErrorListener);
-          document.head.removeChild(script);
-          // Note that if an error occurs that isn't caught by this if statement,
-          // that getRegister will return null and a "did not instantiate" error will be thrown.
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(loader.getRegister());
-          }
-        });
-        script.src = url;
-        document.head.appendChild(script);
+        else {
+          resolve(loader.getRegister());
+        }
       });
-    }
+      script.src = url;
+      document.head.appendChild(script);
+    });
   };
 
   /*
@@ -626,55 +630,95 @@
   })(typeof self !== 'undefined' ? self : global);
 
   /*
-   * Loads WASM based on file extension detection
-   * Assumes successive instantiate will handle other files
+   * Loads JSON, CSS, Wasm module types based on file extensions
+   * Supports application/javascript falling back to JS eval
    */
   const instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, parent) {
-    if (url.slice(-5) !== '.wasm')
-      return instantiate.call(this, url, parent);
-    
-    return fetch(url)
-    .then(function (res) {
-      if (!res.ok)
-        throw Error(res.status + ' ' + res.statusText + ' ' + res.url + (parent ? ' loading from ' + parent : ''));
-
-      if (WebAssembly.compileStreaming)
-        return WebAssembly.compileStreaming(res);
-      
-      return res.arrayBuffer()
-      .then(function (buf) {
-        return WebAssembly.compile(buf);
-      });
-    })
-    .then(function (module) {
-      const deps = [];
-      const setters = [];
-      const importObj = {};
-
-      // we can only set imports if supported (eg early Safari doesnt support)
-      if (WebAssembly.Module.imports)
-        WebAssembly.Module.imports(module).forEach(function (impt) {
-          const key = impt.module;
-          setters.push(function (m) {
-            importObj[key] = m;
-          });
-          if (deps.indexOf(key) === -1)
-            deps.push(key);
+    const loader = this;
+    const ext = url.slice(url.lastIndexOf('.'));
+    switch (ext) {
+      case '.css':
+        return loadDynamicModule(function (_export, source) {
+          // Relies on a Constructable Stylesheet polyfill
+          const stylesheet = new CSSStyleSheet();
+          stylesheet.replaceSync(source);
+          _export('default', stylesheet);
         });
-
-      return [deps, function (_export) {
-        return {
-          setters: setters,
-          execute: function () {
-            return WebAssembly.instantiate(module, importObj)
-            .then(function (instance) {
-              _export(instance.exports);
+      case '.html':
+        return getSourceRes().then(function (res) {
+          return maybeJSFallback(res) || loadError("'.html' modules not implemented");
+        });
+      case '.json':
+        return loadDynamicModule(function (_export, source) {
+          _export('default', JSON.parse(source));
+        });
+      case '.wasm':
+        return getSourceRes().then(function (res) {
+          return maybeJSFallback(res) ||
+              (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile));
+        })
+        .then(function (module) {
+          const deps = [];
+          const setters = [];
+          const importObj = {};
+      
+          // we can only set imports if supported (eg early Safari doesnt support)
+          if (WebAssembly.Module.imports)
+            WebAssembly.Module.imports(module).forEach(function (impt) {
+              const key = impt.module;
+              if (deps.indexOf(key) === -1) {
+                deps.push(key);
+                setters.push(function (m) {
+                  importObj[key] = m;
+                });
+              }
             });
-          }
-        };
-      }];
-    });
+      
+          return [deps, function (_export) {
+            return {
+              setters: setters,
+              execute: function () {
+                return WebAssembly.instantiate(module, importObj)
+                .then(function (instance) {
+                  _export(instance.exports);
+                });
+              }
+            };
+          }];
+        });
+    }
+    return instantiate.apply(this, arguments);
+
+    function getSourceRes () {
+      return fetch(url).then(function (res) {
+        if (!res.ok)
+          loadError(res.status + ' ' + res.statusText);
+        return res;
+      });
+    }
+    function maybeJSFallback (res) {
+      const contentType = res.headers.get('content-type');
+      // if the resource is sent as application/javascript, support eval-based execution
+      if (contentType && contentType.match(/^application\/javascript(;|$)/)) {
+        return res.text().then(function (source) {
+          (0, eval)(source);
+          return loader.getRegister();
+        });
+      }
+    }
+    function loadDynamicModule (createExec) {
+      return getSourceRes().then(function (res) {
+        return maybeJSFallback(res) || res.text().then(function (source) {
+          return [[], function (_export) {
+            return { execute: createExec(_export, source) };
+          }];
+        });
+      });
+    }
+    function loadError (msg) {
+      throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
+    }
   };
 
   /*
@@ -690,50 +734,40 @@
    * There is no support for dynamic import maps injection currently.
    */
 
-  const baseMap = Object.create(null);
-  baseMap.imports = Object.create(null);
-  baseMap.scopes = Object.create(null);
-  let importMapPromise = Promise.resolve(baseMap);
-  let acquiringImportMaps = typeof document !== 'undefined';
+  let importMap = { imports: {}, scopes: {} }, importMapPromise;
 
-  if (acquiringImportMaps) {
+  if (hasDocument) {
     Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
-      script._j = fetch(script.src).then(function (resp) {
-        return resp.json();
+      script._j = fetch(script.src).then(function (res) {
+        return res.json();
       });
     });
   }
 
-  function mergeImportMap(originalMap, newMap) {
-    for (let i in newMap.imports) {
-      originalMap.imports[i] = newMap.imports[i];
+  systemJSPrototype.prepareImport = function () {
+    if (!importMapPromise) {
+      importMapPromise = Promise.resolve();
+      if (hasDocument)
+        Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+          importMapPromise = importMapPromise.then(function () {
+            return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
+            .then(function (json) {
+              importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
+            });
+          });
+        });
     }
-    for (let i in newMap.scopes) {
-      originalMap.scopes[i] = newMap.scopes[i];
-    }
-    return originalMap;
-  }
+    return importMapPromise;
+  };
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || baseUrl;
-
-    if (acquiringImportMaps) {
-      acquiringImportMaps = false;
-      Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-        importMapPromise = importMapPromise.then(function (map) {
-          return (script._j || script.src && fetch(script.src).then(function (resp) {return resp.json()}) || Promise.resolve(JSON.parse(script.innerHTML)))
-          .then(function (json) {
-            return mergeImportMap(map, parseImportMap(json, script.src || baseUrl));
-          });
-        });
-      });
-    }
-
-    return importMapPromise
-    .then(function (importMap) {
-      return resolveImportMap(id, parentUrl, importMap);
-    });
+    return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
   };
+
+  function throwUnresolved (id, parentUrl) {
+    throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+  }
 
   const toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 

@@ -6,9 +6,11 @@
 
 Configurable module loader enabling backwards compatibility workflows for ES modules in browsers. If you're interested in modern workflows for ES module compatible browsers only, see [ES Module Shims](https://github.com/guybedford/es-module-shims).
 
-[Read the SystemJS 2.0 announcement post](https://guybedford.com/systemjs-2.0)
+Release Links:
 
-_[For the previous release see the SystemJS 0.21.x branch](https://github.com/systemjs/systemjs/tree/0.21)_
+* [Latest 6.x Major Release](https://github.com/systemjs/systemjs/releases/tag/6.0.0)
+* [SystemJS 2.0 rewrite announcement post](https://guybedford.com/systemjs-2.0)
+* [SystemJS 0.21](https://github.com/systemjs/systemjs/tree/0.21)
 
 _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 

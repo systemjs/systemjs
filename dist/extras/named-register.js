@@ -16,15 +16,23 @@
   SystemJS.prototype = systemJSPrototype;
   System = new SystemJS();
 
+  let firstNamedDefine;
+
+  function clearFirstNamedDefine () {
+    firstNamedDefine = null;
+  }
+
   const register = systemJSPrototype.register;
   systemJSPrototype.register = function (name, deps, declare) {
     if (typeof name !== 'string')
       return register.apply(this, arguments);
-
-    this.registerRegistry[name] = [deps, declare];
-
-    // Provide an empty module to signal success.
-    return register.call(this, [], function () { return {}; });
+    const define = [deps, declare];
+    this.registerRegistry[name] = define;
+    if (!firstNamedDefine) {
+      firstNamedDefine = define;
+      setTimeout(clearFirstNamedDefine, 0);
+    }
+    return register.apply(this, arguments);
   };
 
   const resolve = systemJSPrototype.resolve;
@@ -40,4 +48,9 @@
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return this.registerRegistry[url] || instantiate.call(this, url, firstParentUrl);
   };
+
+  const getRegister = systemJSPrototype.getRegister;
+  systemJSPrototype.getRegister = function () {
+    return firstNamedDefine || getRegister.call(this);
+  }
 })();
