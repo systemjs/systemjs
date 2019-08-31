@@ -43,9 +43,9 @@ function noteGlobalProps () {
 }
 
 const impt = systemJSPrototype.import;
-systemJSPrototype.import = function (id, parentUrl) {
+systemJSPrototype.import = function () {
   noteGlobalProps();
-  return impt.call(this, id, parentUrl);
+  return impt.apply(this, arguments);
 };
 
 const emptyInstantiation = [[], function () { return {} }];
@@ -55,7 +55,7 @@ systemJSPrototype.getRegister = function () {
   const lastRegister = getRegister.call(this);
   if (lastRegister)
     return lastRegister;
-  
+
   // no registration -> attempt a global detection as difference from snapshot
   // when multiple globals, we take the global value to be the last defined new global object property
   // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
@@ -63,7 +63,7 @@ systemJSPrototype.getRegister = function () {
   const globalProp = getGlobalProp();
   if (!globalProp)
     return emptyInstantiation;
-  
+
   let globalExport;
   try {
     globalExport = global[globalProp];

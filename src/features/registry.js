@@ -11,6 +11,10 @@ systemJSPrototype.get = function (id) {
   }
 };
 
+systemJSPrototype.getLoad = function (id) {
+  return this[REGISTRY][id];
+};
+
 systemJSPrototype.set = function (id, module) {
   let ns;
   if (toStringTag && module[toStringTag] === 'Module') {
@@ -36,7 +40,7 @@ systemJSPrototype.set = function (id, module) {
 
   if (load.e || load.E)
     return false;
-  
+
   Object.assign(load, {
     n: ns,
     I: done,
@@ -74,6 +78,7 @@ systemJSPrototype.delete = function (id) {
     const load = registry[id];
     if (!load || !importerSetters || load.e !== null || load.E)
       return false;
+
     // add back the old setters
     importerSetters.forEach(setter => {
       load.i.push(setter);
@@ -91,7 +96,7 @@ systemJSPrototype.entries = function () {
   const result = {
     next: function () {
       while (
-        (key = keys[index++]) !== undefined && 
+        (key = keys[index++]) !== undefined &&
         (ns = loader.get(key)) === undefined
       );
       return {
