@@ -181,13 +181,13 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('should load <script type=systemjs-module>', function () {
-    const resolved = System.resolve('/test/fixtures/browser/systemjs-module-script.js')
+    const resolved = System.resolve('/test/fixtures/browser/systemjs-module-script.js');
     assert.ok(System.has(resolved));
     assert.equal(System.get(resolved).foo, 'bar');
   });
 
   test('should remove import: prefix from <script type=systemjs-module>', function () {
-    const resolved = System.resolve('/test/fixtures/browser/systemjs-module-script2.js')
+    const resolved = System.resolve('/test/fixtures/browser/systemjs-module-script2.js');
     assert.ok(System.has(resolved));
     assert.equal(System.get(resolved).hello, 'there');
   });
