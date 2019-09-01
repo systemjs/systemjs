@@ -172,11 +172,52 @@ suite('SystemJS Standard Tests', function() {
     assert.ok(m.css, 'module');
   });
 
-  test('should throw when trying to load an HTML module', function () {
-    return System.import('/test/test.html').then(function () {
-      throw Error("Loading html modules isn't implemented, but attempting to do so didn't throw an Error");
-    }, function (err) {
-      assert.ok(err.message.indexOf("'.html' modules not implemented") !== -1);
-    });
+  test('should load an html module with the HTMLDocument as default export', async function () {
+    const m = await System.import('fixturesbase/html-modules/a.html');
+    assert.ok(m);
+    assert.ok(m.default instanceof HTMLDocument);
+    assert.ok(m.default.querySelector('#a-thing'));
+    assert.equal(m.default.querySelector('#a-thing').textContent, 'inner text');
+  });
+
+  test('should load an html module with one script module inside it', async function () {
+    const m = await System.import('fixturesbase/html-modules/b.html');
+    assert.ok(m);
+    assert.ok(m.default instanceof HTMLDocument);
+    assert.ok(m.template);
+    assert.ok(m.template instanceof HTMLTemplateElement);
+    assert.equal(m.template.innerHTML.trim(), 'The b template');
+  });
+
+  test('should load an html module with two script modules inside it', async function () {
+    const m = await System.import('fixturesbase/html-modules/c.html');
+    assert.ok(m);
+    assert.ok(m.default instanceof HTMLDocument);
+    assert.equal(m.first, 1);
+    assert.equal(m.second, 2);
+  });
+
+  test('should load an html module that overrides the default export', async function () {
+    const m = await System.import('fixturesbase/html-modules/d.html');
+    assert.ok(m);
+    assert.equal(m.default, 1234);
+  });
+
+  test('should throw for scripts within an html module that aren\'t of type systemjs-module', async function () {
+    try {
+      await System.import('fixturesbase/html-modules/e.html');
+      assert.fail("Should fail to load the module");
+    } catch (err) {
+      assert.ok(err.message.indexOf("must have type 'systemjs-module'") >= 0);
+    }
+  });
+
+  test('should throw for external scripts within an html module', async function () {
+    try {
+      await System.import('fixturesbase/html-modules/f.html');
+      assert.fail("Should fail to load the module");
+    } catch (err) {
+      assert.ok(err.message.indexOf("All JS modules within an HTML module must be inline") >= 0);
+    }
   });
 });

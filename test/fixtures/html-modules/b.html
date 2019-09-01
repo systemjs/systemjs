@@ -1,0 +1,13 @@
+<template id="b-template">
+  The b template
+</template>
+<script type="systemjs-module">
+  System.register([], function (_export, _context) {
+    return {
+      execute: function() {
+        _export('thing', 'one');
+        _export('template', _context.meta.document.querySelector('#b-template'));
+      },
+    };
+  });
+</script>

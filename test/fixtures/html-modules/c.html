@@ -1,0 +1,21 @@
+<div id="hi">
+  Hi
+</div>
+<script type="systemjs-module">
+  System.register([], function (_export, _context) {
+    return {
+      execute: function() {
+        _export('first', 1);
+      },
+    };
+  });
+</script>
+<script type="systemjs-module">
+  System.register([], function (_export, _context) {
+    return {
+      execute: function() {
+        _export('second', 2);
+      },
+    };
+  });
+</script>

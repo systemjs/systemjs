@@ -94,8 +94,8 @@ systemJSPrototype.instantiate = function (url, parent) {
       const doc = new DOMParser().parseFromString(source, 'text/html');
 
       return Promise.all(Array.prototype.slice.call(doc.querySelectorAll('script')).map(function (htmlScript) {
-        if (htmlScript.type !== 'module') {
-          loadError("All JS modules within an HTML module must have type 'module'");
+        if (htmlScript.type !== 'systemjs-module') {
+          loadError("All JS modules within an HTML module must have type 'systemjs-module'");
         } else if (htmlScript.src) {
           loadError("All JS modules within an HTML module must be inline");
         } else {
@@ -113,10 +113,10 @@ systemJSPrototype.instantiate = function (url, parent) {
         return [depNames, function(_export, _context) {
           _context.meta.document = doc;
 
-          let defaultAlreadyExported = false;
+          _export('default', doc);
 
           const registers = declarations.map(function (declaration) {
-            return declaration[1](protectedExport, _context);
+            return declaration[1](_export, _context);
           });
 
           return {
@@ -127,23 +127,8 @@ systemJSPrototype.instantiate = function (url, parent) {
               registers.forEach(function (register) {
                 register.execute();
               });
-
-              if (!defaultAlreadyExported) {
-                _export('default', doc);
-              }
             }
           };
-
-          function protectedExport(name, value) {
-            if (name === 'default') {
-              if (defaultAlreadyExported) {
-                throw Error("Only one HTML module inline script can export default");
-              } else {
-                defaultAlreadyExported = true;
-              }
-            }
-            _export(name, value);
-          }
         }];
       });
     });
