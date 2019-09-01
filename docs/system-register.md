@@ -40,7 +40,7 @@ where:
 * `execute: AsyncFunction` - If using an asynchronous function for execute, top-level await execution support semantics are provided following [variant B of the specification](https://github.com/tc39/proposal-top-level-await#variant-b-top-level-await-does-not-block-sibling-execution).
 * `_export: (name: String, value: any) => value` - The direct form of the export function can be used to export bindings - `_export('exportName', value)`. It returns the set value for ease of use in expressions.
 * `_export: ({ [name: String]: any }) => value` - The bulk form of the export function allows setting an object of exports. This is not just sugar, but improves performance by calling fewer setter functions when used, so should be used whenever possible by implementations over the direct export form.
-* `_context.meta: Object` - This is an object representing the value of `import.meta` for a module execution. By default it will have `import.meta.url` present in SystemJS.
+* `_context.meta: Object` - This is an object representing the value of `import.meta` for a module execution. By default it will have `import.meta.url` present in SystemJS. For [HTML modules](/docs/module-types.md#html-modules), `import.meta.document` is also available.
 * `_context.import: (id: String) => Promise<Module>` This is the contextual dynamic import function available to the module as the replacement for `import()`.
 
 > Note as of SystemJS 2.0 support for named `System.register(name, deps, declare)` is no longer supported, as instead code optimization approaches that combine modules
