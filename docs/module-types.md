@@ -172,5 +172,5 @@ System.import('advanced-module.html').then(function (module) {
 - Within an html module, zero, one, or more javascript modules are permitted.
 - When there are multiple javascript modules within an html module, SystemJS does not enforce that
   they have uniquely named exports.
-- All js modules within an html module must be inline.
+- All js modules within an html module must be inline and have `type="systemjs-module"`.
 - Javascript modules inside of an html module may have dependencies on other modules.
