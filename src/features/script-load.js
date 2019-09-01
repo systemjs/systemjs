@@ -46,3 +46,17 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   });
 };
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', loadScriptModules);
+}
+
+function loadScriptModules() {
+  window.removeEventListener('load', loadScriptModules);
+  document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
+    if (script.src) {
+      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : script.src);
+    } else {
+      console.error('inline systemjs-module scripts are not yet supported');
+    }
+  });
+}
