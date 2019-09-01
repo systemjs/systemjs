@@ -74,7 +74,7 @@ npm install systemjs
 ## Example Usage
 
 ### Loading a System.register module
-You can load [System.register](/docs/system-register.md) modules with a script element in your html.
+You can load [System.register](/docs/system-register.md) modules with a script element in your HTML:
 
 ```html
 <script type="systemjs-module" src="/js/main.js"></script>
