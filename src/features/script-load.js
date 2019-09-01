@@ -56,7 +56,7 @@ function loadScriptModules() {
     if (script.src) {
       System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : script.src);
     } else {
-      console.error('inline systemjs-module scripts are not yet supported');
+      console.warn('inline systemjs-module scripts are not yet supported');
     }
   });
 }
