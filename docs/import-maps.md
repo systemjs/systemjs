@@ -66,6 +66,10 @@ To more clearly define package folders we can use package folder mappings:
 In this scenario `import 'lodash'` will resolve to `/path/to/lodash/index.js` while `import 'lodash/x'` will
 resolve to `/path/to/lodash/x`.
 
+Note that the _right hand side_ of the import map must always be a valid relative, absolute or full URL (`./x`, `/x`, `https://site.com/x`).
+
+Bare specifiers such as `x` on the right hand side will not match and throw an error.
+
 ### Scopes
 
 Import maps also provide support for scoped mappings, where the mapping should only be applied within
@@ -91,16 +95,44 @@ This can be achieved with scoped import maps:
 </script>
 ```
 
+> Note scopes must end with a trailing `/` to match all subpaths within that path.
+
 Scopes still fallback to applying the global imports, so we only need to do this for imports that are different
 from their global resolutions.
 
+### Composition
+
+_Note: This is an advanced feature, which is not necessary for most use cases._
+
+Multiple import maps are supported with each successive import map composing with the previous one.
+
+When composing import maps, they are combined in order, with the _right hand side_ resolutions of the new import map applying the resolution
+rules of the import map that came before.
+
+This means import maps can reference resolutions from previous import maps:
+
+
+```html
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "x": "/path/to/x.js"
+  }
+}
+</script>
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "y": "x" // resolves to /path/to/x.js
+  }
+}
+</script>
+```
+
 #### Spec and Implementation Feedback
 
-Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on
-the spec.
+Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on the spec.
 
 If you have suggestions, or notice cases where this implementation seems not to be following the spec properly feel free to post an issue.
 
-The edge cases are still being worked out, so there will still be work to do here too.
-
-[Read the full specification for the exact behaviours further](https://github.com/domenic/import-maps/blob/master/spec.md).
+See the [import maps specification](https://github.com/domenic/import-maps/blob/master/spec.md) for exact resolution behaviours.

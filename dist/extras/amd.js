@@ -64,20 +64,10 @@
   // hook System.register to know the last declaration binding
   let lastRegisterDeclare;
   const systemRegister = systemPrototype.register;
-  // if we have named register support continue to use it
-  if (systemRegister.length === 3) {
-    systemPrototype.register = function (name, deps, declare) {
-      if (typeof name !== 'string')
-        lastRegisterDeclare = deps;
-      systemRegister.apply(this, arguments);
-    };
-  }
-  else {
-    systemPrototype.register = function (deps, declare) {
-      lastRegisterDeclare = declare;
-      systemRegister.apply(this, arguments);
-    };
-  }
+  systemPrototype.register = function (name, deps, declare) {
+    lastRegisterDeclare = typeof name === 'string' ? declare : deps;
+    systemRegister.apply(this, arguments);
+  };
 
   const getRegister = systemPrototype.getRegister;
   systemPrototype.getRegister = function () {

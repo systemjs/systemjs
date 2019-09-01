@@ -6,9 +6,11 @@
 
 Configurable module loader enabling backwards compatibility workflows for ES modules in browsers. If you're interested in modern workflows for ES module compatible browsers only, see [ES Module Shims](https://github.com/guybedford/es-module-shims).
 
-[Read the SystemJS 2.0 announcement post](https://guybedford.com/systemjs-2.0)
+Release Links:
 
-_[For the previous release see the SystemJS 0.21.x branch](https://github.com/systemjs/systemjs/tree/0.21)_
+* [Latest 6.x Major Release](https://github.com/systemjs/systemjs/releases/tag/6.0.0)
+* [SystemJS 2.0 Announcement Post](https://guybedford.com/systemjs-2.0)
+* [SystemJS 0.21](https://github.com/systemjs/systemjs/tree/0.21)
 
 _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
@@ -107,7 +109,6 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 </script>
 ```
 
-
 ## Community Projects
 
 A list of projects that use or work with SystemJS in providing modular browser workflows. [Post a PR](https://github.com/systemjs/systemjs/edit/master/README.md).
@@ -180,6 +181,10 @@ To support import maps in the system.js build, a fetch polyfill is need. The [Gi
     document.write('<script src="node_modules/whatwg-fetch/fetch.js"><\/script>');
 </script>
 ```
+
+### Constructable Stylesheets
+
+If using CSS modules, a Constructable Stylesheets polyfill is needed - [see the module types documentation](docs/module-types.md#constructable-style-sheets-polyfill) for further info.
 
 ## Contributing to SystemJS
 

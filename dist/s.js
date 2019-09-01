@@ -1,15 +1,17 @@
 /*
-* SJS 5.0.0
+* SJS 6.0.0
 * Minimal SystemJS Build
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
 
+  const hasDocument = typeof document !== 'undefined';
+
   const envGlobal = hasSelf ? self : global;
 
   let baseUrl;
 
-  if (typeof document !== 'undefined') {
+  if (hasDocument) {
     const baseEl = document.querySelector('base[href]');
     if (baseEl)
       baseUrl = baseEl.href;
@@ -114,7 +116,7 @@
    * - System.getRegister to get the registration
    * - Symbol.toStringTag support in Module objects
    * - Hookable System.createContext to customize import.meta
-   * - System.onload(id, err?) handler for tracing / hot-reloading
+   * - System.onload(err, id, deps) handler for tracing / hot-reloading
    * 
    * Core comes with no System.prototype.resolve or
    * System.prototype.instantiate implementations
@@ -129,9 +131,15 @@
   }
 
   const systemJSPrototype = SystemJS.prototype;
+
+  systemJSPrototype.prepareImport = function () {};
+
   systemJSPrototype.import = function (id, parentUrl) {
     const loader = this;
-    return Promise.resolve(loader.resolve(id, parentUrl))
+    return Promise.resolve(loader.prepareImport())
+    .then(function() {
+      return loader.resolve(id, parentUrl);
+    })
     .then(function (id) {
       const load = getOrCreateLoad(loader, id);
       return load.C || topLevelLoad(loader, load);
@@ -328,9 +336,8 @@
           (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
       }
     });
-    if (depLoadPromises) {
+    if (depLoadPromises)
       return Promise.all(depLoadPromises).then(doExec);
-    }
 
     return doExec();
 
@@ -371,49 +378,39 @@
 
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
-    if (url.substr(-5) === '.json') {
-      return fetch(url).then(function (resp) {
-        return resp.text();
-      }).then(function (source) {
-        return [[], function(_export) {
-          return {execute: function() {_export('default', JSON.parse(source));}};
-        }];
-      });
-    } else {
-      return new Promise(function (resolve, reject) {
-        let err;
+    return new Promise(function (resolve, reject) {
+      let err;
 
-        function windowErrorListener(evt) {
-          if (evt.filename === url)
-            err = evt.error;
+      function windowErrorListener(evt) {
+        if (evt.filename === url)
+          err = evt.error;
+      }
+
+      window.addEventListener('error', windowErrorListener);
+
+      const script = document.createElement('script');
+      script.charset = 'utf-8';
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.addEventListener('error', function () {
+        window.removeEventListener('error', windowErrorListener);
+        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+      });
+      script.addEventListener('load', function () {
+        window.removeEventListener('error', windowErrorListener);
+        document.head.removeChild(script);
+        // Note that if an error occurs that isn't caught by this if statement,
+        // that getRegister will return null and a "did not instantiate" error will be thrown.
+        if (err) {
+          reject(err);
         }
-
-        window.addEventListener('error', windowErrorListener);
-
-        const script = document.createElement('script');
-        script.charset = 'utf-8';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        script.addEventListener('error', function () {
-          window.removeEventListener('error', windowErrorListener);
-          reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
-        });
-        script.addEventListener('load', function () {
-          window.removeEventListener('error', windowErrorListener);
-          document.head.removeChild(script);
-          // Note that if an error occurs that isn't caught by this if statement,
-          // that getRegister will return null and a "did not instantiate" error will be thrown.
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(loader.getRegister());
-          }
-        });
-        script.src = url;
-        document.head.appendChild(script);
+        else {
+          resolve(loader.getRegister());
+        }
       });
-    }
+      script.src = url;
+      document.head.appendChild(script);
+    });
   };
 
   /*

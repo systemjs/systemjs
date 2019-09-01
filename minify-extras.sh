@@ -1,3 +1,4 @@
+mkdir -p dist/extras
 cp src/extras/* dist/extras/
 cd dist/extras
 rm *.min.js

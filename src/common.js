@@ -1,11 +1,13 @@
 export const hasSelf = typeof self !== 'undefined';
 
+export const hasDocument = typeof document !== 'undefined';
+
 const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
 export let baseUrl;
 
-if (typeof document !== 'undefined') {
+if (hasDocument) {
   const baseEl = document.querySelector('base[href]');
   if (baseEl)
     baseUrl = baseEl.href;
@@ -108,46 +110,42 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
  */
 
 function resolveUrl (relUrl, parentUrl) {
-  return resolveIfNotPlainOrUrl(relUrl, parentUrl) ||
-      relUrl.indexOf(':') !== -1 && relUrl ||
-      resolveIfNotPlainOrUrl('./' + relUrl, parentUrl);
+  return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
 }
 
-function resolvePackages(pkgs, baseUrl) {
-  var outPkgs = {};
-  for (var p in pkgs) {
-    var value = pkgs[p];
-    // TODO package fallback support
-    if (typeof value !== 'string')
+function objectAssign (to, from) {
+  for (let p in from)
+    to[p] = from[p];
+  return to;
+}
+
+function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
+  for (let p in packages) {
+    const rhs = packages[p];
+    // package fallbacks not currently supported
+    if (typeof rhs !== 'string')
       continue;
-    outPkgs[resolveIfNotPlainOrUrl(p, baseUrl) || p] = resolveUrl(value, baseUrl);
+    const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
+    if (!mapped)
+      targetWarning(p, rhs, 'bare specifier did not resolve');
+    else
+      outPackages[p] = mapped;
   }
-  return outPkgs;
 }
 
-export function parseImportMap (json, baseUrl) {
-  const imports = resolvePackages(json.imports, baseUrl) || {};
-  const scopes = {};
-  if (json.scopes) {
-    for (let scopeName in json.scopes) {
-      const scope = json.scopes[scopeName];
-      let resolvedScopeName = resolveUrl(scopeName, baseUrl);
-      if (resolvedScopeName[resolvedScopeName.length - 1] !== '/')
-        resolvedScopeName += '/';
-      scopes[resolvedScopeName] = resolvePackages(scope, baseUrl) || {};
+export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
+  const outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
+
+  if (json.imports)
+    resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
+
+  if (json.scopes)
+    for (let s in json.scopes) {
+      const resolvedScope = resolveUrl(s, baseUrl);
+      resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
     }
-  }
 
-  return { imports: imports, scopes: scopes };
-}
-
-export function mergeImportMap(originalMap, newMap) {
-  for (let i in newMap.imports) {
-    originalMap.imports[i] = newMap.imports[i];
-  }
-  for (let i in newMap.scopes) {
-    originalMap.scopes[i] = newMap.scopes[i];
-  }
+  return outMap;
 }
 
 function getMatch (path, matchObj) {
@@ -167,26 +165,23 @@ function applyPackages (id, packages) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-      console.warn("Invalid package target " + pkg + " for '" + pkgName + "' should have a trailing '/'.");
-    return pkg + id.slice(pkgName.length);
+      targetWarning(pkgName, pkg, "should have a trailing '/'");
+    else
+      return pkg + id.slice(pkgName.length);
   }
 }
 
-export function resolveImportMap (id, parentUrl, importMap) {
-  const urlResolved = resolveIfNotPlainOrUrl(id, parentUrl) || id.indexOf(':') !== -1 && id;
-  if (urlResolved)
-    id = urlResolved;
-  const scopeName = getMatch(parentUrl, importMap.scopes);
-  if (scopeName) {
-    const scopePackages = importMap.scopes[scopeName];
-    const packageResolution = applyPackages(id, scopePackages);
+function targetWarning (match, target, msg) {
+  console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
+}
+
+export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
+  let scopeUrl = parentUrl && getMatch(parentUrl, importMap.scopes);
+  while (scopeUrl) {
+    const packageResolution = applyPackages(resolvedOrPlain, importMap.scopes[scopeUrl]);
     if (packageResolution)
       return packageResolution;
+    scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
   }
-  return applyPackages(id, importMap.imports) || urlResolved || throwBare(id, parentUrl);
+  return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
 }
-
-export function throwBare (id, parentUrl) {
-  throw Error('Unable to resolve bare specifier "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
-}
-

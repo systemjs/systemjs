@@ -39,6 +39,12 @@ System.constructor.prototype.createContext = function (url) {
 };
 ```
 
+#### prepareImport() -> Promise
+
+This function is called before any `System.import` or dynamic import, returning a Promise that is resolved before continuing to perform the import.
+
+This is used in SystemJS core to ensure that import maps are loaded so that the `System.resolve` function remains synchronous.
+
 #### getRegister() -> [deps: String[], declare: Function]
 
 > This hook is intended for custom module format integrations only.
