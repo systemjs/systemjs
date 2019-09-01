@@ -3,6 +3,7 @@
  */
 
 import { systemJSPrototype } from '../system-core';
+import { hasDocument } from '../common';
 
 const systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
@@ -46,17 +47,14 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   });
 };
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('load', loadScriptModules);
+if (hasDocument) {
+  window.addEventListener('DOMContentLoaded', loadScriptModules);
 }
 
 function loadScriptModules() {
-  window.removeEventListener('load', loadScriptModules);
   document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
     if (script.src) {
-      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : script.src);
-    } else {
-      console.warn('inline systemjs-module scripts are not yet supported');
+      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : new URL(script.src).href);
     }
   });
 }
