@@ -119,8 +119,8 @@ where `wasm-module.wasm` is generated from:
 
 ## HTML Modules
 
-[HTML Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) are html files whose
-`HTMLDocument` is (by default) exposed to the javascript code importing the html module.
+[HTML Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) are html files whose [HTMLDocument](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDocument) is (by default) exposed to the javascript code importing the html module. The
+html from the module **is not inserted into the DOM** unless you do so after importing it.
 
 ### Basic HTML module example
 ```html
