@@ -78,6 +78,7 @@ You can load [System.register](/docs/system-register.md) modules with a script e
 
 ```html
 <script type="systemjs-module" src="/js/main.js"></script>
+<script type="systemjs-module" src="import:name-of-module"></script>
 <script src="system.js"></script>
 ```
 
