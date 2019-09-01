@@ -3,7 +3,7 @@
  */
 
 import { systemJSPrototype } from '../system-core';
-import { hasDocument } from '../common';
+import { hasDocument, baseUrl, resolveUrl } from '../common';
 
 const systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
@@ -54,7 +54,7 @@ if (hasDocument) {
 function loadScriptModules() {
   document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
     if (script.src) {
-      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : new URL(script.src).href);
+      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
     }
   });
 }
