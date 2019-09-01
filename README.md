@@ -84,10 +84,8 @@ You can load [System.register](/docs/system-register.md) modules with a script e
 ### Loading with System.import
 You can also dynamically load modules at any time with System.import().
 
-```html
-<script>
-  System.import('/js/main.js');
-</script>
+```js
+System.import('/js/main.js');
 ```
 
 where `main.js` is a module available in the System.register module format.
