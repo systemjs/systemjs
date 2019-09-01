@@ -119,9 +119,10 @@ where `wasm-module.wasm` is generated from:
 
 ## HTML Modules
 
-[HTML Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) are supported.
+[HTML Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) are html files whose
+`HTMLDocument` is (by default) exposed to the javascript code importing the html module.
 
-### Basic example
+### Basic HTML module example
 ```html
 <!-- module.html -->
 <template id="my-template">
@@ -135,7 +136,10 @@ System.import('module.html').then(function (module) {
 })
 ```
 
-### Advanced example
+### Javascript module within HTML module
+HTML modules can contain javascript modules. The exports from the javascript modules
+become the exports for the HTML module.
+
 ```html
 <!-- advanced-module.html -->
 <template id="the-template">
