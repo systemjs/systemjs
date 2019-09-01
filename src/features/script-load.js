@@ -49,6 +49,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
 
 if (hasDocument) {
   window.addEventListener('DOMContentLoaded', loadScriptModules);
+  loadScriptModules();
 }
 
 function loadScriptModules() {
