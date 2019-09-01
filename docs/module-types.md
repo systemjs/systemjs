@@ -7,6 +7,7 @@ SystemJS supports loading modules that are in the following formats:
 | [System.register](/docs/system-register.md) | :heavy_check_mark: | :heavy_check_mark: | * |
 | [JSON Modules](https://github.com/whatwg/html/pull/4407) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.json |
 | [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.css |
+| [HTML Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.html |
 | [Web Assembly](https://github.com/WebAssembly/esm-integration/tree/master/proposals/esm-integration) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.wasm |
 | Global variable | [global extra](/dist/extras/global.js) | :heavy_check_mark: | * |
 | [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
@@ -115,3 +116,57 @@ where `wasm-module.wasm` is generated from:
   )
 )
 ```
+
+## HTML Modules
+
+[HTML Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) are supported.
+
+### Basic example
+```html
+<!-- module.html -->
+<template id="my-template">
+  A template
+</template>
+```
+
+```js
+System.import('module.html').then(function (module) {
+  const template = module.default.getElementById('my-template');
+})
+```
+
+### Advanced example
+```html
+<!-- advanced-module.html -->
+<template id="the-template">
+  The template
+</template>
+<script type="systemjs-module">
+  System.register([], function (_export, _context) {
+    return {
+      execute: function () {
+        const doc = _context.meta.document;
+        const template = doc.getElementById('the-template');
+        _export('theTemplate', template);
+        _export('one', 1);
+      }
+    };
+  });
+</script>
+```
+
+```js
+System.import('advanced-module.html').then(function (module) {
+  const entireDocument = module.default;
+  const theTemplate = module.theTemplate;
+  const one = module.one;
+});
+```
+
+### Notes about HTML Modules
+- `import.meta.document` is supported via `_context.meta.document`.
+- Within an html module, zero, one, or more javascript modules are permitted.
+- When there are multiple javascript modules within an html module, SystemJS does not enforce that
+  they have uniquely named exports.
+- All js modules within an html module must be inline.
+- Javascript modules inside of an html module may have dependencies on other modules.
