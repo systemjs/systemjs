@@ -3,6 +3,7 @@
  */
 
 import { systemJSPrototype } from '../system-core';
+import { hasDocument, baseUrl, resolveUrl } from '../common';
 
 const systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
@@ -46,3 +47,15 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   });
 };
 
+if (hasDocument) {
+  window.addEventListener('DOMContentLoaded', loadScriptModules);
+  loadScriptModules();
+}
+
+function loadScriptModules() {
+  document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
+    if (script.src) {
+      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+    }
+  });
+}

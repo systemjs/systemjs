@@ -109,7 +109,7 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
  *
  */
 
-function resolveUrl (relUrl, parentUrl) {
+export function resolveUrl (relUrl, parentUrl) {
   return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
 }
 
