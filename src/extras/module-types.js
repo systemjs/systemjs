@@ -105,9 +105,9 @@ systemJSPrototype.instantiate = function (url, parent) {
           document.head.removeChild(script);
           return loader.getRegister();
         }
-      })).then(function (declarations) {
-        const depNames = declarations.reduce(function (result, declaration) {
-          return result.concat(declaration[0]);
+      })).then(function (registers) {
+        const depNames = registers.reduce(function (result, register) {
+          return result.concat(register[0]);
         }, []);
 
         return [depNames, function(_export, _context) {
@@ -115,17 +115,17 @@ systemJSPrototype.instantiate = function (url, parent) {
 
           _export('default', doc);
 
-          const registers = declarations.map(function (declaration) {
-            return declaration[1](_export, _context);
+          const declares = registers.map(function (register) {
+            return register[1](_export, _context);
           });
 
           return {
-            setters: registers.reduce(function (allSetters, register) {
-              return allSetters.concat(register.setters);
+            setters: declares.reduce(function (allSetters, declare) {
+              return allSetters.concat(declare.setters);
             }, []),
             execute: function () {
-              registers.forEach(function (register) {
-                register.execute();
+              declares.forEach(function (declare) {
+                declare.execute();
               });
             }
           };
