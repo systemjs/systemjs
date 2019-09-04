@@ -12,8 +12,6 @@ systemJSPrototype.get = function (id) {
 };
 
 systemJSPrototype.set = function (id, module) {
-  if (this[REGISTRY][id]) return false;
-
   let ns;
   if (toStringTag && module[toStringTag] === 'Module') {
     ns = module;
@@ -25,19 +23,26 @@ systemJSPrototype.set = function (id, module) {
   }
 
   const done = Promise.resolve(ns);
-  this[REGISTRY][id] = {
+
+  const load = this[REGISTRY][id] || (this[REGISTRY][id] = {
     id: id,
     i: [],
-    n: ns,
-    I: done,
-    L: done,
     h: false,
     d: [],
     e: null,
     er: undefined,
-    E: undefined,
+    E: undefined
+  });
+
+  if (load.e || load.E)
+    return false;
+  
+  Object.assign(load, {
+    n: ns,
+    I: done,
+    L: done,
     C: done
-  };
+  });
   return ns;
 };
 
