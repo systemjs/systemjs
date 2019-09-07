@@ -75,8 +75,8 @@ systemJSPrototype.delete = function (id) {
     if (!load || load.e !== null || load.E)
       return false;
     // add back the old setters
-    load.i.forEach(setter => {
-      if (importerSetters.indexOf(setter) === -1) {
+    importerSetters.forEach(setter => {
+      if (load.i.indexOf(setter) === -1) {
         load.i.push(setter);
         setter(load.ns);
       }
