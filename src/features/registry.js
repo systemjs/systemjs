@@ -60,7 +60,7 @@ systemJSPrototype.delete = function (id) {
   if (!load || load.e !== null || load.E)
     return false;
 
-  const importerSetters = load.i;
+  let importerSetters = load.i;
   // remove from importerSetters
   // (release for gc)
   if (load.d)
@@ -72,15 +72,14 @@ systemJSPrototype.delete = function (id) {
   delete registry[id];
   return function () {
     const load = registry[id];
-    if (!load || load.e !== null || load.E)
+    if (!load || !importerSetters || load.e !== null || load.E)
       return false;
     // add back the old setters
     importerSetters.forEach(setter => {
-      if (load.i.indexOf(setter) === -1) {
-        load.i.push(setter);
-        setter(load.ns);
-      }
+      load.i.push(setter);
+      setter(load.ns);
     });
+    importerSetters = null;
   };
 };
 
