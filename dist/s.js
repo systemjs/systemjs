@@ -1,5 +1,5 @@
 /*
-* SJS 6.0.0
+* SJS 6.1.0
 * Minimal SystemJS Build
 */
 (function () {
@@ -103,6 +103,18 @@
         output.push(segmented.slice(segmentIndex));
       return parentUrl.slice(0, parentUrl.length - pathname.length) + output.join('');
     }
+  }
+
+  /*
+   * Import maps implementation
+   *
+   * To make lookups fast we pre-resolve the entire import map
+   * and then match based on backtracked hash lookups
+   *
+   */
+
+  function resolveUrl (relUrl, parentUrl) {
+    return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
   }
 
   /*
@@ -412,6 +424,19 @@
       document.head.appendChild(script);
     });
   };
+
+  if (hasDocument) {
+    window.addEventListener('DOMContentLoaded', loadScriptModules);
+    loadScriptModules();
+  }
+
+  function loadScriptModules() {
+    document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
+      if (script.src) {
+        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+      }
+    });
+  }
 
   /*
    * Supports loading System.register in workers

@@ -1,3 +1,6 @@
+**SystemJS 6.1.0 (2019/09/11) - Minor Changes**
+* Add support for `<script type="systemjs-module" src="import:foo">` (https://github.com/systemjs/systemjs/pull/2015)
+
 **SystemJS 6.0.0 (2019/08/29) - Major Changes**
 * Cascading import maps implementation (https://github.com/systemjs/systemjs/pull/2009)
 * New module types extra for CSS, JSON and Wasm (https://github.com/systemjs/systemjs/pull/2006)
