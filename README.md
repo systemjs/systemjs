@@ -126,6 +126,7 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [jspm.io](https://jspm.io) - `https://system-dev.jspm.io/[name]` provides a CDN serving npm modules for SystemJS.
 * [jspm.org](https://jspm.org) - Package manager for native modules, using SystemJS for backwards compatibility.
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
+* [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
 
 ## Loader Extensions
 
@@ -137,6 +138,8 @@ This list can be extended to include third-party loader extensions. [Post a PR](
 ## Compatibility with Webpack
 
 Code-splitting builds on top of native ES modules, like Rollup offers, are an alternative to the Webpack-style chunking approach - offering a way to utilize the native module loader for loading shared and dynamic chunks instead of using a custom registry and loader as Webpack bundles include. Scope-level optimizations can be performed on ES modules when they are combined, while ensuring no duplicate code is loaded through dynamic loading and code-sharing in the module registry, using the features of the native module loader and its dynamic runtime nature.
+
+[systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) is a community-maintained npm library that might help you get webpack and systemjs working well together.
 
 As of webpack@4.30.0, it is now possible to compile webpack bundles to System.register format, by modifying your webpack config:
 
