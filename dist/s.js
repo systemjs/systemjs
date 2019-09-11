@@ -106,6 +106,18 @@
   }
 
   /*
+   * Import maps implementation
+   *
+   * To make lookups fast we pre-resolve the entire import map
+   * and then match based on backtracked hash lookups
+   *
+   */
+
+  function resolveUrl (relUrl, parentUrl) {
+    return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
+  }
+
+  /*
    * SystemJS Core
    * 
    * Provides
@@ -412,6 +424,19 @@
       document.head.appendChild(script);
     });
   };
+
+  if (hasDocument) {
+    window.addEventListener('DOMContentLoaded', loadScriptModules);
+    loadScriptModules();
+  }
+
+  function loadScriptModules() {
+    document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
+      if (script.src) {
+        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+      }
+    });
+  }
 
   /*
    * Supports loading System.register in workers
