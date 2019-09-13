@@ -191,4 +191,10 @@ suite('SystemJS Standard Tests', function() {
     assert.ok(System.has(resolved));
     assert.equal(System.get(resolved).hello, 'there');
   });
+
+  test('should load <script type=systemjs-module> that is in the dom before systemjs is loaded', function () {
+    const resolved = System.resolve('/test/fixtures/browser/systemjs-module-early.js');
+    assert.ok(System.has(resolved));
+    assert.equal(System.get(resolved).hi, 'bye');
+  })
 });
