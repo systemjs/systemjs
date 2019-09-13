@@ -1,4 +1,8 @@
-**SystemJS 6.1.0 (2019/09/11) - Minor Changes**
+SystemJS 6.1.1 (2019/09/13)
+* Fixes a bug where imports before the import map load might not apply the import map (https://github.com/systemjs/systemjs/issues/2024, @joeldenning)
+* Fixes the module-types extra output which was incorrectly referencing an import (https://github.com/systemjs/systemjs/issues/2027, @joeldenning)
+
+SystemJS 6.1.0 (2019/09/11) - Minor Changes
 * Add support for `<script type="systemjs-module" src="import:foo">` (https://github.com/systemjs/systemjs/pull/2015)
 
 **SystemJS 6.0.0 (2019/08/29) - Major Changes**

@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.1.0
+* SystemJS 6.1.1
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -481,6 +481,54 @@
   envGlobal.System = new SystemJS();
 
   /*
+   * Import map support for SystemJS
+   * 
+   * <script type="systemjs-importmap">{}</script>
+   * OR
+   * <script type="systemjs-importmap" src=package.json></script>
+   * 
+   * Only those import maps available at the time of SystemJS initialization will be loaded
+   * and they will be loaded in DOM order.
+   * 
+   * There is no support for dynamic import maps injection currently.
+   */
+
+  let importMap = { imports: {}, scopes: {} }, importMapPromise;
+
+  if (hasDocument) {
+    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
+      script._j = fetch(script.src).then(function (res) {
+        return res.json();
+      });
+    });
+  }
+
+  systemJSPrototype.prepareImport = function () {
+    if (!importMapPromise) {
+      importMapPromise = Promise.resolve();
+      if (hasDocument)
+        Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+          importMapPromise = importMapPromise.then(function () {
+            return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
+            .then(function (json) {
+              importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
+            });
+          });
+        });
+    }
+    return importMapPromise;
+  };
+
+  systemJSPrototype.resolve = function (id, parentUrl) {
+    parentUrl = parentUrl || baseUrl;
+    return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+  };
+
+  function throwUnresolved (id, parentUrl) {
+    throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+  }
+
+  /*
    * Supports loading System.register via script tag injection
    */
 
@@ -646,141 +694,97 @@
    * Loads JSON, CSS, Wasm module types based on file extensions
    * Supports application/javascript falling back to JS eval
    */
-  const instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, parent) {
-    const loader = this;
-    const ext = url.slice(url.lastIndexOf('.'));
-    switch (ext) {
-      case '.css':
-        return loadDynamicModule(function (_export, source) {
-          // Relies on a Constructable Stylesheet polyfill
-          const stylesheet = new CSSStyleSheet();
-          stylesheet.replaceSync(source);
-          _export('default', stylesheet);
-        });
-      case '.html':
-        return getSourceRes().then(function (res) {
-          return maybeJSFallback(res) || loadError("'.html' modules not implemented");
-        });
-      case '.json':
-        return loadDynamicModule(function (_export, source) {
-          _export('default', JSON.parse(source));
-        });
-      case '.wasm':
-        return getSourceRes().then(function (res) {
-          return maybeJSFallback(res) ||
-              (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile));
-        })
-        .then(function (module) {
-          const deps = [];
-          const setters = [];
-          const importObj = {};
-      
-          // we can only set imports if supported (eg early Safari doesnt support)
-          if (WebAssembly.Module.imports)
-            WebAssembly.Module.imports(module).forEach(function (impt) {
-              const key = impt.module;
-              if (deps.indexOf(key) === -1) {
-                deps.push(key);
-                setters.push(function (m) {
-                  importObj[key] = m;
-                });
-              }
-            });
-      
-          return [deps, function (_export) {
-            return {
-              setters: setters,
-              execute: function () {
-                return WebAssembly.instantiate(module, importObj)
-                .then(function (instance) {
-                  _export(instance.exports);
-                });
-              }
-            };
-          }];
-        });
-    }
-    return instantiate.apply(this, arguments);
+  (function() {
+    const systemPrototype = System.constructor.prototype;
+    const instantiate = systemPrototype.instantiate;
 
-    function getSourceRes () {
-      return fetch(url).then(function (res) {
-        if (!res.ok)
-          loadError(res.status + ' ' + res.statusText);
-        return res;
-      });
-    }
-    function maybeJSFallback (res) {
-      const contentType = res.headers.get('content-type');
-      // if the resource is sent as application/javascript, support eval-based execution
-      if (contentType && contentType.match(/^application\/javascript(;|$)/)) {
-        return res.text().then(function (source) {
-          (0, eval)(source);
-          return loader.getRegister();
+    systemPrototype.instantiate = function (url, parent) {
+      const loader = this;
+      const ext = url.slice(url.lastIndexOf('.'));
+      switch (ext) {
+        case '.css':
+          return loadDynamicModule(function (_export, source) {
+            // Relies on a Constructable Stylesheet polyfill
+            const stylesheet = new CSSStyleSheet();
+            stylesheet.replaceSync(source);
+            _export('default', stylesheet);
+          });
+        case '.html':
+          return getSourceRes().then(function (res) {
+            return maybeJSFallback(res) || loadError("'.html' modules not implemented");
+          });
+        case '.json':
+          return loadDynamicModule(function (_export, source) {
+            _export('default', JSON.parse(source));
+          });
+        case '.wasm':
+          return getSourceRes().then(function (res) {
+            return maybeJSFallback(res) ||
+                (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile));
+          })
+          .then(function (module) {
+            const deps = [];
+            const setters = [];
+            const importObj = {};
+        
+            // we can only set imports if supported (eg early Safari doesnt support)
+            if (WebAssembly.Module.imports)
+              WebAssembly.Module.imports(module).forEach(function (impt) {
+                const key = impt.module;
+                if (deps.indexOf(key) === -1) {
+                  deps.push(key);
+                  setters.push(function (m) {
+                    importObj[key] = m;
+                  });
+                }
+              });
+        
+            return [deps, function (_export) {
+              return {
+                setters: setters,
+                execute: function () {
+                  return WebAssembly.instantiate(module, importObj)
+                  .then(function (instance) {
+                    _export(instance.exports);
+                  });
+                }
+              };
+            }];
+          });
+      }
+      return instantiate.apply(this, arguments);
+
+      function getSourceRes () {
+        return fetch(url).then(function (res) {
+          if (!res.ok)
+            loadError(res.status + ' ' + res.statusText);
+          return res;
         });
       }
-    }
-    function loadDynamicModule (createExec) {
-      return getSourceRes().then(function (res) {
-        return maybeJSFallback(res) || res.text().then(function (source) {
-          return [[], function (_export) {
-            return { execute: createExec(_export, source) };
-          }];
-        });
-      });
-    }
-    function loadError (msg) {
-      throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
-    }
-  };
-
-  /*
-   * Import map support for SystemJS
-   * 
-   * <script type="systemjs-importmap">{}</script>
-   * OR
-   * <script type="systemjs-importmap" src=package.json></script>
-   * 
-   * Only those import maps available at the time of SystemJS initialization will be loaded
-   * and they will be loaded in DOM order.
-   * 
-   * There is no support for dynamic import maps injection currently.
-   */
-
-  let importMap = { imports: {}, scopes: {} }, importMapPromise;
-
-  if (hasDocument) {
-    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
-      script._j = fetch(script.src).then(function (res) {
-        return res.json();
-      });
-    });
-  }
-
-  systemJSPrototype.prepareImport = function () {
-    if (!importMapPromise) {
-      importMapPromise = Promise.resolve();
-      if (hasDocument)
-        Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-          importMapPromise = importMapPromise.then(function () {
-            return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
-            .then(function (json) {
-              importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
-            });
+      function maybeJSFallback (res) {
+        const contentType = res.headers.get('content-type');
+        // if the resource is sent as application/javascript, support eval-based execution
+        if (contentType && contentType.match(/^application\/javascript(;|$)/)) {
+          return res.text().then(function (source) {
+            (0, eval)(source);
+            return loader.getRegister();
+          });
+        }
+      }
+      function loadDynamicModule (createExec) {
+        return getSourceRes().then(function (res) {
+          return maybeJSFallback(res) || res.text().then(function (source) {
+            return [[], function (_export) {
+              return { execute: createExec(_export, source) };
+            }];
           });
         });
-    }
-    return importMapPromise;
-  };
-
-  systemJSPrototype.resolve = function (id, parentUrl) {
-    parentUrl = parentUrl || baseUrl;
-    return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
-  };
-
-  function throwUnresolved (id, parentUrl) {
-    throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
-  }
+      }
+      function loadError (msg) {
+        throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
+      }
+    };
+  })();
 
   const toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
