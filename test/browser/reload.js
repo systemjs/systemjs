@@ -252,37 +252,8 @@ suite('Reload extra tests', function () {
   });
 
   test('Can restore live bindings after reload errors', function () {
-    const id1 = System.resolve('./fixtures/browser/reload/live-binding-recover-error-1.js');
-    const id2 = System.resolve('./fixtures/browser/reload/live-binding-recover-error-2.js');
-    let liveBinding1;
-
-    return System.import(id1)
-      .then(function (_liveBinding1) {
-        liveBinding1 = _liveBinding1;
-        assert.equal(liveBinding1.getX(), 'x');
-      })
-      .then(function () {
-        // reload live binding 2 fails
-        virtualModules[id2] = [null];
-        return System.reload(id2).catch(function () { });
-      })
-      .then(function () {
-        // reload live binding 2 succeeds
-        virtualModules[id2] = [[[], function (_export) {
-          _export('x', 'y');
-          return {};
-        }]];
-        return System.reload(id2);
-      })
-      .then(function (liveBinding2) {
-        assert.equal(liveBinding2.x, 'y');
-        assert.equal(liveBinding1.getX(), 'y');
-      });
-  });
-
-  test('Can restore live bindings after reload errors', function () {
-    const id1 = System.resolve('./fixtures/browser/reload/live-binding-recover-error-1.js');
-    const id2 = System.resolve('./fixtures/browser/reload/live-binding-recover-error-2.js');
+    const id1 = System.resolve('./fixtures/browser/reload/live-binding-reload-error-1.js');
+    const id2 = System.resolve('./fixtures/browser/reload/live-binding-reload-error-2.js');
     let liveBinding1;
 
     return System.import(id1)

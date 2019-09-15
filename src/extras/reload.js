@@ -1,5 +1,6 @@
-(function (global) {
+(function () {
   const systemJSPrototype = System.constructor.prototype;
+  const lastUpdateFunction = {};
 
   systemJSPrototype.reload = function (id, parentUrl) {
     const loader = this;
@@ -22,23 +23,30 @@
             // don't handle errors from the previous import, they might be fixed in the reload
           })
           .then(function () {
-
             // delete the module from the registry, re-import it and
             // update the references in the registry
             const update = loader.delete(id);
+
+            function onResolved() {
+              if (update) {
+                update();
+              } else if (id in lastUpdateFunction) {
+                lastUpdateFunction[id]();
+              }
+
+              lastUpdateFunction[id] = update;
+            }
             return loader.import(id)
               .catch(function (error) {
-                // on error we still need to call update to preserve importerSetters
-                // for a potential future reload which fixes the error
-                update && update();
+                onResolved();
                 throw error;
               })
               .then(function (module) {
-                update && update();
+                onResolved();
                 return module;
               });
           });
       });
   }
 
-})(typeof self !== 'undefined' ? self : global);
+})();
