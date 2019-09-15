@@ -30,11 +30,11 @@
               .catch(function (error) {
                 // on error we still need to call update to preserve importerSetters
                 // for a potential future reload which fixes the error
-                update();
+                update && update();
                 throw error;
               })
               .then(function (module) {
-                update();
+                update && update();
                 return module;
               });
           });
