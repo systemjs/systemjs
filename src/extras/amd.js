@@ -69,11 +69,11 @@
     systemRegister.apply(this, arguments);
   };
 
-  const prepareImport = systemPrototype.prepareImport;
-  systemPrototype.prepareImport = function() {
+  const instantiate = systemPrototype.instantiate;
+  systemPrototype.instantiate = function() {
     // Reset "currently executing script"
     amdDefineDeps = null;
-    return prepareImport.apply(this, arguments);
+    return instantiate.apply(this, arguments);
   };
 
   const getRegister = systemPrototype.getRegister;
