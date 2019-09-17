@@ -65,4 +65,12 @@ suite('AMD tests', function () {
     });
   });
 
+  test('loading single named AMD module after manually calling define. See https://github.com/systemjs/systemjs/issues/2026#issuecomment-532022465', function () {
+    define('inline-define', [], function () {
+      return "inline define value";
+    });
+    return System.import('fixtures/amd-named-simple.js').then(function (m) {
+      assert.equal(m.default, "AMD Simple");
+    });
+  });
 });
