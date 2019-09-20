@@ -53,9 +53,10 @@ if (hasDocument) {
 }
 
 function loadScriptModules() {
-  document.querySelectorAll('script[type=systemjs-module]').forEach(function (script) {
-    if (script.src) {
-      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
-    }
-  });
+  Array.prototype.forEach.call(
+    document.querySelectorAll('script[type=systemjs-module]'), function (script) {
+      if (script.src) {
+        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+      }
+    });
 }
