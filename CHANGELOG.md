@@ -1,3 +1,7 @@
+SystemJS 6.1.2 (2019/09/22)
+* Bug fix for named AMD modules (https://github.com/systemjs/systemjs/pull/2029)
+* Bug fix for IE11 regression bug (https://github.com/systemjs/systemjs/pull/2033)
+
 SystemJS 6.1.1 (2019/09/13)
 * Fixes a bug where imports before the import map load might not apply the import map (https://github.com/systemjs/systemjs/issues/2024, @joeldenning)
 * Fixes the module-types extra output which was incorrectly referencing an import (https://github.com/systemjs/systemjs/issues/2027, @joeldenning)
