@@ -69,6 +69,13 @@
     systemRegister.apply(this, arguments);
   };
 
+  const instantiate = systemPrototype.instantiate;
+  systemPrototype.instantiate = function() {
+    // Reset "currently executing script"
+    amdDefineDeps = null;
+    return instantiate.apply(this, arguments);
+  };
+
   const getRegister = systemPrototype.getRegister;
   systemPrototype.getRegister = function () {
     const register = getRegister.call(this);
