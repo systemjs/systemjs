@@ -39,8 +39,8 @@ systemJSPrototype.set = function (id, module) {
   
   Object.assign(load, {
     n: ns,
-    I: done,
-    L: done,
+    I: undefined,
+    L: undefined,
     C: done
   });
   return ns;
