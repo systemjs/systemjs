@@ -14,7 +14,16 @@ function getGlobalProp () {
   let lastProp;
   for (let p in global) {
     // do not check frames cause it could be removed during import
-    if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length) || frameElementIds.indexOf(p) !== -1)
+    if (
+      !global.hasOwnProperty(p)
+      || (
+        global[p]
+        && global[p].document
+        && global[p].location
+        && global[p].alert
+        && global[p].setInterval
+      )
+    )
       continue;
     if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
       return p;
@@ -31,7 +40,16 @@ function noteGlobalProps () {
   firstGlobalProp = secondGlobalProp = undefined;
   for (let p in global) {
     // do not check frames cause it could be removed during import
-    if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length || frameElementIds.indexOf(p) !== -1))
+    if (
+      !global.hasOwnProperty(p)
+      || (
+        global[p]
+        && global[p].document
+        && global[p].location
+        && global[p].alert
+        && global[p].setInterval
+      )
+    )
       continue;
     if (!firstGlobalProp)
       firstGlobalProp = p;
@@ -40,16 +58,6 @@ function noteGlobalProps () {
     lastGlobalProp = p;
   }
   return lastGlobalProp;
-}
-
-/**
- * Store frame ids to avoid to check these in properties
- * Cause it is the last props in Internet Explorer
- */
-function noteFrameElementIds() {
-  for (let i = 0; i < global.frames.length; i++) {
-    frameElementIds.push(global[i].frameElement.id);
-  }
 }
 
 const impt = systemJSPrototype.import;
