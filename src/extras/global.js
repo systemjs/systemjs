@@ -8,7 +8,7 @@
 const systemJSPrototype = System.constructor.prototype;
 
 // safari unpredictably lists some new globals first or second in object order
-let firstGlobalProp, secondGlobalProp, lastGlobalProp, frameElementIds = [];
+let firstGlobalProp, secondGlobalProp, lastGlobalProp;
 function getGlobalProp () {
   let cnt = 0;
   let lastProp;
@@ -62,7 +62,6 @@ function noteGlobalProps () {
 
 const impt = systemJSPrototype.import;
 systemJSPrototype.import = function (id, parentUrl) {
-  noteFrameElementIds();
   noteGlobalProps();
   return impt.call(this, id, parentUrl);
 };
