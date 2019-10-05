@@ -12,6 +12,7 @@ function doResolveImportMap (id, parentUrl, importMap) {
 describe('Import Maps', function () {
   const firstImportMap = resolveAndComposeImportMap({
     imports: {
+      "./asdf": "./asdf-asdf",
       "t": "./src/t",
       "t/": "./src/t/",
       "r": "./src/r"
@@ -53,6 +54,10 @@ describe('Import Maps', function () {
 
   it('Can map URLs', function () {
     assert.equal(doResolveImportMap('/x', 'https://site.com/', baseImportMap), 'https://sample.com/x.js');
+  });
+
+  it('Can map relative URLs', function () {
+    assert.equal(doResolveImportMap('/asdf', 'https://sample.com/', baseImportMap), 'https://sample.com/asdf-asdf');
   });
 
   it('Resolves packages with main sugar', function () {
