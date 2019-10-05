@@ -121,6 +121,7 @@ function objectAssign (to, from) {
 
 function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
   for (let p in packages) {
+    const resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
     const rhs = packages[p];
     // package fallbacks not currently supported
     if (typeof rhs !== 'string')
@@ -129,7 +130,7 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
     if (!mapped)
       targetWarning(p, rhs, 'bare specifier did not resolve');
     else
-      outPackages[p] = mapped;
+      outPackages[resolvedLhs] = mapped;
   }
 }
 
