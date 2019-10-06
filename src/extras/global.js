@@ -4,7 +4,7 @@
  * (Included by default in system.js build)
  */
 (function (global) {
-
+const System = global.System;
 const systemJSPrototype = System.constructor.prototype;
 
 // safari unpredictably lists some new globals first or second in object order

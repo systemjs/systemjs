@@ -2,7 +2,8 @@
  * Loads JSON, CSS, Wasm module types based on file extensions
  * Supports application/javascript falling back to JS eval
  */
-(function() {
+(function(global) {
+  const System = global.System;
   const systemPrototype = System.constructor.prototype;
   const instantiate = systemPrototype.instantiate;
 
@@ -92,4 +93,4 @@
       throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
     }
   };
-})();
+})(typeof self !== 'undefined' ? self : global);

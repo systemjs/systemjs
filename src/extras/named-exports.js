@@ -1,7 +1,8 @@
 /*
  * Named exports support for legacy module formats in SystemJS 2.0
  */
-(function () {
+(function (global) {
+  const System = global.System;
   const systemPrototype = System.constructor.prototype;
   
   // hook System.register to know the last declaration binding
@@ -54,4 +55,4 @@
     };
     return register;
   };
-})();
+})(typeof self !== 'undefined' ? self : global);

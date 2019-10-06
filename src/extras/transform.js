@@ -1,7 +1,8 @@
 /*
  * Support for a "transform" loader interface
  */
-(function () {
+(function (global) {
+  const System = global.System;
   const systemJSPrototype = System.constructor.prototype;
 
   const instantiate = systemJSPrototype.instantiate;
@@ -29,4 +30,4 @@
   systemJSPrototype.transform = function (_id, source) {
     return source;
   };
-})();
+})(typeof self !== 'undefined' ? self : global);

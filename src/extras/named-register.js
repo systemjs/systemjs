@@ -5,7 +5,8 @@
  * Names are written to the registry as-is
  * System.register('x', ...) can be imported as System.import('x')
  */
-(function () {
+(function (global) {
+  const System = global.System;
   const systemJSPrototype = System.constructor.prototype;
 
   const constructor = System.constructor;
@@ -53,4 +54,4 @@
   systemJSPrototype.getRegister = function () {
     return firstNamedDefine || getRegister.call(this);
   }
-})();
+})(typeof self !== 'undefined' ? self : global);
