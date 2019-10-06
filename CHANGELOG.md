@@ -1,3 +1,8 @@
+SystemJS 6.3.1 (2019/10/06)
+* Fix relative resolution of LHS URLs in import maps (https://github.com/systemjs/systemjs/pull/2039)
+* Fix named register extra to extend rather than reinstantiate the SystemJS instance (https://github.com/systemjs/systemjs/pull/2042)
+* Update extras to extend the global System instance explicitly (https://github.com/systemjs/systemjs/pull/2043)
+
 SystemJS 6.1.2 (2019/09/22)
 * Bug fix for named AMD modules (https://github.com/systemjs/systemjs/pull/2029)
 * Bug fix for IE11 regression bug (https://github.com/systemjs/systemjs/pull/2033)

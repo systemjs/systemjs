@@ -2,11 +2,11 @@
  * Loads JSON, CSS, Wasm module types based on file extensions
  * Supports application/javascript falling back to JS eval
  */
-(function() {
-  const systemPrototype = System.constructor.prototype;
-  const instantiate = systemPrototype.instantiate;
+(function(global) {
+  const systemJSPrototype = global.System.constructor.prototype;
+  const instantiate = systemJSPrototype.instantiate;
 
-  systemPrototype.instantiate = function (url, parent) {
+  systemJSPrototype.instantiate = function (url, parent) {
     const loader = this;
     const ext = url.slice(url.lastIndexOf('.'));
     switch (ext) {
@@ -92,4 +92,4 @@
       throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
     }
   };
-})();
+})(typeof self !== 'undefined' ? self : global);

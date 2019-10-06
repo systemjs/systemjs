@@ -1,19 +1,19 @@
 /*
  * Named exports support for legacy module formats in SystemJS 2.0
  */
-(function () {
-  const systemPrototype = System.constructor.prototype;
+(function (global) {
+  const systemJSPrototype = global.System.constructor.prototype;
   
   // hook System.register to know the last declaration binding
   let lastRegisterDeclare;
-  const systemRegister = systemPrototype.register;
-  systemPrototype.register = function (name, deps, declare) {
+  const systemRegister = systemJSPrototype.register;
+  systemJSPrototype.register = function (name, deps, declare) {
     lastRegisterDeclare = typeof name === 'string' ? declare : deps;
     systemRegister.apply(this, arguments);
   };
 
-  const getRegister = systemPrototype.getRegister;
-  systemPrototype.getRegister = function () {
+  const getRegister = systemJSPrototype.getRegister;
+  systemJSPrototype.getRegister = function () {
     const register = getRegister.call(this);
     // if it is an actual System.register call, then its ESM
     // -> dont add named exports
@@ -54,4 +54,4 @@
     };
     return register;
   };
-})();
+})(typeof self !== 'undefined' ? self : global);
