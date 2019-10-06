@@ -6,20 +6,24 @@
  * System.register('x', ...) can be imported as System.import('x')
  */
 (function () {
+  setRegisterRegistry(System);
   const systemJSPrototype = System.constructor.prototype;
-
   const constructor = System.constructor;
   const SystemJS = function () {
     constructor.call(this);
-    this.registerRegistry = Object.create(null);
+    setRegisterRegistry(this);
   };
   SystemJS.prototype = systemJSPrototype;
-  System = new SystemJS();
+  System.constructor = SystemJS;
 
   let firstNamedDefine;
 
   function clearFirstNamedDefine () {
     firstNamedDefine = null;
+  }
+
+  function setRegisterRegistry(systemInstance) {
+    systemInstance.registerRegistry = Object.create(null);
   }
 
   const register = systemJSPrototype.register;
