@@ -3,11 +3,10 @@
  * Supports application/javascript falling back to JS eval
  */
 (function(global) {
-  const System = global.System;
-  const systemPrototype = System.constructor.prototype;
-  const instantiate = systemPrototype.instantiate;
+  const systemJSPrototype = global.System.constructor.prototype;
+  const instantiate = systemJSPrototype.instantiate;
 
-  systemPrototype.instantiate = function (url, parent) {
+  systemJSPrototype.instantiate = function (url, parent) {
     const loader = this;
     const ext = url.slice(url.lastIndexOf('.'));
     switch (ext) {

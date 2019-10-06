@@ -2,8 +2,7 @@
  * Support for AMD loading
  */
 (function (global) {
-  const System = global.System;
-  const systemPrototype = System.constructor.prototype;
+  const systemPrototype = global.System.constructor.prototype;
 
   const emptyInstantiation = [[], function () { return {} }];
 

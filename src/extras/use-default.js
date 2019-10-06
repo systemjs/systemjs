@@ -3,11 +3,10 @@
  * `{ default: amdModule }` object from `System.import`
  */
 (function (global) {
-  const System = global.System;
-  const systemPrototype = System.constructor.prototype;
-  const originalImport = systemPrototype.import;
+  const systemJSPrototype = global.System.constructor.prototype;
+  const originalImport = systemJSPrototype.import;
 
-  systemPrototype.import = function () {
+  systemJSPrototype.import = function () {
     return originalImport.apply(this, arguments).then(function (ns) {
       return ns.__useDefault ? ns.default : ns;
     });

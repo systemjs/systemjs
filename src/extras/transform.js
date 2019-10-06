@@ -2,8 +2,7 @@
  * Support for a "transform" loader interface
  */
 (function (global) {
-  const System = global.System;
-  const systemJSPrototype = System.constructor.prototype;
+  const systemJSPrototype = global.System.constructor.prototype;
 
   const instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, parent) {
