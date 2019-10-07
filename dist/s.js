@@ -1,5 +1,5 @@
 /*
-* SJS 6.1.2
+* SJS 6.1.3
 * Minimal SystemJS Build
 */
 (function () {
@@ -377,6 +377,7 @@
     }
   }
 
+  console.log('instance');
   envGlobal.System = new SystemJS();
 
   /*
