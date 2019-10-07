@@ -5,6 +5,7 @@
  */
 (function (global) {
   const systemJSPrototype = global.System.constructor.prototype;
+  const isIE = navigator.userAgent.indexOf('Trident') !== -1;
 
   // safari unpredictably lists some new globals first or second in object order
   let firstGlobalProp, secondGlobalProp, lastGlobalProp;
@@ -13,7 +14,7 @@
     let lastProp;
     for (let p in global) {
       // do not check frames cause it could be removed during import
-      if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length))
+      if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length) || (isIE && global[p].parent === window))
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
@@ -30,7 +31,7 @@
     firstGlobalProp = secondGlobalProp = undefined;
     for (let p in global) {
       // do not check frames cause it could be removed during import
-      if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length))
+      if (!global.hasOwnProperty(p) || (!isNaN(p) && p < global.length) || (isIE && global[p].parent === window))
         continue;
       if (!firstGlobalProp)
         firstGlobalProp = p;
