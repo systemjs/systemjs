@@ -302,5 +302,4 @@ function postOrderExec (loader, load, seen) {
   }
 }
 
-console.log('instance');
 global.System = new SystemJS();
