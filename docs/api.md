@@ -32,7 +32,7 @@ Declaration function for defining modules of the `System.register` polyfill modu
 
 _Note: Named System.register is not supported, only anonymous definitions._
 
-#### System.resolve(id [, parentURL]) -> Promise(string)
+#### System.resolve(id [, parentURL]) -> string
 Type: `Function`
 
 Resolves a module specifier relative to an optional parent URL, returning the resolved URL.
