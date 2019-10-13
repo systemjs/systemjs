@@ -1,4 +1,8 @@
-SystemJS 6.3.1 (2019/10/06)
+SystemJS 6.1.4 (2019/10/12)
+* Fix IE global detection to ignore IFrames (https://github.com/systemjs/systemjs/pull/2035, @kduret)
+* Remove stray console.log (https://github.com/systemjs/systemjs/pull/2046, @joeldenning)
+
+SystemJS 6.1.3 (2019/10/06)
 * Fix relative resolution of LHS URLs in import maps (https://github.com/systemjs/systemjs/pull/2039)
 * Fix named register extra to extend rather than reinstantiate the SystemJS instance (https://github.com/systemjs/systemjs/pull/2042)
 * Update extras to extend the global System instance explicitly (https://github.com/systemjs/systemjs/pull/2043)
