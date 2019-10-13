@@ -77,11 +77,11 @@ npm install systemjs
 You can load [System.register](/docs/system-register.md) modules with a script element in your HTML:
 
 ```html
-<script type="systemjs-module" src="/js/main.js"></script>
-<script type="systemjs-module" src="import:name-of-module"></script>
 <script src="system.js"></script>
+<script>System.import('/js/main.js')</script>
+<script>System.import('name-of-module')</script>
 ```
-Using an [`import:` URL](https://github.com/WICG/import-maps/#import-urls) the `src` attribute in HTML can reference [import maps](/docs/import-maps.md).
+
 ### Loading with System.import
 You can also dynamically load modules at any time with `System.import()`:
 
