@@ -176,7 +176,7 @@ suite('SystemJS Standard Tests', function() {
     return System.import('/test/test.html').then(function () {
       throw Error("Loading html modules isn't implemented, but attempting to do so didn't throw an Error");
     }, function (err) {
-      assert.ok(err.message.indexOf("'.html' modules not implemented") !== -1);
+      assert.ok(err);
     });
   });
 

@@ -86,6 +86,29 @@ Such tracing can be used for analysis and to clear the loader registry using the
 
 ### Extras Hooks
 
+#### shouldFetch(url) -> Boolean
+
+This hook is provided by the [module types extra](./module-types.md).
+
+For module type loading support, files ending in `.css`, `.json`, `.wasm` will be loaded via `fetch()`.
+
+This function handles that logic, allowing for custom handling for other extensions.
+
+Setting:
+
+```js
+System.shouldFetch = function () { return true; };
+```
+
+will enforce loading all JS files through `fetch`, even allowing custom transform hooks to be implemented through the fetch hook.
+
+#### fetch(url) -> Promise<Response>
+
+This hook is provided by the [module types extra](./module-types.md).
+
+The default fetch implementation used by module types is simply `System.fetch = window.fetch` and can be hooked through the fetch hook, allowing for
+any custom request interception.
+
 #### transform(url, source) -> Promise<String>
 
 This hook is provided by the [transform extra](../dist/extras/transform.js).
