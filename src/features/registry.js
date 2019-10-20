@@ -21,43 +21,66 @@ systemJSPrototype.set = function (id, module) {
     if (toStringTag)
       Object.defineProperty(ns, toStringTag, { value: 'Module' });
   }
+
   const done = Promise.resolve(ns);
-  this.delete(id);
-  this[REGISTRY][id] = {
+
+  const load = this[REGISTRY][id] || (this[REGISTRY][id] = {
     id: id,
     i: [],
-    n: ns,
-    I: done,
-    L: done,
     h: false,
     d: [],
     e: null,
     er: undefined,
-    E: undefined,
+    E: undefined
+  });
+
+  if (load.e || load.E)
+    return false;
+  
+  Object.assign(load, {
+    n: ns,
+    I: undefined,
+    L: undefined,
     C: done
-  };
+  });
   return ns;
 };
 
 systemJSPrototype.has = function (id) {
   const load = this[REGISTRY][id];
-  return load && load.e === null && !load.E;
+  return !!load;
 };
 
 // Delete function provided for hot-reloading use cases
 systemJSPrototype.delete = function (id) {
-  const load = this.get(id);
-  if (load === undefined)
+  const registry = this[REGISTRY];
+  const load = registry[id];
+  // in future we can support load.E case by failing load first
+  // but that will require TLA callbacks to be implemented
+  if (!load || load.e !== null || load.E)
     return false;
+
+  let importerSetters = load.i;
   // remove from importerSetters
   // (release for gc)
-  if (load && load.d)
+  if (load.d)
     load.d.forEach(function (depLoad) {
       const importerIndex = depLoad.i.indexOf(load);
       if (importerIndex !== -1)
         depLoad.i.splice(importerIndex, 1);
     });
-  return delete this[REGISTRY][id];
+  delete registry[id];
+  return function () {
+    const load = registry[id];
+    if (!load || !importerSetters || load.e !== null || load.E)
+      return false;
+    // add back the old setters
+    importerSetters.forEach(setter => {
+      load.i.push(setter);
+      setter(load.n);
+    });
+    importerSetters = null;
+  };
 };
 
 const iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
