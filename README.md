@@ -93,6 +93,20 @@ where `main.js` is a module available in the System.register module format.
 
 For an example of a bundling workflow, see the Rollup Code Splitting starter project - https://github.com/rollup/rollup-starter-code-splitting.
 
+Note that when building System modules you typically want to ensure anonymous System.register statements like:
+
+```js
+System.register([], function () { ... });
+```
+
+are emitted, as these can be loaded in a way that behaves the same as normal ES modules, and **not** named register statements like:
+
+```js
+System.register('name', [], function () { ... });
+```
+
+While these can be supported with the named register extension, this approach is typically not recommended for modern modules workflows.
+
 ### Import Maps
 
 Say `main.js` depends on loading `'lodash'`, then we can define an import map:
