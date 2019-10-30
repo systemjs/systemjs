@@ -135,7 +135,6 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [es-dev-server](https://github.com/open-wc/open-wc/tree/master/packages/es-dev-server) - A web server for developing without a build step.
 * [import map overrides](https://github.com/joeldenning/import-map-overrides/) - Dynamically inject an import map stored in local storage so that you can override the URL for any module. Can be useful for running development modules on localhost against the server.
 * [js-env](https://github.com/jsenv/jsenv-core) - Collection of development tools providing a unified workflow to write JavaScript for the web, node.js or both at the same time.
-* [jspm.io](https://jspm.io) - `https://system-dev.jspm.io/[name]` provides a CDN serving npm modules for SystemJS.
 * [jspm.org](https://jspm.org) - Package manager for native modules, using SystemJS for backwards compatibility.
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
 * [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
