@@ -39,6 +39,8 @@ Resolves a module specifier relative to an optional parent URL, returning the re
 
 ### Registry API (system.js only)
 
+> Note: The registry API is **not recommended** for standard module loading workflows. It is designed more for tooling built around SystemJS such as hot-reloading workflows. If you find yourself wanting to define a module, rather try to restructure your module architecture around standard module import loading principles and import maps (and the same goes for named System.register).
+
 #### System.delete(id) -> Boolean
 Type: `Function`
 
