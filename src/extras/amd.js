@@ -135,6 +135,8 @@
   global.define.amd = {};
 
   function insertToRegisterRegistry(name, define) {
+    // We must call System.getRegister() here to give other extras, such as the named-exports extra,
+    // a chance to modify the define before it's put into the registerRegistry.
     tempRegister = define;
     System.registerRegistry[name] = System.getRegister();
     tempRegister = null;
