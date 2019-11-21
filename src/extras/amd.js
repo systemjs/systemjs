@@ -10,6 +10,8 @@
     throw Error('AMD require not supported.');
   }
 
+  let tempRegister;
+
   function emptyFn () {}
 
   const requireExportsModule = ['require', 'exports', 'module'];
@@ -78,6 +80,9 @@
 
   const getRegister = systemPrototype.getRegister;
   systemPrototype.getRegister = function () {
+    if (tempRegister)
+      return tempRegister;
+
     const register = getRegister.call(this);
     // if its an actual System.register leave it
     if (register && register[1] === lastRegisterDeclare)
@@ -99,14 +104,14 @@
       if (amdDefineDeps) {
         if (!System.registerRegistry)
           throw Error('Include the named register extension for SystemJS named AMD support.');
-        System.registerRegistry[name] = createAMDRegister(deps, execute);
+        insertToRegisterRegistry(name, createAMDRegister(deps, execute));
         amdDefineDeps = [];
         amdDefineExec = emptyFn;
         return;
       }
       else {
         if (System.registerRegistry)
-          System.registerRegistry[name] = createAMDRegister([].concat(deps), execute);
+          insertToRegisterRegistry(name, createAMDRegister([].concat(deps), execute));
         name = deps;
         deps = execute;
       }
@@ -128,4 +133,10 @@
     }
   };
   global.define.amd = {};
+
+  function insertToRegisterRegistry(name, define) {
+    tempRegister = define;
+    System.registerRegistry[name] = System.getRegister();
+    tempRegister = null;
+  }
 })(typeof self !== 'undefined' ? self : global);

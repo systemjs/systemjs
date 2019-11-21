@@ -25,4 +25,28 @@ suite('Named System.register', function() {
       assert.equal(m.b, 'c');
     });
   });
+
+  test('Loading a named AMD module with named-exports enabled (no dependencies)', function () {
+    define('named-amd-define-no-deps', [], function() {
+      return {foo: 'bar'};
+    });
+
+    return System.import('named-amd-define-no-deps').then(function (m) {
+      assert.ok(m.default);
+      assert.ok(m.default.foo);
+      assert.ok(m.foo);
+    });
+  });
+
+  test('Loading a named AMD module with named-exports enabled (with dependencies)', function () {
+    define('named-amd-define-with-deps', ['b'], function() {
+      return {foo: 'bar'};
+    });
+
+    return System.import('named-amd-define-with-deps').then(function (m) {
+      assert.ok(m.default);
+      assert.ok(m.default.foo);
+      assert.ok(m.foo);
+    });
+  });
 });
