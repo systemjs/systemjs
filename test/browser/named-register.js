@@ -26,6 +26,7 @@ suite('Named System.register', function() {
     });
   });
 
+  // https://github.com/systemjs/systemjs/issues/2073
   test('Loading a named AMD module with named-exports enabled (no dependencies)', function () {
     define('named-amd-define-no-deps', [], function() {
       return {foo: 'bar'};
@@ -38,6 +39,7 @@ suite('Named System.register', function() {
     });
   });
 
+  // https://github.com/systemjs/systemjs/issues/2073
   test('Loading a named AMD module with named-exports enabled (with dependencies)', function () {
     define('named-amd-define-with-deps', ['b'], function() {
       return {foo: 'bar'};
