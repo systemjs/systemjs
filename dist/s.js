@@ -1,5 +1,5 @@
 /*
-* SJS 6.1.4
+* SJS 6.1.5
 * Minimal SystemJS Build
 */
 (function () {
@@ -282,7 +282,7 @@
       d: undefined,
       // execution function
       // set to NULL immediately after execution (or on any failure) to indicate execution has happened
-      // in such a case, pC should be used, and pLo, pLi will be emptied
+      // in such a case, C should be used, and E, I, L will be emptied
       e: undefined,
 
       // On execution we have populated:
@@ -291,7 +291,7 @@
       // in the case of TLA, the execution promise
       E: undefined,
 
-      // On execution, pLi, pLo, e cleared
+      // On execution, L, I, E cleared
 
       // Promise for top-level completion
       C: undefined
