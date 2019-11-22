@@ -1,3 +1,7 @@
+SystemJS 6.1.5
+* Support registry delete returning update function (https://github.com/systemjs/systemjs/pull/2020 @guybedford)
+* Fixing bug where named-exports didn't work on named registers. (https://github.com/systemjs/systemjs/pull/2074 @joeldenning)
+
 SystemJS 6.1.4 (2019/10/12)
 * Fix IE global detection to ignore IFrames (https://github.com/systemjs/systemjs/pull/2035, @kduret)
 * Remove stray console.log (https://github.com/systemjs/systemjs/pull/2046, @joeldenning)
