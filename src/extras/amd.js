@@ -10,7 +10,7 @@
     throw Error('AMD require not supported.');
   }
 
-  let tempRegister;
+  let tmpRegister;
 
   function emptyFn () {}
 
@@ -80,8 +80,8 @@
 
   const getRegister = systemPrototype.getRegister;
   systemPrototype.getRegister = function () {
-    if (tempRegister)
-      return tempRegister;
+    if (tmpRegister)
+      return tmpRegister;
 
     const register = getRegister.call(this);
     // if its an actual System.register leave it
@@ -104,14 +104,14 @@
       if (amdDefineDeps) {
         if (!System.registerRegistry)
           throw Error('Include the named register extension for SystemJS named AMD support.');
-        insertToRegisterRegistry(name, createAMDRegister(deps, execute));
+        addToRegisterRegistry(name, createAMDRegister(deps, execute));
         amdDefineDeps = [];
         amdDefineExec = emptyFn;
         return;
       }
       else {
         if (System.registerRegistry)
-          insertToRegisterRegistry(name, createAMDRegister([].concat(deps), execute));
+          addToRegisterRegistry(name, createAMDRegister([].concat(deps), execute));
         name = deps;
         deps = execute;
       }
@@ -134,12 +134,12 @@
   };
   global.define.amd = {};
 
-  function insertToRegisterRegistry(name, define) {
+  function addToRegisterRegistry(name, define) {
     // We must call System.getRegister() here to give other extras, such as the named-exports extra,
     // a chance to modify the define before it's put into the registerRegistry.
     // See https://github.com/systemjs/systemjs/issues/2073
-    tempRegister = define;
+    tmpRegister = define;
     System.registerRegistry[name] = System.getRegister();
-    tempRegister = null;
+    tmpRegister = null;
   }
 })(typeof self !== 'undefined' ? self : global);
