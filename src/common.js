@@ -1,281 +1,188 @@
-import { resolveIfNotPlain } from 'es-module-loader/core/resolve.js';
-import { baseURI, isBrowser, isWindows, addToError, global, createSymbol, toStringTag } from 'es-module-loader/core/common.js';
-import RegisterLoader from 'es-module-loader/core/register-loader.js';
-import { ModuleNamespace } from 'es-module-loader/core/loader-polyfill.js';
+export const hasSelf = typeof self !== 'undefined';
 
-export { baseURI, isBrowser, isWindows, addToError, global, resolveIfNotPlain, ModuleNamespace }
+export const hasDocument = typeof document !== 'undefined';
 
-export var resolvedPromise = Promise.resolve();
-export function noop () {};
+const envGlobal = hasSelf ? self : global;
+export { envGlobal as global };
 
-export var emptyModule = new ModuleNamespace({});
+export let baseUrl;
 
-export function protectedCreateNamespace (bindings) {
-  if (bindings) {
-    if (bindings instanceof ModuleNamespace || bindings[toStringTag] === 'module')
-      return bindings;
+if (hasDocument) {
+  const baseEl = document.querySelector('base[href]');
+  if (baseEl)
+    baseUrl = baseEl.href;
+}
 
-    if (bindings.__esModule)
-      return new ModuleNamespace(bindings);
+if (!baseUrl && typeof location !== 'undefined') {
+  baseUrl = location.href.split('#')[0].split('?')[0];
+  const lastSepIndex = baseUrl.lastIndexOf('/');
+  if (lastSepIndex !== -1)
+    baseUrl = baseUrl.slice(0, lastSepIndex + 1);
+}
+
+const backslashRegEx = /\\/g;
+export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
+  if (relUrl.indexOf('\\') !== -1)
+    relUrl = relUrl.replace(backslashRegEx, '/');
+  // protocol-relative
+  if (relUrl[0] === '/' && relUrl[1] === '/') {
+    return parentUrl.slice(0, parentUrl.indexOf(':') + 1) + relUrl;
   }
-
-  return new ModuleNamespace({ default: bindings, __useDefault: bindings });
-}
-
-export function isModule (m) {
-  return m instanceof ModuleNamespace || m[toStringTag] === 'module';
-}
-
-export var CONFIG = createSymbol('loader-config');
-export var METADATA = createSymbol('metadata');
-export var PLAIN_RESOLVE = createSymbol('plain-resolve');
-export var PLAIN_RESOLVE_SYNC = createSymbol('plain-resolve-sync');
-
-export var isWorker = typeof window === 'undefined' && typeof self !== 'undefined' && typeof importScripts !== 'undefined';
-
-export function warn (msg, force) {
-  if (force || this.warnings && typeof console !== 'undefined' && console.warn)
-    console.warn(msg);
-}
-
-export function checkInstantiateWasm (loader, wasmBuffer, processAnonRegister) {
-  var bytes = new Uint8Array(wasmBuffer);
-
-  // detect by leading bytes
-  // Can be (new Uint32Array(fetched))[0] === 0x6D736100 when working in Node
-  if (bytes[0] === 0 && bytes[1] === 97 && bytes[2] === 115) {
-    return WebAssembly.compile(wasmBuffer).then(function (m) {
-      var deps = [];
-      var setters = [];
-      var importObj = {};
-
-      // we can only set imports if supported (eg Safari doesnt support)
-      if (WebAssembly.Module.imports)
-        WebAssembly.Module.imports(m).forEach(function (i) {
-          var key = i.module;
-          setters.push(function (m) {
-            importObj[key] = m;
-          });
-          if (deps.indexOf(key) === -1)
-            deps.push(key);
-        });
-      loader.register(deps, function (_export) {
-        return {
-          setters: setters,
-          execute: function () {
-            _export(new WebAssembly.Instance(m, importObj).exports);
-          }
-        };
-      });
-      processAnonRegister();
-
-      return true;
-    });
-  }
-
-  return Promise.resolve(false);
-}
-
-var parentModuleContext;
-export function loadNodeModule (key, baseURL) {
-  if (key[0] === '.')
-    throw new Error('Node module ' + key + ' can\'t be loaded as it is not a package require.');
-
-  if (!parentModuleContext) {
-    var Module = this._nodeRequire('module');
-    var base = decodeURI(baseURL.substr(isWindows ? 8 : 7));
-    parentModuleContext = new Module(base);
-    parentModuleContext.paths = Module._nodeModulePaths(base);
-  }
-  return parentModuleContext.require(key);
-}
-
-export function extend (a, b) {
-  for (var p in b) {
-    if (!Object.hasOwnProperty.call(b, p))
-      continue;
-    a[p] = b[p];
-  }
-  return a;
-}
-
-export function prepend (a, b) {
-  for (var p in b) {
-    if (!Object.hasOwnProperty.call(b, p))
-      continue;
-    if (a[p] === undefined)
-      a[p] = b[p];
-  }
-  return a;
-}
-
-// meta first-level extends where:
-// array + array appends
-// object + object extends
-// other properties replace
-export function extendMeta (a, b, _prepend) {
-  for (var p in b) {
-    if (!Object.hasOwnProperty.call(b, p))
-      continue;
-    var val = b[p];
-    if (a[p] === undefined)
-      a[p] = val;
-    else if (val instanceof Array && a[p] instanceof Array)
-      a[p] = [].concat(_prepend ? val : a[p]).concat(_prepend ? a[p] : val);
-    else if (typeof val == 'object' && val !== null && typeof a[p] == 'object')
-      a[p] = (_prepend ? prepend : extend)(extend({}, a[p]), val);
-    else if (!_prepend)
-      a[p] = val;
-  }
-}
-
-var supportsPreload = false, supportsPrefetch = false;
-if (isBrowser)
-  (function () {
-    var relList = document.createElement('link').relList;
-    if (relList && relList.supports) {
-      supportsPrefetch = true;
-      try {
-        supportsPreload = relList.supports('preload');
+  // relative-url
+  else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && (relUrl[2] === '/' || relUrl.length === 2 && (relUrl += '/')) ||
+      relUrl.length === 1  && (relUrl += '/')) ||
+      relUrl[0] === '/') {
+    const parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
+    // Disabled, but these cases will give inconsistent results for deep backtracking
+    //if (parentUrl[parentProtocol.length] !== '/')
+    //  throw Error('Cannot resolve');
+    // read pathname from parent URL
+    // pathname taken to be part after leading "/"
+    let pathname;
+    if (parentUrl[parentProtocol.length + 1] === '/') {
+      // resolving to a :// so we need to read out the auth and host
+      if (parentProtocol !== 'file:') {
+        pathname = parentUrl.slice(parentProtocol.length + 2);
+        pathname = pathname.slice(pathname.indexOf('/') + 1);
       }
-      catch (e) {}
+      else {
+        pathname = parentUrl.slice(8);
+      }
     }
-  })();
-
-export function preloadScript (url) {
-  // fallback to old fashioned image technique which still works in safari
-  if (!supportsPreload && !supportsPrefetch) {
-    var preloadImage = new Image();
-    preloadImage.src = url;
-    return;
-  }
-
-  var link = document.createElement('link');
-  if (supportsPreload) {
-    link.rel = 'preload';
-    link.as = 'script';
-  }
-  else {
-    // this works for all except Safari (detected by relList.supports lacking)
-    link.rel = 'prefetch';
-  }
-  link.href = url;
-  document.head.appendChild(link);
-}
-
-function workerImport (src, resolve, reject) {
-  try {
-    importScripts(src);
-  }
-  catch (e) {
-    reject(e);
-  }
-  resolve();
-}
-
-if (isBrowser) {
-  var onerror = window.onerror;
-  window.onerror = function globalOnerror (msg, src) {
-    if (onerror)
-      onerror.apply(this, arguments);
-  };
-}
-
-export function scriptLoad (src, crossOrigin, integrity, resolve, reject) {
-  // percent encode just "#" for HTTP requests
-  src = src.replace(/#/g, '%23');
-
-  // subresource integrity is not supported in web workers
-  if (isWorker)
-    return workerImport(src, resolve, reject);
-
-  var script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.charset = 'utf-8';
-  script.async = true;
-
-  if (crossOrigin)
-    script.crossOrigin = crossOrigin;
-  if (integrity)
-    script.integrity = integrity;
-
-  script.addEventListener('load', load, false);
-  script.addEventListener('error', error, false);
-
-  script.src = src;
-  document.head.appendChild(script);
-
-  function load () {
-    resolve();
-    cleanup();
-  }
-
-  // note this does not catch execution errors
-  function error (err) {
-    cleanup();
-    reject(new Error('Fetching ' + src));
-  }
-
-  function cleanup () {
-    script.removeEventListener('load', load, false);
-    script.removeEventListener('error', error, false);
-    document.head.removeChild(script);
-  }
-}
-
-export function readMemberExpression (p, value) {
-  var pParts = p.split('.');
-  while (pParts.length)
-    value = value[pParts.shift()];
-  return value;
-}
-
-// separate out paths cache as a baseURL lock process
-export function applyPaths (baseURL, paths, key) {
-  var mapMatch = getMapMatch(paths, key);
-  if (mapMatch) {
-    var target = paths[mapMatch] + key.substr(mapMatch.length);
-
-    var resolved = resolveIfNotPlain(target, baseURI);
-    if (resolved !== undefined)
-      return resolved;
-
-    return baseURL + target;
-  }
-  else if (key.indexOf(':') !== -1) {
-    return key;
-  }
-  else {
-    return baseURL + key;
-  }
-}
-
-function checkMap (p) {
-  var name = this.name;
-  // can add ':' here if we want paths to match the behaviour of map
-  if (name.substr(0, p.length) === p && (name.length === p.length || name[p.length] === '/' || p[p.length - 1] === '/' || p[p.length - 1] === ':')) {
-    var curLen = p.split('/').length;
-    if (curLen > this.len) {
-      this.match = p;
-      this.len = curLen;
+    else {
+      // resolving to :/ so pathname is the /... part
+      pathname = parentUrl.slice(parentProtocol.length + (parentUrl[parentProtocol.length] === '/'));
     }
+
+    if (relUrl[0] === '/')
+      return parentUrl.slice(0, parentUrl.length - pathname.length - 1) + relUrl;
+
+    // join together and split for removal of .. and . segments
+    // looping the string instead of anything fancy for perf reasons
+    // '../../../../../z' resolved to 'x/y' is just 'z'
+    const segmented = pathname.slice(0, pathname.lastIndexOf('/') + 1) + relUrl;
+
+    const output = [];
+    let segmentIndex = -1;
+    for (let i = 0; i < segmented.length; i++) {
+      // busy reading a segment - only terminate on '/'
+      if (segmentIndex !== -1) {
+        if (segmented[i] === '/') {
+          output.push(segmented.slice(segmentIndex, i + 1));
+          segmentIndex = -1;
+        }
+      }
+
+      // new segment - check if it is relative
+      else if (segmented[i] === '.') {
+        // ../ segment
+        if (segmented[i + 1] === '.' && (segmented[i + 2] === '/' || i + 2 === segmented.length)) {
+          output.pop();
+          i += 2;
+        }
+        // ./ segment
+        else if (segmented[i + 1] === '/' || i + 1 === segmented.length) {
+          i += 1;
+        }
+        else {
+          // the start of a new segment as below
+          segmentIndex = i;
+        }
+      }
+      // it is the start of a new segment
+      else {
+        segmentIndex = i;
+      }
+    }
+    // finish reading out the last segment
+    if (segmentIndex !== -1)
+      output.push(segmented.slice(segmentIndex));
+    return parentUrl.slice(0, parentUrl.length - pathname.length) + output.join('');
   }
 }
 
-export function getMapMatch (map, name) {
-  if (Object.hasOwnProperty.call(map, name))
-    return name;
+/*
+ * Import maps implementation
+ *
+ * To make lookups fast we pre-resolve the entire import map
+ * and then match based on backtracked hash lookups
+ *
+ */
 
-  var bestMatch = {
-    name: name,
-    match: undefined,
-    len: 0
-  };
-
-  Object.keys(map).forEach(checkMap, bestMatch);
-
-  return bestMatch.match;
+export function resolveUrl (relUrl, parentUrl) {
+  return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
 }
 
-// RegEx adjusted from https://github.com/jbrantly/yabble/blob/master/lib/yabble.js#L339
-export var cjsRequireRegEx = /(?:^\uFEFF?|[^$_a-zA-Z\xA0-\uFFFF."'])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`)\s*\)/g
+function objectAssign (to, from) {
+  for (let p in from)
+    to[p] = from[p];
+  return to;
+}
+
+function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
+  for (let p in packages) {
+    const resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
+    const rhs = packages[p];
+    // package fallbacks not currently supported
+    if (typeof rhs !== 'string')
+      continue;
+    const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
+    if (!mapped)
+      targetWarning(p, rhs, 'bare specifier did not resolve');
+    else
+      outPackages[resolvedLhs] = mapped;
+  }
+}
+
+export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
+  const outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
+
+  if (json.imports)
+    resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
+
+  if (json.scopes)
+    for (let s in json.scopes) {
+      const resolvedScope = resolveUrl(s, baseUrl);
+      resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
+    }
+
+  return outMap;
+}
+
+function getMatch (path, matchObj) {
+  if (matchObj[path])
+    return path;
+  let sepIndex = path.length;
+  do {
+    const segment = path.slice(0, sepIndex + 1);
+    if (segment in matchObj)
+      return segment;
+  } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
+}
+
+function applyPackages (id, packages) {
+  const pkgName = getMatch(id, packages);
+  if (pkgName) {
+    const pkg = packages[pkgName];
+    if (pkg === null) return;
+    if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
+      targetWarning(pkgName, pkg, "should have a trailing '/'");
+    else
+      return pkg + id.slice(pkgName.length);
+  }
+}
+
+function targetWarning (match, target, msg) {
+  console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
+}
+
+export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
+  let scopeUrl = parentUrl && getMatch(parentUrl, importMap.scopes);
+  while (scopeUrl) {
+    const packageResolution = applyPackages(resolvedOrPlain, importMap.scopes[scopeUrl]);
+    if (packageResolution)
+      return packageResolution;
+    scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
+  }
+  return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
+}

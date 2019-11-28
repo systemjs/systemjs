@@ -1,0 +1,14 @@
+/*
+ * Interop for AMD modules to return the direct AMD binding instead of a
+ * `{ default: amdModule }` object from `System.import`
+ */
+(function (global) {
+  const systemJSPrototype = global.System.constructor.prototype;
+  const originalImport = systemJSPrototype.import;
+
+  systemJSPrototype.import = function () {
+    return originalImport.apply(this, arguments).then(function (ns) {
+      return ns.__useDefault ? ns.default : ns;
+    });
+  };
+})(typeof self !== 'undefined' ? self : global);

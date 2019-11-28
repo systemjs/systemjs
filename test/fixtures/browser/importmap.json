@@ -1,0 +1,22 @@
+{
+  "imports": {
+    "fixtures/": "./",
+    "fixturesbase/": "../",
+    "a": "/b",
+    "a/": "./a/",
+    "f": "a:",
+    "b/": "/d/",
+    "b.js": "http://jquery.com/jquery.js",
+    "b.js/": "http://jquery.com/",
+    "g/": "https://site.com/"
+  },
+  "scopes": {
+    "scope-test/": {
+      "maptest": "./contextual-map-dep.js",
+      "maptest/": "./contextual-map-dep/"
+    },
+    "wasm/": {
+      "example": "./wasm/example.js"
+    }
+  }
+}

@@ -1,1 +1,0 @@
-exports.prop = 'value';
