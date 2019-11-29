@@ -1,3 +1,6 @@
+SystemJS 6.1.7
+* Fix problem where banner comment in output files had wrong version number
+
 SystemJS 6.1.6
 * Fix IE11 regression in 6.1.5 (https://github.com/systemjs/systemjs/pull/2077 @kouts)
 
