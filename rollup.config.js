@@ -1,4 +1,5 @@
 import replace from 'rollup-plugin-replace';
+import babel from 'rollup-plugin-babel';
 import fs from 'fs';
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
@@ -17,7 +18,14 @@ export default {
 * SystemJS ${version}
 */`
   },
-  plugins: [replace({
+  plugins: [
+      replace({
     TRACING: process.env.sjs ? 'false' : 'true'
-  })]
+  }),
+    babel({
+      exclude: 'node_modules/**',
+      babelrc: false,
+      presets: [['@babel/preset-env', { modules: false }]],
+    })
+  ]
 };
