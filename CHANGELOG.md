@@ -1,3 +1,6 @@
+SystemJS 6.1.6
+* Fix IE11 regression in 6.1.5 (https://github.com/systemjs/systemjs/pull/2077 @kouts)
+
 SystemJS 6.1.5
 * Support registry delete returning update function (https://github.com/systemjs/systemjs/pull/2020 @guybedford)
 * Fixing bug where named-exports didn't work on named registers. (https://github.com/systemjs/systemjs/pull/2074 @joeldenning)

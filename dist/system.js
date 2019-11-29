@@ -870,7 +870,7 @@
       if (!load || !importerSetters || load.e !== null || load.E)
         return false;
       // add back the old setters
-      importerSetters.forEach(setter => {
+      importerSetters.forEach(function (setter) {
         load.i.push(setter);
         setter(load.n);
       });
