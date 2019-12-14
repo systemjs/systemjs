@@ -16,6 +16,10 @@ _SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/pos
 
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
+## Examples
+
+The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
+
 ## Overview
 
 SystemJS provides two hookable base builds:
