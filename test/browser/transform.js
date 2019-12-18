@@ -74,6 +74,14 @@ suite('Transform Loader', function() {
         assert.equal(m.exampleExport(1), 2);
       });
     });
+    
+    test('Loading CSS', function () {
+      return System.import('./fixtures/css-modules/a.css')
+      .then(function (m) {
+        assert.ok(m);
+        assert.ok(m.default instanceof CSSStyleSheet);
+      });
+    });
 
     test('Verification', function () {
       assert.equal(translateCnt, 8);
