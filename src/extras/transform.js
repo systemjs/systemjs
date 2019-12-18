@@ -6,7 +6,7 @@
 
   const instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, parent) {
-    if (url.slice(-5) === '.wasm')
+    if (url.slice(-5) === '.wasm' || url.slice(-4) === '.css')
       return instantiate.call(this, url, parent);
 
     const loader = this;
