@@ -298,6 +298,10 @@
               changed = true;
             }
           }
+          if (name.hasOwnProperty('__esModule')) {
+            const desc = Object.getOwnPropertyDescriptor(name,'__esModule');
+            Object.defineProperty(ns, '__esModule', desc);
+          }
         }
         if (changed)
           for (let i = 0; i < importerSetters.length; i++)
