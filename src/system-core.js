@@ -111,7 +111,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
         }
 
         if (name.__esModule) {
-          ns.__esModule = true
+          ns.__esModule = true;
         }
       }
       if (changed)
