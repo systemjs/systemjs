@@ -196,5 +196,12 @@ suite('SystemJS Standard Tests', function() {
     const resolved = System.resolve('/test/fixtures/browser/systemjs-module-early.js');
     assert.ok(System.has(resolved));
     assert.equal(System.get(resolved).hi, 'bye');
-  })
+  });
+
+  test('non-enumerable __esModule property export (issue 2090)', function () {
+    return System.import('fixtures/__esModule.js').then(function (m) {
+      // Even though __esModule is not enumerable on the exported object, it should be preserved on the systemjs namespace
+      assert.ok(m.__esModule);
+    });
+  });
 });
