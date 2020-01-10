@@ -47,7 +47,7 @@ This is used in SystemJS core to ensure that import maps are loaded so that the 
 
 #### instantiate(url, parentUrl) -> Promise
 
-This function downloads and executes the code for a module. The promise must resolve with a "register" array, as described in the `getRegister` hook documentation.
+This function downloads and executes the code for a module. The promise must resolve with a "register" array, as described in the `getRegister` documentation.
 
 The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. [Example](https://github.com/systemjs/systemjs/blob/master/src/features/script-load.js).
 
