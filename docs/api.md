@@ -30,7 +30,7 @@ Declaration function for defining modules of the `System.register` polyfill modu
 
 [Read more on the format at the loader polyfill page](system-register.md)
 
-_Note: Named System.register is not supported, only anonymous definitions._
+_Note: Named System.register is only supported through the named-register extra._
 
 #### System.resolve(id [, parentURL]) -> string
 Type: `Function`
