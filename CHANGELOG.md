@@ -1,3 +1,6 @@
+SystemJS 6.1.8
+* Ensure that __esModule is copied to ns even if it isn't enumerable. Improves webpack interop when using libraryTarget system.
+
 SystemJS 6.1.7
 * Fix problem where banner comment in output files had wrong version number
 

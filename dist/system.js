@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.1.7
+* SystemJS 6.1.8
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -297,6 +297,10 @@
               ns[p] = value;
               changed = true;
             }
+          }
+
+          if (name.__esModule) {
+            ns.__esModule = name.__esModule;
           }
         }
         if (changed)

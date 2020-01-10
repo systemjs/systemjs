@@ -1,5 +1,5 @@
 /*
-* SJS 6.1.7
+* SJS 6.1.8
 * Minimal SystemJS Build
 */
 (function () {
@@ -213,6 +213,10 @@
               ns[p] = value;
               changed = true;
             }
+          }
+
+          if (name.__esModule) {
+            ns.__esModule = name.__esModule;
           }
         }
         if (changed)
