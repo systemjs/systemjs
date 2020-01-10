@@ -45,6 +45,12 @@ This function is called before any `System.import` or dynamic import, returning 
 
 This is used in SystemJS core to ensure that import maps are loaded so that the `System.resolve` function remains synchronous.
 
+#### instantiate(url, parentUrl) -> Promise
+
+This function downloads and executes the code for a module. The promise must resolve with a "register" array, as described in the `getRegister` hook documentation.
+
+The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. [Example](https://github.com/systemjs/systemjs/blob/master/src/features/script-load.js).
+
 #### getRegister() -> [deps: String[], declare: Function]
 
 > This hook is intended for custom module format integrations only.
