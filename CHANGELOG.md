@@ -1,3 +1,6 @@
+SystemJS 6.1.9
+* Fix bug where url query params and hash broke module type file extension check (https://github.com/systemjs/systemjs/pull/2096 @LarsDenBakker)
+
 SystemJS 6.1.8
 * Ensure that __esModule is copied to ns even if it isn't enumerable. Improves webpack interop when using libraryTarget system.
 

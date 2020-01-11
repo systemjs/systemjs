@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.1.8
+* SystemJS 6.1.9
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -713,7 +713,9 @@
 
     systemJSPrototype.instantiate = function (url, parent) {
       const loader = this;
-      const ext = url.slice(url.lastIndexOf('.'));
+      const path = url.split('?')[0].split('#')[0];
+      const ext = path.slice(path.lastIndexOf('.'));
+
       switch (ext) {
         case '.css':
           return loadDynamicModule(function (_export, source) {
@@ -739,7 +741,7 @@
             const deps = [];
             const setters = [];
             const importObj = {};
-        
+
             // we can only set imports if supported (eg early Safari doesnt support)
             if (WebAssembly.Module.imports)
               WebAssembly.Module.imports(module).forEach(function (impt) {
@@ -751,7 +753,7 @@
                   });
                 }
               });
-        
+
             return [deps, function (_export) {
               return {
                 setters: setters,
