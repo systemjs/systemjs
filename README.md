@@ -2,7 +2,6 @@
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Sponsor](https://cdn.canopytax.com/images/canopy-sponsorship.svg)](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)
 
 Configurable module loader enabling backwards compatibility workflows for ES modules in browsers. If you're interested in modern workflows for ES module compatible browsers only, see [ES Module Shims](https://github.com/guybedford/es-module-shims).
 
@@ -11,8 +10,6 @@ Release Links:
 * [Latest 6.x Major Release](https://github.com/systemjs/systemjs/releases/tag/6.0.0)
 * [SystemJS 2.0 Announcement Post](https://guybedford.com/systemjs-2.0)
 * [SystemJS 0.21](https://github.com/systemjs/systemjs/tree/0.21)
-
-_SystemJS is [currently sponsored by Canopy Tax](https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs)._
 
 For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
