@@ -2,6 +2,8 @@
 
 [![Build Status][travis-image]][travis-url]
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
+[![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
 Configurable module loader enabling backwards compatibility workflows for ES modules in browsers. If you're interested in modern workflows for ES module compatible browsers only, see [ES Module Shims](https://github.com/guybedford/es-module-shims).
 
@@ -55,6 +57,25 @@ The following extras are included in system.js loader by default, and can be add
 * [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]
+
+<a href="https://opencollective.com/systemjs#backers" target="_blank"><img src="https://opencollective.com/systemjs/backers.svg?width=890"></a>
+
+## Sponsors
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/systemjs#sponsor)]
+<a href="https://opencollective.com/systemjs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/9/avatar.svg"></a>
 
 ## Installation
 
