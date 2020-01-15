@@ -21,6 +21,8 @@ The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) cont
 
 ## Overview
 
+[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw)
+
 SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
