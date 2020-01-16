@@ -51,4 +51,17 @@ suite('Named System.register', function() {
       assert.ok(m.foo);
     });
   });
+
+  // https://github.com/systemjs/systemjs/issues/2107
+  test('Loading a named register module as both top level import and linked dependency', function () {
+    return System.import('named-register-single-execute').then(function (m) {
+      assert.equal(m.bonjour, 'bonjour');
+      assert.equal(window.namedRegisterExecutes, 1);
+    }).then(function () {
+      return System.import('./fixtures/browser/named-register-single-execute-as-dep.js')
+    }).then(function (m) {
+      assert.equal(m.bonjour, 'bonjour');
+      assert.equal(window.namedRegisterExecutes, 1);
+    });
+  });
 });
