@@ -78,7 +78,7 @@ System.has('http://site.com/normalized/module/name.js');
 #### System.set(id, module) -> Module
 Type: `Function`
 
-Sets a module in the registry by ID. Note that you must call set with a URL.
+Sets a module in the registry by ID. Note that when using import maps, the id must be a URL.
 
 ```js
 System.set('http://site.com/normalized/module/name.js', {
