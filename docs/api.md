@@ -78,7 +78,7 @@ System.has('http://site.com/normalized/module/name.js');
 #### System.set(id, module) -> Module
 Type: `Function`
 
-Sets a module in the registry by ID.
+Sets a module in the registry by ID. Note that you must call set with a URL.
 
 ```js
 System.set('http://site.com/normalized/module/name.js', {
@@ -89,6 +89,23 @@ System.set('http://site.com/normalized/module/name.js', {
 `module` is an object of names to set as the named exports.
 
 If `module` is an existing Module Namespace, it will be used by reference.
+
+If you want to remap the url to a bare specifier, you can do so with an import map:
+
+```html
+<script type="systemjs-importmap">
+  {
+    "imports": {
+      "@angular/core": "app:@angular/core"
+    }
+  }
+</script>
+<script>
+  // Using the 'app:' turns in the id into a URL instead of a bare specifier
+  System.set('app:@angular/core', window.angularCore);
+  System.import('@angular/core');
+</script>
+```
 
 #### System.entries() -> Iterator<[key, module]>
 Type: `Function`
