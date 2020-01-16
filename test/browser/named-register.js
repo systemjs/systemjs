@@ -52,6 +52,7 @@ suite('Named System.register', function() {
     });
   });
 
+  // https://github.com/systemjs/systemjs/issues/2103
   test('loading named define module should work and should not instantiate it twice', function () {
     return System.import('fixtures/amd-named-single-execute.js').then(function (m) {
       assert.equal(m.default, 'The first named AMD module');
