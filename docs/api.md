@@ -101,7 +101,7 @@ If you want to remap the url to a bare specifier, you can do so with an import m
   }
 </script>
 <script>
-  // Using the 'app:' turns in the id into a URL instead of a bare specifier
+  // Using the 'app:' prefix makes the string a URL instead of a bare specifier
   System.set('app:@angular/core', window.angularCore);
   System.import('@angular/core');
 </script>
