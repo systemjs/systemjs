@@ -10,7 +10,7 @@
     throw Error('AMD require not supported.');
   }
 
-  let tmpRegister;
+  let tmpRegister, firstNamedDefine;
 
   function emptyFn () {}
 
@@ -88,6 +88,10 @@
     if (register && register[1] === lastRegisterDeclare)
       return register;
 
+    // If the script registered a named module, return that module instead of re-instantiating it.
+    if (firstNamedDefine)
+      return firstNamedDefine;
+
     // otherwise AMD takes priority
     // no registration -> attempt AMD detection
     if (!amdDefineDeps)
@@ -135,6 +139,13 @@
   global.define.amd = {};
 
   function addToRegisterRegistry(name, define) {
+    if (!firstNamedDefine) {
+      firstNamedDefine = define;
+      setTimeout(function () {
+        firstNamedDefine = null;
+      });
+    }
+
     // We must call System.getRegister() here to give other extras, such as the named-exports extra,
     // a chance to modify the define before it's put into the registerRegistry.
     // See https://github.com/systemjs/systemjs/issues/2073
