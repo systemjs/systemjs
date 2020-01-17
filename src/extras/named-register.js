@@ -44,7 +44,7 @@
   systemJSPrototype.resolve = function (id, parentURL) {
     try {
       // Prefer import map (or other existing) resolution over the registerRegistry
-      return resolve.call(this, id, parentURL) || this.registerRegistry[id];
+      return resolve.call(this, id, parentURL);
     } catch (err) {
       if (id in this.registerRegistry)
         return id;
