@@ -11,7 +11,7 @@ suite('Named System.register', function() {
 
   test('Loading a named AMD bundle', function () {
     return System.import('./fixtures/browser/named-amd.js').then(function (m) {
-      assert.equal(Object.keys(m).length, 2);
+      assert.equal(m.a, 'b');
       return System.import('c');
     })
     .then(function (m) {
@@ -62,6 +62,19 @@ suite('Named System.register', function() {
     }).then(function (m) {
       assert.equal(m.bonjour, 'bonjour');
       assert.equal(window.namedRegisterExecutes, 1);
+    });
+  });
+
+  // https://github.com/systemjs/systemjs/issues/2103
+  test('loading named define module should work and should not instantiate it twice', function () {
+    return System.import('fixtures/amd-named-single-execute.js').then(function (m) {
+      assert.equal(m.default, 'The first named AMD module');
+      assert.equal(numNamedAMDExecutions, 1);
+    }).then(function () {
+      return System.import('fixtures/amd-named-single-execute.js').then(function (m) {
+        assert.equal(m.default, 'The first named AMD module');
+        assert.equal(numNamedAMDExecutions, 1);
+      });
     });
   });
 });
