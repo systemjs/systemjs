@@ -1,3 +1,8 @@
+SystemJS 6.1.10
+* Fixing bug where named AMD modules were instantiated twice (https://github.com/systemjs/systemjs/pull/2104)
+* Save bytes with setTimeout (https://github.com/systemjs/systemjs/pull/2105)
+* Prefer import map resolution over registryRegistry resolution (https://github.com/systemjs/systemjs/pull/2108)
+
 SystemJS 6.1.9
 * Fix bug where url query params and hash broke module type file extension check (https://github.com/systemjs/systemjs/pull/2096 @LarsDenBakker)
 
