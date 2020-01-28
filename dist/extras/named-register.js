@@ -35,18 +35,21 @@
     this.registerRegistry[name] = define;
     if (!firstNamedDefine) {
       firstNamedDefine = define;
-      setTimeout(clearFirstNamedDefine, 0);
+      setTimeout(clearFirstNamedDefine);
     }
     return register.apply(this, arguments);
   };
 
   const resolve = systemJSPrototype.resolve;
   systemJSPrototype.resolve = function (id, parentURL) {
-    if (id[0] === '/' || id[0] === '.' && (id[1] === '/' || id[1] === '.' && id[2] === '/'))
+    try {
+      // Prefer import map (or other existing) resolution over the registerRegistry
       return resolve.call(this, id, parentURL);
-    if (id in this.registerRegistry)
-      return id;
-    return resolve.call(this, id, parentURL);
+    } catch (err) {
+      if (id in this.registerRegistry)
+        return id;
+      throw err;
+    }
   };
 
   const instantiate = systemJSPrototype.instantiate;
