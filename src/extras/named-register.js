@@ -35,7 +35,6 @@
     this.registerRegistry[name] = define;
     if (!firstNamedDefine) {
       firstNamedDefine = define;
-      setTimeout(clearFirstNamedDefine);
     }
     return register.apply(this, arguments);
   };
@@ -59,6 +58,12 @@
 
   const getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
-    return firstNamedDefine || getRegister.call(this);
+    // Calling getRegister() because other extras need to know it was called so they can perform side effects
+    const register = getRegister.call(this);
+
+    const _firstNamedDefine = firstNamedDefine;
+    firstNamedDefine = null;
+
+    return _firstNamedDefine || register;
   }
 })(typeof self !== 'undefined' ? self : global);
