@@ -61,9 +61,8 @@
     // Calling getRegister() because other extras need to know it was called so they can perform side effects
     const register = getRegister.call(this);
 
-    const _firstNamedDefine = firstNamedDefine;
+    const result = firstNamedDefine || register;
     firstNamedDefine = null;
-
-    return _firstNamedDefine || register;
+    return result;
   }
 })(typeof self !== 'undefined' ? self : global);
