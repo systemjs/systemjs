@@ -109,6 +109,10 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
             changed = true;
           }
         }
+
+        if (name.__esModule) {
+          ns.__esModule = name.__esModule;
+        }
       }
       if (changed)
         for (let i = 0; i < importerSetters.length; i++)

@@ -8,7 +8,8 @@
     "b/": "/d/",
     "b.js": "http://jquery.com/jquery.js",
     "b.js/": "http://jquery.com/",
-    "g/": "https://site.com/"
+    "g/": "https://site.com/",
+    "named-register-single-execute": "./named-register-single-execute.js"
   },
   "scopes": {
     "scope-test/": {

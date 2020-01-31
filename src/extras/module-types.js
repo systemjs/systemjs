@@ -8,7 +8,9 @@
 
   const moduleTypesRegEx = /\.(css|html|json|wasm)$/;
   systemJSPrototype.shouldFetch = function (url) {
-    return url.match(moduleTypesRegEx);
+    const path = url.split('?')[0].split('#')[0];
+    const ext = path.slice(path.lastIndexOf('.'));
+    return ext.match(moduleTypesRegEx);
   }
   systemJSPrototype.fetch = function (url) {
     return fetch(url);

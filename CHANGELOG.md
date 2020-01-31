@@ -1,3 +1,24 @@
+SystemJS 6.1.10
+* Fixing bug where named AMD modules were instantiated twice (https://github.com/systemjs/systemjs/pull/2104)
+* Save bytes with setTimeout (https://github.com/systemjs/systemjs/pull/2105)
+* Prefer import map resolution over registryRegistry resolution (https://github.com/systemjs/systemjs/pull/2108)
+
+SystemJS 6.1.9
+* Fix bug where url query params and hash broke module type file extension check (https://github.com/systemjs/systemjs/pull/2096 @LarsDenBakker)
+
+SystemJS 6.1.8
+* Ensure that __esModule is copied to ns even if it isn't enumerable. Improves webpack interop when using libraryTarget system.
+
+SystemJS 6.1.7
+* Fix problem where banner comment in output files had wrong version number
+
+SystemJS 6.1.6
+* Fix IE11 regression in 6.1.5 (https://github.com/systemjs/systemjs/pull/2077 @kouts)
+
+SystemJS 6.1.5
+* Support registry delete returning update function (https://github.com/systemjs/systemjs/pull/2020 @guybedford)
+* Fixing bug where named-exports didn't work on named registers. (https://github.com/systemjs/systemjs/pull/2074 @joeldenning)
+
 SystemJS 6.1.4 (2019/10/12)
 * Fix IE global detection to ignore IFrames (https://github.com/systemjs/systemjs/pull/2035, @kduret)
 * Remove stray console.log (https://github.com/systemjs/systemjs/pull/2046, @joeldenning)

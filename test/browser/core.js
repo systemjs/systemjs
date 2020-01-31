@@ -1,5 +1,5 @@
 suite('SystemJS Standard Tests', function() {
-  
+
   test('Syntax errors', function () {
     // mocha must ignore script errors as uncaught
 		window.onerror = undefined;
@@ -196,5 +196,26 @@ suite('SystemJS Standard Tests', function() {
     const resolved = System.resolve('/test/fixtures/browser/systemjs-module-early.js');
     assert.ok(System.has(resolved));
     assert.equal(System.get(resolved).hi, 'bye');
-  })
+  });
+
+  test('non-enumerable __esModule property export (issue 2090)', function () {
+    return System.import('fixtures/__esModule.js').then(function (m) {
+      // Even though __esModule is not enumerable on the exported object, it should be preserved on the systemjs namespace
+      assert.ok(m.__esModule);
+    });
+  });
+
+  test('should not get confused by filenames in url hash when resolving module type', function () {
+    return System.import('fixturesbase/css-modules/hash.css?foo=bar.html').then(function (m) {
+      assert.ok(m);
+      assert.ok(m.default instanceof CSSStyleSheet);
+    });
+  });
+
+  test('should not get confused by filenames in search params hash when resolving module type', function () {
+    return System.import('fixturesbase/css-modules/search-param.css?param=foo.html').then(function (m) {
+      assert.ok(m);
+      assert.ok(m.default instanceof CSSStyleSheet);
+    });
+  });
 });

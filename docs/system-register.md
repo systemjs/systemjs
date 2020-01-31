@@ -44,7 +44,7 @@ where:
 * `_context.import: (id: String) => Promise<Module>` This is the contextual dynamic import function available to the module as the replacement for `import()`.
 
 > Note as of SystemJS 2.0 support for named `System.register(name, deps, declare)` is no longer supported, as instead code optimization approaches that combine modules
-  like with [Rollup's code-splitting workflows](https://rollupjs.org/guide/en#experimental-code-splitting) are recommended insteead.
+  like with [Rollup's code-splitting workflows](https://rollupjs.org/guide/en#experimental-code-splitting) are recommended instead.
 
 #### Why the System.register name
 

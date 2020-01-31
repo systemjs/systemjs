@@ -10,6 +10,8 @@
     throw Error('AMD require not supported.');
   }
 
+  let tmpRegister, firstNamedDefine;
+
   function emptyFn () {}
 
   const requireExportsModule = ['require', 'exports', 'module'];
@@ -78,10 +80,17 @@
 
   const getRegister = systemPrototype.getRegister;
   systemPrototype.getRegister = function () {
+    if (tmpRegister)
+      return tmpRegister;
+
     const register = getRegister.call(this);
     // if its an actual System.register leave it
     if (register && register[1] === lastRegisterDeclare)
       return register;
+
+    // If the script registered a named module, return that module instead of re-instantiating it.
+    if (firstNamedDefine)
+      return firstNamedDefine;
 
     // otherwise AMD takes priority
     // no registration -> attempt AMD detection
@@ -99,14 +108,14 @@
       if (amdDefineDeps) {
         if (!System.registerRegistry)
           throw Error('Include the named register extension for SystemJS named AMD support.');
-        System.registerRegistry[name] = createAMDRegister(deps, execute);
+        addToRegisterRegistry(name, createAMDRegister(deps, execute));
         amdDefineDeps = [];
         amdDefineExec = emptyFn;
         return;
       }
       else {
         if (System.registerRegistry)
-          System.registerRegistry[name] = createAMDRegister([].concat(deps), execute);
+          addToRegisterRegistry(name, createAMDRegister([].concat(deps), execute));
         name = deps;
         deps = execute;
       }
@@ -128,4 +137,20 @@
     }
   };
   global.define.amd = {};
+
+  function addToRegisterRegistry(name, define) {
+    if (!firstNamedDefine) {
+      firstNamedDefine = define;
+      setTimeout(function () {
+        firstNamedDefine = null;
+      });
+    }
+
+    // We must call System.getRegister() here to give other extras, such as the named-exports extra,
+    // a chance to modify the define before it's put into the registerRegistry.
+    // See https://github.com/systemjs/systemjs/issues/2073
+    tmpRegister = define;
+    System.registerRegistry[name] = System.getRegister();
+    tmpRegister = null;
+  }
 })(typeof self !== 'undefined' ? self : global);

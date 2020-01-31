@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "6.1.4",
+  "version": "6.1.10",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
@@ -37,5 +37,9 @@
     "test": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js && npm run test-browser",
     "test-browser": "node test/server.js",
     "prepublish": "npm run build"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/systemjs"
   }
 }
