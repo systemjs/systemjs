@@ -39,6 +39,16 @@ System.constructor.prototype.createContext = function (url) {
 };
 ```
 
+#### createScript(url) -> HTMLScriptElement
+
+When SystemJS loads a module, it creates a `<script>` tag and injects it into the head.
+
+`createScript` allows hooking this script tag creation, will by default implement `return Object.assign(document.createElement('script'), { url, crossOrigin: 'anonymous' })`.
+
+This allows, for example, including custom integrity or authentication attributes.
+
+Note that this hook does not apply to [module types](module-types.md), which use the default browser fetch implementation.
+
 #### prepareImport() -> Promise
 
 This function is called before any `System.import` or dynamic import, returning a Promise that is resolved before continuing to perform the import.
@@ -81,6 +91,29 @@ For tracing functionality this is called on completion or failure of each and ev
 Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
 
 ### Extras Hooks
+
+#### shouldFetch(url) -> Boolean
+
+This hook is provided by the [module types extra](./module-types.md).
+
+For module type loading support, files ending in `.css`, `.json`, `.wasm` will be loaded via `fetch()`.
+
+This function handles that logic, allowing for custom handling for other extensions.
+
+Setting:
+
+```js
+System.shouldFetch = function () { return true; };
+```
+
+will enforce loading all JS files through `fetch`, even allowing custom transform hooks to be implemented through the fetch hook.
+
+#### fetch(url) -> Promise<Response>
+
+This hook is provided by the [module types extra](./module-types.md).
+
+The default fetch implementation used by module types is simply `System.fetch = window.fetch` and can be hooked through the fetch hook, allowing for
+any custom request interception.
 
 #### transform(url, source) -> Promise<String>
 
