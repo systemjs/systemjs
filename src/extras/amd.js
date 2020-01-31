@@ -103,8 +103,7 @@
     if (!_amdDefineDeps)
       return register || emptyInstantiation;
 
-    const registration = createAMDRegister(_amdDefineDeps, amdDefineExec);
-    return registration;
+    return createAMDRegister(_amdDefineDeps, amdDefineExec);
   };
   let amdDefineDeps, amdDefineExec;
   global.define = function (name, deps, execute) {
