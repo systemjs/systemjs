@@ -1,3 +1,7 @@
+SystemJS 6.2.0
+* Adding new createScript / fetch / shouldFetch hooks (https://github.com/systemjs/systemjs/pull/2058)
+* Fixing race conditions with named register modules (https://github.com/systemjs/systemjs/pull/2114)
+
 SystemJS 6.1.10
 * Fixing bug where named AMD modules were instantiated twice (https://github.com/systemjs/systemjs/pull/2104)
 * Save bytes with setTimeout (https://github.com/systemjs/systemjs/pull/2105)

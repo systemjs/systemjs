@@ -83,23 +83,27 @@
     if (tmpRegister)
       return tmpRegister;
 
+    const _firstNamedDefine = firstNamedDefine;
+    firstNamedDefine = null;
+
     const register = getRegister.call(this);
     // if its an actual System.register leave it
     if (register && register[1] === lastRegisterDeclare)
       return register;
 
+    const _amdDefineDeps = amdDefineDeps;
+    amdDefineDeps = null;
+
     // If the script registered a named module, return that module instead of re-instantiating it.
-    if (firstNamedDefine)
-      return firstNamedDefine;
+    if (_firstNamedDefine)
+      return _firstNamedDefine;
 
     // otherwise AMD takes priority
     // no registration -> attempt AMD detection
-    if (!amdDefineDeps)
+    if (!_amdDefineDeps)
       return register || emptyInstantiation;
 
-    const registration = createAMDRegister(amdDefineDeps, amdDefineExec);
-    amdDefineDeps = null;
-    return registration;
+    return createAMDRegister(_amdDefineDeps, amdDefineExec);
   };
   let amdDefineDeps, amdDefineExec;
   global.define = function (name, deps, execute) {
@@ -141,9 +145,6 @@
   function addToRegisterRegistry(name, define) {
     if (!firstNamedDefine) {
       firstNamedDefine = define;
-      setTimeout(function () {
-        firstNamedDefine = null;
-      });
     }
 
     // We must call System.getRegister() here to give other extras, such as the named-exports extra,
