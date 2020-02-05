@@ -19,13 +19,15 @@
 
   let firstNamedDefine;
 
-  function clearFirstNamedDefine () {
-    firstNamedDefine = null;
-  }
-
   function setRegisterRegistry(systemInstance) {
     systemInstance.registerRegistry = Object.create(null);
   }
+
+  const _import = systemJSPrototype.import;
+  systemJSPrototype.import = function() {
+    firstNamedDefine = null;
+    return _import.apply(this, arguments);
+  };
 
   const register = systemJSPrototype.register;
   systemJSPrototype.register = function (name, deps, declare) {

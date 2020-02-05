@@ -77,4 +77,15 @@ suite('Named System.register', function() {
       });
     });
   });
+
+  // https://github.com/systemjs/systemjs/issues/2115
+  test('loading a module after manual named register should return the loaded module', function () {
+    define('a-named-thing', [], function () {
+      return "named thing right before import";
+    });
+
+    return System.import('fixtures/amd-named-thing-as-dep.js').then(function (m) {
+      assert.equal(m.default, 'The module depending on the named thing');
+    });
+  });
 });
