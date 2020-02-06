@@ -63,6 +63,12 @@
     }];
   }
 
+  const _import = systemPrototype.import;
+  systemPrototype.import = function() {
+    firstNamedDefine = null;
+    return _import.apply(this, arguments);
+  };
+
   // hook System.register to know the last declaration binding
   let lastRegisterDeclare;
   const systemRegister = systemPrototype.register;
