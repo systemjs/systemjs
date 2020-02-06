@@ -1,3 +1,6 @@
+SystemJS 6.2.1
+* Fix problem with named register modules (resolves #2115) (https://github.com/systemjs/systemjs/pull/2116)
+
 SystemJS 6.2.0
 * Adding new createScript / fetch / shouldFetch hooks (https://github.com/systemjs/systemjs/pull/2058)
 * Fixing race conditions with named register modules (https://github.com/systemjs/systemjs/pull/2114)
