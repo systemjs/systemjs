@@ -1,5 +1,5 @@
 /*
-* SJS 6.2.1
+* SJS 6.2.2
 * Minimal SystemJS Build
 */
 (function () {

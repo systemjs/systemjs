@@ -1,3 +1,6 @@
+SystemJS 6.2.2
+* Supporting multiple define variations for named modules. Resolves #2118. (https://github.com/systemjs/systemjs/pull/2119)
+
 SystemJS 6.2.1
 * Fix problem with named register modules (resolves #2115) (https://github.com/systemjs/systemjs/pull/2116)
 
