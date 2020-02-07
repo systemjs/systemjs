@@ -92,7 +92,7 @@ suite('Named System.register', function() {
   // https://github.com/systemjs/systemjs/issues/2118
   test('named define without dependencies specified', function () {
     define('named-define-no-deps', function () {
-      return 'The named-define-no-deps module'
+      return 'The named-define-no-deps module';
     });
 
     return System.import('named-define-no-deps').then(function (m) {
@@ -102,7 +102,7 @@ suite('Named System.register', function() {
 
   // https://github.com/systemjs/systemjs/issues/2118
   test('named define with object', function () {
-    define('named-define-object', {hello: 'there'});
+    define('named-define-object', { hello: 'there' });
 
     return System.import('named-define-object').then(function (m) {
       assert.equal(m.hello, 'there');
