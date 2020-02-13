@@ -5,7 +5,7 @@ const { once } = require('events');
 const { pathToFileURL, fileURLToPath } = require('url');
 const opn = require('opn');
 
-const port = 8085;
+const port = 8080;
 
 const systemJSURL = pathToFileURL(path.resolve(__dirname, '..') + '/');
 
