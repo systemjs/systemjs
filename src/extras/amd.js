@@ -155,6 +155,9 @@
   function addToRegisterRegistry(name, define) {
     if (!firstNamedDefine) {
       firstNamedDefine = define;
+      setTimeout(function () {
+        firstNamedDefine = null;
+      });
     }
 
     // We must call System.getRegister() here to give other extras, such as the named-exports extra,

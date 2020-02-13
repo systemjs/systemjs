@@ -37,6 +37,9 @@
     this.registerRegistry[name] = define;
     if (!firstNamedDefine) {
       firstNamedDefine = define;
+      setTimeout(function () {
+        firstNamedDefine = null;
+      });
     }
     return register.apply(this, arguments);
   };
