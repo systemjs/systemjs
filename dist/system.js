@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.2.2
+* SystemJS 6.2.3
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';

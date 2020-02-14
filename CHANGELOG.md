@@ -1,3 +1,6 @@
+SystemJS 6.2.3
+* Fix another race condition with named registers. (https://github.com/systemjs/systemjs/pull/2121)
+
 SystemJS 6.2.2
 * Supporting multiple define variations for named modules. Resolves #2118. (https://github.com/systemjs/systemjs/pull/2119)
 
