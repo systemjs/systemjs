@@ -63,12 +63,6 @@
     }];
   }
 
-  const _import = systemPrototype.import;
-  systemPrototype.import = function() {
-    firstNamedDefine = null;
-    return _import.apply(this, arguments);
-  };
-
   // hook System.register to know the last declaration binding
   let lastRegisterDeclare;
   const systemRegister = systemPrototype.register;
@@ -155,6 +149,9 @@
   function addToRegisterRegistry(name, define) {
     if (!firstNamedDefine) {
       firstNamedDefine = define;
+      setTimeout(function () {
+        firstNamedDefine = null;
+      });
     }
 
     // We must call System.getRegister() here to give other extras, such as the named-exports extra,

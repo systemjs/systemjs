@@ -108,4 +108,27 @@ suite('Named System.register', function() {
       assert.equal(m.hello, 'there');
     });
   });
+
+  test('named define() called by code outside of SystemJS modules during import', function () {
+    const importPromise = System.import('fixtures/anonymous-define.js');
+
+    define('outside-systemjs', {thing: 'wrong'});
+
+    return importPromise.then(function (m) {
+      assert.equal(m.default.thing, 'correct');
+    });
+  });
+
+  test('named System.register() called by code outside of SystemJS modules during import', function () {
+    const importPromise = System.import('fixtures/anonymous-register.js');
+
+    System.register('named-register-outside-systemjs', [], function (_export) {
+      _export('thing', 'wrong');
+      return {};
+    });
+
+    return importPromise.then(function (m) {
+      assert.equal(m.thing, 'correct');
+    });
+  });
 });
