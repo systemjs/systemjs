@@ -21,7 +21,6 @@
 
   function setRegisterRegistry(systemInstance) {
     systemInstance.registerRegistry = Object.create(null);
-    systemInstance.nameRegistry = [];
   }
 
   const register = systemJSPrototype.register;
@@ -45,7 +44,7 @@
       // Prefer import map (or other existing) resolution over the registerRegistry
       return resolve.call(this, id, parentURL);
     } catch (err) {
-      if (id in this.registerRegistry || this.nameRegistry.includes(id)) {
+      if (id in this.registerRegistry) {
         return id;
       }
       throw err;
@@ -56,8 +55,7 @@
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const result = this.registerRegistry[url];
     if (result) {
-      delete this.registerRegistry[url];
-      this.nameRegistry.push(url);
+      this.registerRegistry[url] = null;
       return result;
     } else {
       return instantiate.call(this, url, firstParentUrl);

@@ -139,7 +139,7 @@ suite('Named System.register', function() {
     })
     .then(function (m) {
       assert.equal(m.b, 'b');
-      assert.equal(System.registerRegistry['b'], undefined);
+      assert.equal(System.registerRegistry['b'], null);
     });
   });
 });
