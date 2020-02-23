@@ -142,4 +142,15 @@ suite('Named System.register', function() {
       assert.equal(System.registerRegistry['b'], null);
     });
   });
+
+  test('Ensure resolve still works after registerRegistry cleanup', function () {
+    return System.import('./fixtures/browser/named-bundle.js').then(function (m) {
+      assert.equal(m.a, 'b');
+      return System.import('b');
+    })
+    .then(function (m) {
+      assert.equal(m.b, 'b');
+      assert.equal(System.resolve('b'), 'b');
+    });
+  });
 });
