@@ -153,4 +153,18 @@ suite('Named System.register', function() {
       assert.equal(System.resolve('b'), 'b');
     });
   });
+
+  test('Ensure import still works after registerRegistry cleanup', function () {
+    return System.import('./fixtures/browser/named-bundle.js').then(function (m) {
+      assert.equal(m.a, 'b');
+      return System.import('b');
+    })
+    .then(function (m) {
+      assert.equal(m.b, 'b');
+      return System.import('b');
+    })
+    .then(function (m) {
+      assert.equal(m.b, 'b');
+    });
+  });
 });

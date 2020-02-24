@@ -1,3 +1,6 @@
+SystemJS 6.2.4
+* Fix problem where System.delete did not remove named register modules. (https://github.com/systemjs/systemjs/pull/2125 @k-j-kim)
+
 SystemJS 6.2.3
 * Fix another race condition with named registers. (https://github.com/systemjs/systemjs/pull/2121)
 
