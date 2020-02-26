@@ -73,4 +73,10 @@ suite('AMD tests', function () {
       assert.equal(m.default, "AMD Simple");
     });
   });
+
+  test('Loading an AMD module which returns a false value', function () {
+    return System.import('fixtures/amd-false-module.js').then(function (m) {
+      assert.equal(m.default, false);
+    });
+  });
 });
