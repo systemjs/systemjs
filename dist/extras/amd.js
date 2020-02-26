@@ -56,7 +56,7 @@
         setters: setters,
         execute: function () {
           const amdResult = amdExec.apply(exports, depModules);
-          if (amdResult !== null && amdResult !== undefined)
+          if (amdResult !== undefined)
             module.exports = amdResult;
           if (exports !== module.exports)
             _export('default', module.exports);
