@@ -1,3 +1,3 @@
-define('amd-false-module', [], function () {
+define([], function () {
   return false;
 });
