@@ -1,3 +1,6 @@
+SystemJS 6.2.5
+* Fix problem where a falsy exported value from AMD modules didn't work (https://github.com/systemjs/systemjs/pull/2130)
+
 SystemJS 6.2.4
 * Fix problem where System.delete did not remove named register modules. (https://github.com/systemjs/systemjs/pull/2125 @k-j-kim)
 
