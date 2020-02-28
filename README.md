@@ -68,25 +68,25 @@ SystemJS can load modules in less than a millisecond, and its performance is ver
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
-| Native modules | |
-| SystemJS | |
-| es-module-shims import map | |
+| Native modules | | |
+| SystemJS | | |
+| es-module-shims | | |
 
 ## With dep cache
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
-| Native modules | |
-| SystemJS | |
-| es-module-shims import map | |
+| Native modules | | |
+| SystemJS | | |
+| es-module-shims | | |
 
 ## With recursive dep cache
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
-| Native modules | |
-| SystemJS | |
-| es-module-shims import map | |
+| Native modules | | |
+| SystemJS | | |
+| es-module-shims | | |
 
 ## Backers
 
