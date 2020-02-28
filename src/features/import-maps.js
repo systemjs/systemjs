@@ -5,7 +5,7 @@ import { baseUrl, resolveAndComposeImportMap, hasDocument, resolveUrl, IMPORT_MA
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
-var importMapPromise = Promise.resolve({ imports: {}, scopes: {} });
+var importMapPromise = Promise.resolve({ imports: {}, scopes: {}, depcache: {} });
 
 // Scripts are processed immediately, on the first System.import, and on DOMReady.
 // Import map scripts are processed only once (by being marked) and in order for each phase.
@@ -25,6 +25,15 @@ if (hasDocument) {
   processScripts();
   window.addEventListener('DOMContentLoaded', processScripts);
 }
+
+const systemInstantiate = systemJSPrototype.instantiate;
+systemJSPrototype.instantiate = function (url, firstParentUrl) {
+  const loader = this;
+  (importMap.depcache[url] || []).forEach(function (dep) {
+    getOrCreateLoad(loader, systemJSPrototype.resolve(dep, url), url);
+  });
+  return systemInstantiate.call(this, url, firstParentUrl);
+};
 
 function processScripts () {
   [].forEach.call(document.querySelectorAll('script'), function (script) {
