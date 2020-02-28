@@ -62,7 +62,7 @@ Since all loader features are hookable, custom extensions can be easily made fol
 
 ## Performance
 
-SystemJS can load modules in less than a millisecond, and is very nearly identical to that of native ES modules. The following performance benchmark was run by loading 450 javascript modules on a good computer with fast internet connection.
+SystemJS can load modules in less than a millisecond, and its performance is very nearly identical to that of native ES modules. The following performance benchmark was run by loading 450 javascript modules on a good computer with fast internet connection.
 
 ## Without dep cache
 
