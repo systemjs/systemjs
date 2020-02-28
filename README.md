@@ -60,6 +60,34 @@ The following extras are included in system.js loader by default, and can be add
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
+## Performance
+
+SystemJS can load modules in less than a millisecond, and is very nearly identical to that of native ES modules. The following performance benchmark was run by loading 450 javascript modules on a good computer with fast internet connection.
+
+## Without dep cache
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | |
+| SystemJS | |
+| es-module-shims import map | |
+
+## With dep cache
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | |
+| SystemJS | |
+| es-module-shims import map | |
+
+## With recursive dep cache
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | |
+| SystemJS | |
+| es-module-shims import map | |
+
 ## Backers
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]
