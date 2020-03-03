@@ -66,9 +66,9 @@ SystemJS can load modules in less than a millisecond, and its performance is ver
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
-| Native modules | 1668ms | 49 |
+| Native modules | 1668ms | 49ms |
 | SystemJS | 2334ms | 81ms |
-| es-module-shims | 2671 | 602 |
+| es-module-shims | 2671ms | 602ms |
 
 ## Backers
 
