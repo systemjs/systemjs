@@ -60,6 +60,16 @@ The following extras are included in system.js loader by default, and can be add
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
+## Performance
+
+SystemJS can load modules in less than a millisecond, and its performance is very nearly identical to that of native ES modules. The following performance benchmark was run by loading 450 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | 1668ms | 49ms |
+| SystemJS | 2334ms | 81ms |
+| es-module-shims | 2671ms | 602ms |
+
 ## Backers
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]

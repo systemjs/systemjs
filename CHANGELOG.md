@@ -1,3 +1,27 @@
+SystemJS 6.2.5
+* Fix problem where a falsy exported value from AMD modules didn't work (https://github.com/systemjs/systemjs/pull/2130)
+
+SystemJS 6.2.4
+* Fix problem where System.delete did not remove named register modules. (https://github.com/systemjs/systemjs/pull/2125 @k-j-kim)
+
+SystemJS 6.2.3
+* Fix another race condition with named registers. (https://github.com/systemjs/systemjs/pull/2121)
+
+SystemJS 6.2.2
+* Supporting multiple define variations for named modules. Resolves #2118. (https://github.com/systemjs/systemjs/pull/2119)
+
+SystemJS 6.2.1
+* Fix problem with named register modules (resolves #2115) (https://github.com/systemjs/systemjs/pull/2116)
+
+SystemJS 6.2.0
+* Adding new createScript / fetch / shouldFetch hooks (https://github.com/systemjs/systemjs/pull/2058)
+* Fixing race conditions with named register modules (https://github.com/systemjs/systemjs/pull/2114)
+
+SystemJS 6.1.10
+* Fixing bug where named AMD modules were instantiated twice (https://github.com/systemjs/systemjs/pull/2104)
+* Save bytes with setTimeout (https://github.com/systemjs/systemjs/pull/2105)
+* Prefer import map resolution over registryRegistry resolution (https://github.com/systemjs/systemjs/pull/2108)
+
 SystemJS 6.1.9
 * Fix bug where url query params and hash broke module type file extension check (https://github.com/systemjs/systemjs/pull/2096 @LarsDenBakker)
 

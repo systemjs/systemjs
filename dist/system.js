@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.1.9
+* SystemJS 6.2.5
 */
 (function () {
   const hasSelf = typeof self !== 'undefined';
@@ -542,39 +542,40 @@
     systemRegister.call(this, deps, declare);
   };
 
+  systemJSPrototype.createScript = function (url) {
+    const script = document.createElement('script');
+    script.charset = 'utf-8';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.src = url;
+    return script;
+  };
+
+  let lastWindowErrorUrl, lastWindowError;
+  if (hasDocument)
+    window.addEventListener('error', function (evt) {
+      lastWindowErrorUrl = evt.filename;
+      lastWindowError = evt.error;
+    });
+
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
     return new Promise(function (resolve, reject) {
-      let err;
-
-      function windowErrorListener(evt) {
-        if (evt.filename === url)
-          err = evt.error;
-      }
-
-      window.addEventListener('error', windowErrorListener);
-
-      const script = document.createElement('script');
-      script.charset = 'utf-8';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
+      const script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
-        window.removeEventListener('error', windowErrorListener);
         reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
-        window.removeEventListener('error', windowErrorListener);
         document.head.removeChild(script);
         // Note that if an error occurs that isn't caught by this if statement,
         // that getRegister will return null and a "did not instantiate" error will be thrown.
-        if (err) {
-          reject(err);
+        if (lastWindowErrorUrl === url) {
+          reject(lastWindowError);
         }
         else {
           resolve(loader.getRegister());
         }
       });
-      script.src = url;
       document.head.appendChild(script);
     });
   };
@@ -711,93 +712,93 @@
     const systemJSPrototype = global.System.constructor.prototype;
     const instantiate = systemJSPrototype.instantiate;
 
-    systemJSPrototype.instantiate = function (url, parent) {
-      const loader = this;
+    const moduleTypesRegEx = /\.(css|html|json|wasm)$/;
+    systemJSPrototype.shouldFetch = function (url) {
       const path = url.split('?')[0].split('#')[0];
       const ext = path.slice(path.lastIndexOf('.'));
+      return ext.match(moduleTypesRegEx);
+    };
+    systemJSPrototype.fetch = function (url) {
+      return fetch(url);
+    };
 
-      switch (ext) {
-        case '.css':
-          return loadDynamicModule(function (_export, source) {
-            // Relies on a Constructable Stylesheet polyfill
-            const stylesheet = new CSSStyleSheet();
-            stylesheet.replaceSync(source);
-            _export('default', stylesheet);
-          });
-        case '.html':
-          return getSourceRes().then(function (res) {
-            return maybeJSFallback(res) || loadError("'.html' modules not implemented");
-          });
-        case '.json':
-          return loadDynamicModule(function (_export, source) {
-            _export('default', JSON.parse(source));
-          });
-        case '.wasm':
-          return getSourceRes().then(function (res) {
-            return maybeJSFallback(res) ||
-                (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile));
-          })
-          .then(function (module) {
-            const deps = [];
-            const setters = [];
-            const importObj = {};
-
-            // we can only set imports if supported (eg early Safari doesnt support)
-            if (WebAssembly.Module.imports)
-              WebAssembly.Module.imports(module).forEach(function (impt) {
-                const key = impt.module;
-                if (deps.indexOf(key) === -1) {
-                  deps.push(key);
-                  setters.push(function (m) {
-                    importObj[key] = m;
-                  });
-                }
-              });
-
-            return [deps, function (_export) {
-              return {
-                setters: setters,
-                execute: function () {
-                  return WebAssembly.instantiate(module, importObj)
-                  .then(function (instance) {
-                    _export(instance.exports);
-                  });
-                }
-              };
-            }];
-          });
+    systemJSPrototype.instantiate = function (url, parent) {
+      const loader = this;
+      if (this.shouldFetch(url)) {
+        return this.fetch(url)
+        .then(function (res) {
+          if (!res.ok)
+            throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : ''));
+          const contentType = res.headers.get('content-type');
+          if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
+            return res.text().then(function (source) {
+              (0, eval)(source);
+              return loader.getRegister();
+            });
+          }
+          else if (contentType.match(/^application\/json(;|$)/)) {
+            return res.text().then(function (source) {
+              return [[], function (_export) {
+                return {
+                  execute: function () {
+                    _export('default', JSON.parse(source));
+                  }
+                };
+              }];
+            });
+          }
+          else if (contentType.match(/^text\/css(;|$)/)) {
+            return res.text().then(function (source) {
+              return [[], function (_export) {
+                return {
+                  execute: function () {
+                    // Relies on a Constructable Stylesheet polyfill
+                    const stylesheet = new CSSStyleSheet();
+                    stylesheet.replaceSync(source);
+                    _export('default', stylesheet);
+                  }
+                };
+              }];
+            }); 
+          }
+          else if (contentType.match(/^application\/wasm(;|$)/)) {
+            return (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile))
+            .then(function (module) {
+              const deps = [];
+              const setters = [];
+              const importObj = {};
+          
+              // we can only set imports if supported (eg early Safari doesnt support)
+              if (WebAssembly.Module.imports)
+                WebAssembly.Module.imports(module).forEach(function (impt) {
+                  const key = impt.module;
+                  if (deps.indexOf(key) === -1) {
+                    deps.push(key);
+                    setters.push(function (m) {
+                      importObj[key] = m;
+                    });
+                  }
+                });
+          
+              return [deps, function (_export) {
+                return {
+                  setters: setters,
+                  execute: function () {
+                    return WebAssembly.instantiate(module, importObj)
+                    .then(function (instance) {
+                      _export(instance.exports);
+                    });
+                  }
+                };
+              }];
+            });
+          }
+          else {
+            throw new Error('Unknown module type "' + contentType + '"');
+          }
+        });
       }
       return instantiate.apply(this, arguments);
-
-      function getSourceRes () {
-        return fetch(url).then(function (res) {
-          if (!res.ok)
-            loadError(res.status + ' ' + res.statusText);
-          return res;
-        });
-      }
-      function maybeJSFallback (res) {
-        const contentType = res.headers.get('content-type');
-        // if the resource is sent as application/javascript, support eval-based execution
-        if (contentType && contentType.match(/^application\/javascript(;|$)/)) {
-          return res.text().then(function (source) {
-            (0, eval)(source);
-            return loader.getRegister();
-          });
-        }
-      }
-      function loadDynamicModule (createExec) {
-        return getSourceRes().then(function (res) {
-          return maybeJSFallback(res) || res.text().then(function (source) {
-            return [[], function (_export) {
-              return { execute: createExec(_export, source) };
-            }];
-          });
-        });
-      }
-      function loadError (msg) {
-        throw Error(msg + ', loading ' + url + (parent ? ' from ' + parent : ''));
-      }
     };
   })(typeof self !== 'undefined' ? self : global);
 

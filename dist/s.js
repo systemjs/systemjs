@@ -1,5 +1,5 @@
 /*
-* SJS 6.1.9
+* SJS 6.2.5
 * Minimal SystemJS Build
 */
 (function () {
@@ -392,39 +392,40 @@
     systemRegister.call(this, deps, declare);
   };
 
+  systemJSPrototype.createScript = function (url) {
+    const script = document.createElement('script');
+    script.charset = 'utf-8';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.src = url;
+    return script;
+  };
+
+  let lastWindowErrorUrl, lastWindowError;
+  if (hasDocument)
+    window.addEventListener('error', function (evt) {
+      lastWindowErrorUrl = evt.filename;
+      lastWindowError = evt.error;
+    });
+
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     const loader = this;
     return new Promise(function (resolve, reject) {
-      let err;
-
-      function windowErrorListener(evt) {
-        if (evt.filename === url)
-          err = evt.error;
-      }
-
-      window.addEventListener('error', windowErrorListener);
-
-      const script = document.createElement('script');
-      script.charset = 'utf-8';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
+      const script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
-        window.removeEventListener('error', windowErrorListener);
         reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
-        window.removeEventListener('error', windowErrorListener);
         document.head.removeChild(script);
         // Note that if an error occurs that isn't caught by this if statement,
         // that getRegister will return null and a "did not instantiate" error will be thrown.
-        if (err) {
-          reject(err);
+        if (lastWindowErrorUrl === url) {
+          reject(lastWindowError);
         }
         else {
           resolve(loader.getRegister());
         }
       });
-      script.src = url;
       document.head.appendChild(script);
     });
   };

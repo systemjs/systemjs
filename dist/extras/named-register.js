@@ -19,10 +19,6 @@
 
   let firstNamedDefine;
 
-  function clearFirstNamedDefine () {
-    firstNamedDefine = null;
-  }
-
   function setRegisterRegistry(systemInstance) {
     systemInstance.registerRegistry = Object.create(null);
   }
@@ -35,27 +31,44 @@
     this.registerRegistry[name] = define;
     if (!firstNamedDefine) {
       firstNamedDefine = define;
-      setTimeout(clearFirstNamedDefine, 0);
+      setTimeout(function () {
+        firstNamedDefine = null;
+      });
     }
     return register.apply(this, arguments);
   };
 
   const resolve = systemJSPrototype.resolve;
   systemJSPrototype.resolve = function (id, parentURL) {
-    if (id[0] === '/' || id[0] === '.' && (id[1] === '/' || id[1] === '.' && id[2] === '/'))
+    try {
+      // Prefer import map (or other existing) resolution over the registerRegistry
       return resolve.call(this, id, parentURL);
-    if (id in this.registerRegistry)
-      return id;
-    return resolve.call(this, id, parentURL);
+    } catch (err) {
+      if (id in this.registerRegistry) {
+        return id;
+      }
+      throw err;
+    }
   };
 
   const instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    return this.registerRegistry[url] || instantiate.call(this, url, firstParentUrl);
+    const result = this.registerRegistry[url];
+    if (result) {
+      this.registerRegistry[url] = null;
+      return result;
+    } else {
+      return instantiate.call(this, url, firstParentUrl);
+    }
   };
 
   const getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
-    return firstNamedDefine || getRegister.call(this);
+    // Calling getRegister() because other extras need to know it was called so they can perform side effects
+    const register = getRegister.call(this);
+
+    const result = firstNamedDefine || register;
+    firstNamedDefine = null;
+    return result;
   }
 })(typeof self !== 'undefined' ? self : global);
