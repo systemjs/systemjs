@@ -19,12 +19,6 @@ For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
 
 The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
 
-## Overview
-
-[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw)
-
-SystemJS provides two hookable base builds:
-
 ## Performance
 
 SystemJS can load multiple modules in less than a millisecond with its performance around a factor of 1.5 times the performance of native ES modules. The following performance benchmark was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
@@ -34,6 +28,12 @@ SystemJS can load multiple modules in less than a millisecond with its performan
 | Native modules | 1668ms | 49ms |
 | SystemJS | 2334ms | 81ms |
 | es-module-shims | 2671ms | 602ms |
+
+## Overview
+
+[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw)
+
+SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
 
