@@ -25,6 +25,16 @@ The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) cont
 
 SystemJS provides two hookable base builds:
 
+## Performance
+
+SystemJS can load multiple modules in less than a millisecond with its performance around a factor of 1.5 times the performance of native ES modules. The following performance benchmark was run by loading 450 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | 1668ms | 49ms |
+| SystemJS | 2334ms | 81ms |
+| es-module-shims | 2671ms | 602ms |
+
 #### 1. s.js minimal loader
 
 The minimal [1.5KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including IE11++.
@@ -59,16 +69,6 @@ The following extras are included in system.js loader by default, and can be add
 * [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
-
-## Performance
-
-SystemJS can load modules in less than a millisecond, and its performance is very nearly identical to that of native ES modules. The following performance benchmark was run by loading 450 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
-
-| Tool | Uncached | Cached |
-| ---- | -------- | ------ |
-| Native modules | 1668ms | 49ms |
-| SystemJS | 2334ms | 81ms |
-| es-module-shims | 2671ms | 602ms |
 
 ## Backers
 
