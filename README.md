@@ -27,7 +27,7 @@ SystemJS provides two hookable base builds:
 
 ## Performance
 
-SystemJS can load multiple modules in less than a millisecond with its performance around a factor of 1.5 times the performance of native ES modules. The following performance benchmark was run by loading 450 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+SystemJS can load multiple modules in less than a millisecond with its performance around a factor of 1.5 times the performance of native ES modules. The following performance benchmark was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
