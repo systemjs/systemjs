@@ -17,7 +17,7 @@
   SystemJS.prototype = systemJSPrototype;
   System.constructor = SystemJS;
 
-  let firstNamedDefine;
+  let lastNamedDefine, tmpRegister;
 
   function setRegisterRegistry(systemInstance) {
     systemInstance.registerRegistry = Object.create(null);
@@ -28,13 +28,15 @@
     if (typeof name !== 'string')
       return register.apply(this, arguments);
     const define = [deps, declare];
-    this.registerRegistry[name] = define;
-    if (!firstNamedDefine) {
-      firstNamedDefine = define;
-      setTimeout(function () {
-        firstNamedDefine = null;
-      });
-    }
+
+    // We must call System.getRegister() here to give other extras a chance to
+    // modify the define before it's put into the registerRegistry.
+    // See https://github.com/systemjs/systemjs/issues/2073
+    tmpRegister = define;
+    this.registerRegistry[name] = System.getRegister();
+    tmpRegister = null;
+
+    lastNamedDefine = define;
     return register.apply(this, arguments);
   };
 
@@ -64,11 +66,15 @@
 
   const getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
+    if (tmpRegister) {
+      return tmpRegister;
+    }
+
     // Calling getRegister() because other extras need to know it was called so they can perform side effects
     const register = getRegister.call(this);
 
-    const result = firstNamedDefine || register;
-    firstNamedDefine = null;
+    const result = lastNamedDefine || register;
+    lastNamedDefine = null;
     return result;
   }
 })(typeof self !== 'undefined' ? self : global);

@@ -1,3 +1,13 @@
+System.register('b', [], function (exports) {
+  return {
+    execute: function () {
+      exports({
+        b: 'b'
+      });
+    }
+  };
+});
+
 System.register('a', ['b'], function (exports) {
   var b;
   return {
@@ -7,16 +17,6 @@ System.register('a', ['b'], function (exports) {
     execute: function () {
       exports({
         a: b
-      });
-    }
-  };
-});
-
-System.register('b', [], function (exports) {
-  return {
-    execute: function () {
-      exports({
-        b: 'b'
       });
     }
   };
