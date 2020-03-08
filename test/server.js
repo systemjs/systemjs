@@ -18,9 +18,13 @@ const mimes = {
   '.wasm': 'application/wasm'
 };
 
+const shouldExit = process.env.WATCH_MODE !== 'true'
+
 let failTimeout, browserTimeout;
 
 function setBrowserTimeout () {
+  if (!shouldExit)
+    return;
   if (browserTimeout)
     clearTimeout(browserTimeout);
   browserTimeout = setTimeout(() => {
@@ -35,12 +39,16 @@ http.createServer(async function (req, res) {
   setBrowserTimeout();
   if (req.url === '/done') {
     console.log('Tests completed successfully.');
-    process.exit();
+    if (shouldExit) {
+      process.exit();
+    }
     return;
   }
   else if (req.url === '/error') {
     console.log('\033[31mTest failures found.\033[0m');
-    failTimeout = setTimeout(() => process.exit(1), 30000);
+    if (shouldExit) {
+      failTimeout = setTimeout(() => process.exit(1), 30000);
+    }
   }
   else if (failTimeout) {
     clearTimeout(failTimeout);
