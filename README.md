@@ -172,6 +172,7 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [jspm.org](https://jspm.org) - Package manager for native modules, using SystemJS for backwards compatibility.
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
 * [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
+* [esm-bundle](https://github.com/esm-bundle) - list of System.register versions for major libraries, including documentation on how to create a System.register bundle for any npm package.
 
 ## Loader Extensions
 
@@ -207,6 +208,10 @@ If building code using the `System` global in Webpack, the following config is n
   }
 }
 ```
+
+## Using npm packages
+
+Third party libraries and npm packages may be used as long as they are published in [a supported module format](https://github.com/systemjs/systemjs/blob/master/docs/module-types.md). For packages that do not exist in a supported module format, [here is a list of github repos](https://github.com/esm-bundle/) that publish `System.register` versions of popular third party libraries (such as react, react-dom, rxjs, etc).
 
 ## Polyfills for Older Browsers
 
