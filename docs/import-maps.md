@@ -129,6 +129,10 @@ This means import maps can reference resolutions from previous import maps:
 </script>
 ```
 
+#### Multiple import maps
+
+Previous versions of the import maps spec had support for multiple import maps in a single web page ([discussion](https://github.com/WICG/import-maps/issues/199)). SystemJS added support for multiple import maps during that time and has decided to keep support for multiple import maps as an experimental feature. Note that the Chrome implementation of import maps does not yet allow for multiple maps, and use of multiple import maps within SystemJS should be considered experimental and subject to change.
+
 #### Spec and Implementation Feedback
 
 Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on the spec.
