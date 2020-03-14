@@ -17,7 +17,7 @@
   SystemJS.prototype = systemJSPrototype;
   System.constructor = SystemJS;
 
-  let firstNamedDefine;
+  let firstNamedDefine, tmpDefine;
 
   function setRegisterRegistry(systemInstance) {
     systemInstance.registerRegistry = Object.create(null);
@@ -28,10 +28,12 @@
     if (typeof name !== 'string')
       return register.apply(this, arguments);
     const define = [deps, declare];
-    this.registerRegistry[name] = define;
+    tmpDefine = define;
+    this.registerRegistry[name] = System.getRegister();
+    tmpDefine = null;
     if (!firstNamedDefine) {
       firstNamedDefine = define;
-      setTimeout(function () {
+      Promise.resolve().then(function () {
         firstNamedDefine = null;
       });
     }
@@ -64,6 +66,9 @@
 
   const getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
+    if (tmpDefine) {
+      return tmpDefine;
+    }
     // Calling getRegister() because other extras need to know it was called so they can perform side effects
     const register = getRegister.call(this);
 
