@@ -31,7 +31,7 @@
     this.registerRegistry[name] = define;
     if (!firstNamedDefine) {
       firstNamedDefine = define;
-      setTimeout(function () {
+      Promise.resolve().then(function () {
         firstNamedDefine = null;
       });
     }

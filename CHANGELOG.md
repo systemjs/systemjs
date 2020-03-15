@@ -1,3 +1,6 @@
+SystemJS 6.2.6
+* Address race condition with named register modules (https://github.com/systemjs/systemjs/pull/2144)
+
 SystemJS 6.2.5
 * Fix problem where a falsy exported value from AMD modules didn't work (https://github.com/systemjs/systemjs/pull/2130)
 
