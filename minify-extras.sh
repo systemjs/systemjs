@@ -6,5 +6,6 @@ for f in *.js
 do
   short=${f%.js}
   ../../node_modules/.bin/terser $f -c passes=2 --define DEV=false -m --source-map --replace DEV=false -o $short.min.js
-  sed 's/DEV/true/' $f
+  sed -i.bak 's/DEV/true/' $f
+  rm $f.bak
 done

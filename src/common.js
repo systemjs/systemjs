@@ -173,7 +173,7 @@ function applyPackages (id, packages) {
 }
 
 function targetWarning (match, target, msg) {
-  console.warn(errMsg(6, DEV && "Package target " + msg + ", resolving target '" + target + "' for " + match))
+  console.warn(errMsg(6, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [msg, target, match]))
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -188,10 +188,7 @@ export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
 }
 
 export function errMsg(errCode, msg) {
-  const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode
-  if (DEV) {
-    return "SystemJS Error #" + errCode + " - " + msg + ". See " + url + " for details."
-  } else {
-    return "SystemJS #" + errCode + " - " + url;
-  }
+  const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode;
+  msg = msg ? " - " + JSON.stringify(msg) : "";
+  return "SystemJS #" + errCode + msg + " - " + url;
 }
