@@ -14,7 +14,7 @@
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
-import { global } from './common.js';
+import { global, errMsg } from './common.js';
 export { systemJSPrototype, REGISTRY }
 
 const hasSymbol = typeof Symbol !== 'undefined';
@@ -74,6 +74,8 @@ systemJSPrototype.getRegister = function () {
   return _lastRegister;
 };
 
+systemJSPrototype.errMsg = errMsg;
+
 function getOrCreateLoad (loader, id, firstParentUrl) {
   let load = loader[REGISTRY][id];
   if (load)
@@ -90,7 +92,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   })
   .then(function (registration) {
     if (!registration)
-      throw Error('Module ' + id + ' did not instantiate');
+      throw Error(errMsg(5, DEV && 'Module ' + id + ' did not instantiate'));
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;

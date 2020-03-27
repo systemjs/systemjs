@@ -131,7 +131,7 @@
         continue;
       const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
       if (!mapped)
-        targetWarning(p, rhs, 'bare specifier did not resolve');
+        targetWarning(p, rhs, false);
       else
         outPackages[resolvedLhs] = mapped;
     }
@@ -169,14 +169,14 @@
       const pkg = packages[pkgName];
       if (pkg === null) return;
       if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-        targetWarning(pkgName, pkg, "should have a trailing '/'");
+        targetWarning(pkgName, pkg, false);
       else
         return pkg + id.slice(pkgName.length);
     }
   }
 
   function targetWarning (match, target, msg) {
-    console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
+    console.warn(errMsg(6, false));
   }
 
   function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -188,6 +188,13 @@
       scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
     }
     return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
+  }
+
+  function errMsg(errCode, msg) {
+    const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode;
+    {
+      return "SystemJS #" + errCode + " - " + url;
+    }
   }
 
   /*
@@ -263,6 +270,8 @@
     return _lastRegister;
   };
 
+  systemJSPrototype.errMsg = errMsg;
+
   function getOrCreateLoad (loader, id, firstParentUrl) {
     let load = loader[REGISTRY][id];
     if (load)
@@ -279,7 +288,7 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw Error('Module ' + id + ' did not instantiate');
+        throw Error(errMsg(5, false));
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
@@ -501,7 +510,7 @@
   let importMap = { imports: {}, scopes: {} }, importMapPromise;
 
   if (hasDocument) {
-    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
+    iterateImportMaps(function (script) {
       script._j = fetch(script.src).then(function (res) {
         return res.json();
       });
@@ -512,9 +521,9 @@
     if (!importMapPromise) {
       importMapPromise = Promise.resolve();
       if (hasDocument)
-        Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+        iterateImportMaps(function (script) {
           importMapPromise = importMapPromise.then(function () {
-            return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
+            return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(parseJson(script)))
             .then(function (json) {
               importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
             });
@@ -530,7 +539,19 @@
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+    throw Error(errMsg(2, false));
+  }
+
+  function iterateImportMaps(cb, onlyExternal) {
+    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + onlyExternal ? '[src]' : ''), cb);
+  }
+
+  function parseJson(script) {
+    try {
+      return JSON.parse(script);
+    } catch (err) {
+      throw Error(errMsg(1, err.message));
+    }
   }
 
   /*
@@ -563,7 +584,7 @@
     return new Promise(function (resolve, reject) {
       const script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
-        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+        reject(Error(systemJSPrototype.errMsg(4, 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
       });
       script.addEventListener('load', function () {
         document.head.removeChild(script);
@@ -728,7 +749,7 @@
         return this.fetch(url)
         .then(function (res) {
           if (!res.ok)
-            throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : ''));
+            throw Error(systemJSPrototype.errMsg(9, res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
           const contentType = res.headers.get('content-type');
           if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
             return res.text().then(function (source) {
@@ -794,7 +815,7 @@
             });
           }
           else {
-            throw new Error('Unknown module type "' + contentType + '"');
+            throw Error(systemJSPrototype.errMsg(10, 'Unknown module type "' + contentType + '"'));
           }
         });
       }

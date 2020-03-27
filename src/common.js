@@ -128,7 +128,7 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
       continue;
     const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped)
-      targetWarning(p, rhs, 'bare specifier did not resolve');
+      targetWarning(p, rhs, DEV && 'bare specifier did not resolve');
     else
       outPackages[resolvedLhs] = mapped;
   }
@@ -166,14 +166,14 @@ function applyPackages (id, packages) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-      targetWarning(pkgName, pkg, "should have a trailing '/'");
+      targetWarning(pkgName, pkg, DEV && "should have a trailing '/'");
     else
       return pkg + id.slice(pkgName.length);
   }
 }
 
 function targetWarning (match, target, msg) {
-  console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
+  console.warn(errMsg(6, DEV && "Package target " + msg + ", resolving target '" + target + "' for " + match))
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -185,4 +185,13 @@ export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
     scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
   }
   return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
+}
+
+export function errMsg(errCode, msg) {
+  const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode
+  if (DEV) {
+    return "SystemJS Error #" + errCode + " - " + msg + ". See " + url + " for details."
+  } else {
+    return "SystemJS #" + errCode + " - " + url;
+  }
 }
