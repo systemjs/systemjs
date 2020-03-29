@@ -17,7 +17,6 @@ const terserOptions = {
   compress: {
     unsafe: true,
     arguments: true,
-    booleans_as_integers: true,
     hoist_funs: true,
     hoist_props: true,
     keep_fargs: false,
