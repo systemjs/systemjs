@@ -42,9 +42,9 @@ const terserOptions = {
 
 export default [
   // mainConfig('system', true),
-  mainConfig('system', false),
+  // mainConfig('system', false),
   // mainConfig('s', true),
-  // mainConfig('s', false),
+  mainConfig('s', false),
   // ...extrasConfig(true),
   // ...extrasConfig(false),
 ]
