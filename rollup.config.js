@@ -5,6 +5,7 @@ import { terser } from 'rollup-plugin-terser';
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
 const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'))
+
 const terserOptions = {
   mangle: {
     eval: true,
@@ -80,7 +81,7 @@ function mainConfig(name, isDev) {
       file: `dist/${name}${isDev ? '' : '.min'}.js`,
       format: 'iife',
       strict: false,
-      sourcemap: isDev,
+      sourcemap: !isDev,
       banner
     },
     plugins: [
