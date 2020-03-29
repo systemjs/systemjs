@@ -20,7 +20,7 @@ if (hasDocument) {
     script._j = fetch(script.src).then(function (res) {
       return res.json();
     });
-  }, true);
+  }, '[src]');
 }
 
 systemJSPrototype.prepareImport = function () {
@@ -48,6 +48,6 @@ function throwUnresolved (id, parentUrl) {
   throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
 }
 
-function iterateImportMaps(cb, onlyExternal) {
-  [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (onlyExternal ? '[src]' : '')), cb)
+function iterateImportMaps(cb, extraSelector) {
+  [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (extraSelector || '')), cb);
 }
