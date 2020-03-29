@@ -49,5 +49,5 @@ function throwUnresolved (id, parentUrl) {
 }
 
 function iterateImportMaps(cb, onlyExternal) {
-  Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (onlyExternal ? '[src]' : '')), cb)
+  [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (onlyExternal ? '[src]' : '')), cb)
 }

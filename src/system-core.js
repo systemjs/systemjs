@@ -20,6 +20,7 @@ export { systemJSPrototype, REGISTRY }
 const hasSymbol = typeof Symbol !== 'undefined';
 const toStringTag = hasSymbol && Symbol.toStringTag;
 const REGISTRY = hasSymbol ? Symbol() : '@';
+const __esModule = '__esModule';
 
 function SystemJS () {
   this[REGISTRY] = {};
@@ -112,8 +113,8 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
           }
         }
 
-        if (name.__esModule) {
-          ns.__esModule = name.__esModule;
+        if (name[__esModule]) {
+          ns[__esModule] = name[__esModule];
         }
       }
       if (changed)

@@ -185,12 +185,13 @@ function targetWarning (match, target, msg) {
 
 /*@__PURE__*/
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
-  let scopeUrl = parentUrl && getMatch(parentUrl, importMap.scopes);
+  const scopes = importMap.scopes
+  let scopeUrl = parentUrl && getMatch(parentUrl, scopes);
   while (scopeUrl) {
-    const packageResolution = applyPackages(resolvedOrPlain, importMap.scopes[scopeUrl]);
+    const packageResolution = applyPackages(resolvedOrPlain, scopes);
     if (packageResolution)
       return packageResolution;
-    scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
+    scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), scopes);
   }
   return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
 }

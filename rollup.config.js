@@ -28,6 +28,10 @@ const terserOptions = {
     toplevel: true,
     unsafe_proto: true,
     unsafe_regexp: true,
+    unsafe_math: true,
+    unsafe_symbols: true,
+    unsafe_comps: true,
+    unsafe_Function: true,
     unsafe_undefined: true,
   },
   output: {
@@ -48,12 +52,12 @@ const terserOptions = {
 };
 
 export default [
-  // mainConfig('system', true),
+  mainConfig('system', true),
   mainConfig('system', false),
-  // mainConfig('s', true),
+  mainConfig('s', true),
   mainConfig('s', false),
-  // ...extrasConfig(true),
-  // ...extrasConfig(false),
+  ...extrasConfig(true),
+  ...extrasConfig(false),
 ]
 
 function mainConfig(name, isDev) {
