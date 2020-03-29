@@ -1,0 +1,36 @@
+total 184
+drwxr-xr-x   9 joeldenning  staff    288 Mar 28 21:34 .
+drwxr-xr-x  22 joeldenning  staff    704 Mar 28 21:34 ..
+drwxr-xr-x  23 joeldenning  staff    736 Mar 28 21:30 extras
+-rw-r--r--   1 joeldenning  staff  14468 Mar 28 21:30 s.js
+-rw-r--r--   1 joeldenning  staff   4538 Mar 28 21:30 s.min.js
+-rw-r--r--   1 joeldenning  staff   7611 Mar 28 21:30 s.min.js.map
+-rw-r--r--   1 joeldenning  staff  28865 Mar 28 21:30 system.js
+-rw-r--r--   1 joeldenning  staff   9699 Mar 28 21:30 system.min.js
+-rw-r--r--   1 joeldenning  staff  15613 Mar 28 21:30 system.min.js.map
+
+dist/extras:
+total 176
+drwxr-xr-x  23 joeldenning  staff   736 Mar 28 21:30 .
+drwxr-xr-x   9 joeldenning  staff   288 Mar 28 21:34 ..
+-rw-r--r--   1 joeldenning  staff  5092 Mar 28 21:30 amd.js
+-rw-r--r--   1 joeldenning  staff  1670 Mar 28 21:30 amd.min.js
+-rw-r--r--   1 joeldenning  staff  2903 Mar 28 21:30 amd.min.js.map
+-rw-r--r--   1 joeldenning  staff  2874 Mar 28 21:30 global.js
+-rw-r--r--   1 joeldenning  staff   787 Mar 28 21:30 global.min.js
+-rw-r--r--   1 joeldenning  staff  1555 Mar 28 21:30 global.min.js.map
+-rw-r--r--   1 joeldenning  staff  3497 Mar 28 21:30 module-types.js
+-rw-r--r--   1 joeldenning  staff  1500 Mar 28 21:30 module-types.min.js
+-rw-r--r--   1 joeldenning  staff  2098 Mar 28 21:30 module-types.min.js.map
+-rw-r--r--   1 joeldenning  staff  2250 Mar 28 21:30 named-exports.js
+-rw-r--r--   1 joeldenning  staff   627 Mar 28 21:30 named-exports.min.js
+-rw-r--r--   1 joeldenning  staff  1180 Mar 28 21:30 named-exports.min.js.map
+-rw-r--r--   1 joeldenning  staff  2310 Mar 28 21:30 named-register.js
+-rw-r--r--   1 joeldenning  staff   834 Mar 28 21:30 named-register.min.js
+-rw-r--r--   1 joeldenning  staff  1422 Mar 28 21:30 named-register.min.js.map
+-rw-r--r--   1 joeldenning  staff  1000 Mar 28 21:30 transform.js
+-rw-r--r--   1 joeldenning  staff   530 Mar 28 21:30 transform.min.js
+-rw-r--r--   1 joeldenning  staff   862 Mar 28 21:30 transform.min.js.map
+-rw-r--r--   1 joeldenning  staff   497 Mar 28 21:30 use-default.js
+-rw-r--r--   1 joeldenning  staff   207 Mar 28 21:30 use-default.min.js
+-rw-r--r--   1 joeldenning  staff   428 Mar 28 21:30 use-default.min.js.map
