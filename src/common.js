@@ -21,7 +21,6 @@ if (!baseUrl && typeof location !== 'undefined') {
 }
 
 const backslashRegEx = /\\/g;
-/*@__PURE__*/
 export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
   if (relUrl.indexOf('\\') !== -1)
     relUrl = relUrl.replace(backslashRegEx, '/');
@@ -110,19 +109,16 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
  *
  */
 
-/*@__PURE__*/
 export function resolveUrl (relUrl, parentUrl) {
   return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
 }
 
-/*@__PURE__*/
 function objectAssign (to, from) {
   for (let p in from)
     to[p] = from[p];
   return to;
 }
 
-/*@__PURE__*/
 function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
   for (let p in packages) {
     const resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
@@ -138,7 +134,6 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
   }
 }
 
-/*@__PURE__*/
 export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
   const outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
 
@@ -154,7 +149,6 @@ export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
   return outMap;
 }
 
-/*@__PURE__*/
 function getMatch (path, matchObj) {
   if (matchObj[path])
     return path;
@@ -166,7 +160,6 @@ function getMatch (path, matchObj) {
   } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
 }
 
-/*@__PURE__*/
 function applyPackages (id, packages) {
   const pkgName = getMatch(id, packages);
   if (pkgName) {
@@ -183,12 +176,11 @@ function targetWarning (match, target, msg) {
   console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
 }
 
-/*@__PURE__*/
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
   const scopes = importMap.scopes
   let scopeUrl = parentUrl && getMatch(parentUrl, scopes);
   while (scopeUrl) {
-    const packageResolution = applyPackages(resolvedOrPlain, scopes);
+    const packageResolution = applyPackages(resolvedOrPlain, scopes[scopeUrl]);
     if (packageResolution)
       return packageResolution;
     scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), scopes);
