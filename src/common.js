@@ -177,7 +177,7 @@ function targetWarning (match, target, msg) {
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
-  const scopes = importMap.scopes
+  const scopes = importMap.scopes;
   let scopeUrl = parentUrl && getMatch(parentUrl, scopes);
   while (scopeUrl) {
     const packageResolution = applyPackages(resolvedOrPlain, scopes[scopeUrl]);
