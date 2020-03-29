@@ -4,14 +4,14 @@ import path from 'path';
 import { terser } from 'rollup-plugin-terser';
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
-const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'))
+const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'));
 
 const terserOptions = {
   mangle: {
     eval: true,
     module: true,
     safari10: true,
-    toplevel: true,
+    toplevel: true
   },
   parse: {
   },
@@ -33,13 +33,13 @@ const terserOptions = {
     unsafe_symbols: true,
     unsafe_comps: true,
     unsafe_Function: true,
-    unsafe_undefined: true,
+    unsafe_undefined: true
   },
   output: {
     comments(node, comment) {
       return /^\* SystemJS [0-9]\./.test(comment.value.trim());
     },
-    safari10: true,
+    safari10: true
   },
   ecma: 5, // specify one of: 5, 2015, 2016, 2017 or 2018
   keep_classnames: false,
@@ -49,7 +49,7 @@ const terserOptions = {
   nameCache: null, // or specify a name cache object
   safari10: true,
   toplevel: true,
-  warnings: false,
+  warnings: false
 };
 
 export default [
@@ -58,12 +58,12 @@ export default [
   mainConfig('s', true),
   mainConfig('s', false),
   ...extrasConfig(true),
-  ...extrasConfig(false),
-]
+  ...extrasConfig(false)
+];
 
 function mainConfig(name, isDev) {
-  const sjs = name === 's'
-  let banner
+  const sjs = name === 's';
+  let banner;
   if (sjs) {
     banner = isDev ? `/*
   * SJS ${version}
@@ -72,7 +72,7 @@ function mainConfig(name, isDev) {
   } else {
     banner = `/*
   * SystemJS ${version}
-  */`
+  */`;
   }
 
   return {
@@ -90,7 +90,7 @@ function mainConfig(name, isDev) {
       }),
       !isDev && terser(terserOptions)
     ]
-  }
+  };
 }
 
 function extrasConfig(isDev) {
@@ -103,11 +103,11 @@ function extrasConfig(isDev) {
         format: 'iife',
         strict: false,
         compact: true,
-        sourcemap: !isDev,
+        sourcemap: !isDev
       },
       plugins: [
         !isDev && terser(terserOptions)
       ]
-    }
-  })
+    };
+  });
 }
