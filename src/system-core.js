@@ -42,6 +42,7 @@ systemJSPrototype.import = function (id, parentUrl) {
 };
 
 // Hookable createContext function -> allowing eg custom import meta
+/*@__PURE__*/
 systemJSPrototype.createContext = function (parentId) {
   return {
     url: parentId
@@ -51,6 +52,7 @@ systemJSPrototype.createContext = function (parentId) {
 // onLoad(err, id, deps) provided for tracing / hot-reloading
 if (TRACING)
   systemJSPrototype.onload = function () {};
+/*@__PURE__*/
 function loadToId (load) {
   return load.id;
 }

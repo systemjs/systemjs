@@ -16,18 +16,18 @@ import { systemJSPrototype } from '../system-core.js';
 let importMap = { imports: {}, scopes: {} }, importMapPromise;
 
 if (hasDocument) {
-  Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
+  iterateImportMaps(function (script) {
     script._j = fetch(script.src).then(function (res) {
       return res.json();
     });
-  });
+  }, true);
 }
 
 systemJSPrototype.prepareImport = function () {
   if (!importMapPromise) {
     importMapPromise = Promise.resolve();
     if (hasDocument)
-      Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
+      iterateImportMaps(function (script) {
         importMapPromise = importMapPromise.then(function () {
           return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
           .then(function (json) {
@@ -46,4 +46,8 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 
 function throwUnresolved (id, parentUrl) {
   throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+}
+
+function iterateImportMaps(cb, onlyExternal) {
+  Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (onlyExternal ? '[src]' : '')), cb)
 }

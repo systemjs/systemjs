@@ -10,6 +10,7 @@ const terserOptions = {
     eval: true,
     module: true,
     safari10: true,
+    toplevel: true,
   },
   parse: {
   },
@@ -18,10 +19,17 @@ const terserOptions = {
     arguments: true,
     booleans_as_integers: true,
     hoist_funs: true,
+    hoist_props: true,
     keep_fargs: false,
+    negate_iife: true,
     module: true,
+    pure_getters: true,
     passes: 2,
-    toplevel: true
+    sequences: 400,
+    toplevel: true,
+    unsafe_proto: true,
+    unsafe_regexp: true,
+    unsafe_undefined: true,
   },
   output: {
     comments(node, comment) {
@@ -42,7 +50,7 @@ const terserOptions = {
 
 export default [
   // mainConfig('system', true),
-  // mainConfig('system', false),
+  mainConfig('system', false),
   // mainConfig('s', true),
   mainConfig('s', false),
   // ...extrasConfig(true),
@@ -69,7 +77,7 @@ function mainConfig(name, isDev) {
       file: `dist/${name}${isDev ? '' : '.min'}.js`,
       format: 'iife',
       strict: false,
-      sourcemap: !isDev,
+      sourcemap: isDev,
       banner
     },
     plugins: [
