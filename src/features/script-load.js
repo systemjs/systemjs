@@ -20,16 +20,6 @@ systemJSPrototype.createScript = function (url) {
 };
 
 let lastWindowErrorUrl, lastWindowError;
-if (hasDocument) {
-  window.addEventListener('error', function (evt) {
-    lastWindowErrorUrl = evt.filename;
-    lastWindowError = evt.error;
-  });
-
-  window.addEventListener('DOMContentLoaded', loadScriptModules);
-  loadScriptModules();
-}
-
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   const loader = this;
   return new Promise(function (resolve, reject) {
@@ -51,6 +41,17 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     document.head.appendChild(script);
   });
 };
+
+if (hasDocument) {
+  window.addEventListener('error', function (evt) {
+    lastWindowErrorUrl = evt.filename;
+    lastWindowError = evt.error;
+  });
+
+  window.addEventListener('DOMContentLoaded', loadScriptModules);
+  loadScriptModules();
+}
+
 
 function loadScriptModules() {
   [].forEach.call(
