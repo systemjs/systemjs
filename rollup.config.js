@@ -57,29 +57,40 @@ export default [
   mainConfig('system', false),
   mainConfig('s', true),
   mainConfig('s', false),
+  mainConfig('node', true),
+  mainConfig('node', false),
   ...extrasConfig(true),
   ...extrasConfig(false)
 ];
 
 function mainConfig(name, isDev) {
   const sjs = name === 's';
+  const node = name === 'node';
   let banner;
   if (sjs) {
     banner = isDev ? `/*
   * SJS ${version}
   * Minimal SystemJS Build
   */` : null;
+  } else if (node) {
+    banner = `/*
+  * SystemJS ${version}
+  * NodeJS Build
+  */`;
   } else {
     banner = `/*
   * SystemJS ${version}
   */`;
   }
 
+  name = node ? 'system-node' : name;
+  const outputFormat = node ? 'cjs' : 'iife';
+
   return {
     input: `src/${name}.js`,
     output: {
-      file: `dist/${name}${isDev ? '' : '.min'}.js`,
-      format: 'iife',
+      file: `dist/${name}${isDev ? '' : '.min'}.${node ? 'c' : ''}js`,
+      format: outputFormat,
       strict: false,
       sourcemap: !isDev,
       banner
@@ -87,6 +98,7 @@ function mainConfig(name, isDev) {
     plugins: [
       replace({
         TRACING: sjs ? 'false' : 'true',
+        [`typeof document`]: node ? `"undefined"` : `"object"`
       }),
       !isDev && terser(terserOptions)
     ]

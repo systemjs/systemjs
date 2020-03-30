@@ -83,6 +83,6 @@
   function shouldSkipProperty(p) {
     return !global.hasOwnProperty(p)
       || (!isNaN(p) && p < global.length)
-      || (navigator.userAgent.indexOf('Trident') !== -1 && global[p] && global[p].parent === window);
+      || (typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1 && global[p] && global[p].parent === window);
   }
 })(typeof self !== 'undefined' ? self : global);

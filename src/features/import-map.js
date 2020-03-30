@@ -13,7 +13,7 @@
 import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 
-let importMap = { imports: {}, scopes: {} }, importMapPromise;
+let importMap = emptyMap(), importMapPromise;
 
 if (hasDocument) {
   iterateImportMaps(function (script) {
@@ -41,7 +41,8 @@ systemJSPrototype.prepareImport = function () {
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
-  return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+  const map = hasDocument ? importMap : (this._importMap || emptyMap());
+  return resolveImportMap(map, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
 };
 
 function throwUnresolved (id, parentUrl) {
@@ -50,4 +51,12 @@ function throwUnresolved (id, parentUrl) {
 
 function iterateImportMaps(cb, extraSelector) {
   [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (extraSelector || '')), cb);
+}
+
+function emptyMap() {
+  return {imports: {}, scopes: {}};
+}
+
+export function applyImportMap(systemInstance, importMap) {
+  systemInstance._importMap = resolveAndComposeImportMap(importMap, baseUrl, systemInstance._importMap || emptyMap());
 }

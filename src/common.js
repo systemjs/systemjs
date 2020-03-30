@@ -7,6 +7,10 @@ export { envGlobal as global };
 
 export let baseUrl;
 
+export function setBaseUrl(url) {
+  baseUrl = url;
+}
+
 if (hasDocument) {
   const baseEl = document.querySelector('base[href]');
   if (baseEl)

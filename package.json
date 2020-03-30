@@ -38,5 +38,8 @@
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/systemjs"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.0"
   }
 }
