@@ -98,7 +98,7 @@ function mainConfig(name, isDev) {
     plugins: [
       replace({
         TRACING: sjs ? 'false' : 'true',
-        [`typeof document`]: node ? `"undefined"` : `"object"`
+        [`typeof document `]: node ? `"undefined"` : `"object"`
       }),
       !isDev && terser(terserOptions)
     ]
