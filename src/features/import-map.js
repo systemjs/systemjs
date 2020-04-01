@@ -48,10 +48,6 @@ function throwUnresolved (id, parentUrl) {
   throw Error(errMsg(2, DEV ? "Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl]));
 }
 
-function iterateImportMaps(cb, onlyExternal) {
-  Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + onlyExternal ? '[src]' : ''), cb);
-}
-
 function parseJson(script) {
   try {
     return JSON.parse(script);
