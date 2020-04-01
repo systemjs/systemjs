@@ -4,8 +4,7 @@
  * (Included by default in system.js build)
  */
 (function (global) {
-  const systemJSPrototype = global.System.constructor.prototype;
-  const isIE = navigator.userAgent.indexOf('Trident') !== -1;
+  const systemJSPrototype = System.constructor.prototype;
 
   // safari unpredictably lists some new globals first or second in object order
   let firstGlobalProp, secondGlobalProp, lastGlobalProp;
@@ -14,11 +13,7 @@
     let lastProp;
     for (let p in global) {
       // do not check frames cause it could be removed during import
-      if (
-        !global.hasOwnProperty(p)
-        || (!isNaN(p) && p < global.length)
-        || (isIE && global[p] && global[p].parent === window)
-      )
+      if (shouldSkipProperty(p))
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
@@ -35,11 +30,7 @@
     firstGlobalProp = secondGlobalProp = undefined;
     for (let p in global) {
       // do not check frames cause it could be removed during import
-      if (
-        !global.hasOwnProperty(p)
-        || (!isNaN(p) && p < global.length)
-        || (isIE && global[p] && global[p].parent === window)
-      )
+      if (shouldSkipProperty(p))
         continue;
       if (!firstGlobalProp)
         firstGlobalProp = p;
@@ -88,4 +79,10 @@
       };
     }];
   };
+
+  function shouldSkipProperty(p) {
+    return !global.hasOwnProperty(p)
+      || (!isNaN(p) && p < global.length)
+      || (navigator.userAgent.indexOf('Trident') !== -1 && global[p] && global[p].parent === window);
+  }
 })(typeof self !== 'undefined' ? self : global);

@@ -7,14 +7,9 @@ import { hasSelf } from '../common';
 if (hasSelf && typeof importScripts === 'function')
   systemJSPrototype.instantiate = function (url) {
     const loader = this;
-    return new Promise(function (resolve, reject) {
-      try {
-        importScripts(url);
-      }
-      catch (e) {
-        reject(e);
-      }
-      resolve(loader.getRegister());
+    return Promise.resolve().then(function () {
+      importScripts(url);
+      return loader.getRegister();
     });
   };
   
