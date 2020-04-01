@@ -52,16 +52,26 @@ const terserOptions = {
   warnings: false
 };
 
+const buildProd = !process.env.dev;
+
 export default [
   mainConfig('system', true),
-  mainConfig('system', false),
+  buildProd && mainConfig('system', false),
   mainConfig('s', true),
-  mainConfig('s', false),
+  buildProd && mainConfig('s', false),
   mainConfig('node', true),
   mainConfig('node', false),
   ...extrasConfig(true),
-  ...extrasConfig(false)
-];
+  ...prodExtras(),
+].filter(Boolean);
+
+function prodExtras() {
+  if (buildProd) {
+    return extrasConfig(false);
+  } else {
+    return [];
+  }
+}
 
 function mainConfig(name, isDev) {
   const sjs = name === 's';
@@ -69,18 +79,13 @@ function mainConfig(name, isDev) {
   let banner;
   if (sjs) {
     banner = isDev ? `/*
-  * SJS ${version}
-  * Minimal SystemJS Build
-  */` : null;
-  } else if (node) {
-    banner = `/*
-  * SystemJS ${version}
-  * NodeJS Build
-  */`;
+* SJS ${version}
+* Minimal SystemJS Build
+*/` : null;
   } else {
     banner = `/*
-  * SystemJS ${version}
-  */`;
+* SystemJS ${version}
+*/`;
   }
 
   name = node ? 'system-node' : name;
