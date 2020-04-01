@@ -117,13 +117,6 @@
     return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
   }
 
-  function errMsg(errCode, msg) {
-    const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode;
-    {
-      return "SystemJS #" + errCode + " - " + url;
-    }
-  }
-
   /*
    * SystemJS Core
    * 
@@ -186,8 +179,6 @@
     return _lastRegister;
   };
 
-  systemJSPrototype.errMsg = errMsg;
-
   function getOrCreateLoad (loader, id, firstParentUrl) {
     let load = loader[REGISTRY][id];
     if (load)
@@ -204,7 +195,7 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw Error(errMsg(5, false));
+        throw Error('Module ' + id + ' did not instantiate');
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
@@ -422,7 +413,7 @@
     return new Promise(function (resolve, reject) {
       const script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
-        reject(Error(systemJSPrototype.errMsg(4, 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
       script.addEventListener('load', function () {
         document.head.removeChild(script);
@@ -476,7 +467,7 @@
     if (!resolved) {
       if (id.indexOf(':') !== -1)
         return Promise.resolve(id);
-      throw Error(errMsg(3, false))
+      throw Error('Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"'));
     }
     return Promise.resolve(resolved);
   };

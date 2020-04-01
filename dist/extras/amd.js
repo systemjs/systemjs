@@ -7,7 +7,7 @@
   const emptyInstantiation = [[], function () { return {} }];
 
   function unsupportedRequire () {
-    throw Error(systemPrototype.errMsg(7, DEV && 'AMD require not supported.'));
+    throw Error('AMD require not supported.');
   }
 
   let tmpRegister, firstNamedDefine;
@@ -114,7 +114,7 @@
       const depsAndExec = getDepsAndExec(deps, execute);
       if (amdDefineDeps) {
         if (!System.registerRegistry)
-          throw Error(systemPrototype.errMsg(8, DEV && 'Include the named register extension for SystemJS named AMD support.'));
+          throw Error('Include the named register extension for SystemJS named AMD support.');
         addToRegisterRegistry(name, createAMDRegister(depsAndExec[0], depsAndExec[1]));
         amdDefineDeps = [];
         amdDefineExec = emptyFn;
