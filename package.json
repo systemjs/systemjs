@@ -16,6 +16,7 @@
     "@rollup/plugin-replace": "^2.3.1",
     "bluebird": "^3.7.2",
     "construct-style-sheets-polyfill": "^2.3.5",
+    "cross-env": "^7.0.2",
     "esm": "^3.2.25",
     "mocha": "^7.1.1",
     "opn": "^6.0.0",
@@ -33,7 +34,7 @@
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
     "test": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js && npm run test-browser",
     "test-browser": "node test/server.cjs",
-    "test-browser-watch": "WATCH_MODE=true node test/server.cjs",
+    "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"
   },
   "collective": {
