@@ -20,7 +20,7 @@ if (hasDocument) {
     script._j = fetch(script.src).then(function (res) {
       return res.json();
     });
-  });
+  }, '[src]');
 }
 
 systemJSPrototype.prepareImport = function () {
@@ -58,4 +58,8 @@ function parseJson(script) {
   } catch (err) {
     throw Error(errMsg(1, err.message));
   }
+}
+
+function iterateImportMaps(cb, extraSelector) {
+  [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (extraSelector || '')), cb);
 }
