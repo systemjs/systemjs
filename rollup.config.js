@@ -52,27 +52,37 @@ const terserOptions = {
   warnings: false
 };
 
+const buildProd = !process.env.dev;
+
 export default [
   mainConfig('system', true),
-  mainConfig('system', false),
+  buildProd && mainConfig('system', false),
   mainConfig('s', true),
-  mainConfig('s', false),
+  buildProd && mainConfig('s', false),
   ...extrasConfig(true),
-  ...extrasConfig(false)
-];
+  ...prodExtras(),
+].filter(Boolean);
+
+function prodExtras() {
+  if (buildProd) {
+    return extrasConfig(false);
+  } else {
+    return [];
+  }
+}
 
 function mainConfig(name, isDev) {
   const sjs = name === 's';
   let banner;
   if (sjs) {
     banner = isDev ? `/*
-  * SJS ${version}
-  * Minimal SystemJS Build
-  */` : null;
+* SJS ${version}
+* Minimal SystemJS Build
+*/` : null;
   } else {
     banner = `/*
-  * SystemJS ${version}
-  */`;
+* SystemJS ${version}
+*/`;
   }
 
   return {

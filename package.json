@@ -27,6 +27,7 @@
   },
   "scripts": {
     "build": "rimraf dist && rollup -c",
+    "build:dev": "rollup -c --environment dev",
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
