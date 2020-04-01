@@ -1,7 +1,7 @@
 {
   "name": "systemjs",
   "version": "6.2.6",
-  "main": "dist/system-node.js",
+  "main": "dist/system-node.cjs",
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
@@ -14,9 +14,11 @@
     "dist"
   ],
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-replace": "^2.3.1",
-    "@zeit/ncc": "^0.22.0",
     "bluebird": "^3.7.2",
+    "concurrently": "^5.1.0",
     "construct-style-sheets-polyfill": "^2.3.5",
     "esm": "^3.2.25",
     "mocha": "^7.1.1",
@@ -29,13 +31,13 @@
     "whatwg-fetch": "^3.0.0"
   },
   "scripts": {
-    "build": "rimraf dist && rollup -c && npm run build:ncc",
-    "build:dev": "rollup -c --environment dev && ncc build dist/system-node.cjs",
-    "build:ncc": "ncc build dist/system-node.cjs -o dist",
+    "build": "rimraf dist && rollup -c",
+    "build:dev": "rollup -c --environment dev",
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
-    "test": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js && npm run test-browser",
+    "test": "concurrently 'npm run test-mocha' 'npm run test-browser'",
+    "test-mocha": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js test/system-node.js",
     "test-browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"

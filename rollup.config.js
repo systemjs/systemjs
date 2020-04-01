@@ -2,6 +2,8 @@ import replace from '@rollup/plugin-replace';
 import fs from 'fs';
 import path from 'path';
 import { terser } from 'rollup-plugin-terser';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
 const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'));
@@ -60,7 +62,6 @@ export default [
   mainConfig('s', true),
   buildProd && mainConfig('s', false),
   mainConfig('node', true),
-  mainConfig('node', false),
   ...extrasConfig(true),
   ...prodExtras(),
 ].filter(Boolean);
@@ -99,13 +100,19 @@ function mainConfig(name, isDev) {
   return {
     input: `src/${name}.js`,
     output: {
-      file: `dist/${name}${isDev ? '' : '.min'}.js`,
+      file: `dist/${name}${isDev ? '' : '.min'}.${node ? 'c' : ''}js`,
       format: outputFormat,
       strict: false,
       sourcemap: !isDev,
       banner
     },
     plugins: [
+      node && resolve({
+        preferBuiltins: true
+      }),
+      node && commonjs({
+        ignoreGlobal: true
+      }),
       replace({
         TRACING: sjs ? 'false' : 'true'
       }),

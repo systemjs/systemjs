@@ -8,7 +8,13 @@ export { envGlobal as global };
 export let baseUrl;
 
 export function setBaseUrl(url) {
-  baseUrl = url;
+  // Verify it's a valid URL
+  const URL = require('url').URL;
+  baseUrl = new URL(url).href;
+}
+
+export function resetBaseUrl() {
+  baseUrl = null;
 }
 
 if (hasDocument) {
