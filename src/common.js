@@ -190,6 +190,7 @@ export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
 
 export function errMsg(errCode, msg) {
   const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode;
-  msg = msg ? " - " + JSON.stringify(msg) : "";
+  msg = msg && typeof msg === 'string' ? msg : JSON.stringify(msg);
+  msg = msg ? " - " + msg : "";
   return "SystemJS #" + errCode + msg + " - " + url;
 }
