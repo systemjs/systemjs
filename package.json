@@ -32,7 +32,7 @@
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
-    "test": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js && npm run test-browser",
+    "test": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js -f test/mocha-setup.js && npm run test-browser",
     "test-browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"
