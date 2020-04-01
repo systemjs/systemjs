@@ -13,7 +13,7 @@ describe('NodeJS version of SystemJS', () => {
 
   describe('resolve', () => {
     it('throws an error if base url is not set and no parentUrl provided', () => {
-      assert.throws(() => System.resolve('./foo.js'))
+      assert.throws(() => System.resolve('./foo.js'));
     });
 
     it('works if a full url is provided', () => {
