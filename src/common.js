@@ -128,7 +128,7 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
       continue;
     const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped)
-      targetWarning(p, rhs, 'bare specifier did not resolve');
+      targetWarning(5, p, rhs, DEV && 'bare specifier did not resolve');
     else
       outPackages[resolvedLhs] = mapped;
   }
@@ -166,14 +166,14 @@ function applyPackages (id, packages) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-      targetWarning(pkgName, pkg, "should have a trailing '/'");
+      targetWarning(6, pkgName, pkg, "should have a trailing '/'");
     else
       return pkg + id.slice(pkgName.length);
   }
 }
 
-function targetWarning (match, target, msg) {
-  console.warn(errMsg(6, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [msg, target, match]))
+function targetWarning (code, match, target, msg) {
+  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [msg, target, match]))
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
