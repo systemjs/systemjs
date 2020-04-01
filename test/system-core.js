@@ -424,7 +424,6 @@ describe('Loading Cases', function() {
       // prototype fallback
       delete loader.resolve;
       const err = await getImportError('plain-name');
-      console.log(err.toString())
       assert.ok(err.toString().includes('Cannot resolve "plain-name"'));
     });
 

@@ -166,7 +166,7 @@ function applyPackages (id, packages) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-      targetWarning(6, pkgName, pkg, "should have a trailing '/'");
+      targetWarning(6, pkgName, pkg, DEV && "should have a trailing '/'");
     else
       return pkg + id.slice(pkgName.length);
   }
