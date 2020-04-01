@@ -22,7 +22,7 @@
       return this.fetch(url)
       .then(function (res) {
         if (!res.ok)
-          throw Error(systemJSPrototype.errMsg(9, res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
+          throw Error(systemJSPrototype.errMsg(9, DEV ? res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '') : [res.status, res.statusText, url, parent]));
         const contentType = res.headers.get('content-type');
         if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
           return res.text().then(function (source) {
@@ -88,7 +88,7 @@
           });
         }
         else {
-          throw Error(systemJSPrototype.errMsg(10, 'Unknown module type "' + contentType + '"'));
+          throw Error(systemJSPrototype.errMsg(10, DEV ? 'Unknown module type "' + contentType + '"' : contentType));
         }
       });
     }

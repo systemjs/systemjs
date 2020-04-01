@@ -5,7 +5,7 @@ systemJSPrototype.resolve = function (id, parentUrl) {
   if (!resolved) {
     if (id.indexOf(':') !== -1)
       return Promise.resolve(id);
-    throw Error(errMsg(3, DEV && 'Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"')))
+    throw Error(errMsg(3, DEV ? 'Cannot resolve "' + id + (parentUrl ? '" from ' + parentUrl : '"') : [id, parentUrl]))
   }
   return Promise.resolve(resolved);
 };

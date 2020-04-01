@@ -45,7 +45,7 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error(errMsg(2, DEV && "Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
+  throw Error(errMsg(2, DEV ? "Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl]));
 }
 
 function iterateImportMaps(cb, onlyExternal) {
@@ -56,7 +56,7 @@ function parseJson(script) {
   try {
     return JSON.parse(script);
   } catch (err) {
-    throw Error(errMsg(1, err.message));
+    throw Error(errMsg(1, DEV && "systemjs-import map contains invalid JSON"));
   }
 }
 
