@@ -45,6 +45,5 @@
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/systemjs"
-  },
-  "dependencies": {}
+  }
 }

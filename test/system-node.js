@@ -42,11 +42,8 @@ describe('NodeJS version of SystemJS', () => {
     });
 
     it('can load a module from disk without setting base url', async () => {
-      console.log(0)
       applyImportMap(System, {imports: {"foo": 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/export.js')}});
-      console.log(1)
       const foo = await System.import('foo');
-      console.log(2)
       assert.equal(foo.p, 5);
     });
   });
