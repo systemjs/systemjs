@@ -82,6 +82,11 @@ function mainConfig(name, isDev) {
 * SJS ${version}
 * Minimal SystemJS Build
 */` : null;
+  } else if (node) {
+    banner =`/*
+ * SystemJS ${version}
+ * NodeJS Build
+ */`;
   } else {
     banner = `/*
 * SystemJS ${version}
@@ -94,7 +99,7 @@ function mainConfig(name, isDev) {
   return {
     input: `src/${name}.js`,
     output: {
-      file: `dist/${name}${isDev ? '' : '.min'}.${node ? 'c' : ''}js`,
+      file: `dist/${name}${isDev ? '' : '.min'}.js`,
       format: outputFormat,
       strict: false,
       sourcemap: !isDev,
@@ -102,8 +107,7 @@ function mainConfig(name, isDev) {
     },
     plugins: [
       replace({
-        TRACING: sjs ? 'false' : 'true',
-        [`typeof document `]: node ? `"undefined"` : `"object"`
+        TRACING: sjs ? 'false' : 'true'
       }),
       !isDev && terser(terserOptions)
     ]

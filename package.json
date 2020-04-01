@@ -15,10 +15,12 @@
   ],
   "devDependencies": {
     "@rollup/plugin-replace": "^2.3.1",
+    "@zeit/ncc": "^0.22.0",
     "bluebird": "^3.7.2",
     "construct-style-sheets-polyfill": "^2.3.5",
     "esm": "^3.2.25",
     "mocha": "^7.1.1",
+    "node-fetch": "^2.6.0",
     "opn": "^6.0.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.2.0",
@@ -27,8 +29,9 @@
     "whatwg-fetch": "^3.0.0"
   },
   "scripts": {
-    "build": "rimraf dist && rollup -c",
-    "build:dev": "rollup -c --environment dev",
+    "build": "rimraf dist && rollup -c && npm run build:ncc",
+    "build:dev": "rollup -c --environment dev && ncc build dist/system-node.cjs",
+    "build:ncc": "ncc build dist/system-node.cjs -o dist",
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
@@ -41,7 +44,5 @@
     "type": "opencollective",
     "url": "https://opencollective.com/systemjs"
   },
-  "dependencies": {
-    "node-fetch": "^2.6.0"
-  }
+  "dependencies": {}
 }
