@@ -22,7 +22,7 @@ A common mistake that causes this a trailing comma on the last module in the imp
 </script>
 ```
 
-Note that this error may occur for external import maps (those with `src=""` attribute), as well. Check the network tab of your browser devtools to verify that the response body for the external import map is valid json.
+Note that this error also can occur for external import maps (those with `src=""` attribute). Check the network tab of your browser devtools to verify that the response body for the external import map is valid json.
 
 ## 2
 
@@ -54,7 +54,7 @@ For more detailed information about "specifiers" and "resolution", see Error #3.
 
 SystemJS Error #3 occurs when you are not using import maps and attempt to load a module that doesn't have a URL associated with it.
 
-A "specifier" is the string name of a module. A specifier may be a URL (`/thing.js` or `https://unpkg.com/vue`) or a "bare specifier" (`vue`). This error occurs when a bare specifier is provided.
+A "specifier" is the string name of a module. A specifier may be a URL (`/thing.js` or `https://unpkg.com/vue`) or a "bare specifier" (`vue`). Error #3 most commonly occurs when using bare specifiers.
 
 "Resolution" refers to converting a specifier into a URL. This happens in any of the following scenarios:
 
@@ -62,7 +62,7 @@ A "specifier" is the string name of a module. A specifier may be a URL (`/thing.
 - a module is loaded as a dependency - `System.register(['specifier'], ...)` or `define(['specifier'], ...)`
 - a module is resolved manually - `System.resolve('specifier')`
 
-To fix this error, you may either use import maps or [hook System.resolve](/docs/hooks.md#resolveid-parenturl---string):
+To fix this error, you may either use [import maps](/docs/import-maps.md) or [hook System.resolve](/docs/hooks.md#resolveid-parenturl---string):
 
 ```html
 <script src="/system.js"></script>
@@ -116,7 +116,7 @@ SystemJS Error #7 occurs when you attempt to use the [AMD require() function](ht
 
 ## 8
 
-### Named AMD modules require the systemjs named-register extra
+### Named AMD modules require the named-register extra
 
 SystemJS Error #8 occurs when you attempt to register a named AMD module, but have not included the [named-register extra](/README.md#extras).
 
@@ -144,7 +144,7 @@ SystemJS Error #9 occurs when SystemJS attempted to load a module with [`fetch()
 
 SystemJS uses `fetch()` instead of `<script>` to load modules whenever the [shouldFetch hook](/docs/hooks.md##shouldfetchurl---boolean) returns true. By default, this occurs only when the file extension indicates it is a [CSS, JSON, HTML, or WASM module](/docs/module-types.md).
 
-SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error 9 if it is not ok.
+SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error #9 if it is not ok.
 
 To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
 
@@ -173,7 +173,7 @@ SystemJS Error #9 occurs when SystemJS attempted to load a module with [`fetch()
 
 This error is specific to fetches caused by the [transform extra](/README.md#extras), not by the `shouldFetch` or `fetch` hooks.
 
-SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error 9 if it is not ok.
+SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error #11 if it is not ok.
 
 To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
 
@@ -187,4 +187,4 @@ Instantiation refers to downloading and executing the code for a module. The ins
 
 SystemJS has various methods of instantiating modules, generally involving either a `<script>` or `fetch()`. Custom module instantiation can be implemented by [hooking System.instantiate](/docs/hooks.md#instantiateurl-parenturl---promise).
 
-Error #9 occurs when the instantiate hook returns a Promise that resolves with no value. This generally does not occur when using the built-in SystemJS functionality and is more common to custom implementations of the System.instantiate.
+Error #12 occurs when the instantiate hook returns a Promise that resolves with no value. This generally does not occur when using the built-in SystemJS functionality and is more common to custom implementations of the System.instantiate.
