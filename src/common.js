@@ -17,8 +17,6 @@ if (hasDocument) {
   const baseEl = document.querySelector('base[href]');
   if (baseEl)
     baseUrl = baseEl.href;
-} else if (typeof process !== 'undefined' && process.cwd) {
-  baseUrl = require('url').pathToFileURL(process.cwd() + require('path').sep).href;
 }
 
 if (!baseUrl && typeof location !== 'undefined') {

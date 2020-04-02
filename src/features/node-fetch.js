@@ -1,6 +1,11 @@
 import fetch from 'node-fetch';
 import { promises as fs } from 'fs';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { setBaseUrl } from '../common';
+import { sep }  from 'path';
+
+// Default base url for NodeJS
+setBaseUrl(pathToFileURL(process.cwd() + sep).href);
 
 global.System.constructor.prototype.shouldFetch = () => true;
 global.System.constructor.prototype.fetch = async url => {
