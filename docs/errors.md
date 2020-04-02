@@ -187,4 +187,4 @@ Instantiation refers to downloading and executing the code for a module. The ins
 
 SystemJS has various methods of instantiating modules, generally involving either a `<script>` or `fetch()`. Custom module instantiation can be implemented by [hooking System.instantiate](/docs/hooks.md#instantiateurl-parenturl---promise).
 
-Error #12 occurs when the instantiate hook returns a Promise that resolves with no value. This generally does not occur when using the built-in SystemJS functionality and is more common to custom implementations of the System.instantiate.
+Error #12 occurs when the instantiate hook returns a Promise that resolves with no value. This generally does not occur when using the built-in SystemJS functionality and is more common to custom implementations of System.instantiate.
