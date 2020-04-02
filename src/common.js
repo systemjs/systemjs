@@ -127,8 +127,12 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
     if (typeof rhs !== 'string')
       continue;
     const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
-    if (!mapped)
-      targetWarning(5, p, rhs, DEV && 'bare specifier did not resolve');
+    if (!mapped) {
+      if (DEV)
+        targetWarning(5, p, rhs, 'bare specifier did not resolve');
+      else
+        targetWarning(5, p, rhs);
+    }
     else
       outPackages[resolvedLhs] = mapped;
   }
@@ -165,15 +169,19 @@ function applyPackages (id, packages) {
   if (pkgName) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
-    if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-      targetWarning(6, pkgName, pkg, DEV && "should have a trailing '/'");
+    if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
+      if (DEV)
+        targetWarning(6, pkgName, pkg, "should have a trailing '/'");
+      else
+        targetWarning(6, pkgName, pkg);
+    }
     else
       return pkg + id.slice(pkgName.length);
   }
 }
 
 function targetWarning (code, match, target, msg) {
-  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [msg, target, match].join(', ')));
+  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [target, match].join(', ')));
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -189,5 +197,5 @@ export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
 }
 
 export function errMsg(errCode, msg) {
-  return "SystemJS #" + errCode + " (" + "https://git.io/JvFET#" + errCode + "): " + msg || "";
+  return "SystemJS #" + errCode + " (" + "https://git.io/JvFET#" + errCode + "): " + (msg || "");
 }
