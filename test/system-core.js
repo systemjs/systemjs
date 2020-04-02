@@ -424,7 +424,7 @@ describe('Loading Cases', function() {
       // prototype fallback
       delete loader.resolve;
       const err = await getImportError('plain-name');
-      assert.equal(err, "Error: Unable to resolve specifier 'plain-name'");
+      assert.equal(err, "Error: Cannot resolve \"plain-name\"");
     });
 
     it('should throw if on syntax error', async function () {

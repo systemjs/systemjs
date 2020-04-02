@@ -2,6 +2,10 @@
   "name": "systemjs",
   "version": "6.2.6",
   "main": "dist/system-node.cjs",
+  "exports": {
+    "node": "./dist/system-node.cjs",
+    "default": "./dist/system.min.js"
+  },
   "description": "Dynamic ES module loader",
   "repository": {
     "type": "git",
@@ -37,9 +41,10 @@
     "footprint": "npm run footprint:systemjs && npm run footprint:sjs",
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
-    "test": "concurrently 'npm run test-mocha' 'npm run test-browser'",
-    "test-mocha": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js test/system-node.js",
-    "test-browser": "node test/server.cjs",
+    "test": "concurrently -n w: 'npm:test:*'",
+    "test:internals": "mocha -b -r esm test/import-map.js test/system-core.js test/url-resolution.js",
+    "test:node": "mocha -b -r esm test/system-node.js",
+    "test:browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"
   },

@@ -1,19 +1,18 @@
-import { System as globalSystem, setBaseUrl, applyImportMap } from '../src/system-node.js';
-import { resetBaseUrl } from '../src/common.js';
+import { System as globalSystem, setBaseUrl, applyImportMap } from '../dist/system-node.cjs';
 import assert from 'assert';
 import path from 'path';
+import { pathToFileURL } from 'url';
 
 describe('NodeJS version of SystemJS', () => {
   let System;
 
   beforeEach(() => {
     System = new globalSystem.constructor();
-    resetBaseUrl();
   });
 
   describe('resolve', () => {
-    it('throws an error if base url is not set and no parentUrl provided', () => {
-      assert.throws(() => System.resolve('./foo.js'));
+    it('provides a default base url if one is not specified', () => {
+      assert.equal(System.resolve('./foo.js'), pathToFileURL(process.cwd()) + path.sep + 'foo.js');
     });
 
     it('works if a full url is provided', () => {
@@ -36,6 +35,7 @@ describe('NodeJS version of SystemJS', () => {
 
   describe('import maps', () => {
     it('can load a module from the network', async () => {
+      // console.log(System.instantiate.toString())
       applyImportMap(System, {imports: {"rxjs": "https://unpkg.com/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});
       const rxjs = await System.import("rxjs");
       assert.ok(rxjs.Observable);
