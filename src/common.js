@@ -173,7 +173,7 @@ function applyPackages (id, packages) {
 }
 
 function targetWarning (code, match, target, msg) {
-  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [msg, target, match]))
+  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [msg, target, match].join(', ')));
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -189,8 +189,5 @@ export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
 }
 
 export function errMsg(errCode, msg) {
-  const url = "https://github.com/systemjs/systemjs/docs/errors.md#" + errCode;
-  msg = msg && typeof msg === 'string' ? msg : JSON.stringify(msg);
-  msg = msg ? " - " + msg : "";
-  return "SystemJS #" + errCode + msg + " - " + url;
+  return "SystemJS #" + errCode + " (" + "https://git.io/JvFET#" + errCode + "): " + msg || "";
 }

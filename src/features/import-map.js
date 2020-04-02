@@ -29,7 +29,7 @@ systemJSPrototype.prepareImport = function () {
     if (hasDocument)
       iterateImportMaps(function (script) {
         importMapPromise = importMapPromise.then(function () {
-          return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(parseJson(script)))
+          return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(parseJson(script.innerHTML)))
           .then(function (json) {
             importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
           });
@@ -45,7 +45,7 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error(errMsg(2, DEV ? "Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl]));
+  throw Error(errMsg(2, DEV ? "Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
 }
 
 function parseJson(script) {
