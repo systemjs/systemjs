@@ -102,11 +102,86 @@ Here are common reasons why a module could not be downloaded:
 
 ## 5
 
-### Import Map could not be fully resolved
+### Invalid import map cascading - bare specifier did not resolve
+
+SystemJS Error #5 occurs when an import map attempts invalid cascading.
+
+Most commonly, this error occurs through accidental attempted usage of import map cascading (details below), by specifying an invalid URL in the import map.
+
+```html
+<!-- INVALID -->
+<!-- You must add ./ to relative URLs in import maps -->
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "thing1": "thing.js"
+  }
+}
+</script>
+
+<!-- VALID -->
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "thing1": "./thing.js"
+  }
+}
+</script>
+```
+
+[Import Map cascading](https://github.com/WICG/import-maps/issues/137) is an advanced, experimental feature of systemjs import maps. With cascading, one module's URL can be derived from another's.
+
+```html
+<!-- Valid cascading -->
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "foo": "/url.js",
+    "bar": "foo"
+  }
+}
+</script>
+
+<!-- Invalid cascading, by referencing a bare specifier as a module's value, that can't be resolved -->
+<!-- "foo" is not a valid URL, nor can it be found in the import map -->
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "bar": "foo"
+  }
+}
+</script>
+```
 
 ## 6
 
-### Invalid import map scopes
+### Invalid address for package
+
+SystemJS Error #6 occurs when an import map has an invalid URL for a [package via trailing slash](https://github.com/WICG/import-maps#packages-via-trailing-slashes).
+
+"Packages via trailing slashes" are a way mapping a bare module specifier to a URL directory, to allow for module-relative imports such as `import 'my-package/sub-module.js';`.
+
+```html
+<!-- Valid package - the URL address ends with / -->
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "foo/": "/some-url/",
+  }
+}
+</script>
+
+<!-- Invalid package - the URL address does not end with / -->
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "foo/": "/some-url",
+  }
+}
+</script>
+```
+
+SystemJS Error #6 is logged by SystemJS to implement [Step 6.1 of this part of the import maps spec](https://wicg.github.io/import-maps/#sort-and-normalize-a-specifier-map).
 
 ## 7
 
