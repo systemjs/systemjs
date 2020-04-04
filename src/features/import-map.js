@@ -11,52 +11,51 @@
  * There is no support for dynamic import maps injection currently.
  */
 import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
-import { systemJSPrototype } from '../system-core.js';
+import { hasSymbol, systemJSPrototype } from '../system-core.js';
 
-let importMap = emptyMap(), importMapPromise;
+const IMPORT_MAP = hasSymbol ? Symbol() : '#';
+const IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
 
-if (hasDocument) {
-  iterateImportMaps(function (script) {
-    script._j = fetch(script.src).then(function (res) {
-      return res.json();
-    });
-  }, '[src]');
-}
+iterateDocumentImportMaps(function (script) {
+  script._t = fetch(script.src).then(function (res) {
+    return res.text();
+  });
+}, '[src]');
 
 systemJSPrototype.prepareImport = function () {
-  if (!importMapPromise) {
-    importMapPromise = Promise.resolve();
-    if (hasDocument)
-      iterateImportMaps(function (script) {
-        importMapPromise = importMapPromise.then(function () {
-          return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
-          .then(function (json) {
-            importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
-          });
+  const loader = this;
+  if (!loader[IMPORT_MAP_PROMISE]) {
+    loader[IMPORT_MAP] = { imports: {}, scopes: {} };
+    loader[IMPORT_MAP_PROMISE] = Promise.resolve();
+    iterateDocumentImportMaps(function (script) {
+      loader[IMPORT_MAP_PROMISE] = loader[IMPORT_MAP_PROMISE].then(function () {
+        return (script._t || script.src && fetch(script.src).then(function (res) { return res.text(); }) || Promise.resolve(script.innerHTML))
+        .then(function (text) {
+          return JSON.parse(text);
+        })
+        .then(function (newMap) {
+          loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, script.src || baseUrl, loader[IMPORT_MAP]);
         });
       });
+    }, '');
   }
-  return importMapPromise;
+  return loader[IMPORT_MAP_PROMISE];
 };
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
-  const map = hasDocument ? importMap : (this._importMap || emptyMap());
-  return resolveImportMap(map, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+  return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
 };
 
 function throwUnresolved (id, parentUrl) {
   throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
 }
 
-function iterateImportMaps(cb, extraSelector) {
-  [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (extraSelector || '')), cb);
+function iterateDocumentImportMaps(cb, extraSelector) {
+  if (hasDocument)
+    [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + extraSelector), cb);
 }
 
-function emptyMap() {
-  return {imports: {}, scopes: {}};
-}
-
-export function applyImportMap(systemInstance, importMap) {
-  systemInstance._importMap = resolveAndComposeImportMap(importMap, baseUrl, systemInstance._importMap || emptyMap());
+export function applyImportMap(loader, newMap) {
+  loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, baseUrl, loader[IMPORT_MAP] || { imports: {}, scopes: {} });
 }
