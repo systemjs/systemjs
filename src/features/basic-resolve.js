@@ -1,5 +1,7 @@
 import { systemJSPrototype } from '../system-core.js';
-import { resolveIfNotPlainOrUrl, baseUrl, errMsg } from '../common.js';
+import { resolveIfNotPlainOrUrl, baseUrl } from '../common.js';
+import { errMsg } from '../err-msg.js';
+
 systemJSPrototype.resolve = function (id, parentUrl) {
   const resolved = resolveIfNotPlainOrUrl(id, parentUrl || baseUrl);
   if (!resolved) {

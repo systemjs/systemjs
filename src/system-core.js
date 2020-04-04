@@ -14,7 +14,8 @@
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
-import { global, errMsg } from './common.js';
+import { global } from './common.js';
+import { errMsg } from './err-msg.js';
 export { systemJSPrototype, REGISTRY }
 
 const hasSymbol = typeof Symbol !== 'undefined';
@@ -73,8 +74,6 @@ systemJSPrototype.getRegister = function () {
   lastRegister = undefined;
   return _lastRegister;
 };
-
-systemJSPrototype.errMsg = errMsg;
 
 function getOrCreateLoad (loader, id, firstParentUrl) {
   let load = loader[REGISTRY][id];

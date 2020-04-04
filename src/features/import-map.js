@@ -10,7 +10,8 @@
  * 
  * There is no support for dynamic import maps injection currently.
  */
-import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument, errMsg } from '../common.js';
+import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
+import { errMsg } from '../err-msg.js';
 import { systemJSPrototype } from '../system-core.js';
 
 let importMap = { imports: {}, scopes: {} }, importMapPromise;
@@ -29,7 +30,7 @@ systemJSPrototype.prepareImport = function () {
     if (hasDocument)
       iterateImportMaps(function (script) {
         importMapPromise = importMapPromise.then(function () {
-          return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.text(); }).then(parseJson) || Promise.resolve(parseJson(script.innerHTML)))
+          return (script._j || (script.src ? fetch(script.src).then(function (resp) { return resp.text(); }) : Promise.resolve(script.innerHTML)).then(parseJson))
           .then(function (json) {
             importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
           });

@@ -1,3 +1,5 @@
+import { errMsg } from './err-msg.js';
+
 export const hasSelf = typeof self !== 'undefined';
 
 export const hasDocument = typeof document !== 'undefined';
@@ -194,8 +196,4 @@ export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
     scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), scopes);
   }
   return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
-}
-
-export function errMsg(errCode, msg) {
-  return "SystemJS #" + errCode + " (" + "https://git.io/JvFET#" + errCode + "): " + (msg || "");
 }
