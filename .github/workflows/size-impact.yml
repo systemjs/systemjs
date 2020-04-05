@@ -1,0 +1,48 @@
+name: size-impact
+
+on: pull_request
+
+jobs:
+  size-impact:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [13.12.0]
+    runs-on: ${{ matrix.os }}
+    name: size impact
+    env:
+      CI: true
+    steps:
+      - name: Setup git
+        env:
+          GITHUB_REPOSITORY_URL: ${{ github.repositoryUrl }}
+        run: |
+          git init
+          git remote add origin $GITHUB_REPOSITORY_URL
+      - name: Setup node ${{ matrix.node }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Git checkout base
+        run: |
+          git fetch --no-tags --prune --depth=1 origin $GITHUB_BASE_REF
+          git checkout origin/$GITHUB_BASE_REF
+          git log -1
+      - name: Generate snapshot for base
+        run: |
+          npm install
+          npm run build
+          node ./.github/workflows/size-impact/generate-size-snapshot.js ../snapshot.base.json || echo "{}" > ../snapshot.base.json
+      - name: Git merge head
+        run: |
+          git fetch --no-tags --prune origin $GITHUB_REF
+          git merge FETCH_HEAD
+      - name: Generate snapshot after merge
+        run: |
+          npm install
+          npm run build
+          node ./.github/workflows/size-impact/generate-size-snapshot.js ../snapshot.head.json
+      - name: Report size impact
+        run: node ./.github/workflows/size-impact/report-size-impact.js ../snapshot.base.json ../snapshot.head.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
