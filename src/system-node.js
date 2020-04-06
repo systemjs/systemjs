@@ -10,6 +10,7 @@ import { setBaseUrl } from './common.js';
 export const System = global.System;
 export { setBaseUrl } from './common.js';
 export { applyImportMap } from './features/import-map.js';
+export { clearFetchCache } from './features/node-fetch.js';
 
 // Default base url for NodeJS
 setBaseUrl(pathToFileURL(process.cwd() + sep).href);
