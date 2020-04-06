@@ -6,8 +6,8 @@ about: Ask a question about SystemJS
 <!-- You can check the radios and checkboxes either before or after you create the issue -->
 - SystemJS Version: 
 - Which library are you using?
-  - <label><input type="radio" name="lib-type"> SystemJS</label>
-  - <label><input type="radio" name="lib-type"> SJS</label>
+  - [ ] SystemJS
+  - [ ] SJS
 - Which extras are you using?
   - [ ] AMD extra
   - [ ] Named Exports
