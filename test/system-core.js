@@ -5,14 +5,15 @@ import path from 'path';
 import { resolveIfNotPlainOrUrl } from '../src/common';
 import '../src/features/registry.js';
 import '../src/system-core.js';
-import '../src/features/basic-resolve.js';
+import '../src/features/import-map.js';
 
 const SystemLoader = System.constructor;
 
 describe('Core API', function () {
   const loader = new SystemLoader();
-  const basicResolve = loader.resolve;
   loader.resolve = x => x;
+
+  before(() => System.prepareImport());
 
   it('Should be an instance of itself', function () {
     assert(loader instanceof SystemLoader);
@@ -135,9 +136,9 @@ describe('Core API', function () {
     });
 
     it('Supports System.resolve', async function () {
-      const resolveReturnValue = basicResolve('http://x');
+      const resolveReturnValue = System.resolve('http://x');
       const resolvedX = await resolveReturnValue;
-      assert(resolveReturnValue instanceof Promise);
+      assert(typeof resolveReturnValue === 'string');
       assert.equal(resolvedX, 'http://x');
     });
 
@@ -424,7 +425,7 @@ describe('Loading Cases', function() {
       // prototype fallback
       delete loader.resolve;
       const err = await getImportError('plain-name');
-      assert.ok(err.toString().includes('Cannot resolve "plain-name"'));
+      assert.ok(err.toString().includes("Unable to resolve bare specifier 'plain-name'"));
     });
 
     it('should throw if on syntax error', async function () {

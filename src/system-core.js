@@ -18,7 +18,7 @@ import { global } from './common.js';
 import { errMsg } from './err-msg.js';
 export { systemJSPrototype, REGISTRY }
 
-const hasSymbol = typeof Symbol !== 'undefined';
+export const hasSymbol = typeof Symbol !== 'undefined';
 const toStringTag = hasSymbol && Symbol.toStringTag;
 const REGISTRY = hasSymbol ? Symbol() : '@';
 
@@ -27,8 +27,6 @@ function SystemJS () {
 }
 
 const systemJSPrototype = SystemJS.prototype;
-
-systemJSPrototype.prepareImport = function () {};
 
 systemJSPrototype.import = function (id, parentUrl) {
   const loader = this;

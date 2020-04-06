@@ -41,6 +41,7 @@ The minimal [1.5KB s.js loader](dist/s.min.js) provides a workflow where code wr
 
 Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
 
+* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">` (requires a `fetch` polyfill for eg IE11).
 * Loads and resolves modules as URLs, throwing for bare specifier names (eg `import 'lodash'`) like the native module loader.
 * Loads System.register modules.
 * Core hookable extensible loader supporting [custom extensions](docs/hooks.md).

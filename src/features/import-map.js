@@ -11,52 +11,56 @@
  * There is no support for dynamic import maps injection currently.
  */
 import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
+import { hasSymbol, systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
-import { systemJSPrototype } from '../system-core.js';
 
-let importMap = { imports: {}, scopes: {} }, importMapPromise;
+const IMPORT_MAP = hasSymbol ? Symbol() : '#';
+const IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
 
-if (hasDocument) {
-  iterateImportMaps(function (script) {
-    script._t = fetch(script.src).then(function (res) {
-      return res.text();
-    });
-  }, '[src]');
-}
+iterateDocumentImportMaps(function (script) {
+  script._t = fetch(script.src).then(function (res) {
+    return res.text();
+  });
+}, '[src]');
 
 systemJSPrototype.prepareImport = function () {
-  if (!importMapPromise) {
-    importMapPromise = Promise.resolve();
-    if (hasDocument)
-      iterateImportMaps(function (script) {
-        importMapPromise = importMapPromise.then(function () {
-          return (script._t || script.src && fetch(script.src).then(function (resp) { return resp.text(); }) || Promise.resolve(script.innerHTML)).then(parseJson)
-          .then(function (json) {
-            importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
-          });
+  const loader = this;
+  if (!loader[IMPORT_MAP_PROMISE]) {
+    loader[IMPORT_MAP] = { imports: {}, scopes: {} };
+    loader[IMPORT_MAP_PROMISE] = Promise.resolve();
+    iterateDocumentImportMaps(function (script) {
+      loader[IMPORT_MAP_PROMISE] = loader[IMPORT_MAP_PROMISE].then(function () {
+        return (script._t || script.src && fetch(script.src).then(function (res) { return res.text(); }) || Promise.resolve(script.innerHTML))
+        .then(function (text) {
+          try {
+            return JSON.parse(text);
+          } catch (err) {
+            throw Error(DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
+          }
+        })
+        .then(function (newMap) {
+          loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, script.src || baseUrl, loader[IMPORT_MAP]);
         });
       });
+    }, '');
   }
-  return importMapPromise;
+  return loader[IMPORT_MAP_PROMISE];
 };
 
 systemJSPrototype.resolve = function (id, parentUrl) {
   parentUrl = parentUrl || baseUrl;
-  return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+  return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
 };
 
 function throwUnresolved (id, parentUrl) {
   throw Error(errMsg(2, DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
 }
 
-function parseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    throw Error(DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
-  }
+function iterateDocumentImportMaps(cb, extraSelector) {
+  if (hasDocument)
+    [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + extraSelector), cb);
 }
 
-function iterateImportMaps(cb, extraSelector) {
-  [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + (extraSelector || '')), cb);
+export function applyImportMap(loader, newMap) {
+  loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, baseUrl, loader[IMPORT_MAP] || { imports: {}, scopes: {} });
 }

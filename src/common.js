@@ -9,6 +9,12 @@ export { envGlobal as global };
 
 export let baseUrl;
 
+export function setBaseUrl(url) {
+  // Verify it's a valid URL
+  const URL = require('url').URL;
+  baseUrl = new URL(url).href;
+}
+
 if (hasDocument) {
   const baseEl = document.querySelector('base[href]');
   if (baseEl)
