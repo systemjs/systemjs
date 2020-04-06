@@ -2,10 +2,12 @@ git:
   depth: 1
 language: node_js
 node_js:
-  - '10'
-
-before_install:
-  - npm install
+  - node
+env:
+  global:
+    - MOZ_HEADLESS=1
+addons:
+  firefox: latest
 script:
   - npm run build
-  - npm run test
+  - npm test
