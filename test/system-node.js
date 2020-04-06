@@ -8,6 +8,7 @@ describe('NodeJS version of SystemJS', () => {
 
   beforeEach(() => {
     System = new globalSystem.constructor();
+    return System.prepareImport();
   });
 
   describe('resolve', () => {
