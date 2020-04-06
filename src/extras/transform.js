@@ -15,7 +15,7 @@ import { errMsg } from '../err-msg.js';
     return fetch(url, { credentials: 'same-origin' })
     .then(function (res) {
       if (!res.ok)
-        throw Error(errMsg(11, DEV ? 'Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : '') : [res.status, res.statusText, parent].join(', ')));
+        throw Error(errMsg(9, DEV ? 'Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : '') : [res.status, res.statusText, parent].join(', ')));
       return res.text();
     })
     .then(function (source) {
