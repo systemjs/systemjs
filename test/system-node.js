@@ -1,7 +1,9 @@
-import { System as globalSystem, setBaseUrl, applyImportMap } from '../dist/system-node.cjs';
+import nodeSystem from '../dist/system-node.cjs';
 import assert from 'assert';
 import path from 'path';
 import { pathToFileURL } from 'url';
+
+const { System: globalSystem, setBaseUrl, applyImportMap } = nodeSystem;
 
 describe('NodeJS version of SystemJS', () => {
   let System;
