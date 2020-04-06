@@ -96,13 +96,13 @@ SystemJS Error #4 occurs when a module could not be downloaded and/or executed.
 
 SystemJS loads modules by appending `<script>` elements to the DOM and waiting for `load` and `error` events. When error #4 is thrown, the script's `error` event fired.
 
-Here are common reasons why a module could not be downloaded:
+Here are common reasons why a module could not be loaded:
 
-- **The url for the module is incorrect**. You can check this by opening up the module's URL in its own browser tab and verifying that a javascript file is shown. The module URL can be found in the browser's devtool console and network tab, or by calling `System.resolve('name')` in the browser console to view the full URL. Be sure to check port number! Also, verify that the URL returns javascript instead of HTML.
+- **The url for the module is incorrect**. You can check this by opening up the module's URL in its own browser tab and verifying that a javascript file is shown. The module URL can be found in the browser devtools (the console and network tabs), or by calling `System.resolve('name')` in the browser console to view the full URL. Be sure to check port number! Also, verify that the URL returns javascript instead of HTML.
 - **The url is correct, but the web server that hosts it isn't running**. This often occurs when you're attempting to download a module from localhost, but haven't started up the web server (ie webpack-dev-server or `npm start`). Be sure to check the port number!
 - **The url is correct and the web server is running, but CORS is not enabled**. [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) is a security mechanism that browsers use to protect users. The server you are downloading the module from may need to enable cors by sending an [`Access-Control-Allow-Origin` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin).
 - **The url is correct, web server running, CORS enabled, but host check fails**. This one is usually specific to webpack-dev-server, which has a [host check](https://webpack.js.org/configuration/dev-server/#devserverdisablehostcheck). You should disable that host check to be able to load modules cross origin.
-- **The javascript file was successfully downloaded, but failed during initial, top-level execution**. A syntax error, errant function call, or any other javascript error that occurs during initial execution could cause the module to fail to load. This error is from within the module itself and can be found in the browser console.
+- **The javascript file was successfully downloaded, but failed during initial, top-level, execution**. A syntax error, errant function call, or any other javascript error that occurs during initial execution could cause the module to fail to load. This error is from within the module itself and can be found in the browser console.
 
 ## 5
 
@@ -185,10 +185,10 @@ If none of those apply to your situation, consider adding the named-register ext
 
 SystemJS Error #9 occurs when SystemJS attempted to load a module with [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), but the HTTP response status was not >= 200 and < 300.
 
-This error occurs when using either the module-types or transform extras. The module-types extension is included in system.js.
+This error occurs when using either the module-types or transform extras. The module-types extension is included in `system.js`, but not in `s.js`.
 
 When using the transform extra, SystemJS uses `fetch()` to load all modules. However, when using the module-types extension (included in system.js), SystemJS uses `fetch()` instead of `<script>` to load modules whenever the [shouldFetch hook](/docs/hooks.md##shouldfetchurl---boolean) returns true. By default, this occurs only when the file extension indicates it is a [CSS, JSON, HTML, or WASM module](/docs/module-types.md).
 
-SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error #9 if it is not ok.
+SystemJS checks the HTTP [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) object to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error #9 if it is not ok.
 
 To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
