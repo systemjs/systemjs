@@ -96,8 +96,8 @@ function mainConfig(name, isDev) {
     },
     plugins: [
       replace({
-        TRACING: sjs ? 'false' : 'true',
-        DEV: isDev
+        'process.env.SYSTEM_TRACING': sjs ? 'false' : 'true',
+        'process.env.SYSTEM_DEV': isDev
       }),
       !isDev && terser(terserOptions)
     ]

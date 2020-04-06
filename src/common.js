@@ -136,7 +136,7 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
       continue;
     const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped) {
-      if (DEV)
+      if (process.env.SYSTEM_DEV)
         targetWarning(2, p, rhs, 'bare specifier did not resolve');
       else
         targetWarning(2, p, rhs);
@@ -178,7 +178,7 @@ function applyPackages (id, packages) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
-      if (DEV)
+      if (process.env.SYSTEM_DEV)
         targetWarning(6, pkgName, pkg, "should have a trailing '/'");
       else
         targetWarning(6, pkgName, pkg);
@@ -189,7 +189,7 @@ function applyPackages (id, packages) {
 }
 
 function targetWarning (code, match, target, msg) {
-  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [target, match].join(', ')));
+  console.warn(errMsg(code, process.env.SYSTEM_DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [target, match].join(', ')));
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {

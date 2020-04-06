@@ -35,7 +35,7 @@ systemJSPrototype.prepareImport = function () {
           try {
             return JSON.parse(text);
           } catch (err) {
-            throw Error(DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
+            throw Error(process.env.SYSTEM_DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
           }
         })
         .then(function (newMap) {
@@ -53,7 +53,7 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error(errMsg(2, DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
+  throw Error(errMsg(2, process.env.SYSTEM_DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
 }
 
 function iterateDocumentImportMaps(cb, extraSelector) {

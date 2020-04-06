@@ -24,7 +24,7 @@ import { errMsg } from '../err-msg.js';
       return this.fetch(url)
       .then(function (res) {
         if (!res.ok)
-          throw Error(errMsg(9, DEV ? res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '') : [res.status, res.statusText, url, parent].join(', ')));
+          throw Error(errMsg(9, process.env.SYSTEM_DEV ? res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '') : [res.status, res.statusText, url, parent].join(', ')));
         const contentType = res.headers.get('content-type');
         if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
           return res.text().then(function (source) {
@@ -90,7 +90,7 @@ import { errMsg } from '../err-msg.js';
           });
         }
         else {
-          throw Error(errMsg(5, DEV ? 'Unknown module type "' + contentType + '"' : contentType));
+          throw Error(errMsg(5, process.env.SYSTEM_DEV ? 'Unknown module type "' + contentType + '"' : contentType));
         }
       });
     }

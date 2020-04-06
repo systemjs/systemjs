@@ -1,2 +1,7 @@
-global.TRACING = true;
-global.DEV = true;
+if (typeof process === 'undefined')
+  global.process = {
+    env: {
+      TRACING: true,
+      DEV: true
+    }
+  };

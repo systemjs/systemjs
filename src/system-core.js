@@ -48,7 +48,7 @@ systemJSPrototype.createContext = function (parentId) {
 };
 
 // onLoad(err, id, deps) provided for tracing / hot-reloading
-if (TRACING)
+if (process.env.SYSTEM_TRACING)
   systemJSPrototype.onload = function () {};
 function loadToId (load) {
   return load.id;
@@ -89,7 +89,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   })
   .then(function (registration) {
     if (!registration)
-      throw Error(errMsg(3, DEV ? 'Module ' + id + ' did not instantiate' : id));
+      throw Error(errMsg(3, process.env.SYSTEM_DEV ? 'Module ' + id + ' did not instantiate' : id));
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;
@@ -128,7 +128,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     return [registration[0], declared.setters || []];
   });
 
-  if (TRACING)
+  if (process.env.SYSTEM_TRACING)
     instantiatePromise = instantiatePromise.catch(function (err) {
       triggerOnload(loader, load, err);
     });
@@ -245,7 +245,7 @@ function postOrderExec (loader, load, seen) {
   // deps execute first, unless circular
   let depLoadPromises;
   load.d.forEach(function (depLoad) {
-    if (TRACING) {
+    if (process.env.SYSTEM_TRACING) {
       try {
         const depLoadPromise = postOrderExec(loader, depLoad, seen);
         if (depLoadPromise) {
@@ -274,7 +274,7 @@ function postOrderExec (loader, load, seen) {
     try {
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
-        if (TRACING)
+        if (process.env.SYSTEM_TRACING)
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null; // indicates completion
@@ -291,10 +291,10 @@ function postOrderExec (loader, load, seen) {
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      if (TRACING) triggerOnload(loader, load, null);
+      if (process.env.SYSTEM_TRACING) triggerOnload(loader, load, null);
     }
     catch (err) {
-      if (TRACING) triggerOnload(loader, load, err);
+      if (process.env.SYSTEM_TRACING) triggerOnload(loader, load, err);
       load.er = err;
       throw err;
     }
