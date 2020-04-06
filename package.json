@@ -27,7 +27,6 @@
     "concurrently": "^5.1.0",
     "construct-style-sheets-polyfill": "^2.3.5",
     "cross-env": "^7.0.2",
-    "esm": "^3.2.25",
     "make-fetch-happen": "^8.0.4",
     "mocha": "^7.1.1",
     "opn": "^6.0.0",
