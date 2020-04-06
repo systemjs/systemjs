@@ -82,11 +82,11 @@ To fix this error, you may either use [import maps](/docs/import-maps.md) or [ho
 
 SystemJS Error #3 occurs when a module fails to instantiate.
 
+This occurs when the instantiate hook returns a Promise that resolves with no value. This generally occurs when a module was downloaded and executed but did not call [`System.register()`](/docs/api.md#systemregisterdeps-declare) (or `define()` for AMD modules). To fix, ensure that the module calls System.register during its initial, top-level execution.
+
 Instantiation refers to downloading and executing the code for a module. The instantiation for a single module refers to an array that represents the module's dependencies, exports, and code.
 
 SystemJS has various methods of instantiating modules, generally involving either a `<script>` or `fetch()`. A module should generally call [`System.register()`](/docs/api.md#systemregisterdeps-declare) during top-level execution, as the primary means of instantiating itself. Custom module instantiation can be implemented by [hooking System.instantiate](/docs/hooks.md#instantiateurl-parenturl---promise).
-
-Error #3 occurs when the instantiate hook returns a Promise that resolves with no value. This generally occurs when a module was downloaded and executed but did not call [`System.register()`](/docs/api.md#systemregisterdeps-declare) (or `define()` for AMD modules). To fix, ensure that the module calls System.register during its initial, top-level execution.
 
 ## 4
 
