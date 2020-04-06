@@ -17,7 +17,7 @@ suite('SystemJS Standard Tests', function() {
     }, function (e) {
       assert.ok(e);
       console.log(e);
-      assert.ok(e.message.indexOf('Error loading ') === 0);
+      assert.ok(e.message.indexOf('Error loading ') !== -1);
       assert.ok(e.message.indexOf('non-existent') !== -1);
       assert.ok(e.message.indexOf('error-loader2.js') !== -1);
     });

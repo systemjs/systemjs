@@ -1,3 +1,5 @@
+import { errMsg } from '../err-msg.js';
+
 /*
  * Loads JSON, CSS, Wasm module types based on file extensions
  * Supports application/javascript falling back to JS eval
@@ -22,7 +24,7 @@
       return this.fetch(url)
       .then(function (res) {
         if (!res.ok)
-          throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : ''));
+          throw Error(errMsg(9, DEV ? res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '') : [res.status, res.statusText, url, parent].join(', ')));
         const contentType = res.headers.get('content-type');
         if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
           return res.text().then(function (source) {
@@ -88,7 +90,7 @@
           });
         }
         else {
-          throw new Error('Unknown module type "' + contentType + '"');
+          throw Error(errMsg(5, DEV ? 'Unknown module type "' + contentType + '"' : contentType));
         }
       });
     }

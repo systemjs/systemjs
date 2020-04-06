@@ -11,14 +11,15 @@
  * There is no support for dynamic import maps injection currently.
  */
 import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
+import { errMsg } from '../err-msg.js';
 import { systemJSPrototype } from '../system-core.js';
 
 let importMap = { imports: {}, scopes: {} }, importMapPromise;
 
 if (hasDocument) {
   iterateImportMaps(function (script) {
-    script._j = fetch(script.src).then(function (res) {
-      return res.json();
+    script._t = fetch(script.src).then(function (res) {
+      return res.text();
     });
   }, '[src]');
 }
@@ -29,7 +30,7 @@ systemJSPrototype.prepareImport = function () {
     if (hasDocument)
       iterateImportMaps(function (script) {
         importMapPromise = importMapPromise.then(function () {
-          return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
+          return (script._t || script.src && fetch(script.src).then(function (resp) { return resp.text(); }) || Promise.resolve(script.innerHTML)).then(parseJson)
           .then(function (json) {
             importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
           });
@@ -45,7 +46,15 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+  throw Error(errMsg(2, DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
+}
+
+function parseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw Error(DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
+  }
 }
 
 function iterateImportMaps(cb, extraSelector) {
