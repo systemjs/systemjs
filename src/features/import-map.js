@@ -12,6 +12,7 @@
  */
 import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
 import { hasSymbol, systemJSPrototype } from '../system-core.js';
+import { errMsg } from '../err-msg.js';
 
 const IMPORT_MAP = hasSymbol ? Symbol() : '#';
 const IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
@@ -31,7 +32,11 @@ systemJSPrototype.prepareImport = function () {
       loader[IMPORT_MAP_PROMISE] = loader[IMPORT_MAP_PROMISE].then(function () {
         return (script._t || script.src && fetch(script.src).then(function (res) { return res.text(); }) || Promise.resolve(script.innerHTML))
         .then(function (text) {
-          return JSON.parse(text);
+          try {
+            return JSON.parse(text);
+          } catch (err) {
+            throw Error(DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
+          }
         })
         .then(function (newMap) {
           loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, script.src || baseUrl, loader[IMPORT_MAP]);
@@ -48,7 +53,7 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+  throw Error(errMsg(2, DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
 }
 
 function iterateDocumentImportMaps(cb, extraSelector) {

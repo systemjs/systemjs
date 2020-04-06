@@ -15,6 +15,7 @@
  * System.prototype.instantiate implementations
  */
 import { global } from './common.js';
+import { errMsg } from './err-msg.js';
 export { systemJSPrototype, REGISTRY }
 
 export const hasSymbol = typeof Symbol !== 'undefined';
@@ -88,7 +89,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   })
   .then(function (registration) {
     if (!registration)
-      throw Error('Module ' + id + ' did not instantiate');
+      throw Error(errMsg(3, DEV ? 'Module ' + id + ' did not instantiate' : id));
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;

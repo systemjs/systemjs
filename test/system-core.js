@@ -416,7 +416,7 @@ describe('Loading Cases', function() {
         assert.fail('Should have failed');
       }
       catch (e) {
-        assert.equal(e.toString(), 'Error: Module x did not instantiate');
+        assert.ok(e.toString().includes('Module x did not instantiate'));
       }
     });
 
@@ -424,7 +424,7 @@ describe('Loading Cases', function() {
       // prototype fallback
       delete loader.resolve;
       const err = await getImportError('plain-name');
-      assert.equal(err, 'Error: Cannot resolve "plain-name"');
+      assert.ok(err.toString().includes('Cannot resolve "plain-name"'));
     });
 
     it('should throw if on syntax error', async function () {

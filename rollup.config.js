@@ -114,6 +114,7 @@ function mainConfig(name, isDev) {
       }),
       replace({
         TRACING: sjs ? 'false' : 'true',
+        DEV: isDev
       }),
       !isDev && terser(terserOptions)
     ]
@@ -133,7 +134,10 @@ function extrasConfig(isDev) {
         sourcemap: !isDev
       },
       plugins: [
-        !isDev && terser(terserOptions)
+        !isDev && terser(terserOptions),
+        replace({
+          DEV: isDev
+        })
       ]
     };
   });
