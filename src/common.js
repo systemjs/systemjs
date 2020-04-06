@@ -131,9 +131,9 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
     const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped) {
       if (DEV)
-        targetWarning(5, p, rhs, 'bare specifier did not resolve');
+        targetWarning(2, p, rhs, 'bare specifier did not resolve');
       else
-        targetWarning(5, p, rhs);
+        targetWarning(2, p, rhs);
     }
     else
       outPackages[resolvedLhs] = mapped;

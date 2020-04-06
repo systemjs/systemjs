@@ -90,7 +90,7 @@ import { errMsg } from '../err-msg.js';
           });
         }
         else {
-          throw Error(errMsg(10, DEV ? 'Unknown module type "' + contentType + '"' : contentType));
+          throw Error(errMsg(5, DEV ? 'Unknown module type "' + contentType + '"' : contentType));
         }
       });
     }

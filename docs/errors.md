@@ -106,56 +106,20 @@ Here are common reasons why a module could not be downloaded:
 
 ## 5
 
-### Invalid import map cascading - bare specifier did not resolve
+### Invalid content-type header
 
-SystemJS Error #5 occurs when an import map attempts invalid cascading.
+SystemJS Error #5 occurs when SystemJS attempted to load a module with [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), but the [content-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) HTTP response header was invalid.
 
-Most commonly, this error occurs through accidental attempted usage of import map cascading (details below), by specifying an invalid URL in the import map.
+SystemJS uses `fetch()` instead of `<script>` to load modules whenever the [shouldFetch hook](/docs/hooks.md##shouldfetchurl---boolean) returns true. By default, this occurs only when the file extension indicates it is a [CSS, JSON, HTML, or WASM module](/docs/module-types.md).
 
-```html
-<!-- INVALID -->
-<!-- You must add ./ to relative URLs in import maps -->
-<script type="systemjs-importmap">
-{
-  "imports": {
-    "thing1": "thing.js"
-  }
-}
-</script>
+SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check the content-type header. The header must be one of the following:
 
-<!-- VALID -->
-<script type="systemjs-importmap">
-{
-  "imports": {
-    "thing1": "./thing.js"
-  }
-}
-</script>
-```
+- `application/javascript`
+- `application/json`
+- `text/css`
+- `application/wasm`
 
-[Import Map cascading](https://github.com/WICG/import-maps/issues/137) is an advanced, experimental feature of systemjs import maps. With cascading, one module's URL can be derived from another's.
-
-```html
-<!-- Valid cascading -->
-<script type="systemjs-importmap">
-{
-  "imports": {
-    "foo": "/url.js",
-    "bar": "foo"
-  }
-}
-</script>
-
-<!-- Invalid cascading, by referencing a bare specifier as a module's value, that can't be resolved -->
-<!-- "foo" is not a valid URL, nor can it be found in the import map -->
-<script type="systemjs-importmap">
-{
-  "imports": {
-    "bar": "foo"
-  }
-}
-</script>
-```
+To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
 
 ## 6
 
@@ -226,22 +190,5 @@ This error occurs when using either the module-types or transform extras. The mo
 When using the transform extra, SystemJS uses `fetch()` to load all modules. However, when using the module-types extension (included in system.js), SystemJS uses `fetch()` instead of `<script>` to load modules whenever the [shouldFetch hook](/docs/hooks.md##shouldfetchurl---boolean) returns true. By default, this occurs only when the file extension indicates it is a [CSS, JSON, HTML, or WASM module](/docs/module-types.md).
 
 SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error #9 if it is not ok.
-
-To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
-
-## 10
-
-### Invalid content-type header
-
-SystemJS Error #10 occurs when SystemJS attempted to load a module with [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), but the [content-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) HTTP response header was invalid.
-
-SystemJS uses `fetch()` instead of `<script>` to load modules whenever the [shouldFetch hook](/docs/hooks.md##shouldfetchurl---boolean) returns true. By default, this occurs only when the file extension indicates it is a [CSS, JSON, HTML, or WASM module](/docs/module-types.md).
-
-SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check the content-type header. The header must be one of the following:
-
-- `application/javascript`
-- `application/json`
-- `text/css`
-- `application/wasm`
 
 To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
