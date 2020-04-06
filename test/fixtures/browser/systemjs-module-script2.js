@@ -1,7 +1,7 @@
-System.register([], function(_export) {
+System.register([], function (_export) {
   return {
     execute: function () {
-      _export('hello', 'there');
-    }
+      _export("hello", "there");
+    },
   };
 });

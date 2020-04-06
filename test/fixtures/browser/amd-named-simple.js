@@ -1,3 +1,3 @@
-define('amd-named-simple', [], function () {
+define("amd-named-simple", [], function () {
   return "AMD Simple";
 });

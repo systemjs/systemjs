@@ -1,3 +1,3 @@
-System.register(['./non-existent'], function () {
+System.register(["./non-existent"], function () {
   return {};
 });

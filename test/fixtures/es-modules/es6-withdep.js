@@ -1,1 +1,1 @@
-export { p } from './es6-dep.js';
+export { p } from "./es6-dep.js";

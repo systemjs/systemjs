@@ -1,2 +1,1 @@
-
-throw new Error('Global eval error');
+throw new Error("Global eval error");

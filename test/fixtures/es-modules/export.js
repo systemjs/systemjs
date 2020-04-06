@@ -1,8 +1,8 @@
 export var p = 5;
-export function foo() {};
+export function foo() {}
 export var q = {};
 
-export default function bar() {};
+export default function bar() {}
 
 var s = 4;
 

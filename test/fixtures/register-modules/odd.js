@@ -10,9 +10,11 @@ System.register(["./even.js"], function (_export, _context) {
   _export("odd", odd);
 
   return {
-    setters: [function (_evenJs) {
-      even = _evenJs.even;
-    }],
-    execute: function () {}
+    setters: [
+      function (_evenJs) {
+        even = _evenJs.even;
+      },
+    ],
+    execute: function () {},
   };
 });

@@ -1,7 +1,7 @@
 export class q {
   foo() {
-    throw 'g';
-    console.log('class method');
+    throw "g";
+    console.log("class method");
   }
 }
 
@@ -11,4 +11,4 @@ export default 4;
 
 var p = 5;
 
-import * as Q from './test-file.js';
+import * as Q from "./test-file.js";

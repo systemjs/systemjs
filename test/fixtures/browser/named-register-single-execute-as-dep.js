@@ -1,14 +1,14 @@
-System.register(['named-register-single-execute'], function (_export) {
+System.register(["named-register-single-execute"], function (_export) {
   let dep;
 
   return {
     setters: [
-      function(m) {
+      function (m) {
         dep = m;
-      }
+      },
     ],
-    execute: function() {
-      _export('bonjour', dep.bonjour);
-    }
+    execute: function () {
+      _export("bonjour", dep.bonjour);
+    },
   };
 });

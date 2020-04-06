@@ -17,19 +17,27 @@
   "files": [
     "dist"
   ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
   "devDependencies": {
+    "@jsenv/github-pull-request-filesize-impact": "^2.6.0",
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-replace": "^2.3.1",
-    "@jsenv/github-pull-request-filesize-impact": "^2.6.0",
     "bluebird": "^3.7.2",
     "concurrently": "^5.1.0",
     "construct-style-sheets-polyfill": "^2.3.5",
     "cross-env": "^7.0.2",
     "esm": "^3.2.25",
+    "husky": "^4.2.3",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
     "opn": "^6.0.0",
+    "prettier": "^2.0.4",
+    "pretty-quick": "^2.0.1",
     "rimraf": "^3.0.2",
     "rollup": "^2.2.0",
     "rollup-plugin-terser": "^5.3.0",
@@ -47,6 +55,7 @@
     "test:node": "mocha -b -r esm --file test/mocha-setup.js test/system-node.js",
     "test:browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
+    "format": "prettier './**/*' --write",
     "prepublish": "npm run build"
   },
   "collective": {

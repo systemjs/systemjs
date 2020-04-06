@@ -1,7 +1,7 @@
 System.register([], function (_export) {
   return {
     execute: function () {
-      _export('lazyValue', 5);
-    }
+      _export("lazyValue", 5);
+    },
   };
 });

@@ -1,2 +1,2 @@
-export { b } from './b.js';
-export var a = 'a';
+export { b } from "./b.js";
+export var a = "a";

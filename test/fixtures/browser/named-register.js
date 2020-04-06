@@ -1,3 +1,1 @@
-System.register('asdf', [], function () {
-
-});
+System.register("asdf", [], function () {});

@@ -1,2 +1,2 @@
-export * from './star-dep.js';
-export var bar = 'bar';
+export * from "./star-dep.js";
+export var bar = "bar";

@@ -1,1 +1,1 @@
-throw new Error('dep error');
+throw new Error("dep error");

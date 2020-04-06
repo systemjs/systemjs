@@ -1,7 +1,7 @@
-System.register('a', [], function (_export) {
+System.register("a", [], function (_export) {
   return {
-    execute: function() {
-      _export('b', 'c');
-    }
+    execute: function () {
+      _export("b", "c");
+    },
   };
 });

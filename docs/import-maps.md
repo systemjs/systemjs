@@ -14,19 +14,19 @@ Import maps can be loaded inline or from a separate URL using a `<script type="s
 <!-- Separate src: -->
 <script type="systemjs-importmap" src="/path/to/importmap.json">
 
-<!-- Inline: -->
-<script type="systemjs-importmap">
-{
-  "imports": {
-    "lodash": "/path/to/lodash/index.js",
-    "lodash/": "/path/to/lodash/"
-  },
-  "scopes": {
-    "/path/to/lodash/": {
-      "lodash-dependency": "/path/to/scoped/package.js"
+  <!-- Inline: -->
+  <script type="systemjs-importmap">
+  {
+    "imports": {
+      "lodash": "/path/to/lodash/index.js",
+      "lodash/": "/path/to/lodash/"
+    },
+    "scopes": {
+      "/path/to/lodash/": {
+        "lodash-dependency": "/path/to/scoped/package.js"
+      }
     }
   }
-}
 </script>
 ```
 
@@ -38,11 +38,11 @@ For base-level specifier mappings, we can use the `"imports"` property:
 
 ```html
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "lodash": "/path/to/lodash/index.js"
+  {
+    "imports": {
+      "lodash": "/path/to/lodash/index.js"
+    }
   }
-}
 </script>
 ```
 
@@ -54,12 +54,12 @@ To more clearly define package folders we can use package folder mappings:
 
 ```html
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "lodash": "/path/to/lodash/index.js",
-    "lodash/": "/path/to/lodash/"
+  {
+    "imports": {
+      "lodash": "/path/to/lodash/index.js",
+      "lodash/": "/path/to/lodash/"
+    }
   }
-}
 </script>
 ```
 
@@ -82,16 +82,16 @@ This can be achieved with scoped import maps:
 
 ```html
 <script type="systemjs-importmap">
-{
-  "scopes": {
-    "/app/": {
-      "lodash": "/path/to/lodash@2.0.0.js"
-    },
-    "/lib/x/": {
-      "lodash": "/path/to/lodash@1.0.0.js"
+  {
+    "scopes": {
+      "/app/": {
+        "lodash": "/path/to/lodash@2.0.0.js"
+      },
+      "/lib/x/": {
+        "lodash": "/path/to/lodash@1.0.0.js"
+      }
     }
   }
-}
 </script>
 ```
 
@@ -111,21 +111,20 @@ rules of the import map that came before.
 
 This means import maps can reference resolutions from previous import maps:
 
-
 ```html
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "x": "/path/to/x.js"
+  {
+    "imports": {
+      "x": "/path/to/x.js"
+    }
   }
-}
 </script>
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "y": "x" // resolves to /path/to/x.js
+  {
+    "imports": {
+      "y": "x" // resolves to /path/to/x.js
+    }
   }
-}
 </script>
 ```
 

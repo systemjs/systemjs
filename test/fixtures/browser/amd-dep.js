@@ -1,3 +1,3 @@
 define({
-  amd: 'dep'
+  amd: "dep",
 });

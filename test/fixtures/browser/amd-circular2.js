@@ -1,7 +1,7 @@
-define(['./amd-circular1.js'], function (circular1) {
+define(["./amd-circular1.js"], function (circular1) {
   return {
-    fn: function() {
+    fn: function () {
       return circular1.val;
-    }
+    },
   };
 });

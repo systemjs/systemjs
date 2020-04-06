@@ -1,4 +1,2 @@
-export * from './export-star.js';
-export function foo() {
-  
-}
+export * from "./export-star.js";
+export function foo() {}

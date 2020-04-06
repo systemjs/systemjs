@@ -1,23 +1,25 @@
-System.register('a', ['b'], function (exports) {
+System.register("a", ["b"], function (exports) {
   var b;
   return {
-    setters: [function (m) {
-      b = m.b;
-    }],
+    setters: [
+      function (m) {
+        b = m.b;
+      },
+    ],
     execute: function () {
       exports({
-        a: b
+        a: b,
       });
-    }
+    },
   };
 });
 
-System.register('b', [], function (exports) {
+System.register("b", [], function (exports) {
   return {
     execute: function () {
       exports({
-        b: 'b'
+        b: "b",
       });
-    }
+    },
   };
 });

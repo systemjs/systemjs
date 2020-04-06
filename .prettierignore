@@ -1,0 +1,9 @@
+.agignore
+.gitignore
+.prettierignore
+dist
+LICENSE
+*.wasm
+*.wast
+test/fixtures/browser/json-error.json
+test/fixtures/css-modules/javascript.css

@@ -3,17 +3,20 @@ System.register(["./star-dep.js"], function (_export, _context) {
 
   var bar;
   return {
-    setters: [function (_starDepJs) {
-      var _exportObj = {};
+    setters: [
+      function (_starDepJs) {
+        var _exportObj = {};
 
-      for (var _key in _starDepJs) {
-        if (_key !== "default" && _key !== "__esModule") _exportObj[_key] = _starDepJs[_key];
-      }
+        for (var _key in _starDepJs) {
+          if (_key !== "default" && _key !== "__esModule")
+            _exportObj[_key] = _starDepJs[_key];
+        }
 
-      _export(_exportObj);
-    }],
+        _export(_exportObj);
+      },
+    ],
     execute: function () {
-      _export("bar", bar = 'bar');
-    }
+      _export("bar", (bar = "bar"));
+    },
   };
 });

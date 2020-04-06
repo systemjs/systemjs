@@ -34,7 +34,7 @@ The default implementation is:
 ```js
 System.constructor.prototype.createContext = function (url) {
   return {
-    url
+    url,
   };
 };
 ```
@@ -103,7 +103,9 @@ This function handles that logic, allowing for custom handling for other extensi
 Setting:
 
 ```js
-System.shouldFetch = function () { return true; };
+System.shouldFetch = function () {
+  return true;
+};
 ```
 
 will enforce loading all JS files through `fetch`, even allowing custom transform hooks to be implemented through the fetch hook.

@@ -42,7 +42,7 @@ Bare specifiers must be defined by import maps in SystemJS. To fix the error, ad
 </script>
 <script>
   // The "vue" specifier will now be "resolved" to https://unpkg.com/vue
-  System.import('vue');
+  System.import("vue");
 </script>
 ```
 
@@ -69,10 +69,10 @@ To fix this error, you may either use [import maps](/docs/import-maps.md) or [ho
       }
     };
 
-    function otherResolution (id) {
-      return '/some-url.js';
+    function otherResolution(id) {
+      return "/some-url.js";
     }
-  })()
+  })();
 </script>
 ```
 
@@ -132,20 +132,20 @@ Trailing slash path mappings for packages are a way of mapping any subpath of th
 ```html
 <!-- Valid package - the URL address ends with / -->
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "foo/": "/some-url/",
+  {
+    "imports": {
+      "foo/": "/some-url/"
+    }
   }
-}
 </script>
 
 <!-- Invalid package - the URL address does not end with / -->
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "foo/": "/some-url",
+  {
+    "imports": {
+      "foo/": "/some-url"
+    }
   }
-}
 </script>
 ```
 

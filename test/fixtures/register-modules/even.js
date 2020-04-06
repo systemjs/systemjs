@@ -11,13 +11,15 @@ System.register(["./odd.js"], function (_export, _context) {
   _export("even", even);
 
   return {
-    setters: [function (_oddJs) {
-      odd = _oddJs.odd;
-    }],
+    setters: [
+      function (_oddJs) {
+        odd = _oddJs.odd;
+      },
+    ],
     execute: function () {
-      _export("counter", counter = 0);
+      _export("counter", (counter = 0));
 
       odd(1);
-    }
+    },
   };
 });

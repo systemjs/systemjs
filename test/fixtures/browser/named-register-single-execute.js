@@ -1,10 +1,10 @@
 window.namedRegisterExecutes = 0;
 
-System.register('named-register-single-execute', [], function(_export) {
+System.register("named-register-single-execute", [], function (_export) {
   return {
-    execute: function() {
+    execute: function () {
       window.namedRegisterExecutes++;
-      _export('bonjour', 'bonjour');
-    }
+      _export("bonjour", "bonjour");
+    },
   };
 });

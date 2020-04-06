@@ -1,1 +1,1 @@
-throw new Error('Outer error.');
+throw new Error("Outer error.");

@@ -1,3 +1,3 @@
 define([], function () {
-  return { ok: 'ok' };
+  return { ok: "ok" };
 });

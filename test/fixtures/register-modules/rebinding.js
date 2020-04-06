@@ -5,7 +5,7 @@ System.register([], function (_export, _context) {
   return {
     setters: [],
     execute: function () {
-      _export("p", p = 4);
-    }
+      _export("p", (p = 4));
+    },
   };
 });

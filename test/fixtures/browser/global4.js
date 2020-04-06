@@ -1,1 +1,1 @@
-self.global4 = 'global4';
+self.global4 = "global4";

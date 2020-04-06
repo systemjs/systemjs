@@ -1,4 +1,4 @@
-import { errMsg } from '../err-msg.js';
+import { errMsg } from "../err-msg.js";
 
 /*
  * Support for a "transform" loader interface
@@ -8,27 +8,37 @@ import { errMsg } from '../err-msg.js';
 
   const instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, parent) {
-    if (url.slice(-5) === '.wasm')
-      return instantiate.call(this, url, parent);
+    if (url.slice(-5) === ".wasm") return instantiate.call(this, url, parent);
 
     const loader = this;
-    return fetch(url, { credentials: 'same-origin' })
-    .then(function (res) {
-      if (!res.ok)
-        throw Error(errMsg(9, DEV ? 'Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : '') : [res.status, res.statusText, parent].join(', ')));
-      return res.text();
-    })
-    .then(function (source) {
-      return loader.transform.call(this, url, source);
-    })
-    .then(function (source) {
-      (0, eval)(source + '\n//# sourceURL=' + url);
-      return loader.getRegister();
-    });
+    return fetch(url, { credentials: "same-origin" })
+      .then(function (res) {
+        if (!res.ok)
+          throw Error(
+            errMsg(
+              9,
+              DEV
+                ? "Fetch error: " +
+                    res.status +
+                    " " +
+                    res.statusText +
+                    (parent ? " loading from " + parent : "")
+                : [res.status, res.statusText, parent].join(", ")
+            )
+          );
+        return res.text();
+      })
+      .then(function (source) {
+        return loader.transform.call(this, url, source);
+      })
+      .then(function (source) {
+        (0, eval)(source + "\n//# sourceURL=" + url);
+        return loader.getRegister();
+      });
   };
 
   // Hookable transform function!
   systemJSPrototype.transform = function (_id, source) {
     return source;
   };
-})(typeof self !== 'undefined' ? self : global);
+})(typeof self !== "undefined" ? self : global);

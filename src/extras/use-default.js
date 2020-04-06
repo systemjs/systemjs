@@ -11,4 +11,4 @@
       return ns.__useDefault ? ns.default : ns;
     });
   };
-})(typeof self !== 'undefined' ? self : global);
+})(typeof self !== "undefined" ? self : global);

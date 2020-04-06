@@ -10,7 +10,7 @@ System.register([], function (_export, _context) {
   return {
     setters: [],
     execute: function () {
-      _export("s", s = 4);
-    }
+      _export("s", (s = 4));
+    },
   };
 });

@@ -1,13 +1,11 @@
-define('named-in-anon', function() {
-  return 'named';
+define("named-in-anon", function () {
+  return "named";
 });
 
-define([], function() {
+define([], function () {});
 
-});
-
-define(function() {
+define(function () {
   return {
-    anon: true
+    anon: true,
   };
 });

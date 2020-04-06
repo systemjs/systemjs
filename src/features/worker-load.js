@@ -1,10 +1,10 @@
 /*
  * Supports loading System.register in workers
  */
-import { systemJSPrototype } from '../system-core';
-import { hasSelf } from '../common';
+import { systemJSPrototype } from "../system-core";
+import { hasSelf } from "../common";
 
-if (hasSelf && typeof importScripts === 'function')
+if (hasSelf && typeof importScripts === "function")
   systemJSPrototype.instantiate = function (url) {
     const loader = this;
     return Promise.resolve().then(function () {
@@ -12,4 +12,3 @@ if (hasSelf && typeof importScripts === 'function')
       return loader.getRegister();
     });
   };
-  

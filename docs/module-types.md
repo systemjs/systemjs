@@ -2,15 +2,15 @@
 
 SystemJS supports loading modules that are in the following formats:
 
-| Module Format | s.js | system.js | File Extension |
-| ------------- | ---- | --------- | -------------- |
-| [System.register](/docs/system-register.md) | :heavy_check_mark: | :heavy_check_mark: | * |
-| [JSON Modules](https://github.com/whatwg/html/pull/4407) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.json |
-| [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.css |
-| [Web Assembly](https://github.com/WebAssembly/esm-integration/tree/master/proposals/esm-integration) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark: | *.wasm |
-| Global variable | [global extra](/dist/extras/global.js) | :heavy_check_mark: | * |
-| [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
-| [UMD](https://github.com/umdjs/umd) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
+| Module Format                                                                                           | s.js                                               | system.js                        | File Extension |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------- | -------------- |
+| [System.register](/docs/system-register.md)                                                             | :heavy_check_mark:                                 | :heavy_check_mark:               | \*             |
+| [JSON Modules](https://github.com/whatwg/html/pull/4407)                                                | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark:               | \*.json        |
+| [CSS Modules](https://github.com/w3c/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md) | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark:               | \*.css         |
+| [Web Assembly](https://github.com/WebAssembly/esm-integration/tree/master/proposals/esm-integration)    | [Module Types extra](/dist/extras/module-types.js) | :heavy_check_mark:               | \*.wasm        |
+| Global variable                                                                                         | [global extra](/dist/extras/global.js)             | :heavy_check_mark:               | \*             |
+| [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD)                                                      | [AMD extra](/dist/extras/amd.js)                   | [AMD extra](/dist/extras/amd.js) | \*             |
+| [UMD](https://github.com/umdjs/umd)                                                                     | [AMD extra](/dist/extras/amd.js)                   | [AMD extra](/dist/extras/amd.js) | \*             |
 
 ### File Extension Limitations
 
@@ -25,6 +25,7 @@ Instead of reading the MIME type, the file extension is thus used specifically f
 ### Example
 
 **file.json**
+
 ```json
 {
   "some": "json value"
@@ -32,7 +33,7 @@ Instead of reading the MIME type, the file extension is thus used specifically f
 ```
 
 ```js
-System.import('file.json').then(function (module) {
+System.import("file.json").then(function (module) {
   console.log(module.default); // The json as a js object.
 });
 ```
@@ -44,6 +45,7 @@ System.import('file.json').then(function (module) {
 Note that the term CSS Modules refers to two separate things: (1) the browser spec, or (2) the Webpack / PostCSS plugin. The CSS modules implemented by SystemJS are the browser spec.
 
 ### Example
+
 ```css
 /* file.css */
 .brown {
@@ -52,7 +54,7 @@ Note that the term CSS Modules refers to two separate things: (1) the browser sp
 ```
 
 ```js
-System.import('file.css').then(function (module) {
+System.import("file.css").then(function (module) {
   const styleSheet = module.default; // A CSSStyleSheet object
   document.adoptedStyleSheets = [...document.adoptedStyleSheets, styleSheet]; // now your css is available to be used.
 });
@@ -68,7 +70,10 @@ Currently these are only available in new versions of Chromium based browsers (e
 The polyfill can be conditionally loaded with an approach like:
 
 ```html
-<script defer src="https://unpkg.com/construct-style-sheets-polyfill@2.1.0/adoptedStyleSheets.min.js"></script>
+<script
+  defer
+  src="https://unpkg.com/construct-style-sheets-polyfill@2.1.0/adoptedStyleSheets.min.js"
+></script>
 ```
 
 _Note that this polyfill does not currently work in IE11._
@@ -81,14 +86,14 @@ _Note that this polyfill does not currently work in IE11._
 
 ```html
 <script type="systemjs-importmap">
-{
-  "imports": {
-    "example": "./wasm-dependency.js"
+  {
+    "imports": {
+      "example": "./wasm-dependency.js"
+    }
   }
-}
 </script>
 <script>
-  System.import('/wasm-module.wasm').then(function (m) {
+  System.import("/wasm-module.wasm").then(function (m) {
     // calls wasm-dependency square function through Wasm
     m.exampleExport(5); // 25
   });
@@ -96,9 +101,10 @@ _Note that this polyfill does not currently work in IE11._
 ```
 
 wasm-dependency.js
+
 ```js
 // function called from Wasm
-export function exampleImport (num) {
+export function exampleImport(num) {
   return num * num;
 }
 ```
@@ -106,6 +112,7 @@ export function exampleImport (num) {
 where `wasm-module.wasm` is generated from:
 
 **wasm-module.wat**
+
 ```wat
 (module
   (func $exampleImport (import "example" "exampleImport") (param i32) (result i32))

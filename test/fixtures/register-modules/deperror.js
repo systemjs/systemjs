@@ -4,7 +4,7 @@ System.register([], function (_export, _context) {
   return {
     setters: [],
     execute: function () {
-      throw new Error('dep error');
-    }
+      throw new Error("dep error");
+    },
   };
 });

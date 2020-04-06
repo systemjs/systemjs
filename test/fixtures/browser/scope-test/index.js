@@ -1,9 +1,10 @@
-System.register(['maptest'], function (_export) {
+System.register(["maptest"], function (_export) {
   return {
-    setters: [function (map) {
-      for (var p in map)
-        _export(p, map[p]);
-    }],
-    execute: function () {}
+    setters: [
+      function (map) {
+        for (var p in map) _export(p, map[p]);
+      },
+    ],
+    execute: function () {},
   };
 });

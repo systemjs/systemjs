@@ -3,11 +3,13 @@ System.register(["./_d.js"], function (_export, _context) {
 
   var c;
   return {
-    setters: [function (_dJs) {
-      _export("d", _dJs.d);
-    }],
+    setters: [
+      function (_dJs) {
+        _export("d", _dJs.d);
+      },
+    ],
     execute: function () {
-      _export("c", c = 'c');
-    }
+      _export("c", (c = "c"));
+    },
   };
 });

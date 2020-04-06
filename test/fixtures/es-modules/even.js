@@ -1,4 +1,4 @@
-import { odd } from './odd.js'
+import { odd } from "./odd.js";
 
 export var counter = 0;
 

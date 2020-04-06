@@ -3,6 +3,6 @@ System.register(["./non-existent.js"], function (_export, _context) {
 
   return {
     setters: [function (_nonExistentJs) {}],
-    execute: function () {}
+    execute: function () {},
   };
 });

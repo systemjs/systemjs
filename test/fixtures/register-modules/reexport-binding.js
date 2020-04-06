@@ -3,9 +3,11 @@ System.register(["./rebinding.js"], function (_export, _context) {
 
   var p;
   return {
-    setters: [function (_rebindingJs) {
-      p = _rebindingJs.p;
-    }],
-    execute: function () {}
+    setters: [
+      function (_rebindingJs) {
+        p = _rebindingJs.p;
+      },
+    ],
+    execute: function () {},
   };
 });

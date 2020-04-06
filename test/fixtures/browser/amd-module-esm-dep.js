@@ -1,3 +1,3 @@
-define(['./esm.js'], function (esm) {
+define(["./esm.js"], function (esm) {
   return esm;
 });

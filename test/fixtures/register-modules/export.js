@@ -14,15 +14,11 @@ System.register([], function (_export, _context) {
   return {
     setters: [],
     execute: function () {
-      _export("p", p = 5);
+      _export("p", (p = 5));
 
-      ;
+      _export("m", _export("q", (q = {})));
 
-      _export("m", _export("q", q = {}));
-
-      ;
-
-      _export("t", _export("s", s = 4));
-    }
+      _export("t", _export("s", (s = 4)));
+    },
   };
 });

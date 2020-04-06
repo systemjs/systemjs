@@ -3,14 +3,16 @@ System.register(["./a.js"], function (_export, _context) {
 
   var c;
   return {
-    setters: [function (_aJs) {
-      _export({
-        a: _aJs.a,
-        b: _aJs.b
-      });
-    }],
+    setters: [
+      function (_aJs) {
+        _export({
+          a: _aJs.a,
+          b: _aJs.b,
+        });
+      },
+    ],
     execute: function () {
-      _export("c", c = 'c');
-    }
+      _export("c", (c = "c"));
+    },
   };
 });

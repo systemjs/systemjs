@@ -1,1 +1,1 @@
-define({thing: 'correct'});
+define({ thing: "correct" });

@@ -1,7 +1,7 @@
 /*
  * SystemJS named register extension
  * Supports System.register('name', [..deps..], function (_export, _context) { ... })
- * 
+ *
  * Names are written to the registry as-is
  * System.register('x', ...) can be imported as System.import('x')
  */
@@ -25,8 +25,7 @@
 
   const register = systemJSPrototype.register;
   systemJSPrototype.register = function (name, deps, declare) {
-    if (typeof name !== 'string')
-      return register.apply(this, arguments);
+    if (typeof name !== "string") return register.apply(this, arguments);
     const define = [deps, declare];
     this.registerRegistry[name] = define;
     if (!firstNamedDefine) {
@@ -70,5 +69,5 @@
     const result = firstNamedDefine || register;
     firstNamedDefine = null;
     return result;
-  }
-})(typeof self !== 'undefined' ? self : global);
+  };
+})(typeof self !== "undefined" ? self : global);

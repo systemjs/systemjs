@@ -1,5 +1,5 @@
-System.register(['./syntax-err.js'], function () {
+System.register(["./syntax-err.js"], function () {
   return {
-    setters: []
+    setters: [],
   };
 });

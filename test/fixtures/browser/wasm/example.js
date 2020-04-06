@@ -5,8 +5,8 @@ System.register([], function (_export) {
       _export({
         exampleImport: function (i) {
           return i + 1;
-        }
+        },
       });
-    }
+    },
   };
 });

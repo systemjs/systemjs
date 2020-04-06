@@ -1,1 +1,1 @@
-export var asdf = 'asdf';
+export var asdf = "asdf";

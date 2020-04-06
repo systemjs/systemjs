@@ -1,1 +1,1 @@
-global2 = 'hi';
+global2 = "hi";

@@ -1,3 +1,3 @@
 var global3 = {
-  some: 'thing'
+  some: "thing",
 };
