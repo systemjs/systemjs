@@ -1,4 +1,3 @@
-import './fixtures/tracing.js';
 import { resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl } from '../src/common.js';
 import assert from 'assert';
 

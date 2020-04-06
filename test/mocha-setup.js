@@ -1,7 +1,4 @@
 if (typeof process === 'undefined')
-  global.process = {
-    env: {
-      TRACING: true,
-      DEV: true
-    }
-  };
+  global.process = { env: {} };
+process.env.SYSTEM_TRACING = 1;
+process.env.SYSTEM_DEV = 1;
