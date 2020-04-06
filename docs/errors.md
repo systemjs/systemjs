@@ -26,11 +26,11 @@ Note that this error also can occur for external import maps (those with `src=""
 
 ## 2
 
-### Unable to resolve specifier
+### Unable to resolve bare specifier
 
 SystemJS Error #2 occurs when you attempt to load a module that doesn't have a URL associated with it.
 
-The most common reason this error occurs in when a module is missing from your import map. To fix it, add the module to your import map:
+Bare specifiers must be defined by import maps in SystemJS. To fix the error, add the module to your import map:
 
 ```html
 <script type="systemjs-importmap">

@@ -46,7 +46,7 @@ systemJSPrototype.resolve = function (id, parentUrl) {
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error(errMsg(2, DEV ? "Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
+  throw Error(errMsg(2, DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
 }
 
 function parseJson(text) {
