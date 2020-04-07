@@ -192,3 +192,19 @@ When using the transform extra, SystemJS uses `fetch()` to load all modules. How
 SystemJS checks the HTTP [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) object to check if the HTTP response status is ["ok"](https://developer.mozilla.org/en-US/docs/Web/API/Response/ok), and throws Error #9 if it is not ok.
 
 To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
+
+## 10
+
+### Invalid module id
+
+SystemJS Error #10 occurs when you call `System.set(id, module)` with an invalid id.
+
+The SystemJS module registry is similar to a browser's module registry, which identifies modules by URL. As such, the module id passed to System.set should be a URL, not a bare specifier.
+
+```js
+// INVALID
+System.set('foo', { some: 'value' });
+
+// VALID
+System.set('/foo.js', { some: 'value' });
+```

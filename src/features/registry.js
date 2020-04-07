@@ -1,4 +1,6 @@
 import { systemJSPrototype, REGISTRY } from '../system-core.js';
+import { baseUrl } from '../common.js';
+import { errMsg } from '../err-msg.js';
 
 const toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
@@ -12,6 +14,11 @@ systemJSPrototype.get = function (id) {
 };
 
 systemJSPrototype.set = function (id, module) {
+  try {
+    new URL(id, baseUrl);
+  } catch (err) {
+    console.warn(Error(DEV ? errMsg(10, 'Invalid module id - ' + id + ' must be url') : errMsg(10, id)));
+  }
   let ns;
   if (toStringTag && module[toStringTag] === 'Module') {
     ns = module;

@@ -2,7 +2,7 @@ import './fixtures/tracing.js';
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
-import { resolveIfNotPlainOrUrl } from '../src/common';
+import { resolveIfNotPlainOrUrl } from '../src/common.js';
 import '../src/features/registry.js';
 import '../src/system-core.js';
 import '../src/features/import-map.js';
@@ -129,10 +129,23 @@ describe('Core API', function () {
     });
 
     it('Supports System.set', async function () {
-      const _x = loader.set('x', { y: 43 });
-      const x = await loader.import('x');
+      const _x = loader.set('http://x', { y: 43 });
+      const x = await loader.import('http://x');
       assert.equal(x.y, 43);
       assert.equal(x, _x);
+    });
+
+    it('warns with invalid System.set', async function () {
+      let numCalls = 0, lastWarn;
+      const originalWarn = console.warn;
+      console.warn = msg => {
+        numCalls++;
+        lastWarn = msg;
+      };
+      loader.set('bare-specifier', { y: 43 });
+      console.warn = originalWarn;
+      assert.equal(numCalls, 1);
+      assert.match(lastWarn.message, /Invalid module id/);
     });
 
     it('Supports System.resolve', async function () {
@@ -143,12 +156,12 @@ describe('Core API', function () {
     });
 
     it('Supports iteration', async function () {
-      loader.set('h', {a: 'b'});
-      await loader.import('h');
+      loader.set('http://h', {a: 'b'});
+      await loader.import('http://h');
 
       let foundH = false;
       for (let entry of loader.entries()) {
-        if (entry[0] === 'h' && entry[1].a === 'b') {
+        if (entry[0] === 'http://h' && entry[1].a === 'b') {
           foundH = true;
         }
       }
@@ -157,10 +170,10 @@ describe('Core API', function () {
     });
 
     it('Supports System.entries', async function () {
-      loader.set('i', {a: 'b'});
-      await loader.import('i');
+      loader.set('http://i', {a: 'b'});
+      await loader.import('http://i');
 
-      assert([...loader.entries()].some(entry => entry[0] === 'i' && entry[1].a === 'b'));
+      assert([...loader.entries()].some(entry => entry[0] === 'http://i' && entry[1].a === 'b'));
     })
   });
 });
