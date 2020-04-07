@@ -1,37 +1,37 @@
 import { errMsg } from './err-msg.js';
 
-export const hasSymbol = typeof Symbol !== 'undefined';
-export const hasSelf = typeof self !== 'undefined';
-export const hasDocument = typeof document !== 'undefined';
+export var hasSymbol = typeof Symbol !== 'undefined';
+export var hasSelf = typeof self !== 'undefined';
+export var hasDocument = typeof document !== 'undefined';
 
-const envGlobal = hasSelf ? self : global;
+var envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
 // Loader-scoped baseUrl supported in Node.js only
-export const BASE_URL = hasSymbol ? Symbol() : '_';
+export var BASE_URL = hasSymbol ? Symbol() : '_';
 
-export let baseUrl;
+export var baseUrl;
 
 if (hasDocument) {
-  const baseEl = document.querySelector('base[href]');
+  var baseEl = document.querySelector('base[href]');
   if (baseEl)
     baseUrl = baseEl.href;
 }
 
 if (!baseUrl && typeof location !== 'undefined') {
   baseUrl = location.href.split('#')[0].split('?')[0];
-  const lastSepIndex = baseUrl.lastIndexOf('/');
+  var lastSepIndex = baseUrl.lastIndexOf('/');
   if (lastSepIndex !== -1)
     baseUrl = baseUrl.slice(0, lastSepIndex + 1);
 }
 
 if (!process.env.SYSTEM_BROWSER && !baseUrl && typeof process !== 'undefined') {
-  const cwd = process.cwd();
+  var cwd = process.cwd();
   // TODO: encoding edge cases
   baseUrl = 'file://' + (cwd[0] === '/' ? '' : '/') + cwd.replace(/\\/g, '/') + '/';
 }
 
-const backslashRegEx = /\\/g;
+var backslashRegEx = /\\/g;
 export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
   if (relUrl.indexOf('\\') !== -1)
     relUrl = relUrl.replace(backslashRegEx, '/');
@@ -43,13 +43,13 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
   else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && (relUrl[2] === '/' || relUrl.length === 2 && (relUrl += '/')) ||
       relUrl.length === 1  && (relUrl += '/')) ||
       relUrl[0] === '/') {
-    const parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
+    var parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
     // Disabled, but these cases will give inconsistent results for deep backtracking
     //if (parentUrl[parentProtocol.length] !== '/')
     //  throw Error('Cannot resolve');
     // read pathname from parent URL
     // pathname taken to be part after leading "/"
-    let pathname;
+    var pathname;
     if (parentUrl[parentProtocol.length + 1] === '/') {
       // resolving to a :// so we need to read out the auth and host
       if (parentProtocol !== 'file:') {
@@ -71,11 +71,11 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
     // join together and split for removal of .. and . segments
     // looping the string instead of anything fancy for perf reasons
     // '../../../../../z' resolved to 'x/y' is just 'z'
-    const segmented = pathname.slice(0, pathname.lastIndexOf('/') + 1) + relUrl;
+    var segmented = pathname.slice(0, pathname.lastIndexOf('/') + 1) + relUrl;
 
-    const output = [];
-    let segmentIndex = -1;
-    for (let i = 0; i < segmented.length; i++) {
+    var output = [];
+    var segmentIndex = -1;
+    for (var i = 0; i < segmented.length; i++) {
       // busy reading a segment - only terminate on '/'
       if (segmentIndex !== -1) {
         if (segmented[i] === '/') {
@@ -125,19 +125,19 @@ export function resolveUrl (relUrl, parentUrl) {
 }
 
 function objectAssign (to, from) {
-  for (let p in from)
+  for (var p in from)
     to[p] = from[p];
   return to;
 }
 
 function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
-  for (let p in packages) {
-    const resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
-    const rhs = packages[p];
+  for (var p in packages) {
+    var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
+    var rhs = packages[p];
     // package fallbacks not currently supported
     if (typeof rhs !== 'string')
       continue;
-    const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
+    var mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped) {
       if (process.env.SYSTEM_PRODUCTION)
         targetWarning(2, p, rhs);
@@ -150,14 +150,14 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
 }
 
 export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
-  const outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
+  var outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
 
   if (json.imports)
     resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
 
   if (json.scopes)
-    for (let s in json.scopes) {
-      const resolvedScope = resolveUrl(s, baseUrl);
+    for (var s in json.scopes) {
+      var resolvedScope = resolveUrl(s, baseUrl);
       resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
     }
 
@@ -167,18 +167,18 @@ export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
 function getMatch (path, matchObj) {
   if (matchObj[path])
     return path;
-  let sepIndex = path.length;
+  var sepIndex = path.length;
   do {
-    const segment = path.slice(0, sepIndex + 1);
+    var segment = path.slice(0, sepIndex + 1);
     if (segment in matchObj)
       return segment;
   } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
 }
 
 function applyPackages (id, packages) {
-  const pkgName = getMatch(id, packages);
+  var pkgName = getMatch(id, packages);
   if (pkgName) {
-    const pkg = packages[pkgName];
+    var pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
       if (process.env.SYSTEM_PRODUCTION)
@@ -196,10 +196,10 @@ function targetWarning (code, match, target, msg) {
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
-  const scopes = importMap.scopes;
-  let scopeUrl = parentUrl && getMatch(parentUrl, scopes);
+  var scopes = importMap.scopes;
+  var scopeUrl = parentUrl && getMatch(parentUrl, scopes);
   while (scopeUrl) {
-    const packageResolution = applyPackages(resolvedOrPlain, scopes[scopeUrl]);
+    var packageResolution = applyPackages(resolvedOrPlain, scopes[scopeUrl]);
     if (packageResolution)
       return packageResolution;
     scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), scopes);

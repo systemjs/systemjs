@@ -18,23 +18,23 @@ import { global, hasSymbol } from './common.js';
 import { errMsg } from './err-msg.js';
 export { systemJSPrototype, REGISTRY }
 
-const toStringTag = hasSymbol && Symbol.toStringTag;
-const REGISTRY = hasSymbol ? Symbol() : '@';
+var toStringTag = hasSymbol && Symbol.toStringTag;
+var REGISTRY = hasSymbol ? Symbol() : '@';
 
 function SystemJS () {
   this[REGISTRY] = {};
 }
 
-const systemJSPrototype = SystemJS.prototype;
+var systemJSPrototype = SystemJS.prototype;
 
 systemJSPrototype.import = function (id, parentUrl) {
-  const loader = this;
+  var loader = this;
   return Promise.resolve(loader.prepareImport())
   .then(function() {
     return loader.resolve(id, parentUrl);
   })
   .then(function (id) {
-    const load = getOrCreateLoad(loader, id);
+    var load = getOrCreateLoad(loader, id);
     return load.C || topLevelLoad(loader, load);
   });
 };
@@ -58,7 +58,7 @@ function triggerOnload (loader, load, err) {
     throw err;
 }
 
-let lastRegister;
+var lastRegister;
 systemJSPrototype.register = function (deps, declare) {
   lastRegister = [deps, declare];
 };
@@ -67,22 +67,22 @@ systemJSPrototype.register = function (deps, declare) {
  * getRegister provides the last anonymous System.register call
  */
 systemJSPrototype.getRegister = function () {
-  const _lastRegister = lastRegister;
+  var _lastRegister = lastRegister;
   lastRegister = undefined;
   return _lastRegister;
 };
 
 function getOrCreateLoad (loader, id, firstParentUrl) {
-  let load = loader[REGISTRY][id];
+  var load = loader[REGISTRY][id];
   if (load)
     return load;
 
-  const importerSetters = [];
-  const ns = Object.create(null);
+  var importerSetters = [];
+  var ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
   
-  let instantiatePromise = Promise.resolve()
+  var instantiatePromise = Promise.resolve()
   .then(function () {
     return loader.instantiate(id, firstParentUrl);
   })
@@ -92,7 +92,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;
-      let changed = false;
+      var changed = false;
       if (typeof name !== 'object') {
         if (!(name in ns) || ns[name] !== value) {
           ns[name] = value;
@@ -100,8 +100,8 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
         }
       }
       else {
-        for (let p in name) {
-          let value = name[p];
+        for (var p in name) {
+          var value = name[p];
           if (!(p in ns) || ns[p] !== value) {
             ns[p] = value;
             changed = true;
@@ -113,11 +113,11 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
         }
       }
       if (changed)
-        for (let i = 0; i < importerSetters.length; i++)
+        for (var i = 0; i < importerSetters.length; i++)
           importerSetters[i](ns);
       return value;
     }
-    const declared = registration[1](_export, registration[1].length === 2 ? {
+    var declared = registration[1](_export, registration[1].length === 2 ? {
       import: function (importId) {
         return loader.import(importId, id);
       },
@@ -132,13 +132,13 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
       triggerOnload(loader, load, err);
     });
 
-  const linkPromise = instantiatePromise
+  var linkPromise = instantiatePromise
   .then(function (instantiation) {
     return Promise.all(instantiation[0].map(function (dep, i) {
-      const setter = instantiation[1][i];
+      var setter = instantiation[1][i];
       return Promise.resolve(loader.resolve(dep, id))
       .then(function (depId) {
-        const depLoad = getOrCreateLoad(loader, depId, id);
+        var depLoad = getOrCreateLoad(loader, depId, id);
         // depLoad.I may be undefined for already-evaluated
         return Promise.resolve(depLoad.I)
         .then(function () {
@@ -224,7 +224,7 @@ function topLevelLoad (loader, load) {
 }
 
 // the closest we can get to call(undefined)
-const nullContext = Object.freeze(Object.create(null));
+var nullContext = Object.freeze(Object.create(null));
 
 // returns a promise if and only if a top-level await subgraph
 // throws on sync errors
@@ -242,11 +242,11 @@ function postOrderExec (loader, load, seen) {
   }
 
   // deps execute first, unless circular
-  let depLoadPromises;
+  var depLoadPromises;
   load.d.forEach(function (depLoad) {
     if (!process.env.SYSTEM_PRODUCTION) {
       try {
-        const depLoadPromise = postOrderExec(loader, depLoad, seen);
+        var depLoadPromise = postOrderExec(loader, depLoad, seen);
         if (depLoadPromise) {
           depLoadPromise.catch(function (err) {
             triggerOnload(loader, load, err);
@@ -259,7 +259,7 @@ function postOrderExec (loader, load, seen) {
       }
     }
     else {
-      const depLoadPromise = postOrderExec(loader, depLoad, seen);
+      var depLoadPromise = postOrderExec(loader, depLoad, seen);
       if (depLoadPromise)
         (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
@@ -271,7 +271,7 @@ function postOrderExec (loader, load, seen) {
 
   function doExec () {
     try {
-      let execPromise = load.e.call(nullContext);
+      var execPromise = load.e.call(nullContext);
       if (execPromise) {
         if (!process.env.SYSTEM_PRODUCTION)
           execPromise = execPromise.then(function () {
