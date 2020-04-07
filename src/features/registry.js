@@ -17,7 +17,7 @@ systemJSPrototype.set = function (id, module) {
   try {
     new URL(id, baseUrl);
   } catch (err) {
-    console.warn(Error(DEV ? errMsg(10, 'Invalid module id - ' + id + ' must be url') : errMsg(10, id)));
+    console.warn(Error(process.env.SYSTEM_PRODUCTION ? errMsg(10, id) : errMsg(10, 'Invalid module id - ' + id + ' must be url')));
   }
   let ns;
   if (toStringTag && module[toStringTag] === 'Module') {
