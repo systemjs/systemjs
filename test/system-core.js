@@ -61,7 +61,7 @@ describe('Core API', function () {
     assert.equal(x.meta.custom, 'yay');
   });
 
-  describe.skip('Tracing API', function () {
+  describe('Tracing API', function () {
     it('Supports tracing loads', async function () {
       loader.instantiate = x => [[], _export => ({ execute () { _export('y', 42) } })];
       const loaded = [];
