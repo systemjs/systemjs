@@ -143,6 +143,18 @@ describe('Core API', function () {
       assert.match(lastWarn.message, /Invalid module id/);
     });
 
+    it('does not warn with valid System.set', async function () {
+      let numCalls = 0, lastWarn;
+      const originalWarn = console.warn;
+      console.warn = msg => {
+        numCalls++;
+        lastWarn = msg;
+      };
+      loader.set('./bare-specifier.js', { y: 43 });
+      console.warn = originalWarn;
+      assert.equal(numCalls, 0);
+    });
+
     it('Supports System.resolve', async function () {
       const resolveReturnValue = System.resolve('http://x');
       const resolvedX = await resolveReturnValue;

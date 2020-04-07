@@ -1,5 +1,5 @@
 import { systemJSPrototype, REGISTRY } from '../system-core.js';
-import { baseUrl } from '../common.js';
+import { baseUrl, resolveIfNotPlainOrUrl } from '../common.js';
 import { errMsg } from '../err-msg.js';
 
 var toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
@@ -14,12 +14,8 @@ systemJSPrototype.get = function (id) {
 };
 
 systemJSPrototype.set = function (id, module) {
-  if (!process.env.SYSTEM_PRODUCTION) {
-    try {
-      new URL(id, baseUrl);
-    } catch (err) {
-      console.warn(Error(errMsg(53, 'Invalid module id - ' + id + ' must be url')));
-    }
+  if (!process.env.SYSTEM_PRODUCTION && !resolveIfNotPlainOrUrl(id, baseUrl)) {
+    console.warn(Error(errMsg(53, 'Invalid module id - ' + id + ' must be url')));
   }
   var ns;
   if (toStringTag && module[toStringTag] === 'Module') {
