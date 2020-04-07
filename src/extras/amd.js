@@ -111,9 +111,10 @@ import { errMsg } from '../err-msg.js';
   };
   var amdDefineDeps, amdDefineExec;
   global.define = function (name, deps, execute) {
+    var depsAndExec;
     // define('', [], function () {})
     if (typeof name === 'string') {
-      var depsAndExec = getDepsAndExec(deps, execute);
+      depsAndExec = getDepsAndExec(deps, execute);
       if (amdDefineDeps) {
         if (!System.registerRegistry) {
           throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(8) : errMsg(8, 'Include the named register extension for SystemJS named AMD support.'));
@@ -130,7 +131,7 @@ import { errMsg } from '../err-msg.js';
         deps = execute;
       }
     }
-    var depsAndExec = getDepsAndExec(name, deps);
+    depsAndExec = getDepsAndExec(name, deps);
     amdDefineDeps = depsAndExec[0];
     amdDefineExec = depsAndExec[1];
   };

@@ -6,12 +6,12 @@ import { fileURLToPath } from 'url';
 import rimraf from 'rimraf';
 import os from 'os';
 
-export var clearFetchCache;
+export let clearFetchCache;
 
 sourceMapSupport.install();
 
-var home = os.homedir();
-var cacheDir;
+const home = os.homedir();
+let cacheDir;
 if (process.platform === 'darwin')
   cacheDir = path.join(home, 'Library', 'Caches', 'systemjs');
 else if (process.platform === 'win32')
@@ -23,13 +23,13 @@ clearFetchCache = function () {
   rimraf.sync(path.join(cacheDir, 'fetch-cache'));
 };
 
-var fetch = makeFetchHappen.defaults({ cacheManager: path.join(cacheDir, 'fetch-cache')});
+const fetch = makeFetchHappen.defaults({ cacheManager: path.join(cacheDir, 'fetch-cache')});
 
 global.System.constructor.prototype.shouldFetch = () => true;
 global.System.constructor.prototype.fetch = async url => {
   if (url.startsWith('file:')) {
     try {
-      var source = await fs.readFile(fileURLToPath(url.toString()));
+      const source = await fs.readFile(fileURLToPath(url.toString()));
       return {
         ok: true,
         status: 200,

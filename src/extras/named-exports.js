@@ -43,10 +43,10 @@
           // do a bulk export of the default export object
           // to export all its names as named exports
           if (hasDefaultExport && typeof defaultExport === 'object')
-            for (var name in defaultExport) {
+            for (var exportName in defaultExport) {
               // default is not a named export
-              if (name !== 'default') {
-                _export(name, defaultExport[name]);
+              if (exportName !== 'default') {
+                _export(exportName, defaultExport[exportName]);
               }
             }
         };
