@@ -40,11 +40,7 @@ import { errMsg } from '../err-msg.js';
         splice++;
       }
       else {
-        // needed for ie11 lack of iteration scope
-        var idx = i;
-        setters.push(function (ns) {
-          depModules[idx] = ns.__useDefault ? ns.default : ns;
-        });
+        createSetter(i);
       }
       if (splice)
         amdDefineDeps[index] = id;
@@ -65,6 +61,13 @@ import { errMsg } from '../err-msg.js';
         }
       };
     }];
+
+    // needed to iteration scope issues
+    function createSetter(idx) {
+      setters.push(function (ns) {
+        depModules[idx] = ns.__useDefault ? ns.default : ns;
+      });
+    }
   }
 
   // hook System.register to know the last declaration binding
