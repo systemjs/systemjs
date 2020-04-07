@@ -140,9 +140,9 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
     var mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped) {
       if (process.env.SYSTEM_PRODUCTION)
-        targetWarning(2, p, rhs);
+        targetWarning(51, p, rhs);
       else
-        targetWarning(2, p, rhs, 'bare specifier did not resolve');
+        targetWarning(51, p, rhs, 'bare specifier did not resolve');
     }
     else
       outPackages[resolvedLhs] = mapped;
@@ -182,9 +182,9 @@ function applyPackages (id, packages) {
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
       if (process.env.SYSTEM_PRODUCTION)
-        targetWarning(6, pkgName, pkg);
+        targetWarning(52, pkgName, pkg);
       else
-        targetWarning(6, pkgName, pkg, "should have a trailing '/'");
+        targetWarning(52, pkgName, pkg, "should have a trailing '/'");
     }
     else
       return pkg + id.slice(pkgName.length);

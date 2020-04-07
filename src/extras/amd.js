@@ -9,7 +9,7 @@ import { errMsg } from '../err-msg.js';
   var emptyInstantiation = [[], function () { return {} }];
 
   function unsupportedRequire () {
-    throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(7) : errMsg(7, 'AMD require not supported.'));
+    throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(5) : errMsg(5, 'AMD require not supported.'));
   }
 
   var tmpRegister, firstNamedDefine;
@@ -120,7 +120,7 @@ import { errMsg } from '../err-msg.js';
       depsAndExec = getDepsAndExec(deps, execute);
       if (amdDefineDeps) {
         if (!System.registerRegistry) {
-          throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(8) : errMsg(8, 'Include the named register extension for SystemJS named AMD support.'));
+          throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(6) : errMsg(6, 'Include the named register extension for SystemJS named AMD support.'));
         }
         addToRegisterRegistry(name, createAMDRegister(depsAndExec[0], depsAndExec[1]));
         amdDefineDeps = [];

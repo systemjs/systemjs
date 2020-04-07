@@ -18,7 +18,7 @@ systemJSPrototype.set = function (id, module) {
     try {
       new URL(id, baseUrl);
     } catch (err) {
-      console.warn(Error(errMsg(10, 'Invalid module id - ' + id + ' must be url')));
+      console.warn(Error(errMsg(53, 'Invalid module id - ' + id + ' must be url')));
     }
   }
   var ns;
