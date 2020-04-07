@@ -195,13 +195,13 @@ Trailing slash path mappings for packages are a way of mapping any subpath of th
 </script>
 ```
 
-SystemJS Warning #6 is logged by SystemJS to implement [Step 6.1 of this part of the import maps spec](https://wicg.github.io/import-maps/#sort-and-normalize-a-specifier-map).
+SystemJS Warning #52 is logged by SystemJS to implement [Step 6.1 of this part of the import maps spec](https://wicg.github.io/import-maps/#sort-and-normalize-a-specifier-map).
 
 ## 53
 
 ### Invalid module id
 
-SystemJS Error #53 occurs when you call `System.set(id, module)` with an invalid id.
+SystemJS Warning #53 occurs when you call `System.set(id, module)` with an invalid id.
 
 The SystemJS module registry is similar to a browser's module registry, which identifies modules by URL. As such, the module id passed to System.set should be a URL, not a bare specifier.
 
