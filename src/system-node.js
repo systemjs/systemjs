@@ -1,11 +1,10 @@
-import './system-node-baseurl.js';
-
+import { REGISTRY } from './system-core.js';
 import { IMPORT_MAP } from './features/import-map.js';
 import './features/registry.js';
 import './extras/global.js';
 import './extras/module-types.js';
 import './features/node-fetch.js';
-import { BASE_URL } from './common.js';
+import { BASE_URL, baseUrl, resolveAndComposeImportMap } from './common.js';
 
 export const System = global.System;
 
@@ -22,6 +21,6 @@ export function setBaseUrl(loader, url) {
 }
 
 function ensureValidSystemLoader (loader) {
-  if (!loader[IMPORT_MAP])
+  if (!loader[REGISTRY])
     throw new Error('A valid SystemJS instance must be provided');
 }

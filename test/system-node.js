@@ -31,7 +31,7 @@ describe('NodeJS version of SystemJS', () => {
     });
 
     it('allows the base URL to be set to a valid full URL', () => {
-      setBaseUrl('http://localhost:9650/some-prefix/');
+      setBaseUrl(System, 'http://localhost:9650/some-prefix/');
       assert.equal(System.resolve('./foo.js'), 'http://localhost:9650/some-prefix/foo.js');
     });
   });

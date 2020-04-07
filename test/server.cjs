@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { once } = require('events');
 const { pathToFileURL, fileURLToPath } = require('url');
-const opn = require('opn');
+const open = require('open');
 
 const port = 8080;
 
@@ -96,4 +96,5 @@ http.createServer(async function (req, res) {
 }).listen(port);
 
 console.log(`Test server listening on http://localhost:${port}\n`);
-opn(`http://localhost:${port}/test/test.html`);
+const openOptions = process.env.CI ? { app: ['firefox'] } : {};
+open(`http://localhost:${port}/test/test.html`, openOptions);
