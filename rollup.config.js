@@ -2,8 +2,6 @@ import replace from '@rollup/plugin-replace';
 import fs from 'fs';
 import path from 'path';
 import { terser } from 'rollup-plugin-terser';
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
 const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'));
@@ -61,7 +59,6 @@ export default [
   buildProd && mainConfig('system', false),
   mainConfig('s', true),
   buildProd && mainConfig('s', false),
-  mainConfig('node', true),
   ...extrasConfig(true),
   ...prodExtras(),
 ].filter(Boolean);
@@ -74,69 +71,55 @@ function prodExtras() {
   }
 }
 
-function mainConfig(name, isDev) {
+function mainConfig(name, isMin) {
   const sjs = name === 's';
-  const node = name === 'node';
   let banner;
   if (sjs) {
-    banner = isDev ? `/*
+    banner = !isMin ? `/*
 * SJS ${version}
 * Minimal SystemJS Build
 */` : null;
-  } else if (node) {
-    banner =`/*
-* SystemJS ${version}
-* NodeJS Build
-*/`;
   } else {
     banner = `/*
 * SystemJS ${version}
 */`;
   }
 
-  name = node ? 'system-node' : name;
-
   return {
     input: `src/${name}.js`,
     output: {
-      file: `dist/${name}${isDev ? '' : '.min'}.${node ? 'c' : ''}js`,
-      format: node ? 'cjs' : 'iife',
+      file: `dist/${name}${isMin ? '.min' : ''}.js`,
+      format: 'iife',
       strict: false,
-      sourcemap: !isDev,
+      sourcemap: isMin,
       banner
     },
     plugins: [
-      node && resolve({
-        preferBuiltins: true
-      }),
-      node && commonjs({
-        ignoreGlobal: true
-      }),
       replace({
-        TRACING: sjs ? 'false' : 'true',
-        DEV: isDev
+        'process.env.SYSTEM_PRODUCTION': sjs ? 'true' : 'false',
+        'process.env.SYSTEM_BROWSER': 'true'
       }),
-      !isDev && terser(terserOptions)
+      isMin && terser(terserOptions)
     ]
   };
 }
 
-function extrasConfig(isDev) {
+function extrasConfig(isMin) {
   return extras.map(extra => {
     extra = extra.replace('.js', '');
     return {
       input: `src/extras/${extra}.js`,
       output: {
-        file: `dist/extras/${extra}${isDev ? '' : '.min'}.js`,
+        file: `dist/extras/${extra}${isMin ? '.min' : ''}.js`,
         format: 'iife',
         strict: false,
         compact: true,
-        sourcemap: !isDev
+        sourcemap: isMin
       },
       plugins: [
-        !isDev && terser(terserOptions),
+        isMin && terser(terserOptions),
         replace({
-          DEV: isDev
+          'process.env.SYSTEM_PRODUCTION': isMin ? 'true' : 'false'
         })
       ]
     };

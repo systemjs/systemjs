@@ -1,6 +1,29 @@
-import fetch from 'node-fetch';
+import sourceMapSupport from 'source-map-support';
+import makeFetchHappen from 'make-fetch-happen';
+import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
+import rimraf from 'rimraf';
+import os from 'os';
+
+export let clearFetchCache;
+
+sourceMapSupport.install();
+
+const home = os.homedir();
+let cacheDir;
+if (process.platform === 'darwin')
+  cacheDir = path.join(home, 'Library', 'Caches', 'systemjs');
+else if (process.platform === 'win32')
+  cacheDir = path.join(process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'systemjs-cache');
+else
+  cacheDir = path.join(process.env.XDG_CACHE_HOME || path.join(home, '.cache'), 'systemjs');
+
+clearFetchCache = function () {
+  rimraf.sync(path.join(cacheDir, 'fetch-cache'));
+};
+
+const fetch = makeFetchHappen.defaults({ cacheManager: path.join(cacheDir, 'fetch-cache')});
 
 global.System.constructor.prototype.shouldFetch = () => true;
 global.System.constructor.prototype.fetch = async url => {

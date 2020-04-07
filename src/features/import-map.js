@@ -10,8 +10,8 @@
  * 
  * There is no support for dynamic import maps injection currently.
  */
-import { baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument } from '../common.js';
-import { hasSymbol, systemJSPrototype } from '../system-core.js';
+import { BASE_URL, baseUrl, resolveAndComposeImportMap, resolveImportMap, resolveIfNotPlainOrUrl, hasDocument, hasSymbol } from '../common.js';
+import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
 const IMPORT_MAP = hasSymbol ? Symbol() : '#';
@@ -35,7 +35,7 @@ systemJSPrototype.prepareImport = function () {
           try {
             return JSON.parse(text);
           } catch (err) {
-            throw Error(DEV ? errMsg(1, "systemjs-importmap contains invalid JSON") : errMsg(1));
+            throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(1) : errMsg(1, "systemjs-importmap contains invalid JSON"));
           }
         })
         .then(function (newMap) {
@@ -48,19 +48,15 @@ systemJSPrototype.prepareImport = function () {
 };
 
 systemJSPrototype.resolve = function (id, parentUrl) {
-  parentUrl = parentUrl || baseUrl;
+  parentUrl = parentUrl || !process.env.SYSTEM_BROWSER && this[BASE_URL] || baseUrl;
   return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
 };
 
 function throwUnresolved (id, parentUrl) {
-  throw Error(errMsg(2, DEV ? "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'") : [id, parentUrl].join(', ')));
+  throw Error(errMsg(2, process.env.SYSTEM_PRODUCTION ? [id, parentUrl].join(', ') : "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
 }
 
 function iterateDocumentImportMaps(cb, extraSelector) {
   if (hasDocument)
     [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + extraSelector), cb);
-}
-
-export function applyImportMap(loader, newMap) {
-  loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, baseUrl, loader[IMPORT_MAP] || { imports: {}, scopes: {} });
 }
