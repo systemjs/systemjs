@@ -1,19 +1,16 @@
 import { errMsg } from './err-msg.js';
 
+export const hasSymbol = typeof Symbol !== 'undefined';
 export const hasSelf = typeof self !== 'undefined';
-
 export const hasDocument = typeof document !== 'undefined';
 
 const envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
-export let baseUrl;
+// Loader-scoped baseUrl supported in Node.js only
+export const BASE_URL = hasSymbol ? Symbol() : '_';
 
-export function setBaseUrl(url) {
-  // Verify it's a valid URL
-  const URL = require('url').URL;
-  baseUrl = new URL(url).href;
-}
+export let baseUrl;
 
 if (hasDocument) {
   const baseEl = document.querySelector('base[href]');
@@ -26,6 +23,12 @@ if (!baseUrl && typeof location !== 'undefined') {
   const lastSepIndex = baseUrl.lastIndexOf('/');
   if (lastSepIndex !== -1)
     baseUrl = baseUrl.slice(0, lastSepIndex + 1);
+}
+
+if (!process.env.SYSTEM_BROWSER && !baseUrl && typeof process !== 'undefined') {
+  const cwd = process.cwd();
+  // TODO: encoding edge cases
+  baseUrl = 'file://' + (cwd[0] === '/' ? '' : '/') + cwd.replace(/\\/g, '/') + '/';
 }
 
 const backslashRegEx = /\\/g;
@@ -136,10 +139,10 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
       continue;
     const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
     if (!mapped) {
-      if (DEV)
-        targetWarning(2, p, rhs, 'bare specifier did not resolve');
-      else
+      if (process.env.SYSTEM_PRODUCTION)
         targetWarning(2, p, rhs);
+      else
+        targetWarning(2, p, rhs, 'bare specifier did not resolve');
     }
     else
       outPackages[resolvedLhs] = mapped;
@@ -178,10 +181,10 @@ function applyPackages (id, packages) {
     const pkg = packages[pkgName];
     if (pkg === null) return;
     if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
-      if (DEV)
-        targetWarning(6, pkgName, pkg, "should have a trailing '/'");
-      else
+      if (process.env.SYSTEM_PRODUCTION)
         targetWarning(6, pkgName, pkg);
+      else
+        targetWarning(6, pkgName, pkg, "should have a trailing '/'");
     }
     else
       return pkg + id.slice(pkgName.length);
@@ -189,7 +192,7 @@ function applyPackages (id, packages) {
 }
 
 function targetWarning (code, match, target, msg) {
-  console.warn(errMsg(code, DEV ? "Package target " + msg + ", resolving target '" + target + "' for " + match : [target, match].join(', ')));
+  console.warn(errMsg(code, process.env.SYSTEM_PRODUCTION ? [target, match].join(', ') : "Package target " + msg + ", resolving target '" + target + "' for " + match));
 }
 
 export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
