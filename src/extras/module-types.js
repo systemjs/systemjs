@@ -5,13 +5,13 @@ import { errMsg } from '../err-msg.js';
  * Supports application/javascript falling back to JS eval
  */
 (function(global) {
-  const systemJSPrototype = global.System.constructor.prototype;
-  const instantiate = systemJSPrototype.instantiate;
+  var systemJSPrototype = global.System.constructor.prototype;
+  var instantiate = systemJSPrototype.instantiate;
 
-  const moduleTypesRegEx = /\.(css|html|json|wasm)$/;
+  var moduleTypesRegEx = /\.(css|html|json|wasm)$/;
   systemJSPrototype.shouldFetch = function (url) {
-    const path = url.split('?')[0].split('#')[0];
-    const ext = path.slice(path.lastIndexOf('.'));
+    var path = url.split('?')[0].split('#')[0];
+    var ext = path.slice(path.lastIndexOf('.'));
     return ext.match(moduleTypesRegEx);
   }
   systemJSPrototype.fetch = function (url) {
@@ -19,13 +19,13 @@ import { errMsg } from '../err-msg.js';
   };
 
   systemJSPrototype.instantiate = function (url, parent) {
-    const loader = this;
+    var loader = this;
     if (this.shouldFetch(url)) {
       return this.fetch(url)
       .then(function (res) {
         if (!res.ok)
           throw Error(errMsg(9, process.env.SYSTEM_PRODUCTION ? [res.status, res.statusText, url, parent].join(', ') : res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
-        const contentType = res.headers.get('content-type');
+        var contentType = res.headers.get('content-type');
         if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
           return res.text().then(function (source) {
             (0, eval)(source);
@@ -49,7 +49,7 @@ import { errMsg } from '../err-msg.js';
               return {
                 execute: function () {
                   // Relies on a Constructable Stylesheet polyfill
-                  const stylesheet = new CSSStyleSheet();
+                  var stylesheet = new CSSStyleSheet();
                   stylesheet.replaceSync(source);
                   _export('default', stylesheet);
                 }
@@ -60,14 +60,14 @@ import { errMsg } from '../err-msg.js';
         else if (contentType.match(/^application\/wasm(;|$)/)) {
           return (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile))
           .then(function (module) {
-            const deps = [];
-            const setters = [];
-            const importObj = {};
+            var deps = [];
+            var setters = [];
+            var importObj = {};
         
             // we can only set imports if supported (eg early Safari doesnt support)
             if (WebAssembly.Module.imports)
               WebAssembly.Module.imports(module).forEach(function (impt) {
-                const key = impt.module;
+                var key = impt.module;
                 if (deps.indexOf(key) === -1) {
                   deps.push(key);
                   setters.push(function (m) {

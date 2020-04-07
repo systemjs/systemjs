@@ -7,7 +7,7 @@ import './extras/module-types.js';
 import './features/node-fetch.js';
 import { BASE_URL } from './common.js';
 
-export const System = global.System;
+export var System = global.System;
 
 export function applyImportMap(loader, newMap, mapBase) {
   ensureValidSystemLoader(loader);

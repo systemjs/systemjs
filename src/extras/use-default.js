@@ -3,8 +3,8 @@
  * `{ default: amdModule }` object from `System.import`
  */
 (function (global) {
-  const systemJSPrototype = global.System.constructor.prototype;
-  const originalImport = systemJSPrototype.import;
+  var systemJSPrototype = global.System.constructor.prototype;
+  var originalImport = systemJSPrototype.import;
 
   systemJSPrototype.import = function () {
     return originalImport.apply(this, arguments).then(function (ns) {

@@ -6,13 +6,13 @@ import { systemJSPrototype } from '../system-core';
 import { hasDocument, baseUrl, resolveUrl } from '../common';
 import { errMsg } from '../err-msg.js';
 
-const systemRegister = systemJSPrototype.register;
+var systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
   systemRegister.call(this, deps, declare);
 };
 
 systemJSPrototype.createScript = function (url) {
-  const script = document.createElement('script');
+  var script = document.createElement('script');
   script.charset = 'utf-8';
   script.async = true;
   script.crossOrigin = 'anonymous';
@@ -20,11 +20,11 @@ systemJSPrototype.createScript = function (url) {
   return script;
 };
 
-let lastWindowErrorUrl, lastWindowError;
+var lastWindowErrorUrl, lastWindowError;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
-  const loader = this;
+  var loader = this;
   return new Promise(function (resolve, reject) {
-    const script = systemJSPrototype.createScript(url);
+    var script = systemJSPrototype.createScript(url);
     script.addEventListener('error', function () {
       reject(Error(errMsg(4, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
     });

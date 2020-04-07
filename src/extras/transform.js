@@ -4,14 +4,14 @@ import { errMsg } from '../err-msg.js';
  * Support for a "transform" loader interface
  */
 (function (global) {
-  const systemJSPrototype = global.System.constructor.prototype;
+  var systemJSPrototype = global.System.constructor.prototype;
 
-  const instantiate = systemJSPrototype.instantiate;
+  var instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, parent) {
     if (url.slice(-5) === '.wasm')
       return instantiate.call(this, url, parent);
 
-    const loader = this;
+    var loader = this;
     return fetch(url, { credentials: 'same-origin' })
     .then(function (res) {
       if (!res.ok)

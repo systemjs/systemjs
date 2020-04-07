@@ -6,7 +6,7 @@ import { hasSelf } from '../common';
 
 if (hasSelf && typeof importScripts === 'function')
   systemJSPrototype.instantiate = function (url) {
-    const loader = this;
+    var loader = this;
     return Promise.resolve().then(function () {
       importScripts(url);
       return loader.getRegister();
