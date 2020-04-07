@@ -4,29 +4,29 @@ import { errMsg } from '../err-msg.js';
  * Support for AMD loading
  */
 (function (global) {
-  const systemPrototype = global.System.constructor.prototype;
+  var systemPrototype = global.System.constructor.prototype;
 
-  const emptyInstantiation = [[], function () { return {} }];
+  var emptyInstantiation = [[], function () { return {} }];
 
   function unsupportedRequire () {
     throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(7) : errMsg(7, 'AMD require not supported.'));
   }
 
-  let tmpRegister, firstNamedDefine;
+  var tmpRegister, firstNamedDefine;
 
   function emptyFn () {}
 
-  const requireExportsModule = ['require', 'exports', 'module'];
+  var requireExportsModule = ['require', 'exports', 'module'];
 
   function createAMDRegister (amdDefineDeps, amdDefineExec) {
-    const exports = {};
-    const module = { exports: exports };
-    const depModules = [];
-    const setters = [];
-    let splice = 0;
-    for (let i = 0; i < amdDefineDeps.length; i++) {
-      const id = amdDefineDeps[i];
-      const index = setters.length;
+    var exports = {};
+    var module = { exports: exports };
+    var depModules = [];
+    var setters = [];
+    var splice = 0;
+    for (var i = 0; i < amdDefineDeps.length; i++) {
+      var id = amdDefineDeps[i];
+      var index = setters.length;
       if (id === 'require') {
         depModules[i] = unsupportedRequire;
         splice++;
@@ -40,24 +40,20 @@ import { errMsg } from '../err-msg.js';
         splice++;
       }
       else {
-        // needed for ie11 lack of iteration scope
-        const idx = i;
-        setters.push(function (ns) {
-          depModules[idx] = ns.__useDefault ? ns.default : ns;
-        });
+        createSetter(i);
       }
       if (splice)
         amdDefineDeps[index] = id;
     }
     if (splice)
       amdDefineDeps.length -= splice;
-    const amdExec = amdDefineExec;
+    var amdExec = amdDefineExec;
     return [amdDefineDeps, function (_export) {
       _export({ default: exports, __useDefault: true });
       return {
         setters: setters,
         execute: function () {
-          const amdResult = amdExec.apply(exports, depModules);
+          var amdResult = amdExec.apply(exports, depModules);
           if (amdResult !== undefined)
             module.exports = amdResult;
           if (exports !== module.exports)
@@ -65,37 +61,44 @@ import { errMsg } from '../err-msg.js';
         }
       };
     }];
+
+    // needed to avoid iteration scope issues
+    function createSetter(idx) {
+      setters.push(function (ns) {
+        depModules[idx] = ns.__useDefault ? ns.default : ns;
+      });
+    }
   }
 
   // hook System.register to know the last declaration binding
-  let lastRegisterDeclare;
-  const systemRegister = systemPrototype.register;
+  var lastRegisterDeclare;
+  var systemRegister = systemPrototype.register;
   systemPrototype.register = function (name, deps, declare) {
     lastRegisterDeclare = typeof name === 'string' ? declare : deps;
     systemRegister.apply(this, arguments);
   };
 
-  const instantiate = systemPrototype.instantiate;
+  var instantiate = systemPrototype.instantiate;
   systemPrototype.instantiate = function() {
     // Reset "currently executing script"
     amdDefineDeps = null;
     return instantiate.apply(this, arguments);
   };
 
-  const getRegister = systemPrototype.getRegister;
+  var getRegister = systemPrototype.getRegister;
   systemPrototype.getRegister = function () {
     if (tmpRegister)
       return tmpRegister;
 
-    const _firstNamedDefine = firstNamedDefine;
+    var _firstNamedDefine = firstNamedDefine;
     firstNamedDefine = null;
 
-    const register = getRegister.call(this);
+    var register = getRegister.call(this);
     // if its an actual System.register leave it
     if (register && register[1] === lastRegisterDeclare)
       return register;
 
-    const _amdDefineDeps = amdDefineDeps;
+    var _amdDefineDeps = amdDefineDeps;
     amdDefineDeps = null;
 
     // If the script registered a named module, return that module instead of re-instantiating it.
@@ -109,11 +112,12 @@ import { errMsg } from '../err-msg.js';
 
     return createAMDRegister(_amdDefineDeps, amdDefineExec);
   };
-  let amdDefineDeps, amdDefineExec;
+  var amdDefineDeps, amdDefineExec;
   global.define = function (name, deps, execute) {
+    var depsAndExec;
     // define('', [], function () {})
     if (typeof name === 'string') {
-      const depsAndExec = getDepsAndExec(deps, execute);
+      depsAndExec = getDepsAndExec(deps, execute);
       if (amdDefineDeps) {
         if (!System.registerRegistry) {
           throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(8) : errMsg(8, 'Include the named register extension for SystemJS named AMD support.'));
@@ -130,7 +134,7 @@ import { errMsg } from '../err-msg.js';
         deps = execute;
       }
     }
-    const depsAndExec = getDepsAndExec(name, deps);
+    depsAndExec = getDepsAndExec(name, deps);
     amdDefineDeps = depsAndExec[0];
     amdDefineExec = depsAndExec[1];
   };

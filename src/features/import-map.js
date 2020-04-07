@@ -14,8 +14,10 @@ import { BASE_URL, baseUrl, resolveAndComposeImportMap, resolveImportMap, resolv
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
-const IMPORT_MAP = hasSymbol ? Symbol() : '#';
-const IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
+export { IMPORT_MAP };
+
+var IMPORT_MAP = hasSymbol ? Symbol() : '#';
+var IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
 
 iterateDocumentImportMaps(function (script) {
   script._t = fetch(script.src).then(function (res) {
@@ -24,7 +26,7 @@ iterateDocumentImportMaps(function (script) {
 }, '[src]');
 
 systemJSPrototype.prepareImport = function () {
-  const loader = this;
+  var loader = this;
   if (!loader[IMPORT_MAP_PROMISE]) {
     loader[IMPORT_MAP] = { imports: {}, scopes: {} };
     loader[IMPORT_MAP_PROMISE] = Promise.resolve();
