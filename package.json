@@ -46,13 +46,8 @@
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
     "test": "concurrently -n w: 'npm:test:*'",
-<<<<<<< HEAD
-    "test:internals": "mocha -b --file test/mocha-setup.js test/import-map.js test/system-core.js test/url-resolution.js",
-    "test:node": "mocha -b --file test/mocha-setup.js test/system-node.js",
-=======
     "test:internals": "NODE_OPTIONS=--experimental-modules mocha -b --file test/mocha-setup.js test/import-map.js test/system-core.js test/url-resolution.js",
     "test:node": "NODE_OPTIONS=--experimental-modules mocha -b --file test/mocha-setup.js test/system-node.js",
->>>>>>> master
     "test:browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"
