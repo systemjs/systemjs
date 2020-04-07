@@ -62,7 +62,7 @@ import { errMsg } from '../err-msg.js';
       };
     }];
 
-    // needed to iteration scope issues
+    // needed to avoid iteration scope issues
     function createSetter(idx) {
       setters.push(function (ns) {
         depModules[idx] = ns.__useDefault ? ns.default : ns;
