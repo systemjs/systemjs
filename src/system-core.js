@@ -14,11 +14,10 @@
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
-import { global } from './common.js';
+import { global, hasSymbol } from './common.js';
 import { errMsg } from './err-msg.js';
 export { systemJSPrototype, REGISTRY }
 
-export const hasSymbol = typeof Symbol !== 'undefined';
 const toStringTag = hasSymbol && Symbol.toStringTag;
 const REGISTRY = hasSymbol ? Symbol() : '@';
 
@@ -48,7 +47,7 @@ systemJSPrototype.createContext = function (parentId) {
 };
 
 // onLoad(err, id, deps) provided for tracing / hot-reloading
-if (process.env.SYSTEM_TRACING)
+if (!process.env.SYSTEM_PRODUCTION)
   systemJSPrototype.onload = function () {};
 function loadToId (load) {
   return load.id;
@@ -89,7 +88,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   })
   .then(function (registration) {
     if (!registration)
-      throw Error(errMsg(3, process.env.SYSTEM_DEV ? 'Module ' + id + ' did not instantiate' : id));
+      throw Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? id : 'Module ' + id + ' did not instantiate'));
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;
@@ -128,7 +127,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     return [registration[0], declared.setters || []];
   });
 
-  if (process.env.SYSTEM_TRACING)
+  if (!process.env.SYSTEM_PRODUCTION)
     instantiatePromise = instantiatePromise.catch(function (err) {
       triggerOnload(loader, load, err);
     });
@@ -245,7 +244,7 @@ function postOrderExec (loader, load, seen) {
   // deps execute first, unless circular
   let depLoadPromises;
   load.d.forEach(function (depLoad) {
-    if (process.env.SYSTEM_TRACING) {
+    if (!process.env.SYSTEM_PRODUCTION) {
       try {
         const depLoadPromise = postOrderExec(loader, depLoad, seen);
         if (depLoadPromise) {
@@ -274,7 +273,7 @@ function postOrderExec (loader, load, seen) {
     try {
       let execPromise = load.e.call(nullContext);
       if (execPromise) {
-        if (process.env.SYSTEM_TRACING)
+        if (!process.env.SYSTEM_PRODUCTION)
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null; // indicates completion
@@ -291,12 +290,12 @@ function postOrderExec (loader, load, seen) {
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      if (process.env.SYSTEM_TRACING) triggerOnload(loader, load, null);
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null);
     }
     catch (err) {
-      if (process.env.SYSTEM_TRACING) triggerOnload(loader, load, err);
       load.er = err;
-      throw err;
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err);
+      else throw err;
     }
     finally {
       load.L = load.I = undefined;

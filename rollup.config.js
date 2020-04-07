@@ -71,11 +71,11 @@ function prodExtras() {
   }
 }
 
-function mainConfig(name, isDev) {
+function mainConfig(name, isMin) {
   const sjs = name === 's';
   let banner;
   if (sjs) {
-    banner = isDev ? `/*
+    banner = !isMin ? `/*
 * SJS ${version}
 * Minimal SystemJS Build
 */` : null;
@@ -88,38 +88,38 @@ function mainConfig(name, isDev) {
   return {
     input: `src/${name}.js`,
     output: {
-      file: `dist/${name}${isDev ? '' : '.min'}.js`,
+      file: `dist/${name}${isMin ? '.min' : ''}.js`,
       format: 'iife',
       strict: false,
-      sourcemap: !isDev,
+      sourcemap: isMin,
       banner
     },
     plugins: [
       replace({
-        'process.env.SYSTEM_TRACING': sjs ? 'false' : 'true',
-        'process.env.SYSTEM_DEV': isDev
+        'process.env.SYSTEM_PRODUCTION': sjs ? 'true' : 'false',
+        'process.env.SYSTEM_BROWSER': 'true'
       }),
-      !isDev && terser(terserOptions)
+      isMin && terser(terserOptions)
     ]
   };
 }
 
-function extrasConfig(isDev) {
+function extrasConfig(isMin) {
   return extras.map(extra => {
     extra = extra.replace('.js', '');
     return {
       input: `src/extras/${extra}.js`,
       output: {
-        file: `dist/extras/${extra}${isDev ? '' : '.min'}.js`,
+        file: `dist/extras/${extra}${isMin ? '.min' : ''}.js`,
         format: 'iife',
         strict: false,
         compact: true,
-        sourcemap: !isDev
+        sourcemap: isMin
       },
       plugins: [
-        !isDev && terser(terserOptions),
+        isMin && terser(terserOptions),
         replace({
-          DEV: isDev
+          'process.env.SYSTEM_PRODUCTION': isMin ? 'true' : 'false'
         })
       ]
     };

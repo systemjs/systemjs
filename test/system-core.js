@@ -61,9 +61,8 @@ describe('Core API', function () {
     assert.equal(x.meta.custom, 'yay');
   });
 
-  describe('Tracing API', function () {
+  describe.skip('Tracing API', function () {
     it('Supports tracing loads', async function () {
-      process.env.SYSTEM_TRACING = 1;
       loader.instantiate = x => [[], _export => ({ execute () { _export('y', 42) } })];
       const loaded = [];
       loader.onload = function (err, x) {
@@ -73,11 +72,9 @@ describe('Core API', function () {
       assert.equal(z.y, 42);
       assert.equal(loaded.length, 1);
       assert.equal(loaded[0], 'z');
-      process.env.SYSTEM_TRACING = 0;
     });
 
     it('Supports tracing load failures', async function () {
-      process.env.SYSTEM_TRACING = 1;
       loader.instantiate = x => { throw new Error('Problem') };
       const errors = [];
       loader.onload = function (err, id, deps) {
@@ -91,7 +88,6 @@ describe('Core API', function () {
       catch (e) {
         assert.equal(e.err, errors[0].err);
       }
-      process.env.SYSTEM_TRACING = 0;
     });
 
     it('Caches load failures', async function () {
