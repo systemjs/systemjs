@@ -31,7 +31,6 @@ describe('NodeJS version of SystemJS', () => {
     });
 
     it('allows the base URL to be set to a valid full URL', () => {
-      applyImportMap(System, {imports: {"rxjs": "https://unpkg.com/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});
       setBaseUrl(System, 'http://localhost:9650/some-prefix/');
       assert.equal(System.resolve('./foo.js'), 'http://localhost:9650/some-prefix/foo.js');
     });
