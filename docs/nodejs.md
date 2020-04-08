@@ -33,9 +33,7 @@ Modules loaded over HTTP will be cached on disk, according to the [Cache-Control
 
 ## API
 
-The following are exported from systemjs.
-
-### `System`
+### System
 
 A reference to the global SystemJS instance. This is referentially equal to `global.System`.
 
