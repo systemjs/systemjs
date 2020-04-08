@@ -55,7 +55,7 @@ The [3.7KB system.js loader](dist/system.min.js) loader builds on the s.js core 
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 
-#### 3. system-node.cjs NodeJS loader
+#### 3. system-node.cjs loader
 
 The [system-node.cjs](/dist/system-node.cjs) loader is used to load modules in NodeJS programs. It has the following features:
 
