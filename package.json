@@ -40,14 +40,14 @@
   "scripts": {
     "build": "rimraf dist && concurrently -n w: 'yarn:build:*'",
     "build:node": "node --experimental-modules build-node.js",
-    "build:browser:prod": "rollup -c",
-    "build:browser:dev": "rollup -c --environment dev",
+    "build:browser": "rollup -c",
+    "build-browser-dev": "rollup -c --environment dev",
     "footprint": "concurrently -n w: 'npm:footprint:*'",
     "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
     "test": "concurrently -n w: 'npm:test:*'",
-    "test:internals": "cross-env NODE_OPTIONS=--experimental-modules mocha -b --file test/mocha-setup.js test/import-map.js test/system-core.js test/url-resolution.js",
-    "test:node": "cross-env NODE_OPTIONS=--experimental-modules mocha -b --file test/mocha-setup.js test/system-node.js",
+    "test:internals": "cross-env NODE_OPTIONS=--experimental-modules mocha -b test/import-map.js test/system-core.js test/url-resolution.js",
+    "test:node": "cross-env NODE_OPTIONS=--experimental-modules mocha -b test/system-node.js",
     "test:browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"

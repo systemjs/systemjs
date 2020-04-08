@@ -26,7 +26,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   return new Promise(function (resolve, reject) {
     var script = systemJSPrototype.createScript(url);
     script.addEventListener('error', function () {
-      reject(Error(errMsg(4, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+      reject(Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
     });
     script.addEventListener('load', function () {
       document.head.removeChild(script);

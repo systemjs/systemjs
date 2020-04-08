@@ -88,7 +88,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   })
   .then(function (registration) {
     if (!registration)
-      throw Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? id : 'Module ' + id + ' did not instantiate'));
+      throw Error(errMsg(2, process.env.SYSTEM_PRODUCTION ? id : 'Module ' + id + ' did not instantiate'));
     function _export (name, value) {
       // note if we have hoisted exports (including reexports)
       load.h = true;

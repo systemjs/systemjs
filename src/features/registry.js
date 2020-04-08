@@ -1,4 +1,6 @@
 import { systemJSPrototype, REGISTRY } from '../system-core.js';
+import { baseUrl, resolveIfNotPlainOrUrl } from '../common.js';
+import { errMsg } from '../err-msg.js';
 
 var toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
@@ -12,6 +14,14 @@ systemJSPrototype.get = function (id) {
 };
 
 systemJSPrototype.set = function (id, module) {
+  if (!process.env.SYSTEM_PRODUCTION) {
+    try {
+      // No page-relative URLs allowed
+      new URL(id);
+    } catch (err) {
+      console.warn(Error(errMsg('W3', '"' + id + '" is not a valid URL to set in the module registry')));
+    }
+  }
   var ns;
   if (toStringTag && module[toStringTag] === 'Module') {
     ns = module;
