@@ -140,7 +140,7 @@ describe('Core API', function () {
       loader.set('bare-specifier', { y: 43 });
       console.warn = originalWarn;
       assert.equal(numCalls, 1);
-      assert.match(lastWarn.message, /Invalid module id/);
+      assert.match(lastWarn.message, /is not a valid URL to set in the module registry/);
     });
 
     it('does not warn with valid System.set', async function () {
