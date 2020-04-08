@@ -115,11 +115,11 @@ To diagnose the problem, identify which module failed to load. Then check the br
 
 This sections lists the SystemJS warnings that you may encounter.
 
-## 51
+## W1
 
 ### Unable to resolve bare specifier
 
-SystemJS Warning #51 occurs when you attempt to load a module that doesn't have a URL associated with it.
+SystemJS Warning #W1 occurs when you attempt to load a module that doesn't have a URL associated with it.
 
 Bare specifiers must be defined by import maps in SystemJS. To fix the warning, add the module to your import map:
 
@@ -137,7 +137,7 @@ Bare specifiers must be defined by import maps in SystemJS. To fix the warning, 
 </script>
 ```
 
-A "specifier" is the string name of a module. A specifier may be a URL (`/thing.js` or `https://unpkg.com/vue`) or a "bare specifier" (`vue`). Warning #51 most commonly occurs when using bare specifiers.
+A "specifier" is the string name of a module. A specifier may be a URL (`/thing.js` or `https://unpkg.com/vue`) or a "bare specifier" (`vue`). Warning #W1 most commonly occurs when using bare specifiers.
 
 "Resolution" refers to converting a specifier into a URL. This happens in any of the following scenarios:
 
@@ -167,11 +167,11 @@ To fix this warning, you may either use [import maps](/docs/import-maps.md) or [
 </script>
 ```
 
-## 52
+## W2
 
 ### Invalid package target - should have trailing slash
 
-SystemJS Warning #52 occurs when an import map [trailing-slash package path mapping](https://github.com/WICG/import-maps#packages-via-trailing-slashes) on the left hand side with a trailing slash maps into a target address without a trailing slash (`/`).
+SystemJS Warning #W2 occurs when an import map [trailing-slash package path mapping](https://github.com/WICG/import-maps#packages-via-trailing-slashes) on the left hand side with a trailing slash maps into a target address without a trailing slash (`/`).
 
 Trailing slash path mappings for packages are a way of mapping any subpath of the bare module specifier within a directory, allowing for imports such as `import 'my-package/moduleA.js'` and `import 'my-package/moduleB.js'` without needing explicit entries in the import map for both modules.
 
@@ -195,20 +195,26 @@ Trailing slash path mappings for packages are a way of mapping any subpath of th
 </script>
 ```
 
-SystemJS Warning #52 is logged by SystemJS to implement [Step 6.1 of this part of the import maps spec](https://wicg.github.io/import-maps/#sort-and-normalize-a-specifier-map).
+SystemJS Warning #W2 is logged by SystemJS to implement [Step 6.1 of this part of the import maps spec](https://wicg.github.io/import-maps/#sort-and-normalize-a-specifier-map).
 
-## 53
+## W3
 
-### Invalid module id
+### ID is not a valid URL to set in the registry
 
-SystemJS Warning #53 occurs when you call `System.set(id, module)` with an invalid id.
+SystemJS Warning #W3 occurs when you call `System.set(id, module)` with an invalid id.
 
-The SystemJS module registry is similar to a browser's module registry, which identifies modules by URL. As such, the module id passed to System.set should be a URL, not a bare specifier.
+The SystemJS module registry is similar to a browser's module registry, which identifies modules by URL. As such, the module id passed to System.set should be a URL, not a bare specifier. Note that you should set full URLs in the module registry, not page-relative URLs.
+
+Setting non-URL IDs is not recommended, but can be supported by hooking the resolve function to ensure these IDs can be resolved. Typically System.resolve will always return a URL making these modules unloadable otherwise.
 
 ```js
-// INVALID
+// bare specifiers are invalid
 System.set('foo', { some: 'value' });
 
-// VALID
+// page-relative URLs are invalid
 System.set('/foo.js', { some: 'value' });
+System.set('./foo.js', { some: 'value' });
+
+// Full urls are valid
+System.set('http://example.com/foo.js', { some: 'value' });
 ```

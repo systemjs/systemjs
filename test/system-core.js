@@ -150,7 +150,7 @@ describe('Core API', function () {
         numCalls++;
         lastWarn = msg;
       };
-      loader.set('./bare-specifier.js', { y: 43 });
+      loader.set('http://localhost:8080/bare-specifier.js', { y: 43 });
       console.warn = originalWarn;
       assert.equal(numCalls, 0);
     });
