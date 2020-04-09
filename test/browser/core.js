@@ -159,17 +159,19 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
-  test('should load a css module', async function () {
-    const m = await System.import('fixturesbase/css-modules/a.css');
-    assert.ok(m);
-    assert.ok(m.default instanceof CSSStyleSheet);
-    document.adoptedStyleSheets = [...document.adoptedStyleSheets, m.default];
+  test('should load a css module', function () {
+    return System.import('fixturesbase/css-modules/a.css').then(function (m) {
+      assert.ok(m);
+      assert.ok(isCSSStyleSheet(m.default));
+      document.adoptedStyleSheets = document.adoptedStyleSheets.concat(m.default);
+    });
   });
 
-  test('should support application/javascript css module override', async function () {
-    const m = await System.import('fixturesbase/css-modules/javascript.css');
-    assert.ok(m);
-    assert.ok(m.css, 'module');
+  test('should support application/javascript css module override', function () {
+    return System.import('fixturesbase/css-modules/javascript.css').then(function (m) {
+      assert.ok(m);
+      assert.ok(m.css, 'module');
+    });
   });
 
   test('should throw when trying to load an HTML module', function () {
@@ -208,14 +210,24 @@ suite('SystemJS Standard Tests', function() {
   test('should not get confused by filenames in url hash when resolving module type', function () {
     return System.import('fixturesbase/css-modules/hash.css?foo=bar.html').then(function (m) {
       assert.ok(m);
-      assert.ok(m.default instanceof CSSStyleSheet);
+      assert.ok(isCSSStyleSheet(m.default));
     });
   });
 
   test('should not get confused by filenames in search params hash when resolving module type', function () {
     return System.import('fixturesbase/css-modules/search-param.css?param=foo.html').then(function (m) {
       assert.ok(m);
-      assert.ok(m.default instanceof CSSStyleSheet);
+      assert.ok(isCSSStyleSheet(m.default));
     });
   });
+
+  var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;
+
+  function isCSSStyleSheet(obj) {
+    if (isIE11) {
+      return obj.cssRules;
+    } else {
+      return obj instanceof CSSStyleSheet;
+    }
+  }
 });

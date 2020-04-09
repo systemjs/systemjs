@@ -6,6 +6,8 @@ suite('Transform Loader', function() {
     return source;
   };
 
+  const supportsWebAssembly = typeof WebAssembly !== 'undefined' && typeof process === 'undefined';
+
   suite('SystemJS standard tests', function () {
 
     test('String encoding', function () {
@@ -67,7 +69,7 @@ suite('Transform Loader', function() {
       });
     });
 
-    if (typeof WebAssembly !== 'undefined' && typeof process === 'undefined')
+    if (supportsWebAssembly)
     test('Loading WASM', function () {
       return System.import('fixtures/wasm/example.wasm')
       .then(function (m) {
@@ -76,7 +78,8 @@ suite('Transform Loader', function() {
     });
 
     test('Verification', function () {
-      assert.equal(translateCnt, 8);
+      const expected = supportsWebAssembly ? 8 : 7;
+      assert.equal(translateCnt, expected);
     });
   });
 });
