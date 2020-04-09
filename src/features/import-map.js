@@ -14,7 +14,7 @@ import { BASE_URL, baseUrl, resolveAndComposeImportMap, resolveImportMap, resolv
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
-export { IMPORT_MAP };
+export { IMPORT_MAP, IMPORT_MAP_PROMISE };
 
 var IMPORT_MAP = hasSymbol ? Symbol() : '#';
 var IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
