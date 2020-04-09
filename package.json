@@ -34,11 +34,12 @@
     "rollup": "^2.2.0",
     "rollup-plugin-terser": "^5.3.0",
     "source-map-support": "^0.5.16",
+    "symbol-es6": "^0.1.2",
     "terser": "^4.6.7",
     "whatwg-fetch": "^3.0.0"
   },
   "scripts": {
-    "build": "rimraf dist && concurrently -n w: 'yarn:build:*'",
+    "build": "rimraf dist && concurrently -n w: 'npm:build:*'",
     "build:node": "node --experimental-modules build-node.js",
     "build:browser": "rollup -c",
     "build-browser-dev": "rollup -c --environment dev",

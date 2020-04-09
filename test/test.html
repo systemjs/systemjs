@@ -6,9 +6,17 @@
 	</script>
 	<script>
 		if (typeof fetch === 'undefined')
-			document.write('<script src="../node_modules/whatwg-fetch/fetch.js"><\/script>');
+			document.write('<script src="../node_modules/whatwg-fetch/dist/fetch.umd.js"><\/script>');
 	</script>
-	<script defer src="../node_modules/construct-style-sheets-polyfill/dist/adoptedStyleSheets.js"></script>
+	<script>
+		// SystemJS doesn't require a Symbol polyfill, but construct-style-sheets-polyfill does
+		if (typeof Symbol === 'undefined')
+			document.write('<script src="../node_modules/symbol-es6/dist/symbol-es6.min.js"><\/script>');
+	</script>
+	<script>
+		if (typeof document.adoptedStyleSheets === 'undefined')
+			document.write('<script src="../node_modules/construct-style-sheets-polyfill/dist/adoptedStyleSheets.js"><\/script>');
+	</script>
 	<script>
 		// TODO IE11 URL polyfill testing
 		// if (typeof URL === 'undefined')

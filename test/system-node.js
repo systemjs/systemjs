@@ -15,7 +15,7 @@ describe('NodeJS version of SystemJS', () => {
 
   describe('resolve', () => {
     it('provides a default base url if one is not specified', () => {
-      assert.equal(System.resolve('./foo.js'), pathToFileURL(process.cwd()) + path.sep + 'foo.js');
+      assert.equal(System.resolve('./foo.js'), pathToFileURL(process.cwd()).href + '/foo.js');
     });
 
     it('works if a full url is provided', () => {
