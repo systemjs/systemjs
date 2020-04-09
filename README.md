@@ -57,14 +57,16 @@ The [3.7KB system.js loader](dist/system.min.js) loader builds on the s.js core 
 
 #### 3. system-node.cjs loader
 
-The [system-node.cjs](/dist/system-node.cjs) loader is used to load modules in NodeJS programs. It has the following features:
+The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where Sysem modules need to be executed on the server like SSR. It has the following features:
 
-* Loading modules from disk (via `file://` urls).
-* Loading modules from network (via `http://` urls), with included caching that respects the Content-Type header.
-* Global loading
+* Loading System modules from disk (via `file://` urls).
+* Loading System modules from network (via `http://` urls), with included caching that respects the Content-Type header.
+* Loading global modules with the included [global loading extra](#extras)
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 * Import Maps (via the `applyImportMap` api).
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
+
+_CommonJS module support is not currently supported, and is not generally advised - [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) is always recommended where possible._
 
 #### Extras
 
