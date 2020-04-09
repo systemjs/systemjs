@@ -18,7 +18,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@jsenv/github-pull-request-filesize-impact": "^2.6.0",
+    "@jsenv/github-pull-request-filesize-impact": "^3.0.2",
     "@rollup/plugin-json": "^4.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-replace": "^2.3.1",
