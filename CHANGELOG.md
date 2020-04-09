@@ -1,3 +1,10 @@
+SystemJS 6.3.0
+* s.js now has full import map support (https://github.com/systemjs/systemjs/pull/2150)
+* New system-node.cjs loader designed to run in NodeJS. (https://github.com/systemjs/systemjs/pull/2150, https://github.com/systemjs/systemjs/pull/2158)
+* SystemJS now has error codes, along with documentation for each error code (https://github.com/systemjs/systemjs/pull/2151)
+* Fix bug in Chrome 45 where const/let disallowed unless in strict mode (https://github.com/systemjs/systemjs/pull/2162)
+* Add warning for calling System.set with non-URL id (https://github.com/systemjs/systemjs/pull/2161)
+
 SystemJS 6.2.6
 * Address race condition with named register modules (https://github.com/systemjs/systemjs/pull/2144)
 

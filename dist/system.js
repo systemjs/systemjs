@@ -1,29 +1,33 @@
 /*
-* SystemJS 6.2.6
+* SystemJS 6.3.0
 */
 (function () {
-  const hasSelf = typeof self !== 'undefined';
+  function errMsg(errCode, msg) {
+    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
+  }
 
-  const hasDocument = typeof document !== 'undefined';
+  var hasSymbol = typeof Symbol !== 'undefined';
+  var hasSelf = typeof self !== 'undefined';
+  var hasDocument = typeof document !== 'undefined';
 
-  const envGlobal = hasSelf ? self : global;
+  var envGlobal = hasSelf ? self : global;
 
-  let baseUrl;
+  var baseUrl;
 
   if (hasDocument) {
-    const baseEl = document.querySelector('base[href]');
+    var baseEl = document.querySelector('base[href]');
     if (baseEl)
       baseUrl = baseEl.href;
   }
 
   if (!baseUrl && typeof location !== 'undefined') {
     baseUrl = location.href.split('#')[0].split('?')[0];
-    const lastSepIndex = baseUrl.lastIndexOf('/');
+    var lastSepIndex = baseUrl.lastIndexOf('/');
     if (lastSepIndex !== -1)
       baseUrl = baseUrl.slice(0, lastSepIndex + 1);
   }
 
-  const backslashRegEx = /\\/g;
+  var backslashRegEx = /\\/g;
   function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
     if (relUrl.indexOf('\\') !== -1)
       relUrl = relUrl.replace(backslashRegEx, '/');
@@ -35,13 +39,13 @@
     else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && (relUrl[2] === '/' || relUrl.length === 2 && (relUrl += '/')) ||
         relUrl.length === 1  && (relUrl += '/')) ||
         relUrl[0] === '/') {
-      const parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
+      var parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
       // Disabled, but these cases will give inconsistent results for deep backtracking
       //if (parentUrl[parentProtocol.length] !== '/')
       //  throw Error('Cannot resolve');
       // read pathname from parent URL
       // pathname taken to be part after leading "/"
-      let pathname;
+      var pathname;
       if (parentUrl[parentProtocol.length + 1] === '/') {
         // resolving to a :// so we need to read out the auth and host
         if (parentProtocol !== 'file:') {
@@ -63,11 +67,11 @@
       // join together and split for removal of .. and . segments
       // looping the string instead of anything fancy for perf reasons
       // '../../../../../z' resolved to 'x/y' is just 'z'
-      const segmented = pathname.slice(0, pathname.lastIndexOf('/') + 1) + relUrl;
+      var segmented = pathname.slice(0, pathname.lastIndexOf('/') + 1) + relUrl;
 
-      const output = [];
-      let segmentIndex = -1;
-      for (let i = 0; i < segmented.length; i++) {
+      var output = [];
+      var segmentIndex = -1;
+      for (var i = 0; i < segmented.length; i++) {
         // busy reading a segment - only terminate on '/'
         if (segmentIndex !== -1) {
           if (segmented[i] === '/') {
@@ -117,35 +121,36 @@
   }
 
   function objectAssign (to, from) {
-    for (let p in from)
+    for (var p in from)
       to[p] = from[p];
     return to;
   }
 
   function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
-    for (let p in packages) {
-      const resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
-      const rhs = packages[p];
+    for (var p in packages) {
+      var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
+      var rhs = packages[p];
       // package fallbacks not currently supported
       if (typeof rhs !== 'string')
         continue;
-      const mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
-      if (!mapped)
-        targetWarning(p, rhs, 'bare specifier did not resolve');
+      var mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
+      if (!mapped) {
+        targetWarning('W1', p, rhs, 'bare specifier did not resolve');
+      }
       else
         outPackages[resolvedLhs] = mapped;
     }
   }
 
   function resolveAndComposeImportMap (json, baseUrl, parentMap) {
-    const outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
+    var outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
 
     if (json.imports)
       resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
 
     if (json.scopes)
-      for (let s in json.scopes) {
-        const resolvedScope = resolveUrl(s, baseUrl);
+      for (var s in json.scopes) {
+        var resolvedScope = resolveUrl(s, baseUrl);
         resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
       }
 
@@ -155,37 +160,39 @@
   function getMatch (path, matchObj) {
     if (matchObj[path])
       return path;
-    let sepIndex = path.length;
+    var sepIndex = path.length;
     do {
-      const segment = path.slice(0, sepIndex + 1);
+      var segment = path.slice(0, sepIndex + 1);
       if (segment in matchObj)
         return segment;
     } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
   }
 
   function applyPackages (id, packages) {
-    const pkgName = getMatch(id, packages);
+    var pkgName = getMatch(id, packages);
     if (pkgName) {
-      const pkg = packages[pkgName];
+      var pkg = packages[pkgName];
       if (pkg === null) return;
-      if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/')
-        targetWarning(pkgName, pkg, "should have a trailing '/'");
+      if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
+        targetWarning('W2', pkgName, pkg, "should have a trailing '/'");
+      }
       else
         return pkg + id.slice(pkgName.length);
     }
   }
 
-  function targetWarning (match, target, msg) {
-    console.warn("Package target " + msg + ", resolving target '" + target + "' for " + match);
+  function targetWarning (code, match, target, msg) {
+    console.warn(errMsg(code,  "Package target " + msg + ", resolving target '" + target + "' for " + match));
   }
 
   function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
-    let scopeUrl = parentUrl && getMatch(parentUrl, importMap.scopes);
+    var scopes = importMap.scopes;
+    var scopeUrl = parentUrl && getMatch(parentUrl, scopes);
     while (scopeUrl) {
-      const packageResolution = applyPackages(resolvedOrPlain, importMap.scopes[scopeUrl]);
+      var packageResolution = applyPackages(resolvedOrPlain, scopes[scopeUrl]);
       if (packageResolution)
         return packageResolution;
-      scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), importMap.scopes);
+      scopeUrl = getMatch(scopeUrl.slice(0, scopeUrl.lastIndexOf('/')), scopes);
     }
     return applyPackages(resolvedOrPlain, importMap.imports) || resolvedOrPlain.indexOf(':') !== -1 && resolvedOrPlain;
   }
@@ -207,26 +214,23 @@
    * System.prototype.instantiate implementations
    */
 
-  const hasSymbol = typeof Symbol !== 'undefined';
-  const toStringTag = hasSymbol && Symbol.toStringTag;
-  const REGISTRY = hasSymbol ? Symbol() : '@';
+  var toStringTag = hasSymbol && Symbol.toStringTag;
+  var REGISTRY = hasSymbol ? Symbol() : '@';
 
   function SystemJS () {
     this[REGISTRY] = {};
   }
 
-  const systemJSPrototype = SystemJS.prototype;
-
-  systemJSPrototype.prepareImport = function () {};
+  var systemJSPrototype = SystemJS.prototype;
 
   systemJSPrototype.import = function (id, parentUrl) {
-    const loader = this;
+    var loader = this;
     return Promise.resolve(loader.prepareImport())
     .then(function() {
       return loader.resolve(id, parentUrl);
     })
     .then(function (id) {
-      const load = getOrCreateLoad(loader, id);
+      var load = getOrCreateLoad(loader, id);
       return load.C || topLevelLoad(loader, load);
     });
   };
@@ -249,7 +253,7 @@
       throw err;
   }
 
-  let lastRegister;
+  var lastRegister;
   systemJSPrototype.register = function (deps, declare) {
     lastRegister = [deps, declare];
   };
@@ -258,32 +262,32 @@
    * getRegister provides the last anonymous System.register call
    */
   systemJSPrototype.getRegister = function () {
-    const _lastRegister = lastRegister;
+    var _lastRegister = lastRegister;
     lastRegister = undefined;
     return _lastRegister;
   };
 
   function getOrCreateLoad (loader, id, firstParentUrl) {
-    let load = loader[REGISTRY][id];
+    var load = loader[REGISTRY][id];
     if (load)
       return load;
 
-    const importerSetters = [];
-    const ns = Object.create(null);
+    var importerSetters = [];
+    var ns = Object.create(null);
     if (toStringTag)
       Object.defineProperty(ns, toStringTag, { value: 'Module' });
     
-    let instantiatePromise = Promise.resolve()
+    var instantiatePromise = Promise.resolve()
     .then(function () {
       return loader.instantiate(id, firstParentUrl);
     })
     .then(function (registration) {
       if (!registration)
-        throw Error('Module ' + id + ' did not instantiate');
+        throw Error(errMsg(2,  'Module ' + id + ' did not instantiate'));
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
-        let changed = false;
+        var changed = false;
         if (typeof name !== 'object') {
           if (!(name in ns) || ns[name] !== value) {
             ns[name] = value;
@@ -291,8 +295,8 @@
           }
         }
         else {
-          for (let p in name) {
-            let value = name[p];
+          for (var p in name) {
+            var value = name[p];
             if (!(p in ns) || ns[p] !== value) {
               ns[p] = value;
               changed = true;
@@ -304,11 +308,11 @@
           }
         }
         if (changed)
-          for (let i = 0; i < importerSetters.length; i++)
+          for (var i = 0; i < importerSetters.length; i++)
             importerSetters[i](ns);
         return value;
       }
-      const declared = registration[1](_export, registration[1].length === 2 ? {
+      var declared = registration[1](_export, registration[1].length === 2 ? {
         import: function (importId) {
           return loader.import(importId, id);
         },
@@ -322,13 +326,13 @@
         triggerOnload(loader, load, err);
       });
 
-    const linkPromise = instantiatePromise
+    var linkPromise = instantiatePromise
     .then(function (instantiation) {
       return Promise.all(instantiation[0].map(function (dep, i) {
-        const setter = instantiation[1][i];
+        var setter = instantiation[1][i];
         return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
-          const depLoad = getOrCreateLoad(loader, depId, id);
+          var depLoad = getOrCreateLoad(loader, depId, id);
           // depLoad.I may be undefined for already-evaluated
           return Promise.resolve(depLoad.I)
           .then(function () {
@@ -414,7 +418,7 @@
   }
 
   // the closest we can get to call(undefined)
-  const nullContext = Object.freeze(Object.create(null));
+  var nullContext = Object.freeze(Object.create(null));
 
   // returns a promise if and only if a top-level await subgraph
   // throws on sync errors
@@ -432,11 +436,11 @@
     }
 
     // deps execute first, unless circular
-    let depLoadPromises;
+    var depLoadPromises;
     load.d.forEach(function (depLoad) {
-      {
+      if (true) {
         try {
-          const depLoadPromise = postOrderExec(loader, depLoad, seen);
+          var depLoadPromise = postOrderExec(loader, depLoad, seen);
           if (depLoadPromise) {
             depLoadPromise.catch(function (err) {
               triggerOnload(loader, load, err);
@@ -448,6 +452,9 @@
           triggerOnload(loader, load, err);
         }
       }
+      else {
+        var depLoadPromise;
+      }
     });
     if (depLoadPromises)
       return Promise.all(depLoadPromises).then(doExec);
@@ -456,25 +463,30 @@
 
     function doExec () {
       try {
-        let execPromise = load.e.call(nullContext);
+        var execPromise = load.e.call(nullContext);
         if (execPromise) {
-          execPromise = execPromise.then(function () {
+          if (!false)
+            execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
               triggerOnload(loader, load, null);
             }, function (err) {
               triggerOnload(loader, load, err);
             });
+          else
+            execPromise = execPromise.then(function () {
+              load.C = load.n;
+              load.E = null;
+            });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        triggerOnload(loader, load, null);
+        if (!false) triggerOnload(loader, load, null);
       }
       catch (err) {
-        triggerOnload(loader, load, err);
         load.er = err;
-        throw err;
+        triggerOnload(loader, load, err);
       }
       finally {
         load.L = load.I = undefined;
@@ -498,52 +510,64 @@
    * There is no support for dynamic import maps injection currently.
    */
 
-  let importMap = { imports: {}, scopes: {} }, importMapPromise;
+  var IMPORT_MAP = hasSymbol ? Symbol() : '#';
+  var IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
 
-  if (hasDocument) {
-    Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"][src]'), function (script) {
-      script._j = fetch(script.src).then(function (res) {
-        return res.json();
-      });
+  iterateDocumentImportMaps(function (script) {
+    script._t = fetch(script.src).then(function (res) {
+      return res.text();
     });
-  }
+  }, '[src]');
 
   systemJSPrototype.prepareImport = function () {
-    if (!importMapPromise) {
-      importMapPromise = Promise.resolve();
-      if (hasDocument)
-        Array.prototype.forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]'), function (script) {
-          importMapPromise = importMapPromise.then(function () {
-            return (script._j || script.src && fetch(script.src).then(function (resp) { return resp.json(); }) || Promise.resolve(JSON.parse(script.innerHTML)))
-            .then(function (json) {
-              importMap = resolveAndComposeImportMap(json, script.src || baseUrl, importMap);
-            });
+    var loader = this;
+    if (!loader[IMPORT_MAP_PROMISE]) {
+      loader[IMPORT_MAP] = { imports: {}, scopes: {} };
+      loader[IMPORT_MAP_PROMISE] = Promise.resolve();
+      iterateDocumentImportMaps(function (script) {
+        loader[IMPORT_MAP_PROMISE] = loader[IMPORT_MAP_PROMISE].then(function () {
+          return (script._t || script.src && fetch(script.src).then(function (res) { return res.text(); }) || Promise.resolve(script.innerHTML))
+          .then(function (text) {
+            try {
+              return JSON.parse(text);
+            } catch (err) {
+              throw Error( errMsg(1, "systemjs-importmap contains invalid JSON"));
+            }
+          })
+          .then(function (newMap) {
+            loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, script.src || baseUrl, loader[IMPORT_MAP]);
           });
         });
+      }, '');
     }
-    return importMapPromise;
+    return loader[IMPORT_MAP_PROMISE];
   };
 
   systemJSPrototype.resolve = function (id, parentUrl) {
-    parentUrl = parentUrl || baseUrl;
-    return resolveImportMap(importMap, resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+    parentUrl = parentUrl || !true  || baseUrl;
+    return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error("Unable to resolve specifier '" + id + (parentUrl ? "' from " + parentUrl : "'"));
+    throw Error(errMsg(2,  "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
+  }
+
+  function iterateDocumentImportMaps(cb, extraSelector) {
+    if (hasDocument)
+      [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + extraSelector), cb);
   }
 
   /*
    * Supports loading System.register via script tag injection
    */
 
-  const systemRegister = systemJSPrototype.register;
+  var systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
     systemRegister.call(this, deps, declare);
   };
 
   systemJSPrototype.createScript = function (url) {
-    const script = document.createElement('script');
+    var script = document.createElement('script');
     script.charset = 'utf-8';
     script.async = true;
     script.crossOrigin = 'anonymous';
@@ -551,19 +575,13 @@
     return script;
   };
 
-  let lastWindowErrorUrl, lastWindowError;
-  if (hasDocument)
-    window.addEventListener('error', function (evt) {
-      lastWindowErrorUrl = evt.filename;
-      lastWindowError = evt.error;
-    });
-
+  var lastWindowErrorUrl, lastWindowError;
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    const loader = this;
+    var loader = this;
     return new Promise(function (resolve, reject) {
-      const script = systemJSPrototype.createScript(url);
+      var script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
-        reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+        reject(Error(errMsg(3,  'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
       });
       script.addEventListener('load', function () {
         document.head.removeChild(script);
@@ -581,12 +599,18 @@
   };
 
   if (hasDocument) {
+    window.addEventListener('error', function (evt) {
+      lastWindowErrorUrl = evt.filename;
+      lastWindowError = evt.error;
+    });
+
     window.addEventListener('DOMContentLoaded', loadScriptModules);
     loadScriptModules();
   }
 
+
   function loadScriptModules() {
-    Array.prototype.forEach.call(
+    [].forEach.call(
       document.querySelectorAll('script[type=systemjs-module]'), function (script) {
         if (script.src) {
           System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
@@ -600,15 +624,10 @@
 
   if (hasSelf && typeof importScripts === 'function')
     systemJSPrototype.instantiate = function (url) {
-      const loader = this;
-      return new Promise(function (resolve, reject) {
-        try {
-          importScripts(url);
-        }
-        catch (e) {
-          reject(e);
-        }
-        resolve(loader.getRegister());
+      var loader = this;
+      return Promise.resolve().then(function () {
+        importScripts(url);
+        return loader.getRegister();
       });
     };
 
@@ -618,21 +637,16 @@
    * (Included by default in system.js build)
    */
   (function (global) {
-    const systemJSPrototype = global.System.constructor.prototype;
-    const isIE = navigator.userAgent.indexOf('Trident') !== -1;
+    var systemJSPrototype = System.constructor.prototype;
 
     // safari unpredictably lists some new globals first or second in object order
-    let firstGlobalProp, secondGlobalProp, lastGlobalProp;
+    var firstGlobalProp, secondGlobalProp, lastGlobalProp;
     function getGlobalProp () {
-      let cnt = 0;
-      let lastProp;
-      for (let p in global) {
+      var cnt = 0;
+      var lastProp;
+      for (var p in global) {
         // do not check frames cause it could be removed during import
-        if (
-          !global.hasOwnProperty(p)
-          || (!isNaN(p) && p < global.length)
-          || (isIE && global[p] && global[p].parent === window)
-        )
+        if (shouldSkipProperty(p))
           continue;
         if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
           return p;
@@ -647,13 +661,9 @@
       // alternatively Object.keys(global).pop()
       // but this may be faster (pending benchmarks)
       firstGlobalProp = secondGlobalProp = undefined;
-      for (let p in global) {
+      for (var p in global) {
         // do not check frames cause it could be removed during import
-        if (
-          !global.hasOwnProperty(p)
-          || (!isNaN(p) && p < global.length)
-          || (isIE && global[p] && global[p].parent === window)
-        )
+        if (shouldSkipProperty(p))
           continue;
         if (!firstGlobalProp)
           firstGlobalProp = p;
@@ -664,17 +674,17 @@
       return lastGlobalProp;
     }
 
-    const impt = systemJSPrototype.import;
+    var impt = systemJSPrototype.import;
     systemJSPrototype.import = function (id, parentUrl) {
       noteGlobalProps();
       return impt.call(this, id, parentUrl);
     };
 
-    const emptyInstantiation = [[], function () { return {} }];
+    var emptyInstantiation = [[], function () { return {} }];
 
-    const getRegister = systemJSPrototype.getRegister;
+    var getRegister = systemJSPrototype.getRegister;
     systemJSPrototype.getRegister = function () {
-      const lastRegister = getRegister.call(this);
+      var lastRegister = getRegister.call(this);
       if (lastRegister)
         return lastRegister;
 
@@ -682,11 +692,11 @@
       // when multiple globals, we take the global value to be the last defined new global object property
       // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
       // note in Edge, deleting and re-adding a global does not change its ordering
-      const globalProp = getGlobalProp();
+      var globalProp = getGlobalProp();
       if (!globalProp)
         return emptyInstantiation;
 
-      let globalExport;
+      var globalExport;
       try {
         globalExport = global[globalProp];
       }
@@ -702,6 +712,14 @@
         };
       }];
     };
+
+    var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;
+
+    function shouldSkipProperty(p) {
+      return !global.hasOwnProperty(p)
+        || !isNaN(p) && p < global.length
+        || isIE11 && global[p] && typeof window !== 'undefined' && global[p].parent === window;
+    }
   })(typeof self !== 'undefined' ? self : global);
 
   /*
@@ -709,13 +727,13 @@
    * Supports application/javascript falling back to JS eval
    */
   (function(global) {
-    const systemJSPrototype = global.System.constructor.prototype;
-    const instantiate = systemJSPrototype.instantiate;
+    var systemJSPrototype = global.System.constructor.prototype;
+    var instantiate = systemJSPrototype.instantiate;
 
-    const moduleTypesRegEx = /\.(css|html|json|wasm)$/;
+    var moduleTypesRegEx = /\.(css|html|json|wasm)$/;
     systemJSPrototype.shouldFetch = function (url) {
-      const path = url.split('?')[0].split('#')[0];
-      const ext = path.slice(path.lastIndexOf('.'));
+      var path = url.split('?')[0].split('#')[0];
+      var ext = path.slice(path.lastIndexOf('.'));
       return ext.match(moduleTypesRegEx);
     };
     systemJSPrototype.fetch = function (url) {
@@ -723,13 +741,13 @@
     };
 
     systemJSPrototype.instantiate = function (url, parent) {
-      const loader = this;
+      var loader = this;
       if (this.shouldFetch(url)) {
         return this.fetch(url)
         .then(function (res) {
           if (!res.ok)
-            throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : ''));
-          const contentType = res.headers.get('content-type');
+            throw Error(errMsg(7,  res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
+          var contentType = res.headers.get('content-type');
           if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
             return res.text().then(function (source) {
               (0, eval)(source);
@@ -753,7 +771,7 @@
                 return {
                   execute: function () {
                     // Relies on a Constructable Stylesheet polyfill
-                    const stylesheet = new CSSStyleSheet();
+                    var stylesheet = new CSSStyleSheet();
                     stylesheet.replaceSync(source);
                     _export('default', stylesheet);
                   }
@@ -764,14 +782,14 @@
           else if (contentType.match(/^application\/wasm(;|$)/)) {
             return (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile))
             .then(function (module) {
-              const deps = [];
-              const setters = [];
-              const importObj = {};
+              var deps = [];
+              var setters = [];
+              var importObj = {};
           
               // we can only set imports if supported (eg early Safari doesnt support)
               if (WebAssembly.Module.imports)
                 WebAssembly.Module.imports(module).forEach(function (impt) {
-                  const key = impt.module;
+                  var key = impt.module;
                   if (deps.indexOf(key) === -1) {
                     deps.push(key);
                     setters.push(function (m) {
@@ -794,7 +812,7 @@
             });
           }
           else {
-            throw new Error('Unknown module type "' + contentType + '"');
+            throw Error(errMsg(4,  'Unknown module type "' + contentType + '"'));
           }
         });
       }
@@ -802,10 +820,10 @@
     };
   })(typeof self !== 'undefined' ? self : global);
 
-  const toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
+  var toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
   systemJSPrototype.get = function (id) {
-    const load = this[REGISTRY][id];
+    var load = this[REGISTRY][id];
     if (load && load.e === null && !load.E) {
       if (load.er)
         return null;
@@ -814,7 +832,15 @@
   };
 
   systemJSPrototype.set = function (id, module) {
-    let ns;
+    {
+      try {
+        // No page-relative URLs allowed
+        new URL(id);
+      } catch (err) {
+        console.warn(Error(errMsg('W3', '"' + id + '" is not a valid URL to set in the module registry')));
+      }
+    }
+    var ns;
     if (toStringTag$1 && module[toStringTag$1] === 'Module') {
       ns = module;
     }
@@ -824,9 +850,9 @@
         Object.defineProperty(ns, toStringTag$1, { value: 'Module' });
     }
 
-    const done = Promise.resolve(ns);
+    var done = Promise.resolve(ns);
 
-    const load = this[REGISTRY][id] || (this[REGISTRY][id] = {
+    var load = this[REGISTRY][id] || (this[REGISTRY][id] = {
       id: id,
       i: [],
       h: false,
@@ -849,31 +875,31 @@
   };
 
   systemJSPrototype.has = function (id) {
-    const load = this[REGISTRY][id];
+    var load = this[REGISTRY][id];
     return !!load;
   };
 
   // Delete function provided for hot-reloading use cases
   systemJSPrototype.delete = function (id) {
-    const registry = this[REGISTRY];
-    const load = registry[id];
+    var registry = this[REGISTRY];
+    var load = registry[id];
     // in future we can support load.E case by failing load first
     // but that will require TLA callbacks to be implemented
     if (!load || load.e !== null || load.E)
       return false;
 
-    let importerSetters = load.i;
+    var importerSetters = load.i;
     // remove from importerSetters
     // (release for gc)
     if (load.d)
       load.d.forEach(function (depLoad) {
-        const importerIndex = depLoad.i.indexOf(load);
+        var importerIndex = depLoad.i.indexOf(load);
         if (importerIndex !== -1)
           depLoad.i.splice(importerIndex, 1);
       });
     delete registry[id];
     return function () {
-      const load = registry[id];
+      var load = registry[id];
       if (!load || !importerSetters || load.e !== null || load.E)
         return false;
       // add back the old setters
@@ -885,12 +911,12 @@
     };
   };
 
-  const iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
+  var iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
 
   systemJSPrototype.entries = function () {
-    const loader = this, keys = Object.keys(loader[REGISTRY]);
-    let index = 0, ns, key;
-    const result = {
+    var loader = this, keys = Object.keys(loader[REGISTRY]);
+    var index = 0, ns, key;
+    var result = {
       next: function () {
         while (
           (key = keys[index++]) !== undefined && 
