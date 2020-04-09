@@ -4,5 +4,6 @@ reportSizeImpactIntoGithubPullRequest({
   projectDirectoryUrl: new URL("../../../", import.meta.url),
   baseSnapshotFileRelativeUrl: process.argv[2],
   headSnapshotFileRelativeUrl: process.argv[3],
-  generatedByLink: false,
+  commentSections: { fileByFileImpact: true },
+  generatedByLink: true,
 });
