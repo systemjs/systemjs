@@ -57,7 +57,7 @@ The [3.7KB system.js loader](dist/system.min.js) loader builds on the s.js core 
 
 #### 3. system-node.cjs loader
 
-The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where Sysem modules need to be executed on the server like SSR. It has the following features:
+The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where System modules need to be executed on the server like SSR. It has the following features:
 
 * Loading System modules from disk (via `file://` urls).
 * Loading System modules from network (via `http://` urls), with included caching that respects the Content-Type header.
