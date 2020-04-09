@@ -169,7 +169,11 @@ This sections lists the SystemJS warnings that you may encounter.
 
 ## W1
 
+### Unable to resolve bare specifier
+
 SystemJS Warning #1 occurs when there is an error resolving a bare specifier on the right hand side of an import map. See [Error #8](#8) for more detail on fixing bare specifier errors.
+
+Import maps are fully parsed and resolved at initialization time, with validation warnings output in line with the import maps specification. Any resolution errors in the import map are displayed as validation warnings and those import map entries are then ignored in the resolution process.
 
 ## W2
 
