@@ -66,7 +66,7 @@ The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS bui
 * Import Maps (via the `applyImportMap` api).
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
 
-_CommonJS module support is not currently supported, and is not generally advised - [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) is always recommended where possible._
+_Loading CommonJS modules is not currently supported in this loader and likely won't be. If you find you need them it is more advisable to use [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) where possible instead of the SystemJS Node.js loader._
 
 #### Extras
 
