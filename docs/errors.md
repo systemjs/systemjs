@@ -26,7 +26,7 @@ Note that this error also can occur for external import maps (those with `src=""
 
 ## 2
 
-## Module did not instantiate
+### Module did not instantiate
 
 SystemJS Error #2 occurs when a module fails to instantiate.
 
@@ -111,11 +111,7 @@ SystemJS checks the HTTP [Response](https://developer.mozilla.org/en-US/docs/Web
 
 To diagnose the problem, identify which module failed to load. Then check the browser console and network tab of your devtools to find the HTTP status. In order for the module to successfully load, the status needs to be >= 200 and < 300.
 
-# SystemJS Warnings
-
-This sections lists the SystemJS warnings that you may encounter.
-
-## W1
+## 8
 
 ### Unable to resolve bare specifier
 
@@ -166,6 +162,14 @@ To fix this warning, you may either use [import maps](/docs/import-maps.md) or [
   })()
 </script>
 ```
+
+# SystemJS Warnings
+
+This sections lists the SystemJS warnings that you may encounter.
+
+## W1
+
+SystemJS Warning #1 occurs when there is an error resolving a bare specifier on the right hand side of an import map. See [Error #8](#8) for more detail on fixing bare specifier errors.
 
 ## W2
 
