@@ -4,7 +4,9 @@ on: pull_request
 
 jobs:
   size-impact:
-    if: github.event.pull_request.base.repository == github.event.pull_request.head.repository
+    # disable workflow for forks because of
+    # https://help.github.com/en/actions/configuring-and-managing-workflows/authenticating-with-the-github_token#permissions-for-the-github_token
+    if: github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name
     strategy:
       matrix:
         os: [ubuntu-latest]
