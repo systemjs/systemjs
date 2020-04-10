@@ -51,7 +51,7 @@
     "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
     "test": "concurrently -n w: 'npm:test:*'",
     "test:internals": "cross-env NODE_OPTIONS=--experimental-modules mocha -b test/import-map.js test/system-core.js test/url-resolution.js",
-    "test:node": "cross-env NODE_OPTIONS=--experimental-modules mocha -b test/system-node.js",
+    "test:node": "cross-env NODE_OPTIONS=--experimental-modules mocha --timeout 5000 -b test/system-node.js",
     "test:browser": "node test/server.cjs",
     "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
     "prepublish": "npm run build"
