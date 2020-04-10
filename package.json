@@ -3,8 +3,11 @@
   "version": "6.3.0",
   "main": "dist/system-node.cjs",
   "exports": {
-    "node": "./dist/system-node.cjs",
-    "default": "./dist/system.min.js"
+    ".": {
+      "node": "./dist/system-node.cjs",
+      "default": "./dist/system.min.js"
+    },
+    "./dist/": "./dist/"
   },
   "description": "Dynamic ES module loader",
   "repository": {
