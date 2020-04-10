@@ -57,6 +57,9 @@ global.System.constructor.prototype.fetch = async url => {
         return { status: 500, statusText: e.toString() };
     }
   } else {
-    return fetch(url);
+    return fetch(url).then(function (res) {
+      // Workaround for https://github.com/npm/make-fetch-happen/issues/28
+      return res.status === 304 ? fetch(url, { cache: 'reload' }) : res;
+    });
   }
 };
