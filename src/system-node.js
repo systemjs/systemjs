@@ -23,8 +23,6 @@ export function applyImportMap(loader, newMap, mapBase) {
   loader[IMPORT_MAP_PROMISE] = Promise.resolve();
 }
 
-export { clearFetchCache } from './features/node-fetch.js';
-
 export function setBaseUrl(loader, url) {
   ensureValidSystemLoader(loader);
   loader[BASE_URL] = new URL(url).href;
