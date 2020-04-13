@@ -1,5 +1,5 @@
 /*
-* SJS 6.3.0
+* SJS 6.3.1
 * Minimal SystemJS Build
 */
 (function () {
@@ -538,7 +538,7 @@
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error(errMsg(2,  [id, parentUrl].join(', ') ));
+    throw Error(errMsg(8,  [id, parentUrl].join(', ') ));
   }
 
   function iterateDocumentImportMaps(cb, extraSelector) {

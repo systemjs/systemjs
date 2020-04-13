@@ -1,3 +1,10 @@
+SystemJS 6.3.1
+* Fix error code mixup (https://github.com/systemjs/systemjs/pull/2169)
+* Fix bug in system-node.cjs where prepareImport overwrote import map (https://github.com/systemjs/systemjs/pull/2170)
+* Adding full dist directory to package.json exports (https://github.com/systemjs/systemjs/pull/2173)
+* Increasing timeout for test:node script (https://github.com/systemjs/systemjs/pull/2174)
+* Switching to node-fetch to avoid caching bugs in make-fetch-happen (https://github.com/systemjs/systemjs/pull/2171)
+
 SystemJS 6.3.0
 * s.js now has full import map support (https://github.com/systemjs/systemjs/pull/2150)
 * New system-node.cjs loader designed to run in NodeJS. (https://github.com/systemjs/systemjs/pull/2150, https://github.com/systemjs/systemjs/pull/2158)

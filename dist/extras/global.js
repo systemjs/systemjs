@@ -1,24 +1,19 @@
-/*
+(function(){/*
  * SystemJS global script loading support
  * Extra for the s.js build only
  * (Included by default in system.js build)
  */
 (function (global) {
-  const systemJSPrototype = global.System.constructor.prototype;
-  const isIE = navigator.userAgent.indexOf('Trident') !== -1;
+  var systemJSPrototype = System.constructor.prototype;
 
   // safari unpredictably lists some new globals first or second in object order
-  let firstGlobalProp, secondGlobalProp, lastGlobalProp;
+  var firstGlobalProp, secondGlobalProp, lastGlobalProp;
   function getGlobalProp () {
-    let cnt = 0;
-    let lastProp;
-    for (let p in global) {
+    var cnt = 0;
+    var lastProp;
+    for (var p in global) {
       // do not check frames cause it could be removed during import
-      if (
-        !global.hasOwnProperty(p)
-        || (!isNaN(p) && p < global.length)
-        || (isIE && global[p] && global[p].parent === window)
-      )
+      if (shouldSkipProperty(p))
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
@@ -33,13 +28,9 @@
     // alternatively Object.keys(global).pop()
     // but this may be faster (pending benchmarks)
     firstGlobalProp = secondGlobalProp = undefined;
-    for (let p in global) {
+    for (var p in global) {
       // do not check frames cause it could be removed during import
-      if (
-        !global.hasOwnProperty(p)
-        || (!isNaN(p) && p < global.length)
-        || (isIE && global[p] && global[p].parent === window)
-      )
+      if (shouldSkipProperty(p))
         continue;
       if (!firstGlobalProp)
         firstGlobalProp = p;
@@ -50,17 +41,17 @@
     return lastGlobalProp;
   }
 
-  const impt = systemJSPrototype.import;
+  var impt = systemJSPrototype.import;
   systemJSPrototype.import = function (id, parentUrl) {
     noteGlobalProps();
     return impt.call(this, id, parentUrl);
   };
 
-  const emptyInstantiation = [[], function () { return {} }];
+  var emptyInstantiation = [[], function () { return {} }];
 
-  const getRegister = systemJSPrototype.getRegister;
+  var getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
-    const lastRegister = getRegister.call(this);
+    var lastRegister = getRegister.call(this);
     if (lastRegister)
       return lastRegister;
 
@@ -68,11 +59,11 @@
     // when multiple globals, we take the global value to be the last defined new global object property
     // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
     // note in Edge, deleting and re-adding a global does not change its ordering
-    const globalProp = getGlobalProp();
+    var globalProp = getGlobalProp();
     if (!globalProp)
       return emptyInstantiation;
 
-    let globalExport;
+    var globalExport;
     try {
       globalExport = global[globalProp];
     }
@@ -88,4 +79,12 @@
       };
     }];
   };
-})(typeof self !== 'undefined' ? self : global);
+
+  var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;
+
+  function shouldSkipProperty(p) {
+    return !global.hasOwnProperty(p)
+      || !isNaN(p) && p < global.length
+      || isIE11 && global[p] && typeof window !== 'undefined' && global[p].parent === window;
+  }
+})(typeof self !== 'undefined' ? self : global);}());

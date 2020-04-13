@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.3.0
+* SystemJS 6.3.1
 */
 (function () {
   function errMsg(errCode, msg) {
@@ -549,7 +549,7 @@
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error(errMsg(2,  "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
+    throw Error(errMsg(8,  "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
   }
 
   function iterateDocumentImportMaps(cb, extraSelector) {

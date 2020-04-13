@@ -1,19 +1,21 @@
-/*
+(function(){function errMsg(errCode, msg) {
+  return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
+}/*
  * Support for a "transform" loader interface
  */
 (function (global) {
-  const systemJSPrototype = global.System.constructor.prototype;
+  var systemJSPrototype = global.System.constructor.prototype;
 
-  const instantiate = systemJSPrototype.instantiate;
+  var instantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, parent) {
     if (url.slice(-5) === '.wasm')
       return instantiate.call(this, url, parent);
 
-    const loader = this;
+    var loader = this;
     return fetch(url, { credentials: 'same-origin' })
     .then(function (res) {
       if (!res.ok)
-        throw Error('Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : ''));
+        throw Error(errMsg(7,  'Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : '')));
       return res.text();
     })
     .then(function (source) {
@@ -29,4 +31,4 @@
   systemJSPrototype.transform = function (_id, source) {
     return source;
   };
-})(typeof self !== 'undefined' ? self : global);
+})(typeof self !== 'undefined' ? self : global);}());
