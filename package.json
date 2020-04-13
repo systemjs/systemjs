@@ -30,8 +30,9 @@
     "concurrently": "^5.1.0",
     "construct-style-sheets-polyfill": "^2.3.5",
     "cross-env": "^7.0.2",
-    "make-fetch-happen": "^8.0.4",
+    "mkdirp": "^1.0.4",
     "mocha": "^7.1.1",
+    "node-fetch": "^2.6.0",
     "open": "^7.0.3",
     "rimraf": "^3.0.2",
     "rollup": "^2.2.0",
@@ -42,7 +43,7 @@
     "whatwg-fetch": "^3.0.0"
   },
   "scripts": {
-    "build": "rimraf dist && concurrently -n w: 'npm:build:*'",
+    "build": "rimraf dist && mkdirp dist && concurrently -n w: 'npm:build:*'",
     "build:node": "node --experimental-modules build-node.js",
     "build:browser": "rollup -c",
     "build-browser-dev": "rollup -c --environment dev",

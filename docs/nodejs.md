@@ -12,7 +12,7 @@ yarn add systemjs
 ```
 
 ```js
-const { System, applyImportMap, clearFetchCache, setBaseUrl } = require('systemjs');
+const { System, applyImportMap, setBaseUrl } = require('systemjs');
 
 System.import('file:///Users/name/some-module.js').then(module => {
   console.log("The loaded module", module);
@@ -29,7 +29,7 @@ Separate instances of SystemJS, each with their own import map and module regist
 
 Additionally, [global loading](/README.md#extras), [module types](/docs/module-types.md), and the [SystemJS Registry API](/docs/api.md#registry) are supported. Other extras, such as the AMD extra, have not been thoroughly tested but are presumed to work.
 
-Modules loaded over HTTP will be cached on disk, according to the [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) header. This caching is performed by [make-fetch-happen](https://github.com/npm/make-fetch-happen).
+Modules loaded over HTTP will be loaded via [node-fetch](https://github.com/node-fetch/node-fetch).
 
 ## API
 
@@ -106,18 +106,4 @@ setBaseUrl(System, 'https://example.com/base/');
 // Use a file URL as the base
 setBaseUrl(System, 'file:///Users/name/some-dir/');
 setBaseUrl(System, pathToFileURL(path.join(process.cwd(), 'some-dir')) + path.sep);
-```
-
-### clearFetchCache() -> undefined
-
-SystemJS uses [make-fetch-happen](https://github.com/npm/make-fetch-happen) to manage a disk cache that respects the [`Cache-Control`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) header. The `clearFetchCache` API clears the disk cache of modules loaded over the network.
-
-Calling `clearFetchCache` ensures that subsequent modules will be loaded from the network instead of disk cache. This does not impact any existing SystemJS modules in the registry.
-
-Note that the disk cache is reused by all NodeJS programs that use SystemJS on any particular machine. This includes reusing the cache after shutting down the program and restarting it.
-
-```js
-const { clearFetchCache } = require('systemjs');
-
-clearFetchCache();
 ```
