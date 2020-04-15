@@ -62,8 +62,7 @@ SystemJS uses `fetch()` instead of `<script>` to load modules whenever the [shou
 
 SystemJS checks the HTTP [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) to check the content-type header. The header must be one of the following:
 
-- `text/javascript`
-- `application/javascript`
+- `application/javascript` (Other accepted JS MIME types include `text/javascript`)
 - `application/json`
 - `text/css`
 - `application/wasm`
