@@ -5,7 +5,7 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Configurable module loader enabling backwards compatibility workflows for ES modules in browsers. If you're interested in modern workflows for ES module compatible browsers only, see [ES Module Shims](https://github.com/guybedford/es-module-shims).
+Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including IE.
 
 Release Links:
 
@@ -21,13 +21,15 @@ The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) cont
 
 ## Performance
 
-SystemJS can load multiple modules in less than a millisecond with its performance around a factor of 1.5 times the performance of native ES modules. The following performance benchmark was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+SystemJS is designed for production modules performance and can load multiple modules in less than a millisecond. Its performance is only around a factor of 1.5 times the performance of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
 | Native modules | 1668ms | 49ms |
 | SystemJS | 2334ms | 81ms |
 | es-module-shims | 2671ms | 602ms |
+
+> [ES module Shims](https://github.com/guybedford/es-module-shims), like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers. The performance difference is because source rewriting happens in browser instead of ahead-of-time like SystemJS handles via the System module format.
 
 ## Overview
 
