@@ -5,7 +5,7 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Configurable module loader loading the System module format, running at almost native speed enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including IE.
+Configurable module loader for the System module format, running at almost-native speed, enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including IE.
 
 Release Links:
 
