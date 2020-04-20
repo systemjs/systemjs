@@ -5,7 +5,7 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Very fast configurable module loader enabling backwards compatibility workflows for ES modules in browsers. If you're interested in modern workflows for ES module compatible browsers only, see [ES Module Shims](https://github.com/guybedford/es-module-shims).
+Configurable module loader loading the System module format, running at almost native speed enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including IE.
 
 Release Links:
 
@@ -28,6 +28,8 @@ SystemJS is designed for production modules performance and can load multiple mo
 | Native modules | 1668ms | 49ms |
 | SystemJS | 2334ms | 81ms |
 | es-module-shims | 2671ms | 602ms |
+
+> [ES module Shims](https://github.com/guybedford/es-module-shims), like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers. The performance difference is because source rewriting happens in browser instead of ahead-of-time like SystemJS handles via the System module format.
 
 ## Overview
 
