@@ -21,7 +21,7 @@ The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) cont
 
 ## Performance
 
-SystemJS is designed for production performance and can load multiple modules in less than a millisecond with its performance around a factor of 1.5 times the performance of native ES modules. The following performance benchmark was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+SystemJS is designed for production modules performance and can load multiple modules in less than a millisecond. Its performance is only around a factor of 1.5 times the performance of native ES modules. See the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
