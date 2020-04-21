@@ -225,6 +225,19 @@ If building code using the `System` global in Webpack, the following config is n
 }
 ```
 
+As of webpack@5.0.0-beta.15, you can access [SystemJS context](/docs/system-register.md#format-definition) via `__system_context__`:
+
+```js
+// Log the URL of the current SystemJS module
+// http://localhost:8080/dist/js/main.js
+console.log(__system_context__.meta.url);
+
+// Import a SystemJS module, with the current SystemJS module's url as the parentUrl
+__system_context__.import('./other-file.js').then(m => {
+  console.log(m);
+});
+```
+
 ## Using npm packages
 
 Third party libraries and npm packages may be used as long as they are published in [a supported module format](https://github.com/systemjs/systemjs/blob/master/docs/module-types.md). For packages that do not exist in a supported module format, [here is a list of github repos](https://github.com/esm-bundle/) that publish `System.register` versions of popular third party libraries (such as react, react-dom, rxjs, etc).
