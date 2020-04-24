@@ -115,7 +115,7 @@ To diagnose the problem, identify which module failed to load. Then check the br
 
 ### Unable to resolve bare specifier
 
-SystemJS Warning #W1 occurs when you attempt to load a module that doesn't have a URL associated with it.
+SystemJS Error #8 occurs when you attempt to load a module that doesn't have a URL associated with it.
 
 Bare specifiers must be defined by import maps in SystemJS. To fix the warning, add the module to your import map:
 
