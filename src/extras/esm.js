@@ -1,5 +1,5 @@
 /*
- * Interop for ESM modules to return the module export
+ * Interop for ESM to return the module export
  */
 (function (global) {
   var esmPtrn = /\besm?\b/;
@@ -20,7 +20,7 @@
         function (_export) {
           return {
             execute() {
-              _export({ __useDefault: !!exported.default, ...exported });
+              _export(exported);
             }
           };
         },
