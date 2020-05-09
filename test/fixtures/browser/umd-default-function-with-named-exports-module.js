@@ -6,7 +6,7 @@
   }
 }(typeof self !== 'undefined' ? self : this, function (amdDep) {
   function umdExportFunctionName() {};
-  umdExportFunctionName['dep']=amdDep;
-  umdExportFunctionName['umd']=true;
+  umdExportFunctionName.dep = amdDep;
+  umdExportFunctionName.umd = true;
   return umdExportFunctionName;
 }));
