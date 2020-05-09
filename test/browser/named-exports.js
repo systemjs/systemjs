@@ -31,6 +31,16 @@ suite('Named exports', function () {
       assert.ok(m.default);
       assert.equal(m.dep, m.default.dep);
       assert.equal(m.umd, true);
+      assert.equal(m.default.hasOwnProperty, Object.prototype.hasOwnProperty)
+    });
+  });
+
+  test('Loading an UMD module with default with object null prototype', function () {
+    return System.import('fixtures/umd-default-object-with-null-prototype-module.js').then(function (m) {
+      assert.ok(m.default);
+      assert.equal(m.dep, m.default.dep);
+      assert.equal(m.umd, true);
+      assert.equal(m.default.hasOwnProperty, undefined)
     });
   });
 
