@@ -42,10 +42,13 @@
           execute.call(this);
           // do a bulk export of the default export object
           // to export all its names as named exports
+
           if (hasDefaultExport)
             for (var exportName in defaultExport) {
-              // default is not a named export
-              if (defaultExport.hasOwnProperty(exportName) && exportName !== 'default') {
+              if (
+                Object.prototype.hasOwnProperty.call(defaultExport,  exportName) // Check if epoxrt name is not inherited, safe for Object.create(null)
+                && exportName !== 'default' // default is not a named export
+              ) {
                 _export(exportName, defaultExport[exportName]);
               }
             }
