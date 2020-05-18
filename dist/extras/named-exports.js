@@ -3,7 +3,7 @@
  */
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
-  
+
   // hook System.register to know the last declaration binding
   var lastRegisterDeclare;
   var systemRegister = systemJSPrototype.register;
@@ -19,7 +19,7 @@
     // -> dont add named exports
     if (!register || register[1] === lastRegisterDeclare || register[1].length === 0)
       return register;
-    
+
     // otherwise it was provided by a custom instantiator
     // -> extend the registration with named exports support
     var registerDeclare = register[1];
@@ -42,10 +42,13 @@
           execute.call(this);
           // do a bulk export of the default export object
           // to export all its names as named exports
-          if (hasDefaultExport && typeof defaultExport === 'object')
+
+          if (hasDefaultExport)
             for (var exportName in defaultExport) {
-              // default is not a named export
-              if (exportName !== 'default') {
+              if (
+                Object.prototype.hasOwnProperty.call(defaultExport,  exportName) // Check if epoxrt name is not inherited, safe for Object.create(null)
+                && exportName !== 'default' // default is not a named export
+              ) {
                 _export(exportName, defaultExport[exportName]);
               }
             }

@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.3.1
+* SystemJS 6.3.2
 */
 (function () {
   function errMsg(errCode, msg) {
