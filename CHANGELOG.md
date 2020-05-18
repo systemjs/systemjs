@@ -1,3 +1,6 @@
+SystemJS 6.3.2
+* Named exports extra now supports non-objects. (https://github.com/systemjs/systemjs/pull/2186 via @Sauloxd)
+
 SystemJS 6.3.1
 * Fix error code mixup (https://github.com/systemjs/systemjs/pull/2169)
 * Fix bug in system-node.cjs where prepareImport overwrote import map (https://github.com/systemjs/systemjs/pull/2170)
