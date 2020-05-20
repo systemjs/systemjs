@@ -2,6 +2,7 @@ import replace from '@rollup/plugin-replace';
 import fs from 'fs';
 import path from 'path';
 import { terser } from 'rollup-plugin-terser';
+import resolve from '@rollup/plugin-node-resolve';
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
 const extras = fs.readdirSync(path.resolve(__dirname, 'src/extras'));
@@ -117,6 +118,7 @@ function extrasConfig(isMin) {
         sourcemap: isMin
       },
       plugins: [
+        resolve(),
         isMin && terser(terserOptions),
         replace({
           'process.env.SYSTEM_PRODUCTION': isMin ? 'true' : 'false'
