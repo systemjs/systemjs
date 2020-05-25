@@ -4,7 +4,7 @@
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
 
-  var originalCreateScript = global.System.constructor.prototype.createScript;
+  var originalCreateScript = systemJSPrototype.createScript;
   systemJSPrototype.createScript = function() {
     var script = originalCreateScript.apply(this, arguments);
     script.type = 'module';
