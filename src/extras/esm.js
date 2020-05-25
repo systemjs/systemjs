@@ -1,44 +1,47 @@
-import { init, parse } from 'es-module-lexer';
-
 /*
  * Interop for ESM to return the module export
  */
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
-  var originalInstantiate = systemJSPrototype.instantiate;
 
-  function checkEsm(url) {
-    return fetch(url, { credentials: 'same-origin' })
-      .then(function (res) {
-        if (!res.ok)
-          throw Error(errMsg(7,  'Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : '')));
-        return Promise.all([res.text(), init]);
-      })
-      .then(function ([source]) {
-        var [imports, exports] = parse(source);
-        return imports.length || exports.length;
-      });
-  }
+  var originalCreateScript = global.System.constructor.prototype.createScript;
+  systemJSPrototype.createScript = function() {
+    var script = originalCreateScript.apply(this, arguments);
+    script.type = 'module';
+    return script;
+  };
 
   function loadEsm(url) {
-    return import(url).then(function (exported) {
+    return import(url).then(function (esModule) {
+      if (Object.keys(esModule).length === 0) {
+        throw new Error('No export found');
+      }
+
       return [
         [],
-        function (_export) {
+        function(_export) {
           return {
             execute() {
-              _export(exported);
+              _export(esModule);
             }
           };
-        },
+        }
       ];
     });
   }
 
-  systemJSPrototype.instantiate = function (url) {
-    return checkEsm(url).then(function (isEsm) {
-      return isEsm ? loadEsm(url) : originalInstantiate.call(systemJSPrototype, url);
-    });
+  var originalInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function(url, parentUrl) {
+    var loader = this;
+
+    return originalInstantiate
+      .apply(this, arguments)
+      .then(function(lastRegister) {
+        return loadEsm(loader.resolve(url, parentUrl))
+          .catch(function () {
+            return lastRegister;
+          });
+      });
   };
 
 })(typeof self !== 'undefined' ? self : global);
