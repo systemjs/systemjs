@@ -157,16 +157,4 @@ suite('ESM tests', function () {
       // assert.equal(m.counter, 15);
     });
   });
-
-  // test('Import erroneous module', function () {
-  //   return System.import('fixtures/es-modules/deperror.js').catch(function (err) {
-  //     assert.ok(err);
-  //   });
-  // });
-
-  // test('Module with erroneous dependency', function () {
-  //   return System.import('fixtures/es-modules/main.js').catch(function (err) {
-  //     assert.ok(err);
-  //   });
-  // });
 });
