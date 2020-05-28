@@ -106,7 +106,7 @@ suite('ESM tests', function () {
 
   test('Export module URL', function () {
     return System.import('fixtures/es-modules/moduleUrl.js').then(function (m) {
-      assert.equal(m.url, 'http://localhost:8080/test/fixtures/browser/es-modules/moduleUrl.js');
+      assert.equal(m.url, window.location.origin + '/test/fixtures/browser/es-modules/moduleUrl.js');
     });
   });
 
