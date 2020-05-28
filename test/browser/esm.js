@@ -84,7 +84,11 @@ suite('ESM tests', function () {
       assert.equal(m.d, 4);
 
       assert.equal(typeof m.q, 'object');
-      assert.equal(JSON.stringify(m.q), '{"m":{},"p":5,"q":{},"s":4,"t":4}');
+      assert.equal(m.q.p, 5);
+      assert.equal(m.q.s, 4);
+      assert.equal(m.q.t, 4);
+      assert.equal(JSON.stringify(m.q.m), '{}');
+      assert.equal(JSON.stringify(m.q.q), '{}');
     });
   });
 
