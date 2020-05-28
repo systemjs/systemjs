@@ -1,20 +1,20 @@
 suite('ESM tests', function () {
 
   test('Export default', function () {
-    return System.import('fixtures/es-modules/export-default.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/export-default.js').then(function (m) {
       assert.equal(typeof m.default, 'function');
       assert.equal(m.default(), 'test');
     });
   });
 
   test('Named export, no import', function () {
-    return System.import('fixtures/es-modules/no-imports.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/no-imports.js').then(function (m) {
       assert.equal(m.asdf, 'asdf');
     });
   });
 
   test('Named export', function () {
-    return System.import('fixtures/es-modules/s.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/s.js').then(function (m) {
       assert.equal(m.a, 'a');
       assert.equal(m.b, 'b');
       assert.equal(m.c, 'c');
@@ -23,21 +23,21 @@ suite('ESM tests', function () {
   });
 
   test('Named export & named re-export 1', function () {
-    return System.import('fixtures/es-modules/_e.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/_e.js').then(function (m) {
       assert.equal(m.c, 'c');
       assert.equal(m.e, 'e');
     });
   });
 
   test('Named export & named re-export 2', function () {
-    return System.import('fixtures/es-modules/_f.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/_f.js').then(function (m) {
       assert.equal(m.f, 'f');
       assert.equal(m.g, 'g');
     });
   });
 
   test('Named export & re-exports', function () {
-    return System.import('fixtures/es-modules/_h.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/_h.js').then(function (m) {
       assert.equal(m.a, 'a');
       assert.equal(m.h, 'h');
       assert.equal(m.i, 'i');
@@ -45,19 +45,19 @@ suite('ESM tests', function () {
   });
 
   test('Named import, no export', function () {
-    return System.import('fixtures/es-modules/direct.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/direct.js').then(function (m) {
       assert.ok(m);
     });
   });
 
   test('Named import, no export', function () {
-    return System.import('fixtures/es-modules/reexport-binding.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/reexport-binding.js').then(function (m) {
       assert.ok(m);
     });
   });
 
   test('Named export class', function () {
-    return System.import('fixtures/es-modules/es6-file.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/es6-file.js').then(function (m) {
 
       assert.equal(m.default, 4);
 
@@ -74,7 +74,7 @@ suite('ESM tests', function () {
   });
 
   test('Export imported', function () {
-    return System.import('fixtures/es-modules/import.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/import.js').then(function (m) {
       assert.equal(typeof m.a, 'function');
       assert.equal(m.a.name, 'bar');
       assert.equal(m.a(), undefined);
@@ -93,13 +93,13 @@ suite('ESM tests', function () {
   });
 
   test('Named re-export', function () {
-    return System.import('fixtures/es-modules/es6-withdep.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/es6-withdep.js').then(function (m) {
       assert.equal(m.p, 'p');
     });
   });
 
   test('Named export and export star twice', function () {
-    return System.import('fixtures/es-modules/export-star2.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/export-star2.js').then(function (m) {
       assert.equal(m.bar, 'bar');
 
       assert.equal(typeof m.foo, 'function');
@@ -109,19 +109,19 @@ suite('ESM tests', function () {
   });
 
   test('Export module URL', function () {
-    return System.import('fixtures/es-modules/moduleUrl.js').then(function (m) {
-      assert.equal(m.url, window.location.origin + '/test/fixtures/browser/es-modules/moduleUrl.js');
+    return System.import('fixturesbase/es-modules/moduleUrl.js').then(function (m) {
+      assert.equal(m.url, window.location.origin + '/test/fixtures/es-modules/moduleUrl.js');
     });
   });
 
   test('Fail on loading non-existent file', function () {
-    return System.import('fixtures/es-modules/load-non-existent.js').catch(function (err) {
+    return System.import('fixturesbase/es-modules/load-non-existent.js').catch(function (err) {
       assert.ok(err);
     });
   });
 
   test('Cyclic 1', function () {
-    return System.import('fixtures/es-modules/circular1.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/circular1.js').then(function (m) {
       assert.equal(typeof m.fn1, 'function');
       assert.equal(m.fn1.name, 'fn1');
       assert.equal(m.fn1(), undefined);
@@ -134,7 +134,7 @@ suite('ESM tests', function () {
   });
 
   test('Cyclic 2', function () {
-    return System.import('fixtures/es-modules/circular2.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/circular2.js').then(function (m) {
       assert.equal(typeof m.fn2, 'function');
       assert.equal(m.fn2.name, 'fn2');
       assert.equal(m.fn2(), undefined);
@@ -147,7 +147,7 @@ suite('ESM tests', function () {
   });
 
   test('should update cyclic dependencies', function () {
-    return System.import('fixtures/es-modules/even.js').then(function (m) {
+    return System.import('fixturesbase/es-modules/even.js').then(function (m) {
       assert.equal(m.counter, 1);
       assert.ok(m.even(10));
 
