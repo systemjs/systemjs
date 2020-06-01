@@ -113,8 +113,10 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
         }
       }
       if (changed)
-        for (var i = 0; i < importerSetters.length; i++)
-          importerSetters[i](ns);
+        for (var i = 0; i < importerSetters.length; i++) {
+          var setter = importerSetters[i];
+          if (setter) setter(ns);
+        }
       return value;
     }
     var declared = registration[1](_export, registration[1].length === 2 ? {
