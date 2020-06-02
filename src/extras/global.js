@@ -47,7 +47,7 @@
     return impt.call(this, id, parentUrl);
   };
 
-  var emptyInstantiation = [[], function () { return {} }];
+  var emptyInstantiation = [[], function () { return {} }, true];
 
   var getRegister = systemJSPrototype.getRegister;
   systemJSPrototype.getRegister = function () {
@@ -77,7 +77,8 @@
           _export({ default: globalExport, __useDefault: true });
         }
       };
-    }];
+    // special third argument for global indicates it's the global fallback
+    }, true];
   };
 
   var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;

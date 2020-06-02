@@ -2,46 +2,24 @@
  * Interop for ESM to return the module export
  */
 (function (global) {
-  var systemJSPrototype = global.System.constructor.prototype;
+  const systemJSPrototype = global.System.constructor.prototype;
 
-  var originalCreateScript = systemJSPrototype.createScript;
-  systemJSPrototype.createScript = function() {
-    var script = originalCreateScript.apply(this, arguments);
-    script.type = 'module';
-    return script;
+  const originalCreateScript = systemJSPrototype.createScript;
+  systemJSPrototype.createScript = function () {
+    return Object.assign(originalCreateScript.apply(this, arguments), { type: 'module' });
   };
 
-  function loadEsm(url) {
-    return import(url).then(function (esModule) {
-      if (Object.keys(esModule).length === 0) {
-        throw new Error('No export found');
-      }
+  const originalInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url) {
+    return originalInstantiate.apply(this, arguments)
+    .then(lastRegister => {
+      // third argument is used to identify global fallback
+      if (lastRegister && !lastRegister[2])
+        return lastRegister;
 
-      return [
-        [],
-        function(_export) {
-          return {
-            execute() {
-              _export(esModule);
-            }
-          };
-        }
-      ];
+      // esm is the fallback
+      return import(url).then(m => [[], _export => (_export(m), {})]);
     });
-  }
-
-  var originalInstantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function(url, parentUrl) {
-    var loader = this;
-
-    return originalInstantiate
-      .apply(this, arguments)
-      .then(function(lastRegister) {
-        return loadEsm(loader.resolve(url, parentUrl))
-          .catch(function () {
-            return lastRegister;
-          });
-      });
   };
 
 })(typeof self !== 'undefined' ? self : global);
