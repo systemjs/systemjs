@@ -74,6 +74,7 @@ _Loading CommonJS modules is not currently supported in this loader and likely w
 
 The following [pluggable extras](dist/extras) can be dropped in with either the s.js or system.js loader:
 
+* [ESM loading](dist/extras/esm.js) support (through `<script type="module">`) with the limitation that import-maps aren't effective across ESM files and implicitly declared globals won't be detected due to [strict-mode](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode)
 * [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created).
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
 * [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles which can then be imported as `System.import('name')` (as well as AMD named define support)

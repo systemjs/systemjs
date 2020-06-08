@@ -11,6 +11,7 @@ SystemJS supports loading modules that are in the following formats:
 | Global variable | [global extra](/dist/extras/global.js) | :heavy_check_mark: | * |
 | [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
 | [UMD](https://github.com/umdjs/umd) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
+| [ESM](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) | [ESM extra](/dist/extras/esm.js) | [ESM extra](/dist/extras/esm.js) | * |
 
 ### File Extension Limitations
 
