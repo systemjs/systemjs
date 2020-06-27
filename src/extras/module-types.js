@@ -26,6 +26,8 @@ import { errMsg } from '../err-msg.js';
         if (!res.ok)
           throw Error(errMsg(7, process.env.SYSTEM_PRODUCTION ? [res.status, res.statusText, url, parent].join(', ') : res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
         var contentType = res.headers.get('content-type');
+        if (!contentType)
+          throw Error(errMsg(4, process.env.SYSTEM_PRODUCTION ? [url, parent] : 'Missing header "Content-Type", loading ' + url + (parent ? ' from ' + parent : '')));
         if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
           return res.text().then(function (source) {
             (0, eval)(source);
