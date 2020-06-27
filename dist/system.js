@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.3.2
+* SystemJS 6.3.3
 */
 (function () {
   function errMsg(errCode, msg) {
@@ -308,8 +308,10 @@
           }
         }
         if (changed)
-          for (var i = 0; i < importerSetters.length; i++)
-            importerSetters[i](ns);
+          for (var i = 0; i < importerSetters.length; i++) {
+            var setter = importerSetters[i];
+            if (setter) setter(ns);
+          }
         return value;
       }
       var declared = registration[1](_export, registration[1].length === 2 ? {
@@ -748,6 +750,8 @@
           if (!res.ok)
             throw Error(errMsg(7,  res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
           var contentType = res.headers.get('content-type');
+          if (!contentType)
+            throw Error(errMsg(4,  'Missing header "Content-Type", loading ' + url + (parent ? ' from ' + parent : '')));
           if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
             return res.text().then(function (source) {
               (0, eval)(source);

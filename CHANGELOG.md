@@ -1,3 +1,7 @@
+SystemJS 6.3.3
+* Better error message when content-type header is missing (https://github.com/systemjs/systemjs/pull/2197 via @brandones)
+* Make setters optional (#2193 via @guybedford) 
+
 SystemJS 6.3.2
 * Named exports extra now supports non-objects. (https://github.com/systemjs/systemjs/pull/2186 via @Sauloxd)
 
