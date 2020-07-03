@@ -77,6 +77,10 @@
 			mocha.run(function(failures) {
 				fetch(failures ? '/error' : '/done');
 			})
+		})
+		.catch(function(e) {
+			fetch('/error');
+			throw e;
 		});
 	</script>
 
