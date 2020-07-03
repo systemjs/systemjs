@@ -1,10 +1,15 @@
 suite('Transform Loader', function() {
-  System = new System.constructor();
   let translateCnt = 0;
-  System.transform = function (url, source) {
-    translateCnt++;
-    return source;
-  };
+
+  suiteSetup(function() {
+    return System.import('../../dist/extras/transform.js').then(function() {
+      System = new System.constructor();
+      System.transform = function (url, source) {
+        translateCnt++;
+        return source;
+      };
+    });
+  });
 
   const supportsWebAssembly = typeof WebAssembly !== 'undefined' && typeof process === 'undefined';
 

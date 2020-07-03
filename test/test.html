@@ -50,27 +50,33 @@
 			}
 		};
 
-		const extras = ['amd', 'named-exports', 'transform', 'named-register'];
-		let failCnt = 0;
-		function runNextExtra (failures) {
-			failCnt += failures;
-			mocha.suite.suites.shift();
-			const extra = extras.shift();
-			if (extra)
-				System.import('../dist/extras/' + extra + '.js')
-				.then(function () {
-					return System.import('./browser/' + extra + '.js');
-				})
-				.then(function () {
-					mocha.run(runNextExtra);
-				});
-			else
-				fetch(failCnt ? '/error' : '/done');
+		function importNext(name) {
+			return function() {
+				return System.import(name);
+			}
 		}
 
-		System.import('./browser/core.js')
-		.then(function () {
-			mocha.run(runNextExtra);
+		function importSeries() {
+			var promise = Promise.resolve();
+			
+			for(var i=0; i<arguments.length; i++) {
+				promise = promise.then(importNext(arguments[i]));
+			}
+
+			return promise;
+		}
+
+		importSeries(
+			'./browser/core.js',
+			'./browser/amd.js',
+			'./browser/named-exports.js',
+			'./browser/transform.js',
+			'./browser/named-register.js'
+		)
+		.then(function() {
+			mocha.run(function(failures) {
+				fetch(failures ? '/error' : '/done');
+			})
 		});
 	</script>
 

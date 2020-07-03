@@ -1,5 +1,9 @@
 suite('Named exports', function () {
-  System = new System.constructor();
+  suiteSetup(function() {
+    return System.import('../../dist/extras/named-exports.js').then(function() {
+      System = new System.constructor();
+    });
+  });
 
   test('Loading an AMD module with named exports', function () {
     return System.import('fixtures/amd-module.js').then(function (m) {

@@ -1,4 +1,7 @@
 suite('AMD tests', function () {
+  suiteSetup(function() {
+    return System.import('../../dist/extras/amd.js').then(function() {});
+  });
 
   test('Multiple Errors', function () {
     window.onerror = undefined;
