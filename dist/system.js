@@ -639,7 +639,7 @@
    * (Included by default in system.js build)
    */
   (function (global) {
-    var systemJSPrototype = System.constructor.prototype;
+    var systemJSPrototype = global.System.constructor.prototype;
 
     // safari unpredictably lists some new globals first or second in object order
     var firstGlobalProp, secondGlobalProp, lastGlobalProp;

@@ -19,7 +19,13 @@ module.exports =
 /******/ 		};
 /******/
 /******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 		var threw = true;
+/******/ 		try {
+/******/ 			modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 			threw = false;
+/******/ 		} finally {
+/******/ 			if(threw) delete installedModules[moduleId];
+/******/ 		}
 /******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
@@ -1912,13 +1918,6 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
   aOutParam.rest = aIndex;
 };
 
-
-/***/ }),
-
-/***/ 282:
-/***/ (function(module) {
-
-module.exports = require("module");
 
 /***/ }),
 
@@ -3957,8 +3956,9 @@ module.exports = require("path");
 /***/ }),
 
 /***/ 662:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
+/* module decorator */ module = __webpack_require__.nmd(module);
 var SourceMapConsumer = __webpack_require__(94).SourceMapConsumer;
 var path = __webpack_require__(622);
 
@@ -3974,6 +3974,16 @@ try {
 }
 
 var bufferFrom = __webpack_require__(501);
+
+/**
+ * Requires a module which is protected against bundler minification.
+ *
+ * @param {NodeModule} mod
+ * @param {string} request
+ */
+function dynamicRequire(mod, request) {
+  return mod.require(request);
+}
 
 // Only install once if called multiple times
 var errorFormatterInstalled = false;
@@ -4487,12 +4497,8 @@ exports.install = function(options) {
 
   // Support runtime transpilers that include inline source maps
   if (options.hookRequire && !isInBrowser()) {
-    var Module;
-    try {
-      Module = __webpack_require__(282);
-    } catch (err) {
-      // NOP: Loading in catch block to convert webpack error to warning.
-    }
+    // Use dynamicRequire to avoid including in browser bundles
+    var Module = dynamicRequire(module, 'module');
     var $compile = Module.prototype._compile;
 
     if (!$compile.__sourceMapSupport) {
@@ -4521,6 +4527,17 @@ exports.install = function(options) {
   if (!uncaughtShimInstalled) {
     var installHandler = 'handleUncaughtExceptions' in options ?
       options.handleUncaughtExceptions : true;
+
+    // Do not override 'uncaughtException' with our own handler in Node.js
+    // Worker threads. Workers pass the error to the main thread as an event,
+    // rather than printing something to stderr and exiting.
+    try {
+      // We need to use `dynamicRequire` because `require` on it's own will be optimized by WebPack/Browserify.
+      var worker_threads = dynamicRequire(module, 'worker_threads');
+      if (worker_threads.isMainThread === false) {
+        installHandler = false;
+      }
+    } catch(e) {}
 
     // Provide the option to not install the uncaught exception handler. This is
     // to support other uncaught exception handlers (in test frameworks, for
@@ -6223,7 +6240,7 @@ module.exports = require("zlib");
  * (Included by default in system.js build)
  */
 (function (global) {
-  var systemJSPrototype = System.constructor.prototype;
+  var systemJSPrototype = global.System.constructor.prototype;
 
   // safari unpredictably lists some new globals first or second in object order
   var firstGlobalProp, secondGlobalProp, lastGlobalProp;
@@ -6642,6 +6659,23 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ 	"use strict";
 /******/ 
+/******/ 	/* webpack/runtime/node module decorator */
+/******/ 	!function() {
+/******/ 		__webpack_require__.nmd = function(module) {
+/******/ 			module.paths = [];
+/******/ 			if (!module.children) module.children = [];
+/******/ 			Object.defineProperty(module, 'loaded', {
+/******/ 				enumerable: true,
+/******/ 				get: function() { return module.l; }
+/******/ 			});
+/******/ 			Object.defineProperty(module, 'id', {
+/******/ 				enumerable: true,
+/******/ 				get: function() { return module.i; }
+/******/ 			});
+/******/ 			return module;
+/******/ 		};
+/******/ 	}();
+/******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	!function() {
 /******/ 		// define __esModule on exports
