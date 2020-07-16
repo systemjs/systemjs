@@ -306,4 +306,4 @@ function postOrderExec (loader, load, seen) {
   }
 }
 
-global.system  = global.system || new SystemJS();}
+global.system  = global.System || new SystemJS();}
