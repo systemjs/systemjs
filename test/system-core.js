@@ -107,6 +107,76 @@ describe('Core API', function () {
         assert.equal(e, err);
       }
     });
+
+    it('Should call onload on target only', async function () {
+      let executeThrown, instantiateThrown;
+
+      const modules = {
+        a: [
+          ['b'],
+          function (_export, _context) {
+            var b;
+            return {
+              setters: [
+                function (_b) {
+                  b = _b.default;
+                },
+              ],
+              execute: function () {
+                _export('default', b);
+              },
+            };
+          },
+        ],
+        b: [
+          [],
+          function (_export, _context) {
+            return {
+              setters: [function () {}],
+              execute: function () {
+                if (!executeThrown) {
+                  executeThrown = true;
+                  throw new Error('Execute Error');
+                } 
+                _export('default', 'b');
+              },
+            };
+          },
+        ],
+      };
+
+      loader.instantiate = (x) => { 
+        if (x === 'b' && !instantiateThrown) {
+          instantiateThrown =true;
+          throw new Error('Instantiate Error');
+        }
+        return modules[x];
+      };
+
+      let error, errorId ;
+      loader.onload = function(err, id, deps) {
+        console.log('onload:', id, err);
+        error = err;
+        errorId= id;
+      }
+
+      try {
+        await loader.import('a');
+        assert.fail('Should have caught');
+      } catch (err) {
+        assert.equal(error, err);
+        assert.equal(errorId, 'b');
+      }
+      loader.delete('a');
+      loader.delete('b');
+      try {
+        await loader.import('a');
+        assert.fail('Should have caught');
+      } catch (err) {
+        assert.equal(error, err);
+        assert.equal(errorId, 'b');
+      }
+    });
   });
 
   describe('Registry API', function () {
