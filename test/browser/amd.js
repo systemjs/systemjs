@@ -82,4 +82,10 @@ suite('AMD tests', function () {
       assert.equal(m.default, false);
     });
   });
+
+  test('Loading an AMD module which returns undefined', function () {
+    return System.import('fixtures/amd-undefined-module.js').then(function (m) {
+      assert.equal(m.default, undefined);
+    });
+  });
 });

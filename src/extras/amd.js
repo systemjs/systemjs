@@ -54,7 +54,12 @@ import { errMsg } from '../err-msg.js';
         setters: setters,
         execute: function () {
           var amdResult = amdExec.apply(exports, depModules);
-          if (amdResult !== undefined)
+          if (
+            amdResult !== undefined ||
+            (amdResult === undefined &&
+                Object.keys(module.exports).length === 0 &&
+                module.exports.constructor === Object)
+          )
             module.exports = amdResult;
           if (exports !== module.exports)
             _export('default', module.exports);
