@@ -270,18 +270,15 @@ function postOrderExec (loader, load, seen) {
     try {
       var execPromise = load.e.call(nullContext);
       if (execPromise) {
-        if (!process.env.SYSTEM_PRODUCTION)
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null; // indicates completion
-            triggerOnload(loader, load, null);
+            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null);
           }, function (err) {
-            triggerOnload(loader, load, err);
-          });
-        else
-          execPromise = execPromise.then(function () {
-            load.C = load.n;
+            load.er = err;
             load.E = null;
+            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err);
+            else throw err;
           });
         return load.E = load.E || execPromise;
       }
