@@ -246,28 +246,23 @@ function postOrderExec (loader, load, seen) {
   // deps execute first, unless circular
   var depLoadPromises;
   load.d.forEach(function (depLoad) {
-    if (!process.env.SYSTEM_PRODUCTION) {
       try {
         var depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise) {
-          depLoadPromise.catch(function (err) {
-            triggerOnload(loader, load, err);
-          });
+        if (depLoadPromise) 
           (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-        }
       }
       catch (err) {
-        triggerOnload(loader, load, err);
+        load.e = null;
+        load.er = err;
+        throw err;
       }
-    }
-    else {
-      var depLoadPromise = postOrderExec(loader, depLoad, seen);
-      if (depLoadPromise)
-        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-    }
   });
   if (depLoadPromises)
-    return Promise.all(depLoadPromises).then(doExec);
+    return Promise.all(depLoadPromises).catch(function(err) {
+      load.e = null;
+      load.er = err;
+      throw err;
+    }).then(doExec);
 
   return doExec();
 
