@@ -75,9 +75,20 @@
 			'./browser/named-register.js'
 		)
 		.then(function() {
-			mocha.run(function(failures) {
-				fetch(failures ? '/error' : '/done');
-			})
+			mocha
+				.rootHooks({
+					// @todo we need an "after each suite": https://github.com/mochajs/mocha/issues/4039
+					afterEach: function() {
+						var c = System.constructor.prototype;
+						var importMapElements = document.querySelectorAll(c.IMPORT_MAP_SELECTOR);
+						for (var i=0; i<importMapElements.length; i++) {
+							importMapElements[i][c.IMPORT_MAP_PARSED] = false;
+						}
+					}
+				})
+				.run(function(failures) {
+					fetch(failures ? '/error' : '/done');
+				});
 		})
 		.catch(function(e) {
 			fetch('/error');
