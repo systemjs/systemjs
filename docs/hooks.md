@@ -78,7 +78,7 @@ In both s.js and system.js, resolve is implemented as a synchronous function.
 
 Resolve should return a fully-valid URL for specification compatibility, but this is not enforced.
 
-#### onload(err, id, deps) (sync)
+#### onload(err, id, deps, isErrSource) (sync)
 
 _This hook is not available in the s.js minimal loader build._
 
@@ -87,6 +87,8 @@ For tracing functionality this is called on completion or failure of each and ev
 `err` is defined for any module load error at instantiation (including fetch and resolution errors), execution or dependency execution.
 
 `deps` is available for errored modules that did not error on instantiation.
+
+`isErrSource` is used to indicate if `id` is the error source or not.
 
 Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
 
