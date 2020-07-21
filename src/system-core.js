@@ -52,8 +52,8 @@ if (!process.env.SYSTEM_PRODUCTION)
 function loadToId (load) {
   return load.id;
 }
-function triggerOnload (loader, load, err, isSource) {
-  loader.onload(err, load.id, load.d && load.d.map(loadToId), !!isSource);
+function triggerOnload (loader, load, err, isErrSource) {
+  loader.onload(err, load.id, load.d && load.d.map(loadToId), !!isErrSource);
   if (err)
     throw err;
 }
