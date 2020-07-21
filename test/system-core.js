@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { resolveIfNotPlainOrUrl } from '../src/common.js';
 import '../src/features/registry.js';
-import '../src/system-core.js';
+import { REGISTRY } from '../src/system-core.js';
 import '../src/features/import-map.js';
 
 const SystemLoader = System.constructor;
@@ -108,73 +108,92 @@ describe('Core API', function () {
       }
     });
 
-    it('Should call onload on target only', async function () {
-      let executeThrown, instantiateThrown;
-
-      const modules = {
-        a: [
-          ['b'],
-          function (_export, _context) {
-            var b;
-            return {
-              setters: [
-                function (_b) {
-                  b = _b.default;
-                },
-              ],
-              execute: function () {
-                _export('default', b);
-              },
-            };
-          },
-        ],
-        b: [
-          [],
-          function (_export, _context) {
-            return {
-              setters: [function () {}],
-              execute: function () {
-                if (!executeThrown) {
-                  executeThrown = true;
-                  throw new Error('Execute Error');
-                } 
-                _export('default', 'b');
-              },
-            };
-          },
-        ],
-      };
-
-      loader.instantiate = (x) => { 
-        if (x === 'b' && !instantiateThrown) {
-          instantiateThrown =true;
-          throw new Error('Instantiate Error');
+    it("Should indicate the error source", async function () {
+      loader.instantiate = (x) => {
+        if (x === "b") {
+          throw new Error("Instantiate Error");
         }
-        return modules[x];
+        return [
+          ["b"],
+          function (_e, _c) {
+            return {
+              setters: function () {},
+              execute: function () {},
+            };
+          },
+        ];
       };
 
-      let error, errorId ;
-      loader.onload = function(err, id, deps) {
-        console.log('onload:', id, err);
-        error = err;
-        errorId= id;
+      let sourceId;
+      loader.onload = function (err, id, deps, isSource) {
+        if (err && isSource) sourceId = id;
+      };
+
+      try {
+        await loader.import("a");
+        assert.fail("Should have caught");
+      } catch (err) {
+        assert.equal(sourceId, "b");
+        delete loader[REGISTRY]["a"];
+        delete loader[REGISTRY]["b"];
+      }
+    });
+
+    it("Should fire onload for all errored sources and their parents just once through", async function () {
+      let instantiateThrown;
+      loader.instantiate = (x) => {
+        if (!instantiateThrown && x === "b") {
+          instantiateThrown = true;
+          throw new Error("Instantiate Error");
+        }
+        return [
+          ["b"],
+          function (_e, _c) {
+            return {
+              setters: function () {},
+              execute: function () {
+                throw new Error("Execute Error");
+              },
+            };
+          },
+        ];
+      };
+
+      const errors = [];
+      loader.onload = function (err, id, deps) {
+        if (err) errors.push(id);
+      };
+
+      try {
+        await loader.import("b");
+        assert.fail("Should have caught");
+      } catch (err) {
+        assert.match(err.message, /instantiate/i);
+        assert.equal(errors.length, 1);
+        assert.equal(errors.length, 1);
+        assert.equal(errors[0], "b");
       }
 
       try {
-        await loader.import('a');
-        assert.fail('Should have caught');
+        await loader.import("a");
+        assert.fail("Should have caught");
       } catch (err) {
-        assert.equal(error, err);
-        assert.equal(errorId, 'b');
+        assert.equal(errors.length, 2);
+        assert.equal(errors[1], "a");
       }
-      loader.delete('a');
-      loader.delete('b');
+
+      delete loader[REGISTRY]["a"];
+      delete loader[REGISTRY]["b"];
+      errors.length = 0;
+
       try {
-        await loader.import('a');
-        assert.fail('Should have caught');
+        await loader.import("a");
+        assert.fail("Should have caught");
       } catch (err) {
-        assert.equal(error, err);
-        assert.equal(errorId, 'b');
+        assert.match(err.message, /execute/i);
+        assert.equal(errors.length, 2);
+        assert.equal(errors[0], "b");
+        assert.equal(errors[1], "a");
       }
     });
   });
