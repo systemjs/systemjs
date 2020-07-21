@@ -52,8 +52,8 @@ if (!process.env.SYSTEM_PRODUCTION)
 function loadToId (load) {
   return load.id;
 }
-function triggerOnload (loader, load, err) {
-  loader.onload(err, load.id, load.d && load.d.map(loadToId));
+function triggerOnload (loader, load, err, isSource) {
+  loader.onload(err, load.id, load.d && load.d.map(loadToId), !!isSource);
   if (err)
     throw err;
 }
@@ -131,7 +131,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
 
   if (!process.env.SYSTEM_PRODUCTION)
     instantiatePromise = instantiatePromise.catch(function (err) {
-      triggerOnload(loader, load, err);
+      triggerOnload(loader, load, err, true);
     });
 
   var linkPromise = instantiatePromise
@@ -155,9 +155,14 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
         });
       })
     }))
-    .then(function (depLoads) {
-      load.d = depLoads;
-    });
+    .then(
+      function (depLoads) {
+        load.d = depLoads;
+      },
+      !process.env.SYSTEM_PRODUCTION && function (err) {
+        triggerOnload(loader, load, err, false);
+      }
+    )
   });
 
   linkPromise.catch(function (err) {
@@ -254,15 +259,17 @@ function postOrderExec (loader, load, seen) {
       catch (err) {
         load.e = null;
         load.er = err;
-        throw err;
+        if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);  
+        else throw err;
       }
   });
   if (depLoadPromises)
-    return Promise.all(depLoadPromises).catch(function(err) {
+    return Promise.all(depLoadPromises).then(doExec, function (err) {
       load.e = null;
       load.er = err;
-      throw err;
-    }).then(doExec);
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);  
+      else throw err;
+    });
 
   return doExec();
 
@@ -273,22 +280,22 @@ function postOrderExec (loader, load, seen) {
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null; // indicates completion
-            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null);
+            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
           }, function (err) {
             load.er = err;
             load.E = null;
-            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err);
+            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
             else throw err;
           });
         return load.E = load.E || execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null);
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
     }
     catch (err) {
       load.er = err;
-      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err);
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
       else throw err;
     }
     finally {
