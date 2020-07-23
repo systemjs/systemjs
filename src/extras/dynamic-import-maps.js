@@ -1,49 +1,30 @@
 /*
  * Support for live DOM updating import maps
  */
-(function (global) {
-  var systemJSPrototype = global.System.constructor.prototype;
-
-  function flagForReparse (element) {
-    element[systemJSPrototype.IMPORT_MAP_PARSED] = false;
-  }
-
+(function () {
   function handleMutation (mutations) {
     var reparse = false;
 
-    mutations.forEach(function (mutation) {
-      switch (mutation.type) {
-        case 'attributes':
-          if (mutation.attributeName === 'src' && isImportMapElement(mutation.target)) {
-            flagForReparse(mutation.target);
-            reparse = true;
-          }
+    for (var i = 0; i < mutations.length; i++) {
+      var mutation = mutations[i];
+      if (mutation.type !== 'childList')
+        continue;
+      for (var j = 0; j < mutation.addedNodes.length; j++) {
+        var addedNode = mutation.addedNodes[j];
+        if (addedNode.tagName === 'SCRIPT' && addedNode.type === 'systemjs-importmap') {
+          reparse = true;
           break;
-
-        case 'childList':
-          var addedNodes = mutation.addedNodes;
-          for (var i=0; i<addedNodes.length; i++) {
-            if (isImportMapElement(addedNodes[i])) {
-              flagForReparse(addedNodes[i]);
-              reparse = true;
-            }
-          }
-          break;
+        }
       }
-    });
-
-    if (reparse) {
-      System.prepareImport(true);
     }
-  }
 
-  function isImportMapElement (element) {
-    return element.nodeType === Node.ELEMENT_NODE && element.tagName === 'SCRIPT' && element.type === 'systemjs-importmap';
+    if (reparse)
+      System.prepareImport(true);
   }
 
   new MutationObserver(handleMutation).observe(document.documentElement, {
-    attributes: true,
+    attributes: false,
     childList: true,
     subtree: true
   });
-})(typeof self !== 'undefined' ? self : global);
+})();
