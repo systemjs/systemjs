@@ -28,10 +28,11 @@ if (hasDocument) {
 
 const systemInstantiate = systemJSPrototype.instantiate;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
-  const loader = this;
-  (importMap.depcache[url] || []).forEach(function (dep) {
-    getOrCreateLoad(loader, systemJSPrototype.resolve(dep, url), url);
-  });
+  var preloads = importMap.depcache[url];
+  if (preloads) {
+    for (var i = 0; i < preloads.length; i++)
+      getOrCreateLoad(this, systemJSPrototype.resolve(preloads[i], url), url);
+  }
   return systemInstantiate.call(this, url, firstParentUrl);
 };
 
