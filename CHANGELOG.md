@@ -1,3 +1,10 @@
+SystemJS 6.4.0
+* Dynamic import map extra support (https://github.com/systemjs/systemjs/pull/2217 @stevenvachon)
+* Depcache support in import maps for automated preloading (https://github.com/systemjs/systemjs/pull/2134)
+* Auto Import feature for `<script src="system-register-module.js">` loading for better load performance (https://github.com/systemjs/systemjs/pull/2216, https://github.com/systemjs/systemjs/pull/2210 @tmsns)
+* Fix onload behaviour with flag for error source (https://github.com/systemjs/systemjs/pull/2204 @smartrejames)
+* Fix Object.prototype mutation (https://github.com/systemjs/systemjs/pull/2206 @stevenvachon)
+
 SystemJS 6.3.3
 * Better error message when content-type header is missing (https://github.com/systemjs/systemjs/pull/2197 via @brandones)
 * Make setters optional (#2193 via @guybedford) 

@@ -1,0 +1,1 @@
+new MutationObserver((function(e){for(var t=0;e.length>t;t++){var r=e[t];if("childList"===r.type)for(var a=0;r.addedNodes.length>a;a++){var s=r.addedNodes[a];if("SCRIPT"===s.tagName&&"systemjs-importmap"===s.type&&!s.sp){System.prepareImport(!0);break}}}})).observe(document,{childList:!0,subtree:!0});//# sourceMappingURL=dynamic-import-maps.min.js.map

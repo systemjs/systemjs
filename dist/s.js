@@ -1,5 +1,5 @@
 /*
-* SJS 6.3.3
+* SJS 6.4.0
 * Minimal SystemJS Build
 */
 (function () {
@@ -127,6 +127,8 @@
     return to;
   }
 
+  var IMPORT_MAP = hasSymbol ? Symbol() : '#';
+
   function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
     for (var p in packages) {
       var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
@@ -144,7 +146,7 @@
   }
 
   function resolveAndComposeImportMap (json, baseUrl, parentMap) {
-    var outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes) };
+    var outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes), depcache: objectAssign({}, parentMap.depcache) };
 
     if (json.imports)
       resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
@@ -153,6 +155,12 @@
       for (var s in json.scopes) {
         var resolvedScope = resolveUrl(s, baseUrl);
         resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
+      }
+
+    if (json.depcache)
+      for (var d in json.depcache) {
+        var resolvedDepcache = resolveUrl(d, baseUrl);
+        outMap.depcache[resolvedDepcache] = json.depcache[d];
       }
 
     return outMap;
@@ -245,8 +253,8 @@
   function loadToId (load) {
     return load.id;
   }
-  function triggerOnload (loader, load, err) {
-    loader.onload(err, load.id, load.d && load.d.map(loadToId));
+  function triggerOnload (loader, load, err, isErrSource) {
+    loader.onload(err, load.id, load.d && load.d.map(loadToId), !!isErrSource);
     if (err)
       throw err;
   }
@@ -343,9 +351,12 @@
           });
         })
       }))
-      .then(function (depLoads) {
-        load.d = depLoads;
-      });
+      .then(
+        function (depLoads) {
+          load.d = depLoads;
+        },
+        !true 
+      )
     });
 
     linkPromise.catch(function (err) {
@@ -434,21 +445,23 @@
     // deps execute first, unless circular
     var depLoadPromises;
     load.d.forEach(function (depLoad) {
-      if (false) {
         try {
-          var depLoadPromise;
+          var depLoadPromise = postOrderExec(loader, depLoad, seen);
+          if (depLoadPromise) 
+            (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
         }
         catch (err) {
+          load.e = null;
+          load.er = err;
+          throw err;
         }
-      }
-      else {
-        var depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise)
-          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-      }
     });
     if (depLoadPromises)
-      return Promise.all(depLoadPromises).then(doExec);
+      return Promise.all(depLoadPromises).then(doExec, function (err) {
+        load.e = null;
+        load.er = err;
+        throw err;
+      });
 
     return doExec();
 
@@ -456,24 +469,21 @@
       try {
         var execPromise = load.e.call(nullContext);
         if (execPromise) {
-          if (!true)
             execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
-              triggerOnload(loader, load, null);
+              if (!true) triggerOnload(loader, load, null, true);
             }, function (err) {
-              triggerOnload(loader, load, err);
-            });
-          else
-            execPromise = execPromise.then(function () {
-              load.C = load.n;
+              load.er = err;
               load.E = null;
+              if (!true) triggerOnload(loader, load, err, true);
+              else throw err;
             });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!true) triggerOnload(loader, load, null);
+        if (!true) triggerOnload(loader, load, null, true);
       }
       catch (err) {
         load.er = err;
@@ -489,73 +499,8 @@
   envGlobal.System = new SystemJS();
 
   /*
-   * Import map support for SystemJS
-   * 
-   * <script type="systemjs-importmap">{}</script>
-   * OR
-   * <script type="systemjs-importmap" src=package.json></script>
-   * 
-   * Only those import maps available at the time of SystemJS initialization will be loaded
-   * and they will be loaded in DOM order.
-   * 
-   * There is no support for dynamic import maps injection currently.
+   * Script instantiation loading
    */
-
-  var IMPORT_MAP = hasSymbol ? Symbol() : '#';
-  var IMPORT_MAP_PROMISE = hasSymbol ? Symbol() : '$';
-
-  iterateDocumentImportMaps(function (script) {
-    script._t = fetch(script.src).then(function (res) {
-      return res.text();
-    });
-  }, '[src]');
-
-  systemJSPrototype.prepareImport = function () {
-    var loader = this;
-    if (!loader[IMPORT_MAP_PROMISE]) {
-      loader[IMPORT_MAP] = { imports: {}, scopes: {} };
-      loader[IMPORT_MAP_PROMISE] = Promise.resolve();
-      iterateDocumentImportMaps(function (script) {
-        loader[IMPORT_MAP_PROMISE] = loader[IMPORT_MAP_PROMISE].then(function () {
-          return (script._t || script.src && fetch(script.src).then(function (res) { return res.text(); }) || Promise.resolve(script.innerHTML))
-          .then(function (text) {
-            try {
-              return JSON.parse(text);
-            } catch (err) {
-              throw Error( errMsg(1) );
-            }
-          })
-          .then(function (newMap) {
-            loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, script.src || baseUrl, loader[IMPORT_MAP]);
-          });
-        });
-      }, '');
-    }
-    return loader[IMPORT_MAP_PROMISE];
-  };
-
-  systemJSPrototype.resolve = function (id, parentUrl) {
-    parentUrl = parentUrl || !true  || baseUrl;
-    return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
-  };
-
-  function throwUnresolved (id, parentUrl) {
-    throw Error(errMsg(8,  [id, parentUrl].join(', ') ));
-  }
-
-  function iterateDocumentImportMaps(cb, extraSelector) {
-    if (hasDocument)
-      [].forEach.call(document.querySelectorAll('script[type="systemjs-importmap"]' + extraSelector), cb);
-  }
-
-  /*
-   * Supports loading System.register via script tag injection
-   */
-
-  var systemRegister = systemJSPrototype.register;
-  systemJSPrototype.register = function (deps, declare) {
-    systemRegister.call(this, deps, declare);
-  };
 
   systemJSPrototype.createScript = function (url) {
     var script = document.createElement('script');
@@ -589,25 +534,132 @@
     });
   };
 
-  if (hasDocument) {
+  if (hasDocument)
     window.addEventListener('error', function (evt) {
       lastWindowErrorUrl = evt.filename;
       lastWindowError = evt.error;
     });
 
-    window.addEventListener('DOMContentLoaded', loadScriptModules);
-    loadScriptModules();
+  systemJSPrototype.resolve = function (id, parentUrl) {
+    parentUrl = parentUrl || !true  || baseUrl;
+    return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+  };
+
+  function throwUnresolved (id, parentUrl) {
+    throw Error(errMsg(8,  [id, parentUrl].join(', ') ));
   }
 
+  /*
+   * SystemJS browser attachments for script and import map processing
+   */
 
-  function loadScriptModules() {
-    [].forEach.call(
-      document.querySelectorAll('script[type=systemjs-module]'), function (script) {
-        if (script.src) {
-          System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+  var importMapPromise = Promise.resolve({ imports: {}, scopes: {}, depcache: {} });
+
+  // Scripts are processed immediately, on the first System.import, and on DOMReady.
+  // Import map scripts are processed only once (by being marked) and in order for each phase.
+  // This is to avoid using DOM mutation observers in core, although that would be an alternative.
+  var processFirst = hasDocument;
+  systemJSPrototype.prepareImport = function (doProcessScripts) {
+    if (processFirst || doProcessScripts) {
+      processScripts();
+      processFirst = false;
+    }
+    var loader = this;
+    return importMapPromise.then(function (importMap) {
+      loader[IMPORT_MAP] = importMap;
+    });
+  };
+  if (hasDocument) {
+    processScripts();
+    window.addEventListener('DOMContentLoaded', processScripts);
+  }
+
+  const systemInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+    var preloads = this[IMPORT_MAP].depcache[url];
+    if (preloads) {
+      for (var i = 0; i < preloads.length; i++)
+        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
+    }
+    return systemInstantiate.call(this, url, firstParentUrl);
+  };
+
+  function processScripts () {
+    [].forEach.call(document.querySelectorAll('script'), function (script) {
+      if (script.sp) // sp marker = systemjs processed
+        return;
+      // TODO: deprecate systemjs-module in next major now that we have auto import
+      if (script.type === 'systemjs-module') {
+        script.sp = true;
+        if (!script.src)
+          return;
+        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+      }
+      else if (script.type === 'systemjs-importmap') {
+        script.sp = true;
+        importMapPromise = importMapPromise.then(function (importMap) {
+          if (script.src)
+            return fetch(script.src).then(function (res) {
+              return res.text();
+            }).then(function (text) {
+              return extendImportMap(importMap, text, script.src);
+            });
+          return extendImportMap(importMap, script.innerHTML, baseUrl);
+        });
+      }
+    });
+  }
+
+  function extendImportMap (importMap, newMapText, newMapUrl) {
+    try {
+      var newMap = JSON.parse(newMapText);
+    } catch (err) {
+      throw Error( errMsg(1) );
+    }
+    return resolveAndComposeImportMap(newMap, newMapUrl, importMap);
+  }
+
+  /**
+   * Auto-import <script src="system-module.js"></script> registrations
+   * Allows the browser preloader to work directly with SystemJS optimization
+   */
+
+  var autoImports = {};
+
+  var systemRegister = systemJSPrototype.register;
+  systemJSPrototype.register = function (deps, declare) {
+    if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
+      var scripts = document.getElementsByTagName('script');
+      var lastScript = scripts[scripts.length - 1];
+      if (lastScript && lastScript.src) {
+        // Only import if not already in the registry.
+        // This avoids re-importing an inline dynamic System.import dependency.
+        // There is still a risk if a user dynamically injects a custom System.register script during DOM load that does an
+        // anomymous registration that is able to execute before DOM load completion, and thus is incorrectly matched to the
+        // last script when it wasn't causing a System.import of that last script, but this is deemed an acceptable edge case
+        // since due to custom user registration injection.
+        // Not using document.currentScript is done to ensure IE11 equivalence.
+        if (!this[REGISTRY][lastScript.src]) {
+          autoImports[lastScript.src] = [deps, declare];
+          // Auto import = immediately import the registration
+          // It is up to the user to manage execution order for deep preloading.
+          this.import(lastScript.src);
         }
-      });
-  }
+        return;
+      }
+    }
+    return systemRegister.call(this, deps, declare);
+  };
+
+  var systemInstantiate$1 = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url) {
+    var autoImport = autoImports[url];
+    if (autoImport) {
+      delete autoImports[url];
+      return autoImport;
+    }
+    return systemInstantiate$1.apply(this, arguments);
+  };
 
   /*
    * Supports loading System.register in workers
