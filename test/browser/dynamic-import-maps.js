@@ -69,22 +69,4 @@ suite('Dynamic import maps', () => {
     appendImportMap({ src: 'fixtures/browser/dynamic-importmap1.json' });
     return importAfterImportMap(moduleId);
   });
-
-  test('Loading modified elements (inline)', async () => {
-    const moduleId = 'dynamic-inline-map-2';
-    const otherModuleId = `${moduleId}--other`;
-    appendImportMap({ moduleId: otherModuleId });
-    await importNonExistent(moduleId);
-    editImportMap({ needleModuleId: otherModuleId, newModuleId: moduleId });
-    return importAfterImportMap(moduleId);
-  });
-
-  test('Loading modified elements (external)', async () => {
-    const moduleId = 'dynamic-external-map-2';
-    const orgSrc = 'fixtures/browser/dynamic-importmap1.json';
-    appendImportMap({ src: orgSrc });
-    await importNonExistent(moduleId);
-    editImportMap({ needleSrc: orgSrc, newSrc: 'fixtures/browser/dynamic-importmap2.json' });
-    return importAfterImportMap(moduleId);
-  });
 });

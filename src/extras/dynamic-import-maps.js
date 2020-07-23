@@ -11,7 +11,7 @@
         continue;
       for (var j = 0; j < mutation.addedNodes.length; j++) {
         var addedNode = mutation.addedNodes[j];
-        if (addedNode.tagName === 'SCRIPT' && addedNode.type === 'systemjs-importmap') {
+        if (addedNode.tagName === 'SCRIPT' && addedNode.type === 'systemjs-importmap' && !addedNode.sp) {
           reparse = true;
           break;
         }
