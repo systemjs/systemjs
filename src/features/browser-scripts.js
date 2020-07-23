@@ -1,7 +1,7 @@
 /*
  * SystemJS browser attachments for script and import map processing
  */
-import { baseUrl, resolveAndComposeImportMap, hasDocument, IMPORT_MAP, resolveUrl } from '../common.js';
+import { baseUrl, resolveAndComposeImportMap, hasDocument, resolveUrl, IMPORT_MAP } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
@@ -11,8 +11,8 @@ var importMapPromise = Promise.resolve({ imports: {}, scopes: {} });
 // Import map scripts are processed only once (by being marked) and in order for each phase.
 // This is to avoid using DOM mutation observers in core, although that would be an alternative.
 var processFirst = hasDocument;
-systemJSPrototype.prepareImport = function () {
-  if (processFirst) {
+systemJSPrototype.prepareImport = function (doProcessScripts) {
+  if (processFirst || doProcessScripts) {
     processScripts();
     processFirst = false;
   }
@@ -28,15 +28,16 @@ if (hasDocument) {
 
 function processScripts () {
   [].forEach.call(document.querySelectorAll('script'), function (script) {
+    if (script.sp) // sp marker = systemjs processed
+      return;
     // TODO: deprecate systemjs-module in next major now that we have auto import
     if (script.type === 'systemjs-module') {
+      script.sp = true;
       if (!script.src)
         return;
       System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
     }
     else if (script.type === 'systemjs-importmap') {
-      if (script.sp) // sp marker = systemjs processed
-        return;
       script.sp = true;
       importMapPromise = importMapPromise.then(function (importMap) {
         if (script.src)

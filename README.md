@@ -78,6 +78,7 @@ The following [pluggable extras](dist/extras) can be dropped in with either the 
 * [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
 * [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles which can then be imported as `System.import('name')` (as well as AMD named define support)
 * [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
+* [Dynamic import maps](dist/extras/dynamic-import-maps.js) support. This is currently a _potential_ new standard [feature](https://github.com/guybedford/import-maps-extensions#lazy-loading-of-import-maps).
 
 The following extras are included in system.js loader by default, and can be added to the s.js loader for a smaller tailored footprint:
 

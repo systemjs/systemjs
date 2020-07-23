@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "dynamic-external-map-1": "./esm.js"
+  }
+}
