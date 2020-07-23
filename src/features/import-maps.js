@@ -2,7 +2,7 @@
  * SystemJS browser attachments for script and import map processing
  */
 import { baseUrl, resolveAndComposeImportMap, hasDocument, resolveUrl, IMPORT_MAP } from '../common.js';
-import { systemJSPrototype } from '../system-core.js';
+import { systemJSPrototype, getOrCreateLoad } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
 var importMapPromise = Promise.resolve({ imports: {}, scopes: {}, depcache: {} });

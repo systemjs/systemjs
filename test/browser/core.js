@@ -226,6 +226,13 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('should support depcache', function () {
+    return System.import('/test/fixtures/browser/depcache.js').then(function (m) {
+      assert.ok(m);
+      assert.equal(m.default, '10th module');
+    });
+  });
+
   test('should not get confused by filenames in url hash when resolving module type', function () {
     return System.import('fixturesbase/css-modules/hash.css?foo=bar.html').then(function (m) {
       assert.ok(m);
