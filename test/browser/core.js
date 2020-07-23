@@ -213,6 +213,12 @@ suite('SystemJS Standard Tests', function() {
     assert.equal(System.get(resolved).hi, 'bye');
   });
 
+  test('should load auto import', function () {
+    const resolved = System.resolve('/test/fixtures/browser/auto-import.js');
+    assert.ok(System.has(resolved));
+    assert.equal(System.get(resolved).auto, 'import');
+  });
+
   test('non-enumerable __esModule property export (issue 2090)', function () {
     return System.import('fixtures/__esModule.js').then(function (m) {
       // Even though __esModule is not enumerable on the exported object, it should be preserved on the systemjs namespace

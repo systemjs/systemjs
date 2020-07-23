@@ -12,4 +12,3 @@ if (hasSelf && typeof importScripts === 'function')
       return loader.getRegister();
     });
   };
-  

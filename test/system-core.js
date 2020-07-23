@@ -1,18 +1,19 @@
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
-import { resolveIfNotPlainOrUrl } from '../src/common.js';
+import { resolveIfNotPlainOrUrl, IMPORT_MAP } from '../src/common.js';
 import '../src/features/registry.js';
 import { REGISTRY } from '../src/system-core.js';
-import '../src/features/import-map.js';
+import '../src/features/resolve.js';
 
 const SystemLoader = System.constructor;
+
+SystemLoader.prototype[IMPORT_MAP] = { imports: {}, scopes: {} };
+SystemLoader.prototype.prepareImport = () => {};
 
 describe('Core API', function () {
   const loader = new SystemLoader();
   loader.resolve = x => x;
-
-  before(() => System.prepareImport());
 
   it('Should be an instance of itself', function () {
     assert(loader instanceof SystemLoader);

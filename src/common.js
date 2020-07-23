@@ -130,6 +130,8 @@ function objectAssign (to, from) {
   return to;
 }
 
+export var IMPORT_MAP = hasSymbol ? Symbol() : '#';
+
 function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
   for (var p in packages) {
     var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;

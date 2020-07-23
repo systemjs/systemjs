@@ -1,12 +1,18 @@
-import { REGISTRY, systemJSPrototype } from './system-core.js';
-import { IMPORT_MAP, IMPORT_MAP_PROMISE } from './features/import-map.js';
+import './features/resolve.js';
 import './features/registry.js';
 import './extras/global.js';
 import './extras/module-types.js';
 import './features/node-fetch.js';
-import { BASE_URL, baseUrl, resolveAndComposeImportMap } from './common.js';
+import { REGISTRY, systemJSPrototype } from './system-core.js';
+import { BASE_URL, baseUrl, resolveAndComposeImportMap, IMPORT_MAP } from './common.js';
 
 export const System = global.System;
+
+const IMPORT_MAP_PROMISE = Symbol();
+
+systemJSPrototype.prepareImport = function () {
+  return this[IMPORT_MAP_PROMISE];
+};
 
 const originalResolve = systemJSPrototype.resolve;
 systemJSPrototype.resolve = function () {
