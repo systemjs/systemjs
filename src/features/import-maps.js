@@ -28,7 +28,7 @@ if (hasDocument) {
 
 const systemInstantiate = systemJSPrototype.instantiate;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
-  var preloads = importMap.depcache[url];
+  var preloads = this[IMPORT_MAP].depcache[url];
   if (preloads) {
     for (var i = 0; i < preloads.length; i++)
       getOrCreateLoad(this, this.resolve(preloads[i], url), url);
