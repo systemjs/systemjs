@@ -15,14 +15,6 @@
     // register normally
     systemRegister.call(this, deps, declare);
 
-    // save the current url, and pass it to `importLastRegisterAs`
-    var scripts = document.getElementsByTagName("script");
-    var scriptUrl = scripts[scripts.length - 1].src || document.baseURI;
-    systemJSPrototype.importLastRegisterAs.call(this, scriptUrl);
-  };
-
-  // import the last register, but use id and parentUrl as
-  systemJSPrototype.importLastRegisterAs = function () {
     // retrieve last register
     var register = systemGetRegister.call(this);
     
@@ -37,7 +29,12 @@
       });
     };
 
+    // save the current url
+    // if it was not a external file, the script was inline so use baseURI
+    var scripts = document.getElementsByTagName("script");
+    var scriptUrl = scripts[scripts.length - 1].src || document.baseURI;
+    
     // do the actual import
-    systemJSPrototype.import.apply(this, arguments);
+    systemJSPrototype.import.call(this, scriptUrl);
   };
 })(typeof self !== "undefined" ? self : global);
