@@ -1,5 +1,5 @@
 /**
- * Auto-import the first call to System.register 
+ * Auto-import all calls to System.register during loading 
  */
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
@@ -7,13 +7,13 @@
   var systemRegister = systemJSPrototype.register;
   var systemGetRegister = systemJSPrototype.getRegister;
 
-  // hook into System.register (but release it after first usage)
+  // hook into System.register
   systemJSPrototype.register = function (deps, declare) {
-    // reset System.register for subsequent usage
-    systemJSPrototype.register = systemRegister;
-
     // register normally
     systemRegister.call(this, deps, declare);
+
+    // only auto import if the document is not loading
+    if (document.readyState !== 'loading') return;
 
     // retrieve last register
     var register = systemGetRegister.call(this);
