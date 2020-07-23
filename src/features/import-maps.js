@@ -2,10 +2,10 @@
  * SystemJS browser attachments for script and import map processing
  */
 import { baseUrl, resolveAndComposeImportMap, hasDocument, resolveUrl, IMPORT_MAP } from '../common.js';
-import { systemJSPrototype } from '../system-core.js';
+import { systemJSPrototype, getOrCreateLoad } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
-var importMapPromise = Promise.resolve({ imports: {}, scopes: {} });
+var importMapPromise = Promise.resolve({ imports: {}, scopes: {}, depcache: {} });
 
 // Scripts are processed immediately, on the first System.import, and on DOMReady.
 // Import map scripts are processed only once (by being marked) and in order for each phase.
@@ -25,6 +25,16 @@ if (hasDocument) {
   processScripts();
   window.addEventListener('DOMContentLoaded', processScripts);
 }
+
+const systemInstantiate = systemJSPrototype.instantiate;
+systemJSPrototype.instantiate = function (url, firstParentUrl) {
+  var preloads = this[IMPORT_MAP].depcache[url];
+  if (preloads) {
+    for (var i = 0; i < preloads.length; i++)
+      getOrCreateLoad(this, this.resolve(preloads[i], url), url);
+  }
+  return systemInstantiate.call(this, url, firstParentUrl);
+};
 
 function processScripts () {
   [].forEach.call(document.querySelectorAll('script'), function (script) {

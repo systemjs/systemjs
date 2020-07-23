@@ -72,7 +72,7 @@ systemJSPrototype.getRegister = function () {
   return _lastRegister;
 };
 
-function getOrCreateLoad (loader, id, firstParentUrl) {
+export function getOrCreateLoad (loader, id, firstParentUrl) {
   var load = loader[REGISTRY][id];
   if (load)
     return load;

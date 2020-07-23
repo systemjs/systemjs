@@ -19,5 +19,17 @@
     "wasm/": {
       "example": "./wasm/example.js"
     }
+  },
+  "depcache": {
+    "depcache.js": ["./depcache1.js"],
+    "depcache1.js": ["./depcache2.js"],
+    "depcache2.js": ["./depcache3.js"],
+    "depcache3.js": ["./depcache4.js"],
+    "depcache4.js": ["./depcache5.js"],
+    "depcache5.js": ["./depcache6.js"],
+    "depcache6.js": ["./depcache7.js"],
+    "depcache7.js": ["./depcache8.js"],
+    "depcache8.js": ["./depcache9.js"],
+    "depcache9.js": ["./depcache10.js"]
   }
 }
