@@ -10,27 +10,24 @@ export { envGlobal as global };
 // Loader-scoped baseUrl supported in Node.js only
 export var BASE_URL = hasSymbol ? Symbol() : '_';
 
-export var baseOrigin;
 export var baseUrl;
 
 if (hasDocument) {
-  baseOrigin = location.origin;
   var baseEl = document.querySelector('base[href]');
-  if (baseEl) {
+  if (baseEl)
     baseUrl = baseEl.href;
-  }
-  else {
-    baseUrl = location.href.split('#')[0].split('?')[0];
-    var lastSepIndex = baseUrl.lastIndexOf('/');
-    if (lastSepIndex !== -1)
-      baseUrl = baseUrl.slice(0, lastSepIndex + 1);
-  }
+}
+
+if (!baseUrl && typeof location !== 'undefined') {
+  baseUrl = location.href.split('#')[0].split('?')[0];
+  var lastSepIndex = baseUrl.lastIndexOf('/');
+  if (lastSepIndex !== -1)
+    baseUrl = baseUrl.slice(0, lastSepIndex + 1);
 }
 
 if (!process.env.SYSTEM_BROWSER && !baseUrl && typeof process !== 'undefined') {
   var cwd = process.cwd();
   // TODO: encoding edge cases
-  baseOrigin = 'file://';
   baseUrl = 'file://' + (cwd[0] === '/' ? '' : '/') + cwd.replace(/\\/g, '/') + '/';
 }
 

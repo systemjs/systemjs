@@ -1,9 +1,17 @@
 /*
  * Script instantiation loading
  */
-import { hasDocument, baseOrigin } from '../common.js';
+import { hasDocument } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
+
+if (hasDocument) {
+  window.addEventListener('error', function (evt) {
+    lastWindowErrorUrl = evt.filename;
+    lastWindowError = evt.error;
+  });
+  var baseOrigin = location.origin
+}
 
 systemJSPrototype.createScript = function (url) {
   var script = document.createElement('script');
@@ -82,9 +90,3 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     document.head.appendChild(script);
   });
 };
-
-if (hasDocument)
-  window.addEventListener('error', function (evt) {
-    lastWindowErrorUrl = evt.filename;
-    lastWindowError = evt.error;
-  });
