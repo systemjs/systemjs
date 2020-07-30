@@ -38,7 +38,7 @@ systemJSPrototype.register = function (deps, declare) {
           loader.import(url);
         if (--timeoutCnt === 0 && document.readyState !== 'loading')
           autoImportCandidates = {};
-      }, 0);
+      });
     }
   }
   else {
