@@ -1,7 +1,7 @@
 /*
  * Script instantiation loading
  */
-import { hasDocument } from '../common.js';
+import { hasDocument, baseOrigin } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
@@ -9,7 +9,11 @@ systemJSPrototype.createScript = function (url) {
   var script = document.createElement('script');
   script.charset = 'utf-8';
   script.async = true;
-  script.crossOrigin = 'anonymous';
+  // Only add cross origin for actual cross origin
+  // this is because Safari triggers for all
+  // - https://bugs.webkit.org/show_bug.cgi?id=171566
+  if (!url.startsWith(baseOrigin + '/'))
+    script.crossOrigin = 'anonymous';
   script.src = url;
   return script;
 };
