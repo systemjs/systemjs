@@ -15,18 +15,15 @@ export var baseUrl;
 
 if (hasDocument) {
   var baseEl = document.querySelector('base[href]');
-  if (baseEl) {
-    baseOrigin = baseEl.origin;
+  if (baseEl)
     baseUrl = baseEl.href;
-  }
-}
-
-if (!baseUrl && typeof location !== 'undefined') {
   baseOrigin = location.origin;
-  baseUrl = location.href.split('#')[0].split('?')[0];
-  var lastSepIndex = baseUrl.lastIndexOf('/');
-  if (lastSepIndex !== -1)
-    baseUrl = baseUrl.slice(0, lastSepIndex + 1);
+  if (!baseUrl) {
+    baseUrl = location.href.split('#')[0].split('?')[0];
+    var lastSepIndex = baseUrl.lastIndexOf('/');
+    if (lastSepIndex !== -1)
+      baseUrl = baseUrl.slice(0, lastSepIndex + 1);
+  }
 }
 
 if (!process.env.SYSTEM_BROWSER && !baseUrl && typeof process !== 'undefined') {
