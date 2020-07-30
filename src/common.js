@@ -14,11 +14,12 @@ export var baseOrigin;
 export var baseUrl;
 
 if (hasDocument) {
-  var baseEl = document.querySelector('base[href]');
-  if (baseEl)
-    baseUrl = baseEl.href;
   baseOrigin = location.origin;
-  if (!baseUrl) {
+  var baseEl = document.querySelector('base[href]');
+  if (baseEl) {
+    baseUrl = baseEl.href;
+  }
+  else {
     baseUrl = location.href.split('#')[0].split('?')[0];
     var lastSepIndex = baseUrl.lastIndexOf('/');
     if (lastSepIndex !== -1)
