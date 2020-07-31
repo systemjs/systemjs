@@ -14,9 +14,47 @@ systemJSPrototype.createScript = function (url) {
   return script;
 };
 
+// Auto imports -> script tags can be inlined directly for load phase
+var lastAutoImportUrl, lastAutoImportDeps;
+var autoImportCandidates = {};
+var systemRegister = systemJSPrototype.register;
+var timeoutCnt = 0;
+systemJSPrototype.register = function (deps, declare) {
+  if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
+    var scripts = document.getElementsByTagName('script');
+    var lastScript = scripts[scripts.length - 1];
+    var url = lastScript && lastScript.src;
+    if (url) {
+      lastAutoImportUrl = url;
+      lastAutoImportDeps = deps;
+      autoImportCandidates[url] = [deps, declare];
+      var loader = this;
+      // This timeout ensures that if this is a dynamic script injection by SystemJS
+      // that the auto import will be cleared after the timeout and hence will not
+      // be auto imported
+      timeoutCnt++;
+      setTimeout(function () {
+        if (autoImportCandidates[url])
+          loader.import(url);
+        if (--timeoutCnt === 0 && document.readyState !== 'loading')
+          autoImportCandidates = {};
+      });
+    }
+  }
+  else {
+    lastAutoImportDeps = undefined;
+  }
+  return systemRegister.call(this, deps, declare);
+};
+
 var lastWindowErrorUrl, lastWindowError;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   var loader = this;
+  var autoImportRegistration = autoImportCandidates[url];
+  if (autoImportRegistration) {
+    delete autoImportCandidates[url];
+    return autoImportRegistration;
+  }
   return new Promise(function (resolve, reject) {
     var script = systemJSPrototype.createScript(url);
     script.addEventListener('error', function () {
@@ -30,7 +68,11 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
         reject(lastWindowError);
       }
       else {
-        resolve(loader.getRegister());
+        var register = loader.getRegister();
+        // Clear any auto import registration for dynamic import scripts during load
+        if (register && register[0] === lastAutoImportDeps)
+          delete autoImportCandidates[lastAutoImportUrl];
+        resolve(register);
       }
     });
     document.head.appendChild(script);
