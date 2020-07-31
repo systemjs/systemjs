@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.4.0
+* SystemJS 6.4.1
 */
 (function () {
   function errMsg(errCode, msg) {
@@ -510,18 +510,68 @@
    * Script instantiation loading
    */
 
+  if (hasDocument) {
+    window.addEventListener('error', function (evt) {
+      lastWindowErrorUrl = evt.filename;
+      lastWindowError = evt.error;
+    });
+    var baseOrigin = location.origin;
+  }
+
   systemJSPrototype.createScript = function (url) {
     var script = document.createElement('script');
     script.charset = 'utf-8';
     script.async = true;
-    script.crossOrigin = 'anonymous';
+    // Only add cross origin for actual cross origin
+    // this is because Safari triggers for all
+    // - https://bugs.webkit.org/show_bug.cgi?id=171566
+    if (!url.startsWith(baseOrigin + '/'))
+      script.crossOrigin = 'anonymous';
     script.src = url;
     return script;
+  };
+
+  // Auto imports -> script tags can be inlined directly for load phase
+  var lastAutoImportUrl, lastAutoImportDeps;
+  var autoImportCandidates = {};
+  var systemRegister = systemJSPrototype.register;
+  var timeoutCnt = 0;
+  systemJSPrototype.register = function (deps, declare) {
+    if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
+      var scripts = document.getElementsByTagName('script');
+      var lastScript = scripts[scripts.length - 1];
+      var url = lastScript && lastScript.src;
+      if (url) {
+        lastAutoImportUrl = url;
+        lastAutoImportDeps = deps;
+        autoImportCandidates[url] = [deps, declare];
+        var loader = this;
+        // This timeout ensures that if this is a dynamic script injection by SystemJS
+        // that the auto import will be cleared after the timeout and hence will not
+        // be auto imported
+        timeoutCnt++;
+        setTimeout(function () {
+          if (autoImportCandidates[url])
+            loader.import(url);
+          if (--timeoutCnt === 0 && document.readyState !== 'loading')
+            autoImportCandidates = {};
+        });
+      }
+    }
+    else {
+      lastAutoImportDeps = undefined;
+    }
+    return systemRegister.call(this, deps, declare);
   };
 
   var lastWindowErrorUrl, lastWindowError;
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
     var loader = this;
+    var autoImportRegistration = autoImportCandidates[url];
+    if (autoImportRegistration) {
+      delete autoImportCandidates[url];
+      return autoImportRegistration;
+    }
     return new Promise(function (resolve, reject) {
       var script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
@@ -535,18 +585,16 @@
           reject(lastWindowError);
         }
         else {
-          resolve(loader.getRegister());
+          var register = loader.getRegister();
+          // Clear any auto import registration for dynamic import scripts during load
+          if (register && register[0] === lastAutoImportDeps)
+            delete autoImportCandidates[lastAutoImportUrl];
+          resolve(register);
         }
       });
       document.head.appendChild(script);
     });
   };
-
-  if (hasDocument)
-    window.addEventListener('error', function (evt) {
-      lastWindowErrorUrl = evt.filename;
-      lastWindowError = evt.error;
-    });
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || !true  || baseUrl;
@@ -626,48 +674,6 @@
     }
     return resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
-
-  /**
-   * Auto-import <script src="system-module.js"></script> registrations
-   * Allows the browser preloader to work directly with SystemJS optimization
-   */
-
-  var autoImports = {};
-
-  var systemRegister = systemJSPrototype.register;
-  systemJSPrototype.register = function (deps, declare) {
-    if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
-      var scripts = document.getElementsByTagName('script');
-      var lastScript = scripts[scripts.length - 1];
-      if (lastScript && lastScript.src) {
-        // Only import if not already in the registry.
-        // This avoids re-importing an inline dynamic System.import dependency.
-        // There is still a risk if a user dynamically injects a custom System.register script during DOM load that does an
-        // anomymous registration that is able to execute before DOM load completion, and thus is incorrectly matched to the
-        // last script when it wasn't causing a System.import of that last script, but this is deemed an acceptable edge case
-        // since due to custom user registration injection.
-        // Not using document.currentScript is done to ensure IE11 equivalence.
-        if (!this[REGISTRY][lastScript.src]) {
-          autoImports[lastScript.src] = [deps, declare];
-          // Auto import = immediately import the registration
-          // It is up to the user to manage execution order for deep preloading.
-          this.import(lastScript.src);
-        }
-        return;
-      }
-    }
-    return systemRegister.call(this, deps, declare);
-  };
-
-  var systemInstantiate$1 = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url) {
-    var autoImport = autoImports[url];
-    if (autoImport) {
-      delete autoImports[url];
-      return autoImport;
-    }
-    return systemInstantiate$1.apply(this, arguments);
-  };
 
   /*
    * Supports loading System.register in workers

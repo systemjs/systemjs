@@ -1,3 +1,7 @@
+SystemJS 6.4.1
+* Fix auto import handling of dynamic import races during loading phase (https://github.com/systemjs/systemjs/pull/2223)
+* Fix crossOrigin script attribute loading in Safari (https://github.com/systemjs/systemjs/pull/2222)
+
 SystemJS 6.4.0
 * Dynamic import map extra support (https://github.com/systemjs/systemjs/pull/2217 @stevenvachon)
 * Depcache support in import maps for automated preloading (https://github.com/systemjs/systemjs/pull/2134)
