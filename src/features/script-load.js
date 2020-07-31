@@ -5,11 +5,23 @@ import { hasDocument } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 
+if (hasDocument) {
+  window.addEventListener('error', function (evt) {
+    lastWindowErrorUrl = evt.filename;
+    lastWindowError = evt.error;
+  });
+  var baseOrigin = location.origin
+}
+
 systemJSPrototype.createScript = function (url) {
   var script = document.createElement('script');
   script.charset = 'utf-8';
   script.async = true;
-  script.crossOrigin = 'anonymous';
+  // Only add cross origin for actual cross origin
+  // this is because Safari triggers for all
+  // - https://bugs.webkit.org/show_bug.cgi?id=171566
+  if (!url.startsWith(baseOrigin + '/'))
+    script.crossOrigin = 'anonymous';
   script.src = url;
   return script;
 };
@@ -78,9 +90,3 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     document.head.appendChild(script);
   });
 };
-
-if (hasDocument)
-  window.addEventListener('error', function (evt) {
-    lastWindowErrorUrl = evt.filename;
-    lastWindowError = evt.error;
-  });
