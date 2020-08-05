@@ -1,3 +1,6 @@
+SystemJS 6.4.2
+* Fix and simplify auto import domready resets (https://github.com/systemjs/systemjs/pull/2225)
+
 SystemJS 6.4.1
 * Fix auto import handling of dynamic import races during loading phase (https://github.com/systemjs/systemjs/pull/2223)
 * Fix crossOrigin script attribute loading in Safari (https://github.com/systemjs/systemjs/pull/2222)
