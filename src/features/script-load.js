@@ -30,7 +30,6 @@ systemJSPrototype.createScript = function (url) {
 var lastAutoImportUrl, lastAutoImportDeps;
 var autoImportCandidates = {};
 var systemRegister = systemJSPrototype.register;
-var timeoutCnt = 0;
 systemJSPrototype.register = function (deps, declare) {
   if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
     var scripts = document.getElementsByTagName('script');
@@ -40,17 +39,9 @@ systemJSPrototype.register = function (deps, declare) {
       lastAutoImportUrl = url;
       lastAutoImportDeps = deps;
       autoImportCandidates[url] = [deps, declare];
-      var loader = this;
-      // This timeout ensures that if this is a dynamic script injection by SystemJS
-      // that the auto import will be cleared after the timeout and hence will not
-      // be auto imported
-      timeoutCnt++;
-      setTimeout(function () {
-        if (autoImportCandidates[url])
-          loader.import(url);
-        if (--timeoutCnt === 0 && document.readyState !== 'loading')
-          autoImportCandidates = {};
-      });
+      // if this is already a System load, then the instantiate has already begun
+      // so this re-import has no consequence
+      this.import(url);
     }
   }
   else {
