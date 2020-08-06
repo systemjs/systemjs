@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "6.4.2",
+  "version": "6.4.3",
   "main": "dist/system-node.cjs",
   "exports": {
     ".": {

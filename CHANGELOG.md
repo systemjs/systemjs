@@ -1,3 +1,7 @@
+SystemJS 6.4.3
+* Define an "s.js" entry in "exports" (https://github.com/systemjs/systemjs/pull/2226)
+* Fixup use of const for older browsers (https://github.com/systemjs/systemjs/issues/2227)
+
 SystemJS 6.4.2
 * Fix and simplify auto import domready resets (https://github.com/systemjs/systemjs/pull/2225)
 
