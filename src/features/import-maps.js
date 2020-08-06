@@ -26,7 +26,7 @@ if (hasDocument) {
   window.addEventListener('DOMContentLoaded', processScripts);
 }
 
-const systemInstantiate = systemJSPrototype.instantiate;
+var systemInstantiate = systemJSPrototype.instantiate;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
   var preloads = this[IMPORT_MAP].depcache[url];
   if (preloads) {
