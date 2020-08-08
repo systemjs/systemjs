@@ -9,7 +9,8 @@ function doResolveImportMap (id, parentUrl, importMap) {
 
 
 describe('Import Maps', function () {
-  const firstImportMap = resolveAndComposeImportMap({
+  const firstImportMap = { imports: {}, scopes: {} };
+  resolveAndComposeImportMap({
     imports: {
       "./asdf": "./asdf-asdf",
       "t": "./src/t",
@@ -21,9 +22,15 @@ describe('Import Maps', function () {
         "y/": "./src/y/"
       }
     }
-  }, 'https://sample.com/', { imports: {}, scopes: {} });
+  }, 'https://sample.com/', firstImportMap);
 
-  const baseImportMap = resolveAndComposeImportMap({
+  const baseImportMap = {
+    imports: Object.assign({}, firstImportMap.imports),
+    scopes: {
+      "/": Object.assign({}, firstImportMap.scopes["https://sample.com/"])
+    }
+  };
+  resolveAndComposeImportMap({
     imports: {
       "x": "/y",
       "x/": "/src/x/",
@@ -36,11 +43,12 @@ describe('Import Maps', function () {
       "g": "./g"
     },
     scopes: {
+      "/": firstImportMap.scopes["https://sample.com/"],
       "/scope/": {
         "x/": "y/"
       }
     }
-  }, 'https://sample.com/src/', firstImportMap);
+  }, 'https://sample.com/src/', baseImportMap);
 
   it('Throws for unknown', function () {
     try {
@@ -97,55 +105,60 @@ describe('Import Maps', function () {
   });
 
   it('Overrides package resolution when two import maps define the same module', function () {
-    const importMap = resolveAndComposeImportMap({
+    const newMap = { imports: Object.assign({}, baseImportMap.imports), scopes: {} };
+    resolveAndComposeImportMap({
       imports: {
         r: './overridden-r',
       }
-    }, 'https://sample.com/src/', baseImportMap);
-    assert.equal(doResolveImportMap('r', 'https://site.com', importMap), 'https://sample.com/src/overridden-r');
+    }, 'https://sample.com/src/', newMap);
+    assert.equal(doResolveImportMap('r', 'https://site.com', newMap), 'https://sample.com/src/overridden-r');
   });
 
   it('Adds to an existing import map when there are two import maps', function () {
-    const importMap = resolveAndComposeImportMap({
+    const newMap = { imports: Object.assign({}, baseImportMap.imports), scopes: {} };
+    resolveAndComposeImportMap({
       imports: {
         g: 'g',
       }
-    }, 'https://sample.com/src/', baseImportMap);
-    assert.equal(doResolveImportMap('g', 'https://site.com', importMap), 'https://sample.com/src/g');
+    }, 'https://sample.com/src/', newMap);
+    assert.equal(doResolveImportMap('g', 'https://site.com', newMap), 'https://sample.com/src/g');
   });
 
   it('Supports scopes as exact ids', function () {
-    const importMap = resolveAndComposeImportMap({
+    const newMap = { imports: Object.assign({}, baseImportMap.imports), scopes: baseImportMap.scopes };
+    resolveAndComposeImportMap({
       scopes: {
         "/scope": {
           "x/": "./z/"
         }
       }
-    }, 'https://sample.com/src/', baseImportMap);
-    assert.equal(doResolveImportMap('x/file.js', 'https://sample.com/scope', importMap), 'https://sample.com/src/z/file.js');
-    assert.equal(doResolveImportMap('x/file.js', 'https://sample.com/scope/', importMap), 'https://sample.com/src/y/file.js');
+    }, 'https://sample.com/src/', newMap);
+    assert.equal(doResolveImportMap('x/file.js', 'https://sample.com/scope', newMap), 'https://sample.com/src/z/file.js');
+    assert.equal(doResolveImportMap('x/file.js', 'https://sample.com/scope/', newMap), 'https://sample.com/src/y/file.js');
   });
 
   it('Overrides an import map scope when two import maps define the same scope', function () {
-    const importMap = resolveAndComposeImportMap({
+    const newMap = { imports: Object.assign({}, baseImportMap.imports), scopes: {} };
+    resolveAndComposeImportMap({
       scopes: {
         "/scope/": {
           "x/": "./z/"
         }
       }
-    }, 'https://sample.com/src/', baseImportMap);
-    assert.equal(doResolveImportMap('x/file.js', 'https://sample.com/scope/something', importMap), 'https://sample.com/src/z/file.js');
+    }, 'https://sample.com/src/', newMap);
+    assert.equal(doResolveImportMap('x/file.js', 'https://sample.com/scope/something', newMap), 'https://sample.com/src/z/file.js');
   });
 
   it('Adds an import map scope when two import maps are merged', function () {
-    const importMap = resolveAndComposeImportMap({
+    const newMap = { imports: Object.assign({}, baseImportMap.imports), scopes: {} };
+    resolveAndComposeImportMap({
       scopes: {
         "/other-scope/": {
           "f": "/other-scope-path/f.js"
         }
       }
-    }, 'https://sample.com/src/', baseImportMap);
-    assert.equal(doResolveImportMap('f', 'https://sample.com/other-scope/something', importMap), 'https://sample.com/other-scope-path/f.js');
+    }, 'https://sample.com/src/', newMap);
+    assert.equal(doResolveImportMap('f', 'https://sample.com/other-scope/something', newMap), 'https://sample.com/other-scope-path/f.js');
   });
 
 });
