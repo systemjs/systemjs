@@ -52,9 +52,8 @@ function processScripts () {
       }) : script.innerHTML;
       importMapPromise = importMapPromise.then(function () {
         return fetchPromise;
-      })
-      .then(function (text) {
-        extendImportMap(importMap, text, script.src);
+      }).then(function (text) {
+        extendImportMap(importMap, text, script.src || baseUrl);
       });
     }
   });

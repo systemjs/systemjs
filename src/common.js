@@ -125,12 +125,6 @@ export function resolveUrl (relUrl, parentUrl) {
   return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
 }
 
-function objectAssign (to, from) {
-  for (var p in from)
-    to[p] = from[p];
-  return to;
-}
-
 function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
   for (var p in packages) {
     var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
