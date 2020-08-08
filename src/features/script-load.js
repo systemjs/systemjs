@@ -1,7 +1,7 @@
 /*
  * Script instantiation loading
  */
-import { hasDocument, IMPORT_MAP } from '../common.js';
+import { hasDocument } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
 import { importMap } from './import-maps.js';
