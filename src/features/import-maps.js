@@ -47,14 +47,14 @@ function processScripts () {
     }
     else if (script.type === 'systemjs-importmap') {
       script.sp = true;
+      var fetchPromise = script.src ? fetch(script.src).then(function (res) {
+        return res.text();
+      }) : script.innerHTML;
       importMapPromise = importMapPromise.then(function () {
-        if (script.src)
-          return fetch(script.src).then(function (res) {
-            return res.text();
-          }).then(function (text) {
-            importMap = extendImportMap(importMap, text, script.src);
-          });
-        importMap = extendImportMap(importMap, script.innerHTML, baseUrl);
+        return fetchPromise;
+      })
+      .then(function (text) {
+        extendImportMap(importMap, text, script.src);
       });
     }
   });
@@ -66,5 +66,5 @@ function extendImportMap (importMap, newMapText, newMapUrl) {
   } catch (err) {
     throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(1) : errMsg(1, "systemjs-importmap contains invalid JSON"));
   }
-  return resolveAndComposeImportMap(newMap, newMapUrl, importMap);
+  resolveAndComposeImportMap(newMap, newMapUrl, importMap);
 }

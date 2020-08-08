@@ -150,16 +150,14 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
   }
 }
 
-export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
-  var outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes), depcache: objectAssign({}, parentMap.depcache), integrity: objectAssign({}, parentMap.integrity) };
-
+export function resolveAndComposeImportMap (json, baseUrl, outMap) {
   if (json.imports)
-    resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
+    resolveAndComposePackages(json.imports, outMap.imports, baseUrl, outMap, null);
 
   var u;
   for (u in json.scopes || {}) {
     var resolvedScope = resolveUrl(u, baseUrl);
-    resolveAndComposePackages(json.scopes[u], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
+    resolveAndComposePackages(json.scopes[u], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, outMap, resolvedScope);
   }
 
   for (u in json.depcache || {})
@@ -167,8 +165,6 @@ export function resolveAndComposeImportMap (json, baseUrl, parentMap) {
   
   for (u in json.integrity || {})
     outMap.integrity[resolveUrl(u, baseUrl)] = json.integrity[u];
-
-  return outMap;
 }
 
 function getMatch (path, matchObj) {
