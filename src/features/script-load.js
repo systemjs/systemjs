@@ -1,9 +1,10 @@
 /*
  * Script instantiation loading
  */
-import { hasDocument } from '../common.js';
+import { hasDocument, IMPORT_MAP } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
+import { importMap } from './import-maps.js';
 
 if (hasDocument) {
   window.addEventListener('error', function (evt) {
@@ -22,6 +23,9 @@ systemJSPrototype.createScript = function (url) {
   // - https://bugs.webkit.org/show_bug.cgi?id=171566
   if (!url.startsWith(baseOrigin + '/'))
     script.crossOrigin = 'anonymous';
+  var integrity = importMap.integrity[url];
+  if (integrity)
+    script.integrity = integrity;
   script.src = url;
   return script;
 };
