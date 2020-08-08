@@ -57,10 +57,48 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('import.meta.resolve package maps', function () {
+    return System.import('fixtures/resolve.js').then(function (m) {
+      return m.resolve('a')
+    })
+    .then(function (resolved) {
+      assert.equal(resolved, rootURL + 'b');
+    });
+  });
+
+  test('import.meta.resolve package maps paths', function () {
+    return System.import('fixtures/resolve.js').then(function (m) {
+      return m.resolve('a/')
+    })
+    .then(function (resolved) {
+      assert.equal(resolved, baseURL + 'fixtures/browser/a/');
+    });
+  });
+
   test('Contextual package maps', function () {
     return System.import('fixtures/scope-test/index.js')
     .then(function (m) {
       assert.equal(m.mapdep, 'mapdep');
+    });
+  });
+
+  test('import.meta.resolve contextual package maps', function () {
+    return System.import('fixtures/resolve.js').then(function (m) {
+      return m.resolve('maptest', baseURL + 'fixtures/browser/scope-test/index.js')
+    })
+    .then(function (resolved) {
+      assert.equal(resolved, baseURL + 'fixtures/browser/contextual-map-dep.js');
+    });
+  });
+
+  test('import.meta.resolve contextual package maps fail', function () {
+    return System.import('fixtures/resolve.js').then(function (m) {
+      return m.resolve('maptest')
+    })
+    .then(function (resolved) {
+      assert.ok(false);
+    }, function (error) {
+      assert.equal(error.message.indexOf('Unable to resolve'), 0);
     });
   });
 
@@ -217,6 +255,15 @@ suite('SystemJS Standard Tests', function() {
     const resolved = System.resolve('/test/fixtures/browser/auto-import.js');
     assert.ok(System.has(resolved));
     assert.equal(System.get(resolved).auto, 'import');
+  });
+
+  test('import.meta.resolve', function () {
+    return System.import('fixtures/resolve.js').then(function (m) {
+      return m.resolve('./test.js')
+    })
+    .then(function (resolved) {
+      assert.equal(resolved, baseURL + 'fixtures/browser/test.js');
+    });
   });
 
   test('non-enumerable __esModule property export (issue 2090)', function () {
