@@ -31,5 +31,8 @@
     "depcache7.js": ["./depcache8.js"],
     "depcache8.js": ["./depcache9.js"],
     "depcache9.js": ["./depcache10.js"]
+  },
+  "integrity": {
+    "./depcache7.js": "sha384-LCvjADCTfAR3k6tCcnOrjSzC4Zjcp1o3e2zeX8c41pdo9i4cTAfQzG1fRESuhAS4"
   }
 }

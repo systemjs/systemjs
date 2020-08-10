@@ -25,7 +25,8 @@ systemJSPrototype.resolve = function () {
 
 export function applyImportMap(loader, newMap, mapBase) {
   ensureValidSystemLoader(loader);
-  loader[IMPORT_MAP] = resolveAndComposeImportMap(newMap, mapBase || baseUrl, loader[IMPORT_MAP] || { imports: {}, scopes: {} });
+  loader[IMPORT_MAP] = loader[IMPORT_MAP] || { imports: {}, scopes: {} };
+  resolveAndComposeImportMap(newMap, mapBase || baseUrl, loader[IMPORT_MAP]);
   loader[IMPORT_MAP_PROMISE] = Promise.resolve();
 }
 
