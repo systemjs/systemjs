@@ -6,16 +6,81 @@ System.register can be considered as a new module format designed to support the
 
 This format provides support for:
 
-* Live bindings updates, including through reexports, star exports and namespace imports, and any combination of these
-* `import.meta`, including `import.meta.url`
 * Dynamic `import()`
+* `import.meta`, including `import.meta.url` and `import.meta.resolve`
 * Top-level await
+* Live bindings updates, including through reexports, star exports and namespace imports, and any combination of these
 * Circular references including function hoisting (where functions in non-executed modules can be used in circular reference cases)
 
 By ensuring we cover all of these semantics, the guarantee is that if code works in browsers in ES modules, the associated
 System.register code can work with s.js providing a legacy fallback workflow that doesn't randomly break at semantic edge cases.
 
-This format was originally developed out of collaboration in Traceur, and is supported as an output in Babel, TypeScript and Rollup.
+This format was originally developed out of collaboration in Traceur, and is supported as an output in Babel, TypeScript and RollupJS.
+
+**This module format is optimized for semantic equivalence, security and performance.**
+
+The general structure of the format is the following:
+
+```js
+System.register(['dependency'], function (_export, _context) {
+  var dep;
+  return {
+    setters: [function (_dep) {
+      dep = _dep;
+    }],
+    execute: function () {
+      _export({
+        name: 'value'
+      });
+    }
+  };
+});
+```
+
+A global callback is used to fully support CSP policies in browsers.
+
+Setters are used over getters to push live bindings since despite being more verbose they offer better runtime performance and
+better handle circularity cases without deadlock.
+
+#### Dynamic Import
+
+The `_context` object contains `_context.import` function corresponding to the contextual dynamic import for the module.
+
+Any `import()` in an ES module can thus be replaced by `_context.import()` to get a semantically identical behaviour for System modules.
+
+### import.meta
+
+The `_context` object contains a `_context.meta` allowing any use of `import.meta` in the ES module to be converted into a `_context.meta` in the System module for semantic equivalence.
+
+#### import.meta.url: String
+
+`_context.meta.url` provides the full URL to the current module as a String.
+
+This is useful for referencing assets by URL in a way that is supported in many modules environments:
+
+```js
+const assetUrl = new URL('./asset.ext', import.meta.url);
+```
+
+#### import.meta.resolve: (id, parentUrl?) => Promise<String>
+
+> `import.meta.resolve` currently has no specification or browser implementation and may still change.
+
+`_context.meta.resolve` implements `import.meta.resolve` similarly to Node.js.
+
+This can be used to resolve import map resolutions or assets:
+
+```js
+const resolvedDep = await import.meta.resolve('dep');
+const localAsset = await import.meta.resolve('./asset.ext');
+const depPath = await import.meta.resolve('dep/');
+```
+
+#### Top-level await
+
+Top-level await can be supported by returning a Promise from the `execute` function or making `execute` an asynchronous function.
+
+This can fully support synchronous subgraph execution remaining synchronous while also allowing the runtime to support the exact loading semantics desired. Currently SystemJS supports variant B of the spec.
 
 ### Format Definition
 
@@ -176,9 +241,3 @@ Could be written:
 ```
 
 Although in the case of not having any dependencies, it could be equally valid to omit hoisting entirely.
-
-#### Top-level await
-
-Top-level await can be supported by returning a Promise from the `execute` function or making `execute` an asynchronous function.
-
-This can fully support synchronous subgraph execution remaining synchronous while also allowing the runtime to support the exact loading semantics desired. Currently SystemJS supports variant B of the spec.

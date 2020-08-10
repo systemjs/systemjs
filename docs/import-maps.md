@@ -100,16 +100,85 @@ This can be achieved with scoped import maps:
 Scopes still fallback to applying the global imports, so we only need to do this for imports that are different
 from their global resolutions.
 
+### Depcache
+
+> Status: Non-standard Extension - https://github.com/guybedford/import-maps-extensions#depcache
+
+Module loading suffers from the dependency waterfall problem which can cause performance issues.
+
+The mitigation for this is preloading by including preload tags for all modules upfront to avoid their latency-bound discovery.
+
+The problem is that preloading is not always possible, especially in lazy dynamic import scenarios.
+
+To solve this problem, `depcache` allows defining the dependencies of a lazily loaded module upfront, so that when it is needed
+the module loader can load all modules in parallel.
+
+For example:
+
+```html
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "dep": "/path/to/dep.js"
+  },
+  "depcache": {
+    "/path/to/dep.js": ["./dep2.js"],
+    "/path/to/dep2.js": ["./dep3.js"],
+    "/path/to/dep3.js": ["./dep4.js"],
+    "/path/to/dep4.js": ["./dep5.js"]
+  }
+}
+</script>
+<script>
+setTimeout(() => {
+  System.import('dep');
+}, 10000);
+</script>
+```
+
+In the above example, `dep` is loaded lazily after 10 seconds, so we do not want any of `dep.js` or `dep2.js` etc using bandwidth during the initial critical page load.
+
+At the 10 second mark, `dep` is loaded, and if we did not have depcache, we would only know to load `dep2.js` after it is received, and in turn for `dep3.js`, `dep4.js` and `dep5.js`.
+
+With 50ms this might take 250ms for something that could be a single round trip.
+
+With depcache, as soon as `dep` is loaded, SystemJS will trigger requests to all of `dep2.js` to `dep5.js` in parallel, which can be seen from the network tab when using this feature.
+
+Note that for non-lazy-loading scenarios, traditional script preloading techniques work better as they integrate directly into the browser preloader during the critical bootstrap of the page.
+
+### Integrity
+
+> Status: Non-standard Extension - https://github.com/guybedford/import-maps-extensions#integrity
+
+For security it can be useful to ensure that all modules executed are based on [integrity checks](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity).
+
+For statically loaded modules on startup, preload scripts support providing integrity which works fine for static module loads, but for lazy dynamic loading there is no way
+to associate integrity with dynamic `import()` requests.
+
+Putting integrity directly into the import map for these lazy import cases allows SystemJS to enable these comprehensive integrity checks for all modules executed.
+
+The `"integrity"` property in the import map allows mapping a URL to its integrity value to use:
+
+```html
+<script type="systemjs-importmap">
+{
+  "imports": {
+    "pkg": "/path/to/pkg.js"
+  },
+  "integrity": {
+    "/path/to/pkg.js": "sha3
+  }
+}
+</script>
+```
+
 ### Composition
 
-_Note: This is an advanced feature, which is not necessary for most use cases._
+> Status: Non-standard Extension - https://github.com/guybedford/import-maps-extensions#lazy-loading-of-import-maps
 
 Multiple import maps are supported with each successive import map composing with the previous one.
 
-When composing import maps, they are combined in order, with the _right hand side_ resolutions of the new import map applying the resolution
-rules of the import map that came before.
-
-This means import maps can reference resolutions from previous import maps:
+Any existing mappings are replaced, although in future this may be an error.
 
 
 ```html
@@ -123,20 +192,19 @@ This means import maps can reference resolutions from previous import maps:
 <script type="systemjs-importmap">
 {
   "imports": {
-    "y": "x" // resolves to /path/to/x.js
+    "y": "/path/to/y.js",
   }
 }
 </script>
 ```
 
-#### Multiple import maps
-
 Previous versions of the import maps spec had support for multiple import maps in a single web page ([explanation](https://github.com/WICG/import-maps/issues/199)). SystemJS added support for multiple import maps during that time and has decided to keep support for multiple import maps as an experimental feature ([discussion](https://github.com/systemjs/systemjs/issues/2095)). Note that the Chrome implementation of import maps does not yet allow for multiple maps, and use of multiple import maps within SystemJS should be considered experimental and subject to change.
 
 #### Spec and Implementation Feedback
 
-Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on the spec.
+Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on the [import maps specification](https://github.com/wicg/import-maps/blob/master/spec.md).
+
+All SystemJS extensions to import maps are based on proposals available in the [import maps extensions repo](https://github.com/guybedford/import-maps-extensions).
 
 If you have suggestions, or notice cases where this implementation seems not to be following the spec properly feel free to post an issue.
 
-See the [import maps specification](https://github.com/domenic/import-maps/blob/master/spec.md) for exact resolution behaviours.
