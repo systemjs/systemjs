@@ -16,6 +16,7 @@ about: Ask a question about SystemJS
   - [ ] Transform
   - [ ] Use Default
   - [ ] Global
+  - [ ] Dynamic Import Maps
 - Are you using any [custom hooks](/docs/hooks.md)?
 
 ### Question
