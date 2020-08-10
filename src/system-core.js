@@ -41,8 +41,12 @@ systemJSPrototype.import = function (id, parentUrl) {
 
 // Hookable createContext function -> allowing eg custom import meta
 systemJSPrototype.createContext = function (parentId) {
+  var loader = this;
   return {
-    url: parentId
+    url: parentId,
+    resolve: function (id, parentUrl) {
+      return Promise.resolve(loader.resolve(id, parentUrl || parentId));
+    }
   };
 };
 
