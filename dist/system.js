@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.4.3
+* SystemJS 6.5.0
 */
 (function () {
   function errMsg(errCode, msg) {
@@ -120,14 +120,6 @@
     return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
   }
 
-  function objectAssign (to, from) {
-    for (var p in from)
-      to[p] = from[p];
-    return to;
-  }
-
-  var IMPORT_MAP = hasSymbol ? Symbol() : '#';
-
   function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
     for (var p in packages) {
       var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
@@ -144,25 +136,21 @@
     }
   }
 
-  function resolveAndComposeImportMap (json, baseUrl, parentMap) {
-    var outMap = { imports: objectAssign({}, parentMap.imports), scopes: objectAssign({}, parentMap.scopes), depcache: objectAssign({}, parentMap.depcache) };
-
+  function resolveAndComposeImportMap (json, baseUrl, outMap) {
     if (json.imports)
-      resolveAndComposePackages(json.imports, outMap.imports, baseUrl, parentMap, null);
+      resolveAndComposePackages(json.imports, outMap.imports, baseUrl, outMap, null);
 
-    if (json.scopes)
-      for (var s in json.scopes) {
-        var resolvedScope = resolveUrl(s, baseUrl);
-        resolveAndComposePackages(json.scopes[s], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, parentMap, resolvedScope);
-      }
+    var u;
+    for (u in json.scopes || {}) {
+      var resolvedScope = resolveUrl(u, baseUrl);
+      resolveAndComposePackages(json.scopes[u], outMap.scopes[resolvedScope] || (outMap.scopes[resolvedScope] = {}), baseUrl, outMap, resolvedScope);
+    }
 
-    if (json.depcache)
-      for (var d in json.depcache) {
-        var resolvedDepcache = resolveUrl(d, baseUrl);
-        outMap.depcache[resolvedDepcache] = json.depcache[d];
-      }
-
-    return outMap;
+    for (u in json.depcache || {})
+      outMap.depcache[resolveUrl(u, baseUrl)] = json.depcache[u];
+    
+    for (u in json.integrity || {})
+      outMap.integrity[resolveUrl(u, baseUrl)] = json.integrity[u];
   }
 
   function getMatch (path, matchObj) {
@@ -245,8 +233,12 @@
 
   // Hookable createContext function -> allowing eg custom import meta
   systemJSPrototype.createContext = function (parentId) {
+    var loader = this;
     return {
-      url: parentId
+      url: parentId,
+      resolve: function (id, parentUrl) {
+        return Promise.resolve(loader.resolve(id, parentUrl || parentId));
+      }
     };
   };
 
@@ -507,6 +499,73 @@
   envGlobal.System = new SystemJS();
 
   /*
+   * SystemJS browser attachments for script and import map processing
+   */
+
+  var importMapPromise = Promise.resolve();
+  var importMap = { imports: {}, scopes: {}, depcache: {}, integrity: {} };
+
+  // Scripts are processed immediately, on the first System.import, and on DOMReady.
+  // Import map scripts are processed only once (by being marked) and in order for each phase.
+  // This is to avoid using DOM mutation observers in core, although that would be an alternative.
+  var processFirst = hasDocument;
+  systemJSPrototype.prepareImport = function (doProcessScripts) {
+    if (processFirst || doProcessScripts) {
+      processScripts();
+      processFirst = false;
+    }
+    return importMapPromise;
+  };
+  if (hasDocument) {
+    processScripts();
+    window.addEventListener('DOMContentLoaded', processScripts);
+  }
+
+  var systemInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+    var preloads = ( importMap).depcache[url];
+    if (preloads) {
+      for (var i = 0; i < preloads.length; i++)
+        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
+    }
+    return systemInstantiate.call(this, url, firstParentUrl);
+  };
+
+  function processScripts () {
+    [].forEach.call(document.querySelectorAll('script'), function (script) {
+      if (script.sp) // sp marker = systemjs processed
+        return;
+      // TODO: deprecate systemjs-module in next major now that we have auto import
+      if (script.type === 'systemjs-module') {
+        script.sp = true;
+        if (!script.src)
+          return;
+        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+      }
+      else if (script.type === 'systemjs-importmap') {
+        script.sp = true;
+        var fetchPromise = script.src ? fetch(script.src).then(function (res) {
+          return res.text();
+        }) : script.innerHTML;
+        importMapPromise = importMapPromise.then(function () {
+          return fetchPromise;
+        }).then(function (text) {
+          extendImportMap(importMap, text, script.src || baseUrl);
+        });
+      }
+    });
+  }
+
+  function extendImportMap (importMap, newMapText, newMapUrl) {
+    try {
+      var newMap = JSON.parse(newMapText);
+    } catch (err) {
+      throw Error( errMsg(1, "systemjs-importmap contains invalid JSON"));
+    }
+    resolveAndComposeImportMap(newMap, newMapUrl, importMap);
+  }
+
+  /*
    * Script instantiation loading
    */
 
@@ -527,6 +586,9 @@
     // - https://bugs.webkit.org/show_bug.cgi?id=171566
     if (!url.startsWith(baseOrigin + '/'))
       script.crossOrigin = 'anonymous';
+    var integrity = importMap.integrity[url];
+    if (integrity)
+      script.integrity = integrity;
     script.src = url;
     return script;
   };
@@ -589,81 +651,11 @@
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || !true  || baseUrl;
-    return resolveImportMap(this[IMPORT_MAP], resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+    return resolveImportMap(( importMap), resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
   };
 
   function throwUnresolved (id, parentUrl) {
     throw Error(errMsg(8,  "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
-  }
-
-  /*
-   * SystemJS browser attachments for script and import map processing
-   */
-
-  var importMapPromise = Promise.resolve({ imports: {}, scopes: {}, depcache: {} });
-
-  // Scripts are processed immediately, on the first System.import, and on DOMReady.
-  // Import map scripts are processed only once (by being marked) and in order for each phase.
-  // This is to avoid using DOM mutation observers in core, although that would be an alternative.
-  var processFirst = hasDocument;
-  systemJSPrototype.prepareImport = function (doProcessScripts) {
-    if (processFirst || doProcessScripts) {
-      processScripts();
-      processFirst = false;
-    }
-    var loader = this;
-    return importMapPromise.then(function (importMap) {
-      loader[IMPORT_MAP] = importMap;
-    });
-  };
-  if (hasDocument) {
-    processScripts();
-    window.addEventListener('DOMContentLoaded', processScripts);
-  }
-
-  var systemInstantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    var preloads = this[IMPORT_MAP].depcache[url];
-    if (preloads) {
-      for (var i = 0; i < preloads.length; i++)
-        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
-    }
-    return systemInstantiate.call(this, url, firstParentUrl);
-  };
-
-  function processScripts () {
-    [].forEach.call(document.querySelectorAll('script'), function (script) {
-      if (script.sp) // sp marker = systemjs processed
-        return;
-      // TODO: deprecate systemjs-module in next major now that we have auto import
-      if (script.type === 'systemjs-module') {
-        script.sp = true;
-        if (!script.src)
-          return;
-        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
-      }
-      else if (script.type === 'systemjs-importmap') {
-        script.sp = true;
-        importMapPromise = importMapPromise.then(function (importMap) {
-          if (script.src)
-            return fetch(script.src).then(function (res) {
-              return res.text();
-            }).then(function (text) {
-              return extendImportMap(importMap, text, script.src);
-            });
-          return extendImportMap(importMap, script.innerHTML, baseUrl);
-        });
-      }
-    });
-  }
-
-  function extendImportMap (importMap, newMapText, newMapUrl) {
-    try {
-      var newMap = JSON.parse(newMapText);
-    } catch (err) {
-      throw Error( errMsg(1, "systemjs-importmap contains invalid JSON"));
-    }
-    return resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
 
   /*

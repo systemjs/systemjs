@@ -1,3 +1,7 @@
+SystemJS 6.5.0
+* import.meta.resolve implementation (https://github.com/systemjs/systemjs/pull/2230)
+* Import maps integrity feature (https://github.com/systemjs/systemjs/pull/2229)
+
 SystemJS 6.4.3
 * Define an "s.js" entry in "exports" (https://github.com/systemjs/systemjs/pull/2226)
 * Fixup use of const for older browsers (https://github.com/systemjs/systemjs/issues/2227)
