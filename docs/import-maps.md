@@ -144,7 +144,7 @@ With 50ms this might take 250ms for something that could be a single round trip.
 
 With depcache, as soon as `dep` is loaded, SystemJS will trigger requests to all of `dep2.js` to `dep5.js` in parallel, which can be seen from the network tab when using this feature.
 
-Note that for non-lazy-loading scenarios, traditional script preloading techniques work better as they integrate directly into the browser preloader during the critical bootstrap of the page.
+Note that for non-lazy-loading scenarios, [traditional script preloading](https://developer.mozilla.org/en-US/docs/Web/HTML/Preloading_content) techniques work better as they integrate directly into the browser preloader during the critical bootstrap of the page.
 
 ### Integrity
 
@@ -166,7 +166,7 @@ The `"integrity"` property in the import map allows mapping a URL to its integri
     "pkg": "/path/to/pkg.js"
   },
   "integrity": {
-    "/path/to/pkg.js": "sha3
+    "/path/to/pkg.js": "sha384-..."
   }
 }
 </script>
@@ -207,4 +207,3 @@ Part of the benefit of giving users a working version of an early spec is being 
 All SystemJS extensions to import maps are based on proposals available in the [import maps extensions repo](https://github.com/guybedford/import-maps-extensions).
 
 If you have suggestions, or notice cases where this implementation seems not to be following the spec properly feel free to post an issue.
-

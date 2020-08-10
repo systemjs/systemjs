@@ -15,7 +15,7 @@ This format provides support for:
 By ensuring we cover all of these semantics, the guarantee is that if code works in browsers in ES modules, the associated
 System.register code can work with s.js providing a legacy fallback workflow that doesn't randomly break at semantic edge cases.
 
-This format was originally developed out of collaboration in Traceur, and is supported as an output in Babel, TypeScript and RollupJS.
+This format was originally developed out of collaboration in Traceur, and is supported as an output in Babel, TypeScript, Webpack, and RollupJS.
 
 **This module format is optimized for semantic equivalence, security and performance.**
 
