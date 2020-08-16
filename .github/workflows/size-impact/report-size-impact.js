@@ -1,9 +1,28 @@
-import { reportSizeImpactIntoGithubPullRequest } from "@jsenv/github-pull-request-filesize-impact";
+import {
+  reportFileSizeImpact,
+  readGithubWorkflowEnv,
+  none,
+  gzip,
+  brotli,
+} from "@jsenv/file-size-impact";
 
-reportSizeImpactIntoGithubPullRequest({
-  projectDirectoryUrl: new URL("../../../", import.meta.url),
-  baseSnapshotFileRelativeUrl: process.argv[2],
-  headSnapshotFileRelativeUrl: process.argv[3],
-  commentSections: { fileByFileImpact: true },
-  generatedByLink: true,
+reportFileSizeImpact({
+  ...readGithubWorkflowEnv(),
+
+  trackingConfig: {
+    systemjs: {
+      "./dist/*": true,
+      "./dist/*.map": false,
+    },
+    extras: {
+      "./dist/extras/**/*.js": true,
+      "./dist/extras/**/*.map": false,
+    },
+  },
+  transformations: { none, gzip, brotli },
+  commentSections: {
+    overallSizeImpact: false,
+    detailedSizeImpact: true,
+    cacheImpact: false,
+  },
 });
