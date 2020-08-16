@@ -10,9 +10,13 @@ reportFileSizeImpact({
   ...readGithubWorkflowEnv(),
 
   trackingConfig: {
-    systemjs: {
+    browser: {
       "./dist/*": true,
       "./dist/*.map": false,
+      "./dist/system-node.cjs": false,
+    },
+    node: {
+      "./dist/system-node.cjs": true,
     },
     extras: {
       "./dist/extras/**/*.js": true,
