@@ -59,7 +59,22 @@ This is used in SystemJS core to ensure that import maps are loaded so that the 
 
 This function downloads and executes the code for a module. The promise must resolve with a "register" array, as described in the `getRegister` documentation.
 
-The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. [Example](https://github.com/systemjs/systemjs/blob/master/src/features/script-load.js).
+The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. 
+
+It is impossible to have an "identifier" to mark the module identity like AMD therefore SystemJS is using a race condition prone way to register the module. Therefore, you must make sure to maintain the execution order of the code.
+
+The correct execution order looks like this:
+
+```
+async System.instantiate
+  => (The module calls) System.register
+  => System.instantiate noticed the module executed **synchorously** 
+  => System.instantiate resolve with System.getRegister **instantly**
+```
+
+The [default implementation](https://github.com/systemjs/systemjs/blob/master/src/features/script-load.js) is based on the creation of `<script>` tag and the `onload` event is emitted just after the System.register call.
+
+If in your environment it is not possible to maintain the execution order (for example, involves the interaction of multiple event loops), you can make the call to the instantiate in a sequent way (Notice: this will slow down the module loading speed if they need to loaded by the network). Here is another [example that implementing System.instantiate](https://github.com/Jack-Works/webextension-systemjs/blob/master/src/content-script.ts#L10) for a speical environment that cannot use `<script>` tag.
 
 #### getRegister() -> [deps: String[], declare: Function]
 
