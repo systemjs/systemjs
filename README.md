@@ -172,12 +172,20 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 }
 </script>
 <!-- Alternatively:
-<script type="systemjs-importmap" src="path/to/map.json">
+<script type="systemjs-importmap" src="path/to/map.json" crossorigin="anonymous">
 -->
 <script>
   System.import('/js/main.js');
 </script>
 ```
+
+#### IE11 Note for External Maps
+
+When using external import maps (those with `src=""` attributes), there is an IE11-specific workaround that might need to be used. Browsers should not make a network request when they see `<script type="systemjs-importmap" src="/importmap.json"></script>` during parsing of the initial HTML page. However, IE11 does so. [Codesandbox demonstration](https://codesandbox.io/s/vibrant-black-xiok4?file=/index.html)
+
+Normally this is not an issue, as SystemJS will make an additional request via fetch/xhr for the import map. However, a problem can occur when the file is cached after the first request, since the first request caused by IE11 does not send the Origin request header by default. If the request requires CORS, the lack of an Origin request header causes many web servers (including AWS Cloudfront) to omit the response CORS headers. This can result in the resource being cached without CORS headers, which causes the later SystemJS fetch() to fail because of CORS checks.
+
+This can be worked around by adding `crossorigin="anonymous"` as an attribute to the `<script type="systemjs-importmap">` script.
 
 ## Community Projects
 
