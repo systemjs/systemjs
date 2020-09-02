@@ -1,7 +1,7 @@
 import {
   reportFileSizeImpact,
   readGithubWorkflowEnv,
-  none,
+  raw,
   gzip,
   brotli,
 } from "@jsenv/file-size-impact";
@@ -11,22 +11,17 @@ reportFileSizeImpact({
 
   trackingConfig: {
     browser: {
-      "./dist/*": true,
-      "./dist/*.map": false,
+      "./dist/*/*.js": false,
+      "./dist/*/*.min.js": true,
       "./dist/system-node.cjs": false,
     },
     node: {
       "./dist/system-node.cjs": true,
     },
     extras: {
-      "./dist/extras/**/*.js": true,
-      "./dist/extras/**/*.map": false,
+      "./dist/extras/**/*.js": false,
+      "./dist/extras/**/*.min.js": true,
     },
   },
-  transformations: { none, gzip, brotli },
-  commentSections: {
-    overallSizeImpact: false,
-    detailedSizeImpact: true,
-    cacheImpact: false,
-  },
+  transformations: { raw, gzip, brotli },
 });
