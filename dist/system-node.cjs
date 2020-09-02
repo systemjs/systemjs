@@ -2638,16 +2638,6 @@ if (hasDocument) {
   window.addEventListener('DOMContentLoaded', processScripts);
 }
 
-var systemInstantiate = system_core_systemJSPrototype.instantiate;
-system_core_systemJSPrototype.instantiate = function (url, firstParentUrl) {
-  var preloads = (!process.env.SYSTEM_BROWSER && this[IMPORT_MAP] || import_maps_importMap).depcache[url];
-  if (preloads) {
-    for (var i = 0; i < preloads.length; i++)
-      getOrCreateLoad(this, this.resolve(preloads[i], url), url);
-  }
-  return systemInstantiate.call(this, url, firstParentUrl);
-};
-
 function processScripts () {
   [].forEach.call(document.querySelectorAll('script'), function (script) {
     if (script.sp) // sp marker = systemjs processed

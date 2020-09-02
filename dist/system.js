@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.5.0
+* SystemJS 6.5.1
 */
 (function () {
   function errMsg(errCode, msg) {
@@ -521,16 +521,6 @@
     window.addEventListener('DOMContentLoaded', processScripts);
   }
 
-  var systemInstantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    var preloads = ( importMap).depcache[url];
-    if (preloads) {
-      for (var i = 0; i < preloads.length; i++)
-        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
-    }
-    return systemInstantiate.call(this, url, firstParentUrl);
-  };
-
   function processScripts () {
     [].forEach.call(document.querySelectorAll('script'), function (script) {
       if (script.sp) // sp marker = systemjs processed
@@ -657,6 +647,16 @@
   function throwUnresolved (id, parentUrl) {
     throw Error(errMsg(8,  "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
   }
+
+  var systemInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+    var preloads = ( importMap).depcache[url];
+    if (preloads) {
+      for (var i = 0; i < preloads.length; i++)
+        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
+    }
+    return systemInstantiate.call(this, url, firstParentUrl);
+  };
 
   /*
    * Supports loading System.register in workers
