@@ -45,7 +45,7 @@
   },
   "scripts": {
     "build": "rimraf dist && mkdirp dist && concurrently -n w: 'npm:build:*'",
-    "build:node": "node --experimental-modules build-node.js",
+    "build:node": "node --experimental-modules build-node.mjs",
     "build:browser": "rollup -c",
     "build-browser-dev": "rollup -c --environment dev",
     "footprint": "concurrently -n w: 'npm:footprint:*'",
