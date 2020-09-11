@@ -31,7 +31,7 @@ systemJSPrototype.createScript = function (url) {
 };
 
 // Auto imports -> script tags can be inlined directly for load phase
-var lastAutoImportUrl, lastAutoImportDeps;
+var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportAutoImport;
 var autoImportCandidates = {};
 var systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
@@ -45,7 +45,7 @@ systemJSPrototype.register = function (deps, declare) {
       autoImportCandidates[url] = [deps, declare];
       // if this is already a System load, then the instantiate has already begun
       // so this re-import has no consequence
-      this.import(url);
+      lastAutoImportAutoImport = setTimeout(this.import, 0, url);
     }
   }
   else {
@@ -77,8 +77,10 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       else {
         var register = loader.getRegister();
         // Clear any auto import registration for dynamic import scripts during load
-        if (register && register[0] === lastAutoImportDeps)
+        if (register && register[0] === lastAutoImportDeps) {
+          clearTimeout(lastAutoImportAutoImport);
           delete autoImportCandidates[lastAutoImportUrl];
+        }
         resolve(register);
       }
     });
