@@ -16,7 +16,7 @@
     "url": "git://github.com/systemjs/systemjs"
   },
   "author": "Guy Bedford",
-  "type": "module",
+  "type": "script",
   "license": "MIT",
   "files": [
     "dist"
