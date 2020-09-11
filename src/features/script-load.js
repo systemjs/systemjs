@@ -42,26 +42,28 @@ systemJSPrototype.register = function (deps, declare) {
     if (url) {
       lastAutoImportUrl = url;
       lastAutoImportDeps = deps;
-      autoImportCandidates[url] = [deps, declare];
       // if this is already a System load, then the instantiate has already begun
       // so this re-import has no consequence
-      lastAutoImportAutoImport = setTimeout(this.import, 0, url);
+      var loader = this;
+      lastAutoImportAutoImport = setTimeout(function () {
+        autoImportCandidates[url] = [deps, declare];
+        loader.import(url);
+      });
     }
   }
   else {
     lastAutoImportDeps = undefined;
+    autoImportCandidates = null;
   }
   return systemRegister.call(this, deps, declare);
 };
 
 var lastWindowErrorUrl, lastWindowError;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
-  var loader = this;
-  var autoImportRegistration = autoImportCandidates[url];
-  if (autoImportRegistration) {
-    delete autoImportCandidates[url];
+  var autoImportRegistration = autoImportCandidates && autoImportCandidates[url];
+  if (autoImportRegistration)
     return autoImportRegistration;
-  }
+  var loader = this;
   return new Promise(function (resolve, reject) {
     var script = systemJSPrototype.createScript(url);
     script.addEventListener('error', function () {
@@ -77,10 +79,8 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       else {
         var register = loader.getRegister();
         // Clear any auto import registration for dynamic import scripts during load
-        if (register && register[0] === lastAutoImportDeps) {
+        if (register && register[0] === lastAutoImportDeps)
           clearTimeout(lastAutoImportAutoImport);
-          delete autoImportCandidates[lastAutoImportUrl];
-        }
         resolve(register);
       }
     });
