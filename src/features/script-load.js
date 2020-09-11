@@ -11,12 +11,11 @@ if (hasDocument) {
     lastWindowErrorUrl = evt.filename;
     lastWindowError = evt.error;
   });
-  var baseOrigin = location.origin
+  var baseOrigin = location.origin;
 }
 
 systemJSPrototype.createScript = function (url) {
   var script = document.createElement('script');
-  script.charset = 'utf-8';
   script.async = true;
   // Only add cross origin for actual cross origin
   // this is because Safari triggers for all
@@ -31,7 +30,7 @@ systemJSPrototype.createScript = function (url) {
 };
 
 // Auto imports -> script tags can be inlined directly for load phase
-var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportAutoImport;
+var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
 var autoImportCandidates = {};
 var systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
@@ -45,7 +44,7 @@ systemJSPrototype.register = function (deps, declare) {
       // if this is already a System load, then the instantiate has already begun
       // so this re-import has no consequence
       var loader = this;
-      lastAutoImportAutoImport = setTimeout(function () {
+      lastAutoImportTimeout = setTimeout(function () {
         autoImportCandidates[url] = [deps, declare];
         loader.import(url);
       });
@@ -53,16 +52,17 @@ systemJSPrototype.register = function (deps, declare) {
   }
   else {
     lastAutoImportDeps = undefined;
-    autoImportCandidates = null;
   }
   return systemRegister.call(this, deps, declare);
 };
 
 var lastWindowErrorUrl, lastWindowError;
 systemJSPrototype.instantiate = function (url, firstParentUrl) {
-  var autoImportRegistration = autoImportCandidates && autoImportCandidates[url];
-  if (autoImportRegistration)
+  var autoImportRegistration = autoImportCandidates[url];
+  if (autoImportRegistration) {
+    delete autoImportCandidates[url];
     return autoImportRegistration;
+  }
   var loader = this;
   return new Promise(function (resolve, reject) {
     var script = systemJSPrototype.createScript(url);
@@ -80,7 +80,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
         var register = loader.getRegister();
         // Clear any auto import registration for dynamic import scripts during load
         if (register && register[0] === lastAutoImportDeps)
-          clearTimeout(lastAutoImportAutoImport);
+          clearTimeout(lastAutoImportTimeout);
         resolve(register);
       }
     });
