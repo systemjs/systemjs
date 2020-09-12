@@ -5,7 +5,7 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including [IE11](#ie11).
+Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including [IE11](#ie11-support).
 
 Release Links:
 
@@ -39,7 +39,7 @@ SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
 
-The minimal [2.3KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including [IE11](#ie11).
+The minimal [2.3KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including [IE11](#ie11-support).
 
 Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
 
