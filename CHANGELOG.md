@@ -1,3 +1,7 @@
+SystemJS 6.6.0
+* Fix autoimport dynamic import conflicts (https://github.com/systemjs/systemjs/pull/2245)
+* Set "type": "script" in package.json (https://github.com/systemjs/systemjs/pull/2246)
+
 SystemJS 6.5.1
 * Fix depcache hook (https://github.com/systemjs/systemjs/pull/2242)
 
