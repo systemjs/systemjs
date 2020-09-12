@@ -5,7 +5,7 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including IE.
+Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including [IE11](#ie11).
 
 Release Links:
 
@@ -39,11 +39,11 @@ SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
 
-The minimal [2.3KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including IE11++.
+The minimal [2.3KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including [IE11](#ie11).
 
 Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
 
-* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">` (requires a `fetch` polyfill for eg IE11).
+* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">`.
 * Loads and resolves modules as URLs, throwing for bare specifier names (eg `import 'lodash'`) like the native module loader.
 * Loads System.register modules.
 * Core hookable extensible loader supporting [custom extensions](docs/hooks.md).
@@ -52,7 +52,7 @@ Since the ES module semantics such as live bindings, circular references, contex
 
 The [3.7KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for [global loading](#extras), [non-javascript module](/docs/module-types.md), and the [SystemJS registry API](/docs/api.md#registry).
 
-* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">` (requires a `fetch` polyfill for eg IE11).
+* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">`.
 * Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
@@ -179,7 +179,26 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 </script>
 ```
 
-#### IE11 Note for External Maps
+### IE11 Support
+
+IE11 continues to be fully supported, provided the relevant polyfills are available.
+
+The main required polyfill is a `Promise` polyfill. If using import maps a `fetch` polyfill is also needed.
+
+Both of these can be loaded conditionally using for example using [Bluebird Promises](http://bluebirdjs.com/docs/getting-started.html) and the [GitHub Fetch Polyfill](https://github.github.io/fetch/) over Unpkg:
+
+```html
+<script>
+  if (typeof Promise === 'undefined')
+    document.write('<script src="https://unpkg.com/bluebird@3.7.2/js/browser/bluebird.core.min.js"><\/script>');
+  if (typeof fetch === 'undefined')
+    document.write('<script src="https://unpkg.com/whatwg-fetch@3.4.1/dist/fetch.umd.js"><\/script>');
+</script>
+```
+
+located _before_ the SystemJS script itself. The above will ensure these polyfills are only fetched for older browsers without `Promise` and `fetch` support.
+
+#### Note on Import Maps Support in IE11
 
 When using external import maps (those with `src=""` attributes), there is an IE11-specific workaround that might need to be used. Browsers should not make a network request when they see `<script type="systemjs-importmap" src="/importmap.json"></script>` during parsing of the initial HTML page. However, IE11 does so. [Codesandbox demonstration](https://codesandbox.io/s/vibrant-black-xiok4?file=/index.html)
 
@@ -237,39 +256,6 @@ If building code using the `System` global in Webpack, the following config is n
 ## Using npm packages
 
 Third party libraries and npm packages may be used as long as they are published in [a supported module format](https://github.com/systemjs/systemjs/blob/master/docs/module-types.md). For packages that do not exist in a supported module format, [here is a list of github repos](https://github.com/esm-bundle/) that publish `System.register` versions of popular third party libraries (such as react, react-dom, rxjs, etc).
-
-## Polyfills for Older Browsers
-
-### Promises
-
-Both builds of SystemJS need Promises in the environment to work, which aren't supported in older browsers like IE11.
-
-Promises can be conditionally polyfilled using, for example, [Bluebird](http://bluebirdjs.com/docs/getting-started.html) (generally the fastest Promise polyfill):
-
-```html
-<script>
-  if (typeof Promise === 'undefined')
-    document.write('<script src="node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
-</script>
-```
-
-> Generally `document.write` is not recommended when writing web applications, but for this use case
-  it works really well and will only apply in older browsers anyway.
-
-### Fetch
-
-To support import maps in the system.js build, a fetch polyfill is need. The [GitHub polyfill](https://github.github.io/fetch/) is recommended:
-
-```html
-<script>
-  if (typeof fetch === 'undefined')
-    document.write('<script src="node_modules/whatwg-fetch/fetch.js"><\/script>');
-</script>
-```
-
-### Constructable Stylesheets
-
-If using CSS modules, a Constructable Stylesheets polyfill is needed - [see the module types documentation](docs/module-types.md#constructable-style-sheets-polyfill) for further info.
 
 ## Contributing to SystemJS
 
