@@ -22,6 +22,6 @@ jobs:
       - name: Setup npm
         run: npm install
       - name: Report file size impact
-        run: node ./.github/workflows/size-impact/report-size-impact.js
+        run: node ./.github/workflows/size-impact/report-size-impact.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
