@@ -29,12 +29,10 @@ The [4.2KB system.js loader](dist/system.min.js) adds the following features in 
 
 The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where System modules need to be executed on the server like SSR. It has the following features:
 
-* Loading System modules from disk (via `file://` urls).
-* Loading System modules from network (via `http://` urls), with included caching that respects the Content-Type header.
+* Loading System modules from disk (via `file://` urls) or the network, with included caching that respects the Content-Type header.
 * Import Maps (via the `applyImportMap` api).
-* Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
-* Loading global modules with the included [global loading extra](#extras)
+* Loading global modules with the included [global loading extra](#extras).
 
 _Loading CommonJS modules is not currently supported in this loader and likely won't be. If you find you need them it is more advisable to use [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) where possible instead of the SystemJS Node.js loader._
 
@@ -54,6 +52,12 @@ The following extras are included in system.js loader by default, and can be add
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
+## SystemJS Babel
+
+To support easy loading of TypeScript or ES modules in development SystemJS workflows, see the [SystemJS Babel Extension](https://github.com/systemjs/systemjs-babel).
+
+SystemJS does not support direct integration with the native ES module browser loader because there is no way to share dependencies between the module systems. For extending the functionality of the native module loader in browsers, see [ES module Shims](https://github.com/guybedford/es-module-shims), which like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers, which it does this a fast Wasm-based source rewriting to remap module specifiers.
+
 ## Performance
 
 SystemJS is designed for production modules performance its performance is only around a factor of 1.5 times the performance of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
@@ -63,8 +67,6 @@ SystemJS is designed for production modules performance its performance is only 
 | Native modules | 1668ms | 49ms |
 | SystemJS | 2334ms | 81ms |
 | es-module-shims | 2671ms | 602ms |
-
-> [ES module Shims](https://github.com/guybedford/es-module-shims), like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers. The performance difference is because source rewriting happens in browser instead of ahead-of-time like SystemJS handles via the System module format.
 
 ## Getting Started
 
@@ -202,13 +204,6 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
 * [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
 * [esm-bundle](https://github.com/esm-bundle) - list of System.register versions for major libraries, including documentation on how to create a System.register bundle for any npm package.
-
-## Loader Extensions
-
-This list can be extended to include third-party loader extensions. [Post a PR](https://github.com/systemjs/systemjs/edit/master/README.md).
-
-* [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
-* [systemjs-css-extra](https://github.com/systemjs/systemjs-css-extra) CSS loader plugin
 
 ## Compatibility with Webpack
 
