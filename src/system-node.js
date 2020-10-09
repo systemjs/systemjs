@@ -1,8 +1,9 @@
 import './features/resolve.js';
 import './features/registry.js';
-import './extras/global.js';
-import './extras/module-types.js';
+import './features/fetch-load.js';
 import './features/node-fetch.js';
+import './extras/global.js';
+
 import { REGISTRY, systemJSPrototype } from './system-core.js';
 import { BASE_URL, baseUrl, resolveAndComposeImportMap, IMPORT_MAP } from './common.js';
 
