@@ -39,7 +39,7 @@ SystemJS provides two hookable base builds:
 
 #### 1. s.js minimal loader
 
-The minimal [2.3KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including [IE11](#ie11-support).
+The minimal [2.8KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including [IE11](#ie11-support).
 
 Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
 
@@ -50,7 +50,7 @@ Since the ES module semantics such as live bindings, circular references, contex
 
 #### 2. system.js loader
 
-The [3.7KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for [global loading](#extras), [non-javascript module](/docs/module-types.md), and the [SystemJS registry API](/docs/api.md#registry).
+The [4.2KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for [global loading](#extras), [non-javascript module](/docs/module-types.md), and the [SystemJS registry API](/docs/api.md#registry).
 
 * Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">`.
 * Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
