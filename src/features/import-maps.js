@@ -37,7 +37,7 @@ function processScripts () {
     }
     else if (script.type === 'systemjs-importmap') {
       script.sp = true;
-      var fetchPromise = script.src ? fetch(script.src).then(function (res) {
+      var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
         return res.text();
       }) : script.innerHTML;
       importMapPromise = importMapPromise.then(function () {
