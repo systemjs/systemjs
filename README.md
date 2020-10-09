@@ -5,57 +5,25 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility for older browsers.
-
-Release Links:
-
-* [Latest 6.x Major Release](https://github.com/systemjs/systemjs/releases/tag/6.0.0)
-* [SystemJS 2.0 Announcement Post](https://guybedford.com/systemjs-2.0)
-* [SystemJS 0.21](https://github.com/systemjs/systemjs/tree/0.21)
-
-For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
-
-## Examples
-
-The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
-
-## Performance
-
-SystemJS is designed for production modules performance and can load multiple modules in less than a millisecond. Its performance is only around a factor of 1.5 times the performance of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
-
-| Tool | Uncached | Cached |
-| ---- | -------- | ------ |
-| Native modules | 1668ms | 49ms |
-| SystemJS | 2334ms | 81ms |
-| es-module-shims | 2671ms | 602ms |
-
-> [ES module Shims](https://github.com/guybedford/es-module-shims), like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers. The performance difference is because source rewriting happens in browser instead of ahead-of-time like SystemJS handles via the System module format.
-
 ## Overview
 
-[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw)
+SystemJS is a hookable standards-based module loader. It provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, running [almost-native module speeds](#performance) while supporting top-level await, dynamic import, circular references and live bindings, import.meta.url, module types, import maps, integrity and Content Security Policy with compatibility in older browsers back to IE11.
 
-SystemJS provides two hookable base builds:
+#### 1. s.js minimal production loader
 
-#### 1. s.js minimal loader
+The minimal [2.8KB s.js production loader](dist/s.min.js) includes the following features:
 
-The minimal [2.8KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including [IE11](#ie11-support).
-
-Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
-
-* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">`.
-* Loads and resolves modules as URLs, throwing for bare specifier names (eg `import 'lodash'`) like the native module loader.
-* Loads System.register modules.
-* Core hookable extensible loader supporting [custom extensions](docs/hooks.md).
+* Loads `System.register` modules, the CSP-compatible [SystemJS module format](docs/system-register.md).
+* Support for loading bare specifier names with [import maps](docs/import-maps.md) via `<script type="systemjs-importmap">`.
+* Supports [hooks](docs/hooks.md) for loader customization.
 
 #### 2. system.js loader
 
-The [4.2KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for [global loading](#extras), [non-javascript module](/docs/module-types.md), and the [SystemJS registry API](/docs/api.md#registry).
+The [4.2KB system.js loader](dist/system.min.js) adds the following features in addition to the `s.js` features above:
 
-* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">`.
-* Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
-* [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
+* [Tracing hooks](docs/hooks.md##onloaderr-id-deps-iserrsource-sync) and [registry deletion API](docs/api.md#registry) for reloading workflows.
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
+* Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
 
 #### 3. system-node.cjs loader
 
@@ -63,10 +31,10 @@ The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS bui
 
 * Loading System modules from disk (via `file://` urls).
 * Loading System modules from network (via `http://` urls), with included caching that respects the Content-Type header.
-* Loading global modules with the included [global loading extra](#extras)
-* Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 * Import Maps (via the `applyImportMap` api).
+* Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
+* Loading global modules with the included [global loading extra](#extras)
 
 _Loading CommonJS modules is not currently supported in this loader and likely won't be. If you find you need them it is more advisable to use [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) where possible instead of the SystemJS Node.js loader._
 
@@ -85,6 +53,24 @@ The following extras are included in system.js loader by default, and can be add
 * [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
+
+## Performance
+
+SystemJS is designed for production modules performance its performance is only around a factor of 1.5 times the performance of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | 1668ms | 49ms |
+| SystemJS | 2334ms | 81ms |
+| es-module-shims | 2671ms | 602ms |
+
+> [ES module Shims](https://github.com/guybedford/es-module-shims), like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers. The performance difference is because source rewriting happens in browser instead of ahead-of-time like SystemJS handles via the System module format.
+
+## Getting Started
+
+[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw).
+
+The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
 
 ## Backers
 
