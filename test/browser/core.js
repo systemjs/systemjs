@@ -172,13 +172,13 @@ suite('SystemJS Standard Tests', function() {
   test('Errors for bad Content-Type headers', function () {
     return System.import('fixtures/content-type-none.json')
     .catch(function (err) {
-      assert.ok(/missing.*content-type.*error#4/i.test(err));
+      assert.ok(/Unknown Content-Type.*error#4/i.test(err));
     })
     .then(function () {
       return System.import('fixtures/content-type-xml.json')
     })
     .catch(function (err) {
-      assert.ok(/unknown module type.*xml.*error#4/i.test(err));
+      assert.ok(/Unknown Content-Type.*error#4/i.test(err));
     })
   });
 
