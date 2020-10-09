@@ -18,8 +18,9 @@
   systemJSPrototype.fetch = function (url, options) {
     return fetch(url, options)
     .then(function (res) {
+      if (!res.ok)
+        return res;
       var contentType = res.headers.get('content-type');
-      console.log('CT: ' + contentType);
       if (jsonContentType.test(contentType))
         return res.json()
         .then(function (json) {
