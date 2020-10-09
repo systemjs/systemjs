@@ -56,11 +56,11 @@ Since all loader features are hookable, custom extensions can be easily made fol
 
 To support easy loading of TypeScript or ES modules in development SystemJS workflows, see the [SystemJS Babel Extension](https://github.com/systemjs/systemjs-babel).
 
-SystemJS does not support direct integration with the native ES module browser loader because there is no way to share dependencies between the module systems. For extending the functionality of the native module loader in browsers, see [ES module Shims](https://github.com/guybedford/es-module-shims), which like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers, which it does this a fast Wasm-based source rewriting to remap module specifiers.
+SystemJS does not support direct integration with the native ES module browser loader because there is no way to share dependencies between the module systems. For extending the functionality of the native module loader in browsers, see [ES module Shims](https://github.com/guybedford/es-module-shims), which like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers, which it does using a fast Wasm-based source rewriting to remap module specifiers.
 
 ## Performance
 
-SystemJS is designed for production modules performance its performance is only around a factor of 1.5 times the performance of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+SystemJS is designed for production modules performance roughly only around a factor of 1.5 times the speed of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
 
 | Tool | Uncached | Cached |
 | ---- | -------- | ------ |
