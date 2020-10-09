@@ -1,5 +1,8 @@
 (function(){/*
  * Named exports support for legacy module formats in SystemJS 2.0
+ * 
+ * Note: This extra is deprecated as the behaviour is now the default in core,
+ *       so will be removed in the next major.
  */
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;

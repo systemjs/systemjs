@@ -74,6 +74,7 @@
     return [[], function (_export) {
       return {
         execute: function () {
+          _export(globalExport);
           _export({ default: globalExport, __useDefault: true });
         }
       };

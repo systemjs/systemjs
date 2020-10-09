@@ -1,3 +1,9 @@
+SystemJS 6.7.0
+* Implement integrity attribute for systemjs-importmap scripts (https://github.com/systemjs/systemjs/commit/78072e594ebebab9124aa9fedd7e17d8303835e1)
+* Deprecate the transform and use default extras (https://github.com/systemjs/systemjs/commit/5f7571a76bef210d096e672c9f011d94871a6827)
+* Fetch hooks brought into core, module types extra refactoring (https://github.com/systemjs/systemjs/commit/281fdf0653663c58145f880131dceaf479add553)
+* Inline named exports extra behaviours into core and deprecate (https://github.com/systemjs/systemjs/commit/3eefa2daa8d203e8d886bae7dc587eed148c5808)
+
 SystemJS 6.6.1
 * IE11 support bug fix (https://github.com/systemjs/systemjs/pull/2247)
 

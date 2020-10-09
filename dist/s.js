@@ -1,8 +1,9 @@
 /*
-* SJS 6.6.1
+* SJS 6.7.0
 * Minimal SystemJS Build
 */
 (function () {
+
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS https://git.io/JvFET#" + errCode + ")";
   }
@@ -286,7 +287,7 @@
         // note if we have hoisted exports (including reexports)
         load.h = true;
         var changed = false;
-        if (typeof name !== 'object') {
+        if (typeof name === 'string') {
           if (!(name in ns) || ns[name] !== value) {
             ns[name] = value;
             changed = true;
@@ -464,18 +465,18 @@
             execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
-              if (!true) triggerOnload(loader, load, null, true);
+              if (!true) ;
             }, function (err) {
               load.er = err;
               load.E = null;
-              if (!true) triggerOnload(loader, load, err, true);
+              if (!true) ;
               else throw err;
             });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!true) triggerOnload(loader, load, null, true);
+        if (!true) ;
       }
       catch (err) {
         load.er = err;
@@ -526,7 +527,7 @@
       }
       else if (script.type === 'systemjs-importmap') {
         script.sp = true;
-        var fetchPromise = script.src ? fetch(script.src).then(function (res) {
+        var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           return res.text();
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
@@ -629,6 +630,38 @@
         }
       });
       document.head.appendChild(script);
+    });
+  };
+
+  /*
+   * Fetch loader, sets up shouldFetch and fetch hooks
+   */
+  systemJSPrototype.shouldFetch = function () {
+    return false;
+  };
+  if (typeof fetch !== 'undefined')
+    systemJSPrototype.fetch = fetch;
+
+  var instantiate = systemJSPrototype.instantiate;
+  var jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
+  systemJSPrototype.instantiate = function (url, parent) {
+    var loader = this;
+    if (!this.shouldFetch(url))
+      return instantiate.apply(this, arguments);
+    return this.fetch(url, {
+      credentials: 'same-origin',
+      integrity: importMap.integrity[url]
+    })
+    .then(function (res) {
+      if (!res.ok)
+        throw Error(errMsg(7,  [res.status, res.statusText, url, parent].join(', ') ));
+      var contentType = res.headers.get('content-type');
+      if (!contentType || !jsContentTypeRegEx.test(contentType))
+        throw Error(errMsg(4,  contentType ));
+      return res.text().then(function (source) {
+        (0, eval)(source);
+        return loader.getRegister();
+      });
     });
   };
 
