@@ -97,7 +97,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       // note if we have hoisted exports (including reexports)
       load.h = true;
       var changed = false;
-      if (typeof name !== 'object') {
+      if (typeof name === 'string') {
         if (!(name in ns) || ns[name] !== value) {
           ns[name] = value;
           changed = true;

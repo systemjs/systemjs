@@ -58,6 +58,7 @@ import { errMsg } from '../err-msg.js';
             module.exports = amdResult;
           if (exports !== module.exports)
             _export('default', module.exports);
+          _export(module.exports);
         }
       };
     }];
