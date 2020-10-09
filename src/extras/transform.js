@@ -2,6 +2,8 @@ import { errMsg } from '../err-msg.js';
 
 /*
  * Support for a "transform" loader interface
+ *
+ * Note: This extra is deprecated and will be removed in the next major.
  */
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;
