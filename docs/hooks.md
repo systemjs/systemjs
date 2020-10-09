@@ -17,11 +17,9 @@ System.constructor.prototype.hookName = function (args) {
 };
 ```
 
-When hooking the loader it is important to pay attention to the order in which hooks will apply, and to
-keep existing hooks running where they provide necessary functionality.
+When hooking the loader it is important to pay attention to the order in which hooks will apply, and to keep existing hooks running where they provide necessary functionality.
 
-In addition, some hooks are Promise-based, so Promise chaining
-also needs to be carefully applied only where necessary.
+In addition, some hooks are Promise-based, so Promise chaining also needs to be carefully applied only where necessary.
 
 #### createContext(url) -> Object
 
@@ -76,20 +74,6 @@ In both s.js and system.js, resolve is implemented as a synchronous function.
 
 Resolve should return a fully-valid URL for specification compatibility, but this is not enforced.
 
-#### onload(err, id, deps, isErrSource) (sync)
-
-_This hook is not available in the s.js minimal loader build._
-
-For tracing functionality this is called on completion or failure of each and every module loaded into the registry.
-
-`err` is defined for any module load error at instantiation (including fetch and resolution errors), execution or dependency execution.
-
-`deps` is available for errored modules that did not error on instantiation.
-
-`isErrSource` is used to indicate if `id` is the error source or not.
-
-Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
-
 #### shouldFetch(url) -> Boolean
 
 This hook is used to determine if a module should be loaded by adding a `<script>` tag to the page (the normal SystemJS behaviour which is the fastest and supports CSP), or if the module should be loaded by using `fetch` and `eval` instead.
@@ -111,3 +95,17 @@ The default fetch implementation used in SystemJS is simply `System.fetch = wind
 arbitrary transformation.
 
 For an example of how to hook this behaviour, see the [module types extra source code](../src/extras/module-types.js).
+
+#### onload(err, id, deps, isErrSource) (sync)
+
+_This hook is not available in the s.js minimal loader build._
+
+For tracing functionality this is called on completion or failure of each and every module loaded into the registry.
+
+`err` is defined for any module load error at instantiation (including fetch and resolution errors), execution or dependency execution.
+
+`deps` is available for errored modules that did not error on instantiation.
+
+`isErrSource` is used to indicate if `id` is the error source or not.
+
+Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
