@@ -116,11 +116,3 @@ This hook is provided by the [module types extra](./module-types.md).
 
 The default fetch implementation used by module types is simply `System.fetch = window.fetch` and can be hooked through the fetch hook, allowing for
 any custom request interception.
-
-#### transform(url, source) -> Promise<String>
-
-This hook is provided by the [transform extra](../dist/extras/transform.js).
-
-The default implementation is a pass-through transform that returns the fetched source.
-
-For an example of a transform see the [Babel plugin transform](https://github.com/systemjs/systemjs-transform-babel).
