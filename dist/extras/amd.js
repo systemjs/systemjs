@@ -56,8 +56,8 @@
           var amdResult = amdExec.apply(exports, depModules);
           if (amdResult !== undefined)
             module.exports = amdResult;
-          if (exports !== module.exports)
-            _export('default', module.exports);
+          _export(module.exports);
+          _export('default', module.exports);
         }
       };
     }];

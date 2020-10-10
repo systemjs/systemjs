@@ -2,6 +2,8 @@
   return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
 }/*
  * Support for a "transform" loader interface
+ *
+ * Note: This extra is deprecated and will be removed in the next major.
  */
 (function (global) {
   var systemJSPrototype = global.System.constructor.prototype;

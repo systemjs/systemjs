@@ -5,68 +5,34 @@
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 
-Configurable module loader, running System modules at almost-native speed, and enabling ES module semantics and features such as top-level await, dynamic import, and import maps with full compatibility in older browsers including IE.
-
-Release Links:
-
-* [Latest 6.x Major Release](https://github.com/systemjs/systemjs/releases/tag/6.0.0)
-* [SystemJS 2.0 Announcement Post](https://guybedford.com/systemjs-2.0)
-* [SystemJS 0.21](https://github.com/systemjs/systemjs/tree/0.21)
-
-For discussion, join the [Gitter Room](https://gitter.im/systemjs/systemjs).
-
-## Examples
-
-The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
-
-## Performance
-
-SystemJS is designed for production modules performance and can load multiple modules in less than a millisecond. Its performance is only around a factor of 1.5 times the performance of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
-
-| Tool | Uncached | Cached |
-| ---- | -------- | ------ |
-| Native modules | 1668ms | 49ms |
-| SystemJS | 2334ms | 81ms |
-| es-module-shims | 2671ms | 602ms |
-
-> [ES module Shims](https://github.com/guybedford/es-module-shims), like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers. The performance difference is because source rewriting happens in browser instead of ahead-of-time like SystemJS handles via the System module format.
-
 ## Overview
 
-[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw)
+SystemJS is a hookable, standards-based module loader. It provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, running [almost-native module speeds](#performance) while supporting top-level await, dynamic import, circular references and live bindings, import.meta.url, module types, import maps, integrity and Content Security Policy with compatibility in older browsers back to IE11.
 
-SystemJS provides two hookable base builds:
+#### 1. s.js minimal production loader
 
-#### 1. s.js minimal loader
+The minimal [2.8KB s.js production loader](dist/s.min.js) includes the following features:
 
-The minimal [2.3KB s.js loader](dist/s.min.js) provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, including IE11++.
-
-Since the ES module semantics such as live bindings, circular references, contextual metadata, dynamic import and top-level await [can all be fully supported this way](docs/system-register.md#semantics), while supporting CSP and cross-origin support, this workflow can be relied upon as a polyfill-like path.
-
-* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">` (requires a `fetch` polyfill for eg IE11).
-* Loads and resolves modules as URLs, throwing for bare specifier names (eg `import 'lodash'`) like the native module loader.
-* Loads System.register modules.
-* Core hookable extensible loader supporting [custom extensions](docs/hooks.md).
+* Loads `System.register` modules, the CSP-compatible [SystemJS module format](docs/system-register.md).
+* Support for loading bare specifier names with [import maps](docs/import-maps.md) via `<script type="systemjs-importmap">`.
+* Supports [hooks](docs/hooks.md) for loader customization.
 
 #### 2. system.js loader
 
-The [3.7KB system.js loader](dist/system.min.js) loader builds on the s.js core and adds support for [global loading](#extras), [non-javascript module](/docs/module-types.md), and the [SystemJS registry API](/docs/api.md#registry).
+The [4.2KB system.js loader](dist/system.min.js) adds the following features in addition to the `s.js` features above:
 
-* Support for loading [bare specifier names](docs/import-maps.md) through import maps (formerly package maps, formerly map configuration), loaded via `<script type="systemjs-importmap">` (requires a `fetch` polyfill for eg IE11).
-* Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
-* [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
+* [Tracing hooks](docs/hooks.md##onloaderr-id-deps-iserrsource-sync) and [registry deletion API](docs/api.md#registry) for reloading workflows.
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
+* Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
 
 #### 3. system-node.cjs loader
 
 The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where System modules need to be executed on the server like SSR. It has the following features:
 
-* Loading System modules from disk (via `file://` urls).
-* Loading System modules from network (via `http://` urls), with included caching that respects the Content-Type header.
-* Loading global modules with the included [global loading extra](#extras)
-* Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
+* Loading System modules from disk (via `file://` urls) or the network, with included caching that respects the Content-Type header.
 * Import Maps (via the `applyImportMap` api).
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
+* Loading global modules with the included [global loading extra](#extras).
 
 _Loading CommonJS modules is not currently supported in this loader and likely won't be. If you find you need them it is more advisable to use [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) where possible instead of the SystemJS Node.js loader._
 
@@ -75,9 +41,7 @@ _Loading CommonJS modules is not currently supported in this loader and likely w
 The following [pluggable extras](dist/extras) can be dropped in with either the s.js or system.js loader:
 
 * [AMD loading](dist/extras/amd.js) support (through `Window.define` which is created).
-* [Named exports](dist/extras/named-exports.js) convenience extension support for global and AMD module formats (`import { x } from './global.js'` instead of `import G from './global.js'; G.x`)
 * [Named register](dist/extras/named-register.js) supports `System.register('name', ...)` named bundles which can then be imported as `System.import('name')` (as well as AMD named define support)
-* [Transform loader](dist/extras/transform.js) support, using fetch and eval, supporting a hookable `loader.transform`
 * [Dynamic import maps](dist/extras/dynamic-import-maps.js) support. This is currently a _potential_ new standard [feature](https://github.com/guybedford/import-maps-extensions#lazy-loading-of-import-maps).
 
 The following extras are included in system.js loader by default, and can be added to the s.js loader for a smaller tailored footprint:
@@ -86,6 +50,28 @@ The following extras are included in system.js loader by default, and can be add
 * [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
+
+## SystemJS Babel
+
+To support easy loading of TypeScript or ES modules in development SystemJS workflows, see the [SystemJS Babel Extension](https://github.com/systemjs/systemjs-babel).
+
+SystemJS does not support direct integration with the native ES module browser loader because there is no way to share dependencies between the module systems. For extending the functionality of the native module loader in browsers, see [ES module Shims](https://github.com/guybedford/es-module-shims), which like SystemJS, provides workflows for import maps and other modules features, but on top of base-level modules support in browsers, which it does using a fast Wasm-based source rewriting to remap module specifiers.
+
+## Performance
+
+SystemJS is designed for production modules performance roughly only around a factor of 1.5 times the speed of native ES modules, as seen in the following performance benchmark, which was run by loading 426 javascript modules (all of `@babel/core`) on a Macbook pro with fast wifi internet connection. Each test was the average of five page loads in Chrome 80.
+
+| Tool | Uncached | Cached |
+| ---- | -------- | ------ |
+| Native modules | 1668ms | 49ms |
+| SystemJS | 2334ms | 81ms |
+| es-module-shims | 2671ms | 602ms |
+
+## Getting Started
+
+[Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw).
+
+The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
 
 ## Backers
 
@@ -172,12 +158,39 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 }
 </script>
 <!-- Alternatively:
-<script type="systemjs-importmap" src="path/to/map.json">
+<script type="systemjs-importmap" src="path/to/map.json" crossorigin="anonymous">
 -->
 <script>
   System.import('/js/main.js');
 </script>
 ```
+
+### IE11 Support
+
+IE11 continues to be fully supported, provided the relevant polyfills are available.
+
+The main required polyfill is a `Promise` polyfill. If using import maps a `fetch` polyfill is also needed.
+
+Both of these can be loaded conditionally using for example using [Bluebird Promises](http://bluebirdjs.com/docs/getting-started.html) and the [GitHub Fetch Polyfill](https://github.github.io/fetch/) over Unpkg:
+
+```html
+<script>
+  if (typeof Promise === 'undefined')
+    document.write('<script src="https://unpkg.com/bluebird@3.7.2/js/browser/bluebird.core.min.js"><\/script>');
+  if (typeof fetch === 'undefined')
+    document.write('<script src="https://unpkg.com/whatwg-fetch@3.4.1/dist/fetch.umd.js"><\/script>');
+</script>
+```
+
+located _before_ the SystemJS script itself. The above will ensure these polyfills are only fetched for older browsers without `Promise` and `fetch` support.
+
+#### Note on Import Maps Support in IE11
+
+When using external import maps (those with `src=""` attributes), there is an IE11-specific workaround that might need to be used. Browsers should not make a network request when they see `<script type="systemjs-importmap" src="/importmap.json"></script>` during parsing of the initial HTML page. However, IE11 does so. [Codesandbox demonstration](https://codesandbox.io/s/vibrant-black-xiok4?file=/index.html)
+
+Normally this is not an issue, as SystemJS will make an additional request via fetch/xhr for the import map. However, a problem can occur when the file is cached after the first request, since the first request caused by IE11 does not send the Origin request header by default. If the request requires CORS, the lack of an Origin request header causes many web servers (including AWS Cloudfront) to omit the response CORS headers. This can result in the resource being cached without CORS headers, which causes the later SystemJS fetch() to fail because of CORS checks.
+
+This can be worked around by adding `crossorigin="anonymous"` as an attribute to the `<script type="systemjs-importmap">` script.
 
 ## Community Projects
 
@@ -190,13 +203,6 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
 * [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
 * [esm-bundle](https://github.com/esm-bundle) - list of System.register versions for major libraries, including documentation on how to create a System.register bundle for any npm package.
-
-## Loader Extensions
-
-This list can be extended to include third-party loader extensions. [Post a PR](https://github.com/systemjs/systemjs/edit/master/README.md).
-
-* [transform-babel](https://github.com/systemjs/systemjs-transform-babel) Supports ES module transformation into System.register with Babel.
-* [systemjs-css-extra](https://github.com/systemjs/systemjs-css-extra) CSS loader plugin
 
 ## Compatibility with Webpack
 
@@ -229,39 +235,6 @@ If building code using the `System` global in Webpack, the following config is n
 ## Using npm packages
 
 Third party libraries and npm packages may be used as long as they are published in [a supported module format](https://github.com/systemjs/systemjs/blob/master/docs/module-types.md). For packages that do not exist in a supported module format, [here is a list of github repos](https://github.com/esm-bundle/) that publish `System.register` versions of popular third party libraries (such as react, react-dom, rxjs, etc).
-
-## Polyfills for Older Browsers
-
-### Promises
-
-Both builds of SystemJS need Promises in the environment to work, which aren't supported in older browsers like IE11.
-
-Promises can be conditionally polyfilled using, for example, [Bluebird](http://bluebirdjs.com/docs/getting-started.html) (generally the fastest Promise polyfill):
-
-```html
-<script>
-  if (typeof Promise === 'undefined')
-    document.write('<script src="node_modules/bluebird/js/browser/bluebird.core.js"><\/script>');
-</script>
-```
-
-> Generally `document.write` is not recommended when writing web applications, but for this use case
-  it works really well and will only apply in older browsers anyway.
-
-### Fetch
-
-To support import maps in the system.js build, a fetch polyfill is need. The [GitHub polyfill](https://github.github.io/fetch/) is recommended:
-
-```html
-<script>
-  if (typeof fetch === 'undefined')
-    document.write('<script src="node_modules/whatwg-fetch/fetch.js"><\/script>');
-</script>
-```
-
-### Constructable Stylesheets
-
-If using CSS modules, a Constructable Stylesheets polyfill is needed - [see the module types documentation](docs/module-types.md#constructable-style-sheets-polyfill) for further info.
 
 ## Contributing to SystemJS
 

@@ -1,6 +1,6 @@
 {
   "name": "systemjs",
-  "version": "6.5.0",
+  "version": "6.7.0",
   "main": "dist/system-node.cjs",
   "exports": {
     ".": {
@@ -16,13 +16,13 @@
     "url": "git://github.com/systemjs/systemjs"
   },
   "author": "Guy Bedford",
-  "type": "module",
+  "type": "script",
   "license": "MIT",
   "files": [
     "dist"
   ],
   "devDependencies": {
-    "@jsenv/github-pull-request-filesize-impact": "^3.0.2",
+    "@jsenv/file-size-impact": "^5.2.0",
     "@rollup/plugin-json": "^4.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-replace": "^2.3.1",
@@ -45,7 +45,7 @@
   },
   "scripts": {
     "build": "rimraf dist && mkdirp dist && concurrently -n w: 'npm:build:*'",
-    "build:node": "node --experimental-modules build-node.js",
+    "build:node": "node --experimental-modules build-node.mjs",
     "build:browser": "rollup -c",
     "build-browser-dev": "rollup -c --environment dev",
     "footprint": "concurrently -n w: 'npm:footprint:*'",

@@ -1,8 +1,9 @@
 /*
-* SJS 6.5.0
+* SJS 6.7.0
 * Minimal SystemJS Build
 */
 (function () {
+
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS https://git.io/JvFET#" + errCode + ")";
   }
@@ -286,7 +287,7 @@
         // note if we have hoisted exports (including reexports)
         load.h = true;
         var changed = false;
-        if (typeof name !== 'object') {
+        if (typeof name === 'string') {
           if (!(name in ns) || ns[name] !== value) {
             ns[name] = value;
             changed = true;
@@ -464,18 +465,18 @@
             execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
-              if (!true) triggerOnload(loader, load, null, true);
+              if (!true) ;
             }, function (err) {
               load.er = err;
               load.E = null;
-              if (!true) triggerOnload(loader, load, err, true);
+              if (!true) ;
               else throw err;
             });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!true) triggerOnload(loader, load, null, true);
+        if (!true) ;
       }
       catch (err) {
         load.er = err;
@@ -513,16 +514,6 @@
     window.addEventListener('DOMContentLoaded', processScripts);
   }
 
-  var systemInstantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    var preloads = ( importMap).depcache[url];
-    if (preloads) {
-      for (var i = 0; i < preloads.length; i++)
-        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
-    }
-    return systemInstantiate.call(this, url, firstParentUrl);
-  };
-
   function processScripts () {
     [].forEach.call(document.querySelectorAll('script'), function (script) {
       if (script.sp) // sp marker = systemjs processed
@@ -536,7 +527,7 @@
       }
       else if (script.type === 'systemjs-importmap') {
         script.sp = true;
-        var fetchPromise = script.src ? fetch(script.src).then(function (res) {
+        var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           return res.text();
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
@@ -571,12 +562,11 @@
 
   systemJSPrototype.createScript = function (url) {
     var script = document.createElement('script');
-    script.charset = 'utf-8';
     script.async = true;
     // Only add cross origin for actual cross origin
     // this is because Safari triggers for all
     // - https://bugs.webkit.org/show_bug.cgi?id=171566
-    if (!url.startsWith(baseOrigin + '/'))
+    if (url.indexOf(baseOrigin + '/'))
       script.crossOrigin = 'anonymous';
     var integrity = importMap.integrity[url];
     if (integrity)
@@ -586,7 +576,7 @@
   };
 
   // Auto imports -> script tags can be inlined directly for load phase
-  var lastAutoImportUrl, lastAutoImportDeps;
+  var lastAutoImportDeps, lastAutoImportTimeout;
   var autoImportCandidates = {};
   var systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
@@ -595,12 +585,14 @@
       var lastScript = scripts[scripts.length - 1];
       var url = lastScript && lastScript.src;
       if (url) {
-        lastAutoImportUrl = url;
         lastAutoImportDeps = deps;
-        autoImportCandidates[url] = [deps, declare];
         // if this is already a System load, then the instantiate has already begun
         // so this re-import has no consequence
-        this.import(url);
+        var loader = this;
+        lastAutoImportTimeout = setTimeout(function () {
+          autoImportCandidates[url] = [deps, declare];
+          loader.import(url);
+        });
       }
     }
     else {
@@ -611,12 +603,12 @@
 
   var lastWindowErrorUrl, lastWindowError;
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    var loader = this;
     var autoImportRegistration = autoImportCandidates[url];
     if (autoImportRegistration) {
       delete autoImportCandidates[url];
       return autoImportRegistration;
     }
+    var loader = this;
     return new Promise(function (resolve, reject) {
       var script = systemJSPrototype.createScript(url);
       script.addEventListener('error', function () {
@@ -633,11 +625,43 @@
           var register = loader.getRegister();
           // Clear any auto import registration for dynamic import scripts during load
           if (register && register[0] === lastAutoImportDeps)
-            delete autoImportCandidates[lastAutoImportUrl];
+            clearTimeout(lastAutoImportTimeout);
           resolve(register);
         }
       });
       document.head.appendChild(script);
+    });
+  };
+
+  /*
+   * Fetch loader, sets up shouldFetch and fetch hooks
+   */
+  systemJSPrototype.shouldFetch = function () {
+    return false;
+  };
+  if (typeof fetch !== 'undefined')
+    systemJSPrototype.fetch = fetch;
+
+  var instantiate = systemJSPrototype.instantiate;
+  var jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
+  systemJSPrototype.instantiate = function (url, parent) {
+    var loader = this;
+    if (!this.shouldFetch(url))
+      return instantiate.apply(this, arguments);
+    return this.fetch(url, {
+      credentials: 'same-origin',
+      integrity: importMap.integrity[url]
+    })
+    .then(function (res) {
+      if (!res.ok)
+        throw Error(errMsg(7,  [res.status, res.statusText, url, parent].join(', ') ));
+      var contentType = res.headers.get('content-type');
+      if (!contentType || !jsContentTypeRegEx.test(contentType))
+        throw Error(errMsg(4,  contentType ));
+      return res.text().then(function (source) {
+        (0, eval)(source);
+        return loader.getRegister();
+      });
     });
   };
 
@@ -649,6 +673,16 @@
   function throwUnresolved (id, parentUrl) {
     throw Error(errMsg(8,  [id, parentUrl].join(', ') ));
   }
+
+  var systemInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+    var preloads = ( importMap).depcache[url];
+    if (preloads) {
+      for (var i = 0; i < preloads.length; i++)
+        getOrCreateLoad(this, this.resolve(preloads[i], url), url);
+    }
+    return systemInstantiate.call(this, url, firstParentUrl);
+  };
 
   /*
    * Supports loading System.register in workers

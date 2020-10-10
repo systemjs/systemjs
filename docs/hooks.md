@@ -17,13 +17,9 @@ System.constructor.prototype.hookName = function (args) {
 };
 ```
 
-When hooking the loader it is important to pay attention to the order in which hooks will apply, and to
-keep existing hooks running where they provide necessary functionality.
+When hooking the loader it is important to pay attention to the order in which hooks will apply, and to keep existing hooks running where they provide necessary functionality.
 
-In addition, some hooks are Promise-based, so Promise chaining
-also needs to be carefully applied only where necessary.
-
-### Core Hooks
+In addition, some hooks are Promise-based, so Promise chaining also needs to be carefully applied only where necessary.
 
 #### createContext(url) -> Object
 
@@ -161,6 +157,28 @@ In both s.js and system.js, resolve is implemented as a synchronous function.
 
 Resolve should return a fully-valid URL for specification compatibility, but this is not enforced.
 
+#### shouldFetch(url) -> Boolean
+
+This hook is used to determine if a module should be loaded by adding a `<script>` tag to the page (the normal SystemJS behaviour which is the fastest and supports CSP), or if the module should be loaded by using `fetch` and `eval` instead.
+
+When using the [module types extra](./module-types.md), this will return true for files ending in `.css`, `.json` and `.wasm`,
+so that it can support these types through the fetch hook.
+
+Setting:
+
+```js
+System.shouldFetch = function () { return true; };
+```
+
+will enforce loading all JS files through `fetch`, allowing custom fetch hook implementation behaviours.
+
+#### fetch(url) -> Promise<Response>
+
+The default fetch implementation used in SystemJS is simply `System.fetch = window.fetch`, which can be further hooked to enable
+arbitrary transformation.
+
+For an example of how to hook this behaviour, see the [module types extra source code](../src/extras/module-types.js).
+
 #### onload(err, id, deps, isErrSource) (sync)
 
 _This hook is not available in the s.js minimal loader build._
@@ -174,36 +192,3 @@ For tracing functionality this is called on completion or failure of each and ev
 `isErrSource` is used to indicate if `id` is the error source or not.
 
 Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
-
-### Extras Hooks
-
-#### shouldFetch(url) -> Boolean
-
-This hook is provided by the [module types extra](./module-types.md).
-
-For module type loading support, files ending in `.css`, `.json`, `.wasm` will be loaded via `fetch()`.
-
-This function handles that logic, allowing for custom handling for other extensions.
-
-Setting:
-
-```js
-System.shouldFetch = function () { return true; };
-```
-
-will enforce loading all JS files through `fetch`, even allowing custom transform hooks to be implemented through the fetch hook.
-
-#### fetch(url) -> Promise<Response>
-
-This hook is provided by the [module types extra](./module-types.md).
-
-The default fetch implementation used by module types is simply `System.fetch = window.fetch` and can be hooked through the fetch hook, allowing for
-any custom request interception.
-
-#### transform(url, source) -> Promise<String>
-
-This hook is provided by the [transform extra](../dist/extras/transform.js).
-
-The default implementation is a pass-through transform that returns the fetched source.
-
-For an example of a transform see the [Babel plugin transform](https://github.com/systemjs/systemjs-transform-babel).
