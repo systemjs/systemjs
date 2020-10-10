@@ -109,7 +109,7 @@ For the given app.js, the correct execution order looks like this:
   => [system.js]: Promise_ID_1 resolved by temp                         // lastRegister is undefined, "code.js" loaded
 ```
 
-The **WRONG** execution order may looks like: (ends with wrong module registered and [Module did not instantiate](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#2) error).
+The **WRONG** execution order may look like: (ends with wrong module registered and [Module did not instantiate](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#2) error).
 
 ```js
 // Event Loop 0                                                     // lastRegister is undefined
