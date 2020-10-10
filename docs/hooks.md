@@ -61,20 +61,85 @@ This function downloads and executes the code for a module. The promise must res
 
 The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. 
 
-It is impossible to have an "identifier" to mark the module identity like AMD therefore SystemJS is using a race condition prone way to register the module. Therefore, you must make sure to maintain the execution order of the code.
+By default, a SystemJS module is not marked by an "identifier" (to match ES Module), therefore SystemJS have to use a race condition prone way to register the module. So you must make sure to maintain the execution order of the code.
 
-The correct execution order looks like this:
+The [module loading process](https://github.com/systemjs/systemjs/blob/master/src/system-core.js#L65-L77) is like:
 
+```js
+var lastRegister;
+systemJSPrototype.register = function (deps, declare) { lastRegister = [deps, declare] };
+/* getRegister provides the last anonymous System.register call */
+systemJSPrototype.getRegister = function () {
+  var _lastRegister = lastRegister;
+  lastRegister = undefined;
+  return _lastRegister;
+};
 ```
-async System.instantiate
-  => (The module calls) System.register
-  => System.instantiate noticed the module executed **synchorously** 
-  => System.instantiate resolve with System.getRegister **instantly**
+
+> app.js
+
+```js
+System.import("./library.js"); System.import("./code.js");
+```
+
+For the given app.js, the correct execution order looks like this:
+
+
+```js
+// Event Loop 0                                                         // lastRegister is undefined
+[app.js] System.import("./library.js")
+  => [system.js] System.instantiate("./library.js") => Promise_ID_0
+  => ...load library.js...
+
+// Event Loop 0                                                         // lastRegister is undefined
+[app.js] System.import("./code.js")
+  => [system.js] System.instantiate("./code.js") => Promise_ID_1
+  => ...load code.js...
+
+// Event Loop N                                                         // lastRegister is undefined
+[library.js]: System.register(module_library)                           // lastRegister is module_library
+  => [system.js]: (Notified by a callback that library.js has executed) // lastRegister is module_library
+  => [system.js]: let temp = getRegister()                              // lastRegister is undefined, temp is module_library
+  => [system.js]: Promise_ID_0 resolved by temp                         // lastRegister is undefined, "library.js" loaded
+
+// Event Loop N                                                         // lastRegister is undefined
+[code.js]: System.register(module_code)                                 // lastRegister is module_code
+  => [system.js]: (Notified by a callback that code.js has executed)    // lastRegister is module_code
+  => [system.js]: let temp = getRegister()                              // lastRegister is undefined, temp is module_code
+  => [system.js]: Promise_ID_1 resolved by temp                         // lastRegister is undefined, "code.js" loaded
+```
+
+The **WRONG** execution order may looks like: (ends with wrong module registered and [Module did not instantiate](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#2) error).
+
+```js
+// Event Loop 0                                                     // lastRegister is undefined
+[app.js] System.import("./library.js")
+  => [system.js] System.instantiate("./library.js") => Promise_ID_0
+  => ...load library.js...
+
+// Event Loop 0                                                     // lastRegister is undefined
+[app.js] System.import("./code.js")
+  => [system.js] System.instantiate("./code.js") => Promise_ID_1
+  => ...load code.js...
+
+// Event Loop N                                                     // lastRegister is undefined
+[library.js]: System.register(module_library)                       // lastRegister is module_library
+[code.js]: System.register(module_code)                             // lastRegister is module_code !!! module_library has been overwrittened !!!
+
+// Event Loop M
+[system.js]: (Notified by a callback that library.js has executed)  // lastRegister is module_code
+  => [system.js]: let temp = getRegister()                          // lastRegister is undefined, temp is module_code
+  => [system.js]: Promise_ID_0 resolved by temp                     // lastRegister is undefined, !!! "library.js" loaded with content of "code.js" !!!
+
+// Event Loop X
+[system.js]: (Notified by a callback that code.js has executed)     // lastRegister is undefined
+  => [system.js]: let temp = getRegister()                          // lastRegister is undefined, temp is undefined
+  => [system.js]: throw "Module did not instantiate"
 ```
 
 The [default implementation](https://github.com/systemjs/systemjs/blob/master/src/features/script-load.js) is based on the creation of `<script>` tag and the `onload` event is emitted just after the System.register call.
 
-If in your environment it is not possible to maintain the execution order (for example, involves the interaction of multiple event loops), you can make the call to the instantiate in a sequent way (Notice: this will slow down the module loading speed if they need to loaded by the network). Here is another [example that implementing System.instantiate](https://github.com/Jack-Works/webextension-systemjs/blob/master/src/content-script.ts#L10) for a speical environment that cannot use `<script>` tag.
+If in your environment it is not possible to maintain the execution order (for example, involves the interaction of multiple event loops), you can make the call to the instantiate in a sequent way (Notice: this will slow down the module loading speed if they need to loaded by the network). Here is another [example that implementing System.instantiate](https://github.com/Jack-Works/webextension-systemjs/blob/master/src/content-script.ts#L10-L26) for a speical environment that cannot use `<script>` tag.
 
 #### getRegister() -> [deps: String[], declare: Function]
 
