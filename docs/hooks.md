@@ -59,7 +59,11 @@ This is used in SystemJS core to ensure that import maps are loaded so that the 
 
 This function downloads and executes the code for a module. The promise must resolve with a "register" array, as described in the `getRegister` documentation.
 
-The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. 
+The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`.
+
+If you're making your own implementation of `instantiate`, you only need to resolve the Promise with the registration. Calling `getRegister()` is not necessary if you can get the registration in other ways.
+
+If what you need is to hook the "code loading" process or supporting new file types, you may not need to change `instantiate()` (see: https://github.com/systemjs/systemjs/blob/master/src/extras/module-types.js).
 
 By default, a SystemJS module is not marked by an "identifier" (to match ES Module), therefore SystemJS have to use a race condition prone way to register the module. So you must make sure to maintain the execution order of the code.
 
