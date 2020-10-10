@@ -63,6 +63,9 @@ If you need to hook the code fetching or transformation process (eg for supporti
 
 By default, SystemJS modules are not registered by name to match ES Modules. Instead, registration of modules is done by matching a `System.register` call to its caller URL using a synchronous callback.
 
+<details>
+  <summary>Execution order (read this if you want to correctly overwrite `instantiate`)</summary>
+
 See below for an outline of the loading lifecycle provided by this default `instantiate` implementation:
 
 ```js
@@ -137,6 +140,7 @@ The **WRONG** execution order may look like: (ends with wrong module registered 
   => [system.js]: throw "Module did not instantiate"
 ```
 
+</details>
 
 If in your environment it is not possible to maintain the execution order (for example, involves the interaction of multiple event loops), you can make the call to the instantiate in a sequent way (Notice: this will slow down the module loading speed if they need to loaded by the network). Here is another [example that implementing System.instantiate](https://github.com/Jack-Works/webextension-systemjs/blob/master/src/content-script.ts#L10-L26) for a speical environment that cannot use `<script>` tag.
 
