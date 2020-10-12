@@ -35,18 +35,17 @@ var autoImportCandidates = {};
 var systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
   if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
-    var scripts = document.getElementsByTagName('script');
+    var scripts = document.querySelectorAll('script[src]');
     var lastScript = scripts[scripts.length - 1];
-    var url = lastScript && lastScript.src;
-    if (url) {
-      lastAutoImportUrl = url;
+    if (lastScript) {
+      lastAutoImportUrl = lastScript.src;
       lastAutoImportDeps = deps;
       // if this is already a System load, then the instantiate has already begun
       // so this re-import has no consequence
       var loader = this;
       lastAutoImportTimeout = setTimeout(function () {
-        autoImportCandidates[url] = [deps, declare];
-        loader.import(url);
+        autoImportCandidates[lastScript.src] = [deps, declare];
+        loader.import(lastScript.src);
       });
     }
   }
