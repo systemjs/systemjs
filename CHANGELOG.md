@@ -1,3 +1,6 @@
+SystemJS 6.7.1
+* Fix auto import race condition (https://github.com/systemjs/systemjs/pull/2266)
+
 SystemJS 6.7.0
 * Implement integrity attribute for systemjs-importmap scripts (https://github.com/systemjs/systemjs/commit/78072e594ebebab9124aa9fedd7e17d8303835e1)
 * Deprecate the transform and use default extras (https://github.com/systemjs/systemjs/commit/5f7571a76bef210d096e672c9f011d94871a6827)

@@ -1,8 +1,7 @@
 /*
-* SystemJS 6.7.0
+* SystemJS 6.7.1
 */
 (function () {
-
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
   }
@@ -478,6 +477,7 @@
               load.er = err;
               load.E = null;
               if (!false) triggerOnload(loader, load, err, true);
+              else throw err;
             });
           return load.E = load.E || execPromise;
         }
@@ -583,22 +583,22 @@
   };
 
   // Auto imports -> script tags can be inlined directly for load phase
-  var lastAutoImportDeps, lastAutoImportTimeout;
+  var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
   var autoImportCandidates = {};
   var systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
     if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
-      var scripts = document.getElementsByTagName('script');
+      var scripts = document.querySelectorAll('script[src]');
       var lastScript = scripts[scripts.length - 1];
-      var url = lastScript && lastScript.src;
-      if (url) {
+      if (lastScript) {
+        lastAutoImportUrl = lastScript.src;
         lastAutoImportDeps = deps;
         // if this is already a System load, then the instantiate has already begun
         // so this re-import has no consequence
         var loader = this;
         lastAutoImportTimeout = setTimeout(function () {
-          autoImportCandidates[url] = [deps, declare];
-          loader.import(url);
+          autoImportCandidates[lastScript.src] = [deps, declare];
+          loader.import(lastScript.src);
         });
       }
     }

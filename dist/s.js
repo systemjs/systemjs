@@ -1,9 +1,8 @@
 /*
-* SJS 6.7.0
+* SJS 6.7.1
 * Minimal SystemJS Build
 */
 (function () {
-
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS https://git.io/JvFET#" + errCode + ")";
   }
@@ -465,18 +464,18 @@
             execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
-              if (!true) ;
+              if (!true) triggerOnload(loader, load, null, true);
             }, function (err) {
               load.er = err;
               load.E = null;
-              if (!true) ;
+              if (!true) triggerOnload(loader, load, err, true);
               else throw err;
             });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!true) ;
+        if (!true) triggerOnload(loader, load, null, true);
       }
       catch (err) {
         load.er = err;
@@ -576,22 +575,22 @@
   };
 
   // Auto imports -> script tags can be inlined directly for load phase
-  var lastAutoImportDeps, lastAutoImportTimeout;
+  var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
   var autoImportCandidates = {};
   var systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
     if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
-      var scripts = document.getElementsByTagName('script');
+      var scripts = document.querySelectorAll('script[src]');
       var lastScript = scripts[scripts.length - 1];
-      var url = lastScript && lastScript.src;
-      if (url) {
+      if (lastScript) {
+        lastAutoImportUrl = lastScript.src;
         lastAutoImportDeps = deps;
         // if this is already a System load, then the instantiate has already begun
         // so this re-import has no consequence
         var loader = this;
         lastAutoImportTimeout = setTimeout(function () {
-          autoImportCandidates[url] = [deps, declare];
-          loader.import(url);
+          autoImportCandidates[lastScript.src] = [deps, declare];
+          loader.import(lastScript.src);
         });
       }
     }
