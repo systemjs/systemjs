@@ -33,7 +33,22 @@ function processScripts () {
       script.sp = true;
       if (!script.src)
         return;
-      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
+        // if there is a script load error, dispatch an "error" event
+        // on the script tag.
+        if (e.message.indexOf('https://git.io/JvFET#3') > -1) {
+          var event
+          // IE 11 throw when callin new Event()
+          try {
+            event = new Event('error')
+          }
+          catch(_) {
+            event = document.createEvent('error')
+          }
+          script.dispatchEvent(event)
+        }
+        return Promise.reject(e)
+      });
     }
     else if (script.type === 'systemjs-importmap') {
       script.sp = true;
