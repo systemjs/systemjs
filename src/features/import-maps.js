@@ -37,17 +37,11 @@ function processScripts () {
         // if there is a script load error, dispatch an "error" event
         // on the script tag.
         if (e.message.indexOf('https://git.io/JvFET#3') > -1) {
-          var event
-          // IE 11 throw when callin new Event()
-          try {
-            event = new Event('error')
-          }
-          catch(_) {
-            event = document.createEvent('error')
-          }
-          script.dispatchEvent(event)
+          var event = document.createEvent('Event');
+          event.initEvent('error', false, false);
+          script.dispatchEvent(event);
         }
-        return Promise.reject(e)
+        return Promise.reject(e);
       });
     }
     else if (script.type === 'systemjs-importmap') {
