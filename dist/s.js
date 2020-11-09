@@ -3,6 +3,7 @@
 * Minimal SystemJS Build
 */
 (function () {
+
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS https://git.io/JvFET#" + errCode + ")";
   }
@@ -464,18 +465,18 @@
             execPromise = execPromise.then(function () {
               load.C = load.n;
               load.E = null; // indicates completion
-              if (!true) triggerOnload(loader, load, null, true);
+              if (!true) ;
             }, function (err) {
               load.er = err;
               load.E = null;
-              if (!true) triggerOnload(loader, load, err, true);
+              if (!true) ;
               else throw err;
             });
           return load.E = load.E || execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!true) triggerOnload(loader, load, null, true);
+        if (!true) ;
       }
       catch (err) {
         load.er = err;
@@ -528,6 +529,9 @@
         script.sp = true;
         var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           return res.text();
+        }).catch((err) => {
+          console.error(( errMsg(7) ) + "\n" + script.src);
+          return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
           return fetchPromise;
@@ -539,10 +543,11 @@
   }
 
   function extendImportMap (importMap, newMapText, newMapUrl) {
+    var newMap = {};
     try {
-      var newMap = JSON.parse(newMapText);
+      newMap = JSON.parse(newMapText);
     } catch (err) {
-      throw Error( errMsg(1) );
+      console.error(( errMsg(1) ) + "\n" + newMapText);
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }

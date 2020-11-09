@@ -39,6 +39,9 @@ function processScripts () {
       script.sp = true;
       var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
         return res.text();
+      }).catch((err) => {
+        console.error((process.env.SYSTEM_PRODUCTION ? errMsg(7) : errMsg(7, "Failed to fetch module - wrong HTTP status")) + "\n" + script.src);
+        return '{}';
       }) : script.innerHTML;
       importMapPromise = importMapPromise.then(function () {
         return fetchPromise;
@@ -50,10 +53,11 @@ function processScripts () {
 }
 
 function extendImportMap (importMap, newMapText, newMapUrl) {
+  var newMap = {};
   try {
-    var newMap = JSON.parse(newMapText);
+    newMap = JSON.parse(newMapText);
   } catch (err) {
-    throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(1) : errMsg(1, "systemjs-importmap contains invalid JSON"));
+    console.error((process.env.SYSTEM_PRODUCTION ? errMsg(1) : errMsg(1, "systemjs-importmap contains invalid JSON")) + "\n" + newMapText)
   }
   resolveAndComposeImportMap(newMap, newMapUrl, importMap);
 }

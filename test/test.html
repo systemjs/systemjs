@@ -26,6 +26,8 @@
 	<link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css"/>
 	<script src="../node_modules/mocha/mocha.js"></script>
 
+	<script type="systemjs-importmap" src="https://hostname.invalid/importmap.json"></script>
+	<script type="systemjs-importmap" src="fixtures/browser/importmap-invalid.json"></script>
 	<script type="systemjs-importmap" src="fixtures/browser/importmap.json" integrity="sha384-+t/f9i0vQYwxmcczlIpgCCTQz2mA1sMGYGErJ4fZb/Lcx/yYrFSiedO0XpSIX8oX"></script>
 	<script type="systemjs-module" src="/test/fixtures/browser/systemjs-module-early.js"></script>
 	<script src="../dist/system.js"></script>
@@ -59,7 +61,7 @@
 
 		function importSeries() {
 			var promise = Promise.resolve();
-			
+
 			for(var i=0; i<arguments.length; i++) {
 				promise = promise.then(importNext(arguments[i]));
 			}
