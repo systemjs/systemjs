@@ -113,8 +113,8 @@ You can load [System.register](/docs/system-register.md) modules with a script e
 
 ```html
 <script src="system.js"></script>
-<script>System.import('/js/main.js')</script>
-<script>System.import('name-of-module')</script>
+<script type="systemjs-module" src="/js/main.js"></script>
+<script type="systemjs-module" src="import:name-of-module"></script>
 ```
 
 ### Loading with System.import
@@ -160,9 +160,7 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 <!-- Alternatively:
 <script type="systemjs-importmap" src="path/to/map.json" crossorigin="anonymous">
 -->
-<script>
-  System.import('/js/main.js');
-</script>
+<script type="systemjs-module" src="/js/main.js"></script>
 ```
 
 ### IE11 Support
