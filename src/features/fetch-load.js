@@ -1,4 +1,5 @@
 import { errMsg } from '../err-msg.js';
+import { resolveUrl } from '../common.js';
 import { importMap } from '../features/import-maps.js';
 import { systemJSPrototype } from '../system-core.js';
 
@@ -28,6 +29,13 @@ systemJSPrototype.instantiate = function (url, parent) {
     if (!contentType || !jsContentTypeRegEx.test(contentType))
       throw Error(errMsg(4, process.env.SYSTEM_PRODUCTION ? contentType : 'Unknown Content-Type "' + contentType + '", loading ' + url + (parent ? ' from ' + parent : '')));
     return res.text().then(function (source) {
+      var sourceMappingIndex = source.lastIndexOf('//# sourceMappingURL=');
+      if (sourceMappingIndex > -1) {
+        var sourceMappingEnd = source.indexOf('\n', sourceMappingIndex);
+        var sourceMapping = source.slice(sourceMappingIndex, sourceMappingEnd > -1 ? sourceMappingEnd : undefined);
+        source += '\n//# sourceMappingURL=' + resolveUrl(sourceMapping.slice(21), url);
+      }
+      source += '\n//# sourceURL=' + url;
       (0, eval)(source);
       return loader.getRegister();
     });
