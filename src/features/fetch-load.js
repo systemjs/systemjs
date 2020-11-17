@@ -35,7 +35,8 @@ systemJSPrototype.instantiate = function (url, parent) {
         var sourceMapping = source.slice(sourceMappingIndex, sourceMappingEnd > -1 ? sourceMappingEnd : undefined);
         source += '\n//# sourceMappingURL=' + resolveUrl(sourceMapping.slice(21), url);
       }
-      source += '\n//# sourceURL=' + url;
+      if (source.indexOf('//# sourceURL=') < 0)
+        source += '\n//# sourceURL=' + url;
       (0, eval)(source);
       return loader.getRegister();
     });
