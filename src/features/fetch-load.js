@@ -1,5 +1,4 @@
 import { errMsg } from '../err-msg.js';
-import { resolveUrl } from '../common.js';
 import { importMap } from '../features/import-maps.js';
 import { systemJSPrototype } from '../system-core.js';
 
