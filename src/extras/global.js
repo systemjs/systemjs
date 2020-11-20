@@ -17,7 +17,7 @@
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
-      if (systemJSPrototype.firstGlobalProp && p === foundLastProp)
+      if (systemJSPrototype.firstGlobalProp && foundLastProp)
         return p;
       foundLastProp = p === lastGlobalProp;
       cnt++;
