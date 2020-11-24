@@ -10,21 +10,21 @@
   var firstGlobalProp, secondGlobalProp, lastGlobalProp;
   function getGlobalProp () {
     var cnt = 0;
-    var lastProp, foundLastProp;
+    var foundLastProp, result;
     for (var p in global) {
       // do not check frames cause it could be removed during import
       if (shouldSkipProperty(p))
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
-      if (systemJSPrototype.firstGlobalProp && foundLastProp)
-        return p;
+      if (foundLastProp && !result)
+        result = p;
+      if (foundLastProp && !shouldSkipProperty(p))
+        lastGlobalProp = p;
       foundLastProp = p === lastGlobalProp;
       cnt++;
-      lastProp = p;
     }
-    if (lastProp !== lastGlobalProp)
-      return lastProp;
+    return result;
   }
 
   function noteGlobalProps () {
