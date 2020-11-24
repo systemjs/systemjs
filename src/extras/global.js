@@ -21,7 +21,7 @@
         result = p;
       if (foundLastProp && !shouldSkipProperty(p))
         lastGlobalProp = p;
-      foundLastProp = p === lastGlobalProp;
+      foundLastProp = foundLastProp || p === lastGlobalProp;
       cnt++;
     }
     return result;
