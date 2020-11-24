@@ -115,7 +115,14 @@ suite('SystemJS Standard Tests', function() {
   test('Global script loading', function () {
     return System.import('fixtures/global.js').then(function (m) {
       assert.ok(m.default);
-      assert.equal(m.default.some, 'thing');
+      assert.equal(m.default.v, '2.0..0');
+    });
+  });
+
+  test('Global script loading with multiple globals', function () {
+    return System.import('fixtures/multiple-globals.js').then(function (m) {
+      assert.ok(m.default);
+      assert.equal(m.default.foo1, 'foo1');
     });
   });
 
