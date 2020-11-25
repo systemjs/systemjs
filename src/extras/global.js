@@ -17,10 +17,10 @@
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
-      if (foundLastProp && !result)
-        result = p;
-      if (foundLastProp && !shouldSkipProperty(p))
+      if (foundLastProp && !shouldSkipProperty(p)) {
         lastGlobalProp = p;
+        result = result || p;
+      }
       foundLastProp = foundLastProp || p === lastGlobalProp;
       cnt++;
     }
