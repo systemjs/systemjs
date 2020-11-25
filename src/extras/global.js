@@ -22,9 +22,10 @@
           lastGlobalProp = p;
           result = result || p;
         }
-        foundLastProp = foundLastProp || p === lastGlobalProp;
       } else
-        result = p === lastGlobalProp ? result : p;
+        result = foundLastProp ? p : result;
+
+      foundLastProp = foundLastProp || p === lastGlobalProp;
       cnt++;
     }
     return result;
