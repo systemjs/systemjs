@@ -57,8 +57,7 @@ function extendImportMap (importMap, newMapText, newMapUrl) {
   try {
     newMap = JSON.parse(newMapText);
   } catch (err) {
-    console.warn(Error(process.env.SYSTEM_PRODUCTION ? errMsg('W5') : errMsg('W5', "systemjs-importmap contains invalid JSON")));
-    console.warn({invalidJsonString: newMapText});
+    console.warn(Error(process.env.SYSTEM_PRODUCTION ? errMsg('W5') : errMsg('W5', "systemjs-importmap contains invalid JSON:\n\n" + newMapText)));
   }
   resolveAndComposeImportMap(newMap, newMapUrl, importMap);
 }

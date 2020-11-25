@@ -2,7 +2,6 @@
 * SystemJS 6.7.1
 */
 (function () {
-
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
   }
@@ -478,6 +477,7 @@
               load.er = err;
               load.E = null;
               if (!false) triggerOnload(loader, load, err, true);
+              else throw err;
             });
           return load.E = load.E || execPromise;
         }
@@ -536,9 +536,6 @@
         script.sp = true;
         var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           return res.text();
-        }).catch((err) => {
-          console.warn(Error(errMsg('W4',  'Failed to fetch ' + script.src)));
-          return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
           return fetchPromise;
@@ -550,12 +547,10 @@
   }
 
   function extendImportMap (importMap, newMapText, newMapUrl) {
-    var newMap = {};
     try {
-      newMap = JSON.parse(newMapText);
+      var newMap = JSON.parse(newMapText);
     } catch (err) {
-      console.warn(Error( errMsg('W5', "systemjs-importmap contains invalid JSON")));
-      console.warn({invalidJsonString: newMapText});
+      throw Error( errMsg(1, "systemjs-importmap contains invalid JSON"));
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
