@@ -530,7 +530,7 @@
         var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           return res.text();
         }).catch((err) => {
-          console.error(Error(errMsg(7,  script.src )));
+          console.warn(Error(errMsg('W4',  script.src )));
           return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
@@ -547,8 +547,8 @@
     try {
       newMap = JSON.parse(newMapText);
     } catch (err) {
-      console.error(Error( errMsg(1) ));
-      console.error(newMapText);
+      console.warn(Error( errMsg('W5') ));
+      console.warn({invalidJsonString: newMapText});
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }

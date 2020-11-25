@@ -226,3 +226,42 @@ System.set('./foo.js', { some: 'value' });
 // Full urls are valid
 System.set('http://example.com/foo.js', { some: 'value' });
 ```
+
+
+## W4
+
+### Unable to fetch external Import Map
+
+SystemJS Warning #W4 occurs when it failed downloading an external import map via `fetch()`.
+
+Reason for this can be a network issue (DNS failed, timeout, server down), a security restriction (CORS, CSP) or a non 2xx status code from the server providing the file.
+
+System.js treats failing import maps as a warning. It skips the failed import map and moves on processing the next one if present.
+
+```js
+// references an unreachable import map
+<script type="systemjs-importmap" src="https://hostname.invalid/importmap.json"></script>
+```
+
+## W5
+
+### Import Map contains invalid JSON
+
+SystemJS Warning W5 occurs when you have a `<script type="systemjs-importmap"></script>` element in your HTML page that has invalid JSON content (See [import maps documentation](https://github.com/systemjs/systemjs/blob/master/docs/import-maps.md)).
+
+A common mistake that causes this a trailing comma on the last module in the import map, which is invalid JSON.
+
+```html
+<!-- Make sure the JSON content is valid! -->
+<script type="systemjs-importmap">
+  {
+    "imports": {
+      "foo": "/foo.js",
+      "bar": "/bar.js"
+    }
+  }
+</script>
+```
+
+Note that this error also can occur for external import maps (those with `src=""` attribute). Check the network tab of your browser devtools to verify that the response body for the external import map is valid json.
+

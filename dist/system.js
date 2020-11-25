@@ -537,7 +537,7 @@
         var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           return res.text();
         }).catch((err) => {
-          console.error(Error(errMsg(7,  'Failed to fetch ' + script.src)));
+          console.warn(Error(errMsg('W4',  'Failed to fetch ' + script.src)));
           return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
@@ -554,8 +554,8 @@
     try {
       newMap = JSON.parse(newMapText);
     } catch (err) {
-      console.error(Error( errMsg(1, "systemjs-importmap contains invalid JSON")));
-      console.error(newMapText);
+      console.warn(Error( errMsg('W5', "systemjs-importmap contains invalid JSON")));
+      console.warn({invalidJsonString: newMapText});
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
