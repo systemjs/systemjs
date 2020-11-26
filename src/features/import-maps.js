@@ -38,9 +38,12 @@ function processScripts () {
     else if (script.type === 'systemjs-importmap') {
       script.sp = true;
       var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
+        if (!res.ok)
+          throw Error(process.env.SYSTEM_PRODUCTION ? res.status : 'Invalid status code: ' + res.status);
         return res.text();
-      }).catch((err) => {
-        console.warn(Error(errMsg('W4', process.env.SYSTEM_PRODUCTION ? script.src : 'Failed to fetch ' + script.src)));
+      }).catch(function (err) {
+        err.message = errMsg('W4', process.env.SYSTEM_PRODUCTION ? script.src : 'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
+        console.warn(err);
         return '{}';
       }) : script.innerHTML;
       importMapPromise = importMapPromise.then(function () {
@@ -57,7 +60,7 @@ function extendImportMap (importMap, newMapText, newMapUrl) {
   try {
     newMap = JSON.parse(newMapText);
   } catch (err) {
-    console.warn(Error(process.env.SYSTEM_PRODUCTION ? errMsg('W5') : errMsg('W5', "systemjs-importmap contains invalid JSON:\n\n" + newMapText)));
+    console.warn(Error((process.env.SYSTEM_PRODUCTION ? errMsg('W5') : errMsg('W5', "systemjs-importmap contains invalid JSON") + '\n\n' + newMapText + '\n' )));
   }
   resolveAndComposeImportMap(newMap, newMapUrl, importMap);
 }
