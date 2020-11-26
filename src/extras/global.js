@@ -17,15 +17,13 @@
         continue;
       if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
         return p;
-      if (systemJSPrototype.firstGlobalProp) {
-        if (foundLastProp) {
-          lastGlobalProp = p;
-          result = result || p;
-        }
-      } else
-        result = foundLastProp ? p : result;
-
-      foundLastProp = foundLastProp || p === lastGlobalProp;
+      if (foundLastProp) {
+        lastGlobalProp = p;
+        result = systemJSPrototype.firstGlobalProp && result || p;
+      }
+      else {
+        foundLastProp = p === lastGlobalProp;
+      }
       cnt++;
     }
     return result;
