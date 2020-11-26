@@ -1,7 +1,8 @@
 /*
-* SystemJS 6.7.1
+* SystemJS 6.8.0
 */
 (function () {
+
   function errMsg(errCode, msg) {
     return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
   }
@@ -477,7 +478,6 @@
               load.er = err;
               load.E = null;
               if (!false) triggerOnload(loader, load, err, true);
-              else throw err;
             });
           return load.E = load.E || execPromise;
         }
@@ -530,12 +530,27 @@
         script.sp = true;
         if (!script.src)
           return;
-        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl));
+        System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
+          // if there is a script load error, dispatch an "error" event
+          // on the script tag.
+          if (e.message.indexOf('https://git.io/JvFET#3') > -1) {
+            var event = document.createEvent('Event');
+            event.initEvent('error', false, false);
+            script.dispatchEvent(event);
+          }
+          return Promise.reject(e);
+        });
       }
       else if (script.type === 'systemjs-importmap') {
         script.sp = true;
         var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
+          if (!res.ok)
+            throw Error( 'Invalid status code: ' + res.status);
           return res.text();
+        }).catch(function (err) {
+          err.message = errMsg('W4',  'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
+          console.warn(err);
+          return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
           return fetchPromise;
@@ -547,10 +562,11 @@
   }
 
   function extendImportMap (importMap, newMapText, newMapUrl) {
+    var newMap = {};
     try {
-      var newMap = JSON.parse(newMapText);
+      newMap = JSON.parse(newMapText);
     } catch (err) {
-      throw Error( errMsg(1, "systemjs-importmap contains invalid JSON"));
+      console.warn(Error(( errMsg('W5', "systemjs-importmap contains invalid JSON") + '\n\n' + newMapText + '\n' )));
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
@@ -666,6 +682,8 @@
       if (!contentType || !jsContentTypeRegEx.test(contentType))
         throw Error(errMsg(4,  'Unknown Content-Type "' + contentType + '", loading ' + url + (parent ? ' from ' + parent : '')));
       return res.text().then(function (source) {
+        if (source.indexOf('//# sourceURL=') < 0)
+          source += '\n//# sourceURL=' + url;
         (0, eval)(source);
         return loader.getRegister();
       });
@@ -716,18 +734,23 @@
     var firstGlobalProp, secondGlobalProp, lastGlobalProp;
     function getGlobalProp () {
       var cnt = 0;
-      var lastProp;
+      var foundLastProp, result;
       for (var p in global) {
         // do not check frames cause it could be removed during import
         if (shouldSkipProperty(p))
           continue;
         if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
           return p;
+        if (foundLastProp) {
+          lastGlobalProp = p;
+          result = systemJSPrototype.firstGlobalProp && result || p;
+        }
+        else {
+          foundLastProp = p === lastGlobalProp;
+        }
         cnt++;
-        lastProp = p;
       }
-      if (lastProp !== lastGlobalProp)
-        return lastProp;
+      return result;
     }
 
     function noteGlobalProps () {

@@ -1,3 +1,9 @@
+SystemJS 6.8.0
+* System.firstGlobalProp for global loading extra (https://github.com/systemjs/systemjs/commit/48351aa83c48fdd22b63000d417dedc2329f2340, @joeldenning)
+* Graceful import map loading errors (https://github.com/systemjs/systemjs/commit/9edebd1969842dcc95a12d4137677c6bc9fe2bae, @naltatis)
+* Sourcemap normalization for fetch loader (https://github.com/systemjs/systemjs/commit/97621d724cc7c892d9dee2cff6b27553326c8169)
+* Dispatch script loading errors for `<script type="systemjs-module">` (https://github.com/systemjs/systemjs/commit/f0fe5a473414b995082688c30a876c602e32d901, @dmail)
+
 SystemJS 6.7.1
 * Fix auto import race condition (https://github.com/systemjs/systemjs/pull/2266)
 
