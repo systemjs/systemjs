@@ -119,6 +119,15 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('firstGlobalProp option', function () {
+    Object.getPrototypeOf(System).firstGlobalProp = true;
+    return System.import('fixtures/multiple-globals.js').then(function (m) {
+      delete Object.getPrototypeOf(System).firstGlobalProp;
+      assert.ok(m.default);
+      assert.equal(m.default.foo1, 'foo1');
+    });
+  });
+
   test('Parallel Global loading', function () {
     var scriptsToLoad = [];
     for (var i = 1; i < 11; i++)

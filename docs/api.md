@@ -37,6 +37,27 @@ Type: `Function`
 
 Resolves a module specifier relative to an optional parent URL, returning the resolved URL.
 
+#### System.firstGlobalProp: boolean
+Type: `Boolean`
+
+Applies to the global loading extra.
+
+Setting `System.firstGlobalProp = true` will ensure that the global loading extra will always use
+the first new global defined as the global module value, and not the last new global defined.
+
+For example, if importing the module `global.js`:
+
+```js
+window.a = 'a';
+window.b = 'b';
+```
+
+`System.import('./global.js')` would usually `{ default: 'b' }`.
+
+Setting `System.firstGlobalProp = true` would ensure the above returns `{ default: 'a' }`.
+
+> Note: This will likely be the default in the next major release.
+
 ### Registry API (system.js only)
 
 > Note: The registry API is **not recommended** for standard module loading workflows. It is designed more for tooling built around SystemJS such as hot-reloading workflows. If you find yourself wanting to define a module, rather try to restructure your module architecture around standard module import loading principles and import maps (and the same goes for named System.register).
