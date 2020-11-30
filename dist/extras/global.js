@@ -8,7 +8,7 @@
 
   // safari unpredictably lists some new globals first or second in object order
   var firstGlobalProp, secondGlobalProp, lastGlobalProp;
-  function getGlobalProp () {
+  function getGlobalProp (useFirstGlobalProp) {
     var cnt = 0;
     var foundLastProp, result;
     for (var p in global) {
@@ -19,7 +19,7 @@
         return p;
       if (foundLastProp) {
         lastGlobalProp = p;
-        result = systemJSPrototype.firstGlobalProp && result || p;
+        result = useFirstGlobalProp && result || p;
       }
       else {
         foundLastProp = p === lastGlobalProp;
@@ -64,7 +64,7 @@
     // when multiple globals, we take the global value to be the last defined new global object property
     // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
     // note in Edge, deleting and re-adding a global does not change its ordering
-    var globalProp = getGlobalProp();
+    var globalProp = getGlobalProp(this.firstGlobalProp);
     if (!globalProp)
       return emptyInstantiation;
 

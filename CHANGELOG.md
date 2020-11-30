@@ -1,3 +1,7 @@
+SystemJS 6.8.1
+* Support System.firstGlobalProp on System instance (https://github.com/systemjs/systemjs/commit/4883c708280f1a7785f065b46852fa806938a2dc)
+* Webpack usage update (https://github.com/systemjs/systemjs/commit/ca781b854fbb253e5f8477ce9b4fbc8c3c43f03c)
+
 SystemJS 6.8.0
 * System.firstGlobalProp for global loading extra (https://github.com/systemjs/systemjs/commit/48351aa83c48fdd22b63000d417dedc2329f2340, @joeldenning)
 * Graceful import map loading errors (https://github.com/systemjs/systemjs/commit/9edebd1969842dcc95a12d4137677c6bc9fe2bae, @naltatis)
