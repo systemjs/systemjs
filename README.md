@@ -218,7 +218,7 @@ As of webpack@4.30.0, it is now possible to compile webpack bundles to System.re
 }
 ```
 
-If building code using the `System` global in Webpack, the following config is needed to avoid rewriting:
+If using webpack@<5, the following config is needed to avoid rewriting references to the global `System` variable:
 
 ```js
 {
