@@ -53,7 +53,7 @@ systemJSPrototype.createContext = function (parentId) {
 
 // onLoad(err, id, deps) provided for tracing / hot-reloading
 if (!process.env.SYSTEM_PRODUCTION)
-  systemJSPrototype.onload = emptyFunction;
+  systemJSPrototype.onload = function () {};
 function loadToId (load) {
   return load.id;
 }
@@ -130,7 +130,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       },
       meta: loader.createContext(id)
     } : undefined);
-    load.e = declared.execute || emptyFunction;
+    load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
   }, function (err) {
     load.e = null;
@@ -156,28 +156,18 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
             if (depLoad.h || !depLoad.I)
               setter(depLoad.n);
           }
-
-          if (depLoad.L)
-            // https://github.com/systemjs/systemjs/issues/2286
-            depLoad.L.catch(function (err) {
-              load.e = null;
-            });
-
           return depLoad;
         }, function (err) {
           load.e = null;
           if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
           throw err;
         });
-      })
+      });
     }))
     .then(function (depLoads) {
       load.d = depLoads;
     });
   });
-
-  // Node.js unhandled rejections
-  linkPromise.catch(emptyFunction);
 
   // Capital letter = a promise function
   return load = loader[REGISTRY][id] = {
@@ -224,7 +214,12 @@ function instantiateAll (loader, load, loaded) {
     .then(function () {
       return Promise.all(load.d.map(function (dep) {
         return instantiateAll(loader, dep, loaded);
-      }));
+      }))
+      .catch(function (err) {
+        load.e = null;
+        if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
+        throw err;
+      });
     });
   }
 }
@@ -295,13 +290,13 @@ function postOrderExec (loader, load, seen) {
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
+      load.L = load.I = undefined;
     }
     catch (err) {
       load.er = err;
       throw err;
     }
     finally {
-      load.L = load.I = undefined;
       load.e = null;
       if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, load.er, true);
     }
