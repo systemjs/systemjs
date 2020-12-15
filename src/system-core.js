@@ -20,7 +20,6 @@ export { systemJSPrototype, REGISTRY }
 
 var toStringTag = hasSymbol && Symbol.toStringTag;
 var REGISTRY = hasSymbol ? Symbol() : '@';
-var emptyFunction = function () {};
 
 function SystemJS () {
   this[REGISTRY] = {};
@@ -168,6 +167,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       load.d = depLoads;
     });
   });
+  linkPromise.catch(function () {});
 
   // Capital letter = a promise function
   return load = loader[REGISTRY][id] = {
