@@ -303,6 +303,20 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  // https://github.com/systemjs/systemjs/issues/2286
+  test('should allow deletion of modules that failed to instantiate', function () {
+    return System.import('fixtures/link-error.js').then(
+      function () {
+        throw Error('Link error expected');
+      },
+      function () {
+        assert.ok(System.delete(System.resolve('fixtures/link-error.js')));
+        assert.ok(System.delete(System.resolve('fixtures/link-error-child.js')));
+        assert.ok(System.delete(System.resolve('fixtures/not-found.js')));
+      }
+    );
+  });
+
   var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;
 
   function isCSSStyleSheet(obj) {

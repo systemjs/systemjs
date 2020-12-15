@@ -156,6 +156,13 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
             if (depLoad.h || !depLoad.I)
               setter(depLoad.n);
           }
+
+          if (depLoad.L)
+            // https://github.com/systemjs/systemjs/issues/2286
+            depLoad.L.catch(function (err) {
+              load.e = null;
+            });
+
           return depLoad;
         });
       })
