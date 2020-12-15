@@ -136,6 +136,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
   if (!process.env.SYSTEM_PRODUCTION)
     instantiatePromise = instantiatePromise.catch(function (err) {
       triggerOnload(loader, load, err, true);
+      throw err;
     });
 
   var linkPromise = instantiatePromise
@@ -165,6 +166,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       },
       !process.env.SYSTEM_PRODUCTION && function (err) {
         triggerOnload(loader, load, err, false);
+        throw err;
       }
     )
   });
