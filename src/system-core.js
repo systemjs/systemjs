@@ -163,7 +163,8 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       load.d = depLoads;
     });
   });
-  linkPromise.catch(function () {});
+  if (!process.env.SYSTEM_BROWSER)
+    linkPromise.catch(function () {});
 
   // Capital letter = a promise function
   return load = loader[REGISTRY][id] = {
