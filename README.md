@@ -25,8 +25,6 @@ _Your logo will show up here with a link to your website._
 <a href="https://opencollective.com/systemjs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/systemjs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/9/avatar.svg"></a>
 
-[[Become a sponsor]](https://opencollective.com/systemjs#sponsor)
-
 ## Backers
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]
