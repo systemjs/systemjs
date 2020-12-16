@@ -156,10 +156,6 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
               setter(depLoad.n);
           }
           return depLoad;
-        }, function (err) {
-          load.e = null;
-          if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
-          throw err;
         });
       });
     }))
@@ -214,12 +210,14 @@ function instantiateAll (loader, load, loaded) {
     .then(function () {
       return Promise.all(load.d.map(function (dep) {
         return instantiateAll(loader, dep, loaded);
-      }))
-      .catch(function (err) {
-        load.e = null;
-        if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
+      }));
+    })
+    .catch(function (err) {
+      if (load.er)
         throw err;
-      });
+      load.e = null;
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
+      throw err;
     });
   }
 }
