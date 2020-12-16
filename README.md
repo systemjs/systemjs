@@ -10,6 +10,25 @@
 
 SystemJS is a hookable, standards-based module loader. It provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, running [almost-native module speeds](#performance) while supporting top-level await, dynamic import, circular references and live bindings, import.meta.url, module types, import maps, integrity and Content Security Policy with compatibility in older browsers back to IE11.
 
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]
+
+<a href="https://opencollective.com/systemjs#backers" target="_blank"><img src="https://opencollective.com/systemjs/backers.svg?width=890"></a>
+
+## Sponsors
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/systemjs#sponsor)]
+<a href="https://opencollective.com/systemjs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/systemjs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/9/avatar.svg"></a>
+
 #### 1. s.js minimal production loader
 
 The minimal [2.8KB s.js production loader](dist/s.min.js) includes the following features:
@@ -73,25 +92,6 @@ SystemJS is designed for production modules performance roughly only around a fa
 [Introduction video](https://www.youtube.com/watch?v=AmdKF2UhFzw).
 
 The [systemjs-examples repo](https://github.com/systemjs/systemjs-examples) contains a variety of examples demonstrating how to use SystemJS.
-
-## Backers
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]
-
-<a href="https://opencollective.com/systemjs#backers" target="_blank"><img src="https://opencollective.com/systemjs/backers.svg?width=890"></a>
-
-## Sponsors
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/systemjs#sponsor)]
-<a href="https://opencollective.com/systemjs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/systemjs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/9/avatar.svg"></a>
 
 ## Installation
 
