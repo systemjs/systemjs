@@ -1,3 +1,8 @@
+SystemJS 6.8.2
+* Fix deleting modules after link failure. (https://github.com/systemjs/systemjs/pull/2288)
+* Ensure onload hooks retain catches (https://github.com/systemjs/systemjs/pull/2289)
+* Footprint improvement for browser (https://github.com/systemjs/systemjs/pull/2290)
+
 SystemJS 6.8.1
 * Support System.firstGlobalProp on System instance (https://github.com/systemjs/systemjs/commit/4883c708280f1a7785f065b46852fa806938a2dc)
 * Webpack usage update (https://github.com/systemjs/systemjs/commit/ca781b854fbb253e5f8477ce9b4fbc8c3c43f03c)

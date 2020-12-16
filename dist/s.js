@@ -1,5 +1,5 @@
 /*
-* SJS 6.8.1
+* SJS 6.8.2
 * Minimal SystemJS Build
 */
 (function () {
@@ -321,6 +321,10 @@
       } : undefined);
       load.e = declared.execute || function () {};
       return [registration[0], declared.setters || []];
+    }, function (err) {
+      load.e = null;
+      load.er = err;
+      throw err;
     });
 
     var linkPromise = instantiatePromise
@@ -342,19 +346,11 @@
             }
             return depLoad;
           });
-        })
+        });
       }))
-      .then(
-        function (depLoads) {
-          load.d = depLoads;
-        },
-        !true 
-      )
-    });
-
-    linkPromise.catch(function (err) {
-      load.e = null;
-      load.er = err;
+      .then(function (depLoads) {
+        load.d = depLoads;
+      });
     });
 
     // Capital letter = a promise function
@@ -404,6 +400,12 @@
           return instantiateAll(loader, dep, loaded);
         }));
       })
+      .catch(function (err) {
+        if (load.er)
+          throw err;
+        load.e = null;
+        throw err;
+      });
     }
   }
 
@@ -438,23 +440,19 @@
     // deps execute first, unless circular
     var depLoadPromises;
     load.d.forEach(function (depLoad) {
-        try {
-          var depLoadPromise = postOrderExec(loader, depLoad, seen);
-          if (depLoadPromise) 
-            (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-        }
-        catch (err) {
-          load.e = null;
-          load.er = err;
-          throw err;
-        }
-    });
-    if (depLoadPromises)
-      return Promise.all(depLoadPromises).then(doExec, function (err) {
+      try {
+        var depLoadPromise = postOrderExec(loader, depLoad, seen);
+        if (depLoadPromise) 
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+      }
+      catch (err) {
         load.e = null;
         load.er = err;
         throw err;
-      });
+      }
+    });
+    if (depLoadPromises)
+      return Promise.all(depLoadPromises).then(doExec);
 
     return doExec();
 
@@ -462,28 +460,27 @@
       try {
         var execPromise = load.e.call(nullContext);
         if (execPromise) {
-            execPromise = execPromise.then(function () {
-              load.C = load.n;
-              load.E = null; // indicates completion
-              if (!true) ;
-            }, function (err) {
-              load.er = err;
-              load.E = null;
-              if (!true) ;
-              else throw err;
-            });
-          return load.E = load.E || execPromise;
+          execPromise = execPromise.then(function () {
+            load.C = load.n;
+            load.E = null; // indicates completion
+            if (!true) ;
+          }, function (err) {
+            load.er = err;
+            load.E = null;
+            if (!true) ;
+            throw err;
+          });
+          return load.E = execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!true) ;
+        load.L = load.I = undefined;
       }
       catch (err) {
         load.er = err;
         throw err;
       }
       finally {
-        load.L = load.I = undefined;
         load.e = null;
       }
     }

@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.8.1
+* SystemJS 6.8.2
 */
 (function () {
 
@@ -323,11 +323,12 @@
       } : undefined);
       load.e = declared.execute || function () {};
       return [registration[0], declared.setters || []];
+    }, function (err) {
+      load.e = null;
+      load.er = err;
+      triggerOnload(loader, load, err, true);
+      throw err;
     });
-
-    instantiatePromise = instantiatePromise.catch(function (err) {
-        triggerOnload(loader, load, err, true);
-      });
 
     var linkPromise = instantiatePromise
     .then(function (instantiation) {
@@ -348,21 +349,11 @@
             }
             return depLoad;
           });
-        })
+        });
       }))
-      .then(
-        function (depLoads) {
-          load.d = depLoads;
-        },
-         function (err) {
-          triggerOnload(loader, load, err, false);
-        }
-      )
-    });
-
-    linkPromise.catch(function (err) {
-      load.e = null;
-      load.er = err;
+      .then(function (depLoads) {
+        load.d = depLoads;
+      });
     });
 
     // Capital letter = a promise function
@@ -412,6 +403,13 @@
           return instantiateAll(loader, dep, loaded);
         }));
       })
+      .catch(function (err) {
+        if (load.er)
+          throw err;
+        load.e = null;
+        triggerOnload(loader, load, err, false);
+        throw err;
+      });
     }
   }
 
@@ -446,23 +444,20 @@
     // deps execute first, unless circular
     var depLoadPromises;
     load.d.forEach(function (depLoad) {
-        try {
-          var depLoadPromise = postOrderExec(loader, depLoad, seen);
-          if (depLoadPromise) 
-            (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-        }
-        catch (err) {
-          load.e = null;
-          load.er = err;
-          triggerOnload(loader, load, err, false);
-        }
-    });
-    if (depLoadPromises)
-      return Promise.all(depLoadPromises).then(doExec, function (err) {
+      try {
+        var depLoadPromise = postOrderExec(loader, depLoad, seen);
+        if (depLoadPromise) 
+          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+      }
+      catch (err) {
         load.e = null;
         load.er = err;
         triggerOnload(loader, load, err, false);
-      });
+        throw err;
+      }
+    });
+    if (depLoadPromises)
+      return Promise.all(depLoadPromises).then(doExec);
 
     return doExec();
 
@@ -470,28 +465,29 @@
       try {
         var execPromise = load.e.call(nullContext);
         if (execPromise) {
-            execPromise = execPromise.then(function () {
-              load.C = load.n;
-              load.E = null; // indicates completion
-              if (!false) triggerOnload(loader, load, null, true);
-            }, function (err) {
-              load.er = err;
-              load.E = null;
-              if (!false) triggerOnload(loader, load, err, true);
-            });
-          return load.E = load.E || execPromise;
+          execPromise = execPromise.then(function () {
+            load.C = load.n;
+            load.E = null; // indicates completion
+            if (!false) triggerOnload(loader, load, null, true);
+          }, function (err) {
+            load.er = err;
+            load.E = null;
+            if (!false) triggerOnload(loader, load, err, true);
+            throw err;
+          });
+          return load.E = execPromise;
         }
         // (should be a promise, but a minify optimization to leave out Promise.resolve)
         load.C = load.n;
-        if (!false) triggerOnload(loader, load, null, true);
+        load.L = load.I = undefined;
       }
       catch (err) {
         load.er = err;
-        triggerOnload(loader, load, err, true);
+        throw err;
       }
       finally {
-        load.L = load.I = undefined;
         load.e = null;
+        triggerOnload(loader, load, load.er, true);
       }
     }
   }

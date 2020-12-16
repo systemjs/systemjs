@@ -2770,12 +2770,12 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     } : undefined);
     load.e = declared.execute || function () {};
     return [registration[0], declared.setters || []];
+  }, function (err) {
+    load.e = null;
+    load.er = err;
+    if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
+    throw err;
   });
-
-  if (!process.env.SYSTEM_PRODUCTION)
-    instantiatePromise = instantiatePromise.catch(function (err) {
-      triggerOnload(loader, load, err, true);
-    });
 
   var linkPromise = instantiatePromise
   .then(function (instantiation) {
@@ -2796,22 +2796,14 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
           }
           return depLoad;
         });
-      })
+      });
     }))
-    .then(
-      function (depLoads) {
-        load.d = depLoads;
-      },
-      !process.env.SYSTEM_PRODUCTION && function (err) {
-        triggerOnload(loader, load, err, false);
-      }
-    )
+    .then(function (depLoads) {
+      load.d = depLoads;
+    });
   });
-
-  linkPromise.catch(function (err) {
-    load.e = null;
-    load.er = err;
-  });
+  if (!process.env.SYSTEM_BROWSER)
+    linkPromise.catch(function () {});
 
   // Capital letter = a promise function
   return load = loader[REGISTRY][id] = {
@@ -2860,6 +2852,13 @@ function instantiateAll (loader, load, loaded) {
         return instantiateAll(loader, dep, loaded);
       }));
     })
+    .catch(function (err) {
+      if (load.er)
+        throw err;
+      load.e = null;
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
+      throw err;
+    });
   }
 }
 
@@ -2894,25 +2893,20 @@ function postOrderExec (loader, load, seen) {
   // deps execute first, unless circular
   var depLoadPromises;
   load.d.forEach(function (depLoad) {
-      try {
-        var depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise) 
-          (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
-      }
-      catch (err) {
-        load.e = null;
-        load.er = err;
-        if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);  
-        else throw err;
-      }
-  });
-  if (depLoadPromises)
-    return Promise.all(depLoadPromises).then(doExec, function (err) {
+    try {
+      var depLoadPromise = postOrderExec(loader, depLoad, seen);
+      if (depLoadPromise) 
+        (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
+    }
+    catch (err) {
       load.e = null;
       load.er = err;
-      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);  
-      else throw err;
-    });
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
+      throw err;
+    }
+  });
+  if (depLoadPromises)
+    return Promise.all(depLoadPromises).then(doExec);
 
   return doExec();
 
@@ -2920,30 +2914,29 @@ function postOrderExec (loader, load, seen) {
     try {
       var execPromise = load.e.call(nullContext);
       if (execPromise) {
-          execPromise = execPromise.then(function () {
-            load.C = load.n;
-            load.E = null; // indicates completion
-            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
-          }, function (err) {
-            load.er = err;
-            load.E = null;
-            if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
-            else throw err;
-          });
-        return load.E = load.E || execPromise;
+        execPromise = execPromise.then(function () {
+          load.C = load.n;
+          load.E = null; // indicates completion
+          if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
+        }, function (err) {
+          load.er = err;
+          load.E = null;
+          if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
+          throw err;
+        });
+        return load.E = execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
-      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
+      load.L = load.I = undefined;
     }
     catch (err) {
       load.er = err;
-      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
-      else throw err;
+      throw err;
     }
     finally {
-      load.L = load.I = undefined;
       load.e = null;
+      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, load.er, true);
     }
   }
 }
@@ -5009,12 +5002,6 @@ function convertBody(buffer, headers) {
 	// html4
 	if (!res && str) {
 		res = /<meta[\s]+?http-equiv=(['"])content-type\1[\s]+?content=(['"])(.+?)\2/i.exec(str);
-		if (!res) {
-			res = /<meta[\s]+?content=(['"])(.+?)\1[\s]+?http-equiv=(['"])content-type\3/i.exec(str);
-			if (res) {
-				res.pop(); // drop last quote
-			}
-		}
 
 		if (res) {
 			res = /charset=(.*)/i.exec(res.pop());
@@ -6022,7 +6009,7 @@ function fetch(url, opts) {
 				// HTTP fetch step 5.5
 				switch (request.redirect) {
 					case 'error':
-						reject(new FetchError(`uri requested responds with a redirect, redirect mode is set to error: ${request.url}`, 'no-redirect'));
+						reject(new FetchError(`redirect mode is set to error: ${request.url}`, 'no-redirect'));
 						finalize();
 						return;
 					case 'manual':
@@ -6061,8 +6048,7 @@ function fetch(url, opts) {
 							method: request.method,
 							body: request.body,
 							signal: request.signal,
-							timeout: request.timeout,
-							size: request.size
+							timeout: request.timeout
 						};
 
 						// HTTP-redirect fetch step 9
