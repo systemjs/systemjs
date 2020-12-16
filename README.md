@@ -6,8 +6,6 @@
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
 [![Downloads on JS Delivr](https://data.jsdelivr.com/v1/package/npm/systemjs/badge)](https://www.jsdelivr.com/package/npm/systemjs)
 
-## Overview
-
 SystemJS is a hookable, standards-based module loader. It provides a workflow where code written for production workflows of native ES modules in browsers ([like Rollup code-splitting builds](https://rollupjs.org/guide/en#code-splitting)), can be transpiled to the [System.register module format](docs/system-register.md) to work in older browsers that don't support native modules, running [almost-native module speeds](#performance) while supporting top-level await, dynamic import, circular references and live bindings, import.meta.url, module types, import maps, integrity and Content Security Policy with compatibility in older browsers back to IE11.
 
 ## Sponsors
@@ -23,13 +21,15 @@ SystemJS is a hookable, standards-based module loader. It provides a workflow wh
 <a href="https://opencollective.com/systemjs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/systemjs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/systemjs/sponsor/9/avatar.svg"></a>
 
-> **Support this project by [becoming a sponsor](https://opencollective.com/systemjs#sponsor).** Your logo will show up here with a link to your website.
+> **Support SystemJS by [becoming a sponsor](https://opencollective.com/systemjs#sponsor).** Your logo will show up here with a link to your website.
 
 ## Backers
 
 Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/systemjs#backer)]
 
 <a href="https://opencollective.com/systemjs#backers" target="_blank"><img src="https://opencollective.com/systemjs/backers.svg?width=890"></a>
+
+### Overview
 
 #### 1. s.js minimal production loader
 
