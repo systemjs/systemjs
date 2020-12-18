@@ -313,11 +313,7 @@ suite('SystemJS Standard Tests', function() {
         assert.ok(System.delete(System.resolve('fixtures/link-error.js')));
         assert.ok(System.delete(System.resolve('fixtures/link-error-child.js')));
         assert.ok(System.delete(System.resolve('fixtures/not-found.js')));
-        assert.ok(System.has(System.resolve('fixtures/link-error-child2.js')));
-        return System.import('fixtures/link-error-child2.js').then(function () {
-          assert.ok(System.get(System.resolve('fixtures/link-error-child2.js')).default);
-          assert.ok(System.delete(System.resolve('fixtures/link-error-child2.js')));
-        })
+        assert.ok(System.delete(System.resolve('fixtures/link-error-child2.js')));
       }
     );
   });
