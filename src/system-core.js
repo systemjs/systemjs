@@ -199,7 +199,10 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
     // On execution, L, I, E cleared
 
     // Promise for top-level completion
-    C: undefined
+    C: undefined,
+
+    // load for firstParent
+    p: loader[REGISTRY][firstParentUrl]
   };
 }
 
