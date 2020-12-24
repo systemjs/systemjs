@@ -199,8 +199,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
     // Promise for top-level completion
     C: undefined,
 
-    // parent importer
-    // on error, this is cleared
+    // parent instantiator / executor
     p: undefined
   };
 }
@@ -211,7 +210,8 @@ function instantiateAll (loader, load, parent, loaded) {
     // load.L may be undefined for already-instantiated
     return Promise.resolve(load.L)
     .then(function () {
-      load.p = parent;
+      if (load.e !== null)
+        load.p = parent;
       return Promise.all(load.d.map(function (dep) {
         return instantiateAll(loader, dep, parent, loaded);
       }));
