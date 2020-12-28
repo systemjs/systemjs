@@ -229,7 +229,7 @@ function instantiateAll (loader, load, parent, loaded) {
 function topLevelLoad (loader, load) {
   return load.C = instantiateAll(loader, load, load, {})
   .then(function () {
-    return postOrderExec(loader, load, load, {});
+    return postOrderExec(loader, load, {});
   })
   .then(function () {
     return load.n;
