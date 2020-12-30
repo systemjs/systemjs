@@ -210,7 +210,7 @@ function instantiateAll (loader, load, parent, loaded) {
     // load.L may be undefined for already-instantiated
     return Promise.resolve(load.L)
     .then(function () {
-      if (load.e !== null)
+      if (load.e !== null && (!load.p || load.p.e === null))
         load.p = parent;
       return Promise.all(load.d.map(function (dep) {
         return instantiateAll(loader, dep, parent, loaded);
