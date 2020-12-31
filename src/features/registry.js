@@ -67,7 +67,7 @@ systemJSPrototype.delete = function (id) {
   var load = registry[id];
   // in future we can support load.E case by failing load first
   // but that will require TLA callbacks to be implemented
-  if (!load || load.e !== null || load.E)
+  if (!load || (load.p && load.p.e !== null) || load.E)
     return false;
 
   var importerSetters = load.i;

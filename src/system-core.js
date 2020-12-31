@@ -186,8 +186,6 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
     // dependency load records
     d: undefined,
     // execution function
-    // set to NULL immediately after execution (or on any failure) to indicate execution has happened
-    // in such a case, C should be used, and E, I, L will be emptied
     e: undefined,
 
     // On execution we have populated:
@@ -199,18 +197,23 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
     // On execution, L, I, E cleared
 
     // Promise for top-level completion
-    C: undefined
+    C: undefined,
+
+    // parent instantiator / executor
+    p: undefined
   };
 }
 
-function instantiateAll (loader, load, loaded) {
+function instantiateAll (loader, load, parent, loaded) {
   if (!loaded[load.id]) {
     loaded[load.id] = true;
     // load.L may be undefined for already-instantiated
     return Promise.resolve(load.L)
     .then(function () {
+      if (!load.p || load.p.e === null)
+        load.p = parent;
       return Promise.all(load.d.map(function (dep) {
-        return instantiateAll(loader, dep, loaded);
+        return instantiateAll(loader, dep, parent, loaded);
       }));
     })
     .catch(function (err) {
@@ -224,7 +227,7 @@ function instantiateAll (loader, load, loaded) {
 }
 
 function topLevelLoad (loader, load) {
-  return load.C = instantiateAll(loader, load, {})
+  return load.C = instantiateAll(loader, load, load, {})
   .then(function () {
     return postOrderExec(loader, load, {});
   })
