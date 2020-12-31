@@ -1,3 +1,6 @@
+SystemJS 6.8.3
+* Allow deletion of uninstantiated modules whose top level parent import finished. (https://github.com/systemjs/systemjs/pull/2291)
+
 SystemJS 6.8.2
 * Fix deleting modules after link failure. (https://github.com/systemjs/systemjs/pull/2288)
 * Ensure onload hooks retain catches (https://github.com/systemjs/systemjs/pull/2289)

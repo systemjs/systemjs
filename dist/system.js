@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.8.2
+* SystemJS 6.8.3
 */
 (function () {
 
@@ -376,8 +376,6 @@
       // dependency load records
       d: undefined,
       // execution function
-      // set to NULL immediately after execution (or on any failure) to indicate execution has happened
-      // in such a case, C should be used, and E, I, L will be emptied
       e: undefined,
 
       // On execution we have populated:
@@ -389,18 +387,23 @@
       // On execution, L, I, E cleared
 
       // Promise for top-level completion
-      C: undefined
+      C: undefined,
+
+      // parent instantiator / executor
+      p: undefined
     };
   }
 
-  function instantiateAll (loader, load, loaded) {
+  function instantiateAll (loader, load, parent, loaded) {
     if (!loaded[load.id]) {
       loaded[load.id] = true;
       // load.L may be undefined for already-instantiated
       return Promise.resolve(load.L)
       .then(function () {
+        if (!load.p || load.p.e === null)
+          load.p = parent;
         return Promise.all(load.d.map(function (dep) {
-          return instantiateAll(loader, dep, loaded);
+          return instantiateAll(loader, dep, parent, loaded);
         }));
       })
       .catch(function (err) {
@@ -414,7 +417,7 @@
   }
 
   function topLevelLoad (loader, load) {
-    return load.C = instantiateAll(loader, load, {})
+    return load.C = instantiateAll(loader, load, load, {})
     .then(function () {
       return postOrderExec(loader, load, {});
     })
@@ -951,7 +954,7 @@
     var load = registry[id];
     // in future we can support load.E case by failing load first
     // but that will require TLA callbacks to be implemented
-    if (!load || load.e !== null || load.E)
+    if (!load || (load.p && load.p.e !== null) || load.E)
       return false;
 
     var importerSetters = load.i;
