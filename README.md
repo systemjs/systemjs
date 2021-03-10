@@ -161,7 +161,7 @@ Say `main.js` depends on loading `'lodash'`, then we can define an import map:
 }
 </script>
 <!-- Alternatively:
-<script type="systemjs-importmap" src="path/to/map.json" crossorigin="anonymous">
+<script type="systemjs-importmap" src="path/to/map.json" crossorigin="anonymous"></script>
 -->
 <script type="systemjs-module" src="/js/main.js"></script>
 ```
