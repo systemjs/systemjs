@@ -8,6 +8,7 @@
       "default": "./dist/system.min.js"
     },
     "./s.js": "./dist/s.min.js",
+    "./package.json": "./package.json",
     "./dist/": "./dist/"
   },
   "description": "Dynamic ES module loader",
