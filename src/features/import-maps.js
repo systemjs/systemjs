@@ -57,6 +57,7 @@ function processScripts () {
           try {
             script.onerror();
           } catch(callbackErr) {
+            callbackErr.message = 'Error during onerror callback function of systemjs-importmap script: ' + script.src + '\n' + callbackErr.message;
             console.error(callbackErr);
           }
         }

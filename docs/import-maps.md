@@ -202,10 +202,12 @@ Previous versions of the import maps spec had support for multiple import maps i
 
 ### Handling Import Map Errors
 
-For handling errors fetching external import maps (specifically for [SystemJS Warning #W4](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#w4)), we can specify a callback function with the `onerror` attribute in the `<script type="systemjs-importmap">` tag.
+For handling errors when fetching external import maps (specifically for [SystemJS Warning #W4](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#w4)), we can use the `onerror` attribute in the `<script type="systemjs-importmap">` tag.
+
+In the `onerror` attribute, we can specify a callback function that will be executed when there is an error.
 
 ```html
-<script type="systemjs-importmap" src="unable-to-reach/importmap.json" onerror="handleError()"></script>
+<script type="systemjs-importmap" onerror="handleError()" src="unable-to-reach/importmap.json"></script>
 
 <script type="text/javascript">
   function handleError() {
