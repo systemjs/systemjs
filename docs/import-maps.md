@@ -200,6 +200,20 @@ Any existing mappings are replaced, although in future this may be an error.
 
 Previous versions of the import maps spec had support for multiple import maps in a single web page ([explanation](https://github.com/WICG/import-maps/issues/199)). SystemJS added support for multiple import maps during that time and has decided to keep support for multiple import maps as an experimental feature ([discussion](https://github.com/systemjs/systemjs/issues/2095)). Note that the Chrome implementation of import maps does not yet allow for multiple maps, and use of multiple import maps within SystemJS should be considered experimental and subject to change.
 
+### Handling Import Map Errors
+
+For handling errors fetching external import maps (specifically for [SystemJS Warning #W4](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#w4)), we can specify a callback function with the `onerror` attribute in the `<script type="systemjs-importmap">` tag.
+
+```html
+<script type="systemjs-importmap" src="unable-to-reach/importmap.json" onerror="handleError()"></script>
+
+<script type="text/javascript">
+  function handleError() {
+    // Put error handling/retry logic here.
+  }
+</script>
+```
+
 #### Spec and Implementation Feedback
 
 Part of the benefit of giving users a working version of an early spec is being able to get real user feedback on the [import maps specification](https://github.com/wicg/import-maps/blob/master/spec.md).

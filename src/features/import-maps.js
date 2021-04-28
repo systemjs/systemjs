@@ -53,6 +53,13 @@ function processScripts () {
       }).catch(function (err) {
         err.message = errMsg('W4', process.env.SYSTEM_PRODUCTION ? script.src : 'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
         console.warn(err);
+        if (typeof script.onerror === 'function') {
+          try {
+            script.onerror();
+          } catch(callbackErr) {
+            console.error(callbackErr);
+          }
+        }
         return '{}';
       }) : script.innerHTML;
       importMapPromise = importMapPromise.then(function () {
