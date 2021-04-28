@@ -28,6 +28,12 @@
 
 	<script type="systemjs-importmap" src="https://hostname.invalid/importmap.json"></script>
 	<script type="systemjs-importmap" src="fixtures/browser/importmap-invalid.json"></script>
+	<script type="systemjs-importmap" onerror="retryImportMap()" src="fixtures/browser/importmap-invalid.json"></script>
+	<script type="text/javascript">
+		function retryImportMap() {
+			document.write('<scr'+'ipt type="systemjs-importmap" src="fixtures/browser/importmap-invalid.json"></sc'+'ript>');
+		}
+	</script>
 	<script type="systemjs-importmap" src="fixtures/browser/importmap.json" integrity="sha384-+t/f9i0vQYwxmcczlIpgCCTQz2mA1sMGYGErJ4fZb/Lcx/yYrFSiedO0XpSIX8oX"></script>
 	<script type="systemjs-module" src="/test/fixtures/browser/systemjs-module-early.js"></script>
 	<script src="../dist/system.js"></script>
