@@ -33,6 +33,9 @@
       if (cssContentType.test(contentType))
         return res.text()
         .then(function (source) {
+          source = source.replace(/url\(([ '"]?)([^:]*?)\1\)/g, function (match, quotes, id) {
+            return 'url(' + quotes + systemJSPrototype.resolve(id, url) + quotes + ')';
+          });
           return new Response(new Blob([
             'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'
           ], {
