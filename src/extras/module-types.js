@@ -35,7 +35,7 @@ import { resolveUrl } from '../common.js';
       if (cssContentType.test(contentType))
         return res.text()
         .then(function (source) {
-          source = source.replace(/url\(\s*(["'])?((?:\\.|[^"')\\])+)\1\s*\)/g, function (match, quotes, relUrl) {
+          source = source.replace(/url\(\s*(["'])?((?:\\.|[^\s,"'()\\])+)\1\s*\)/g, function (match, quotes, relUrl) {
             return 'url(' + quotes + resolveUrl(relUrl, url) + quotes + ')';
           });
           return new Response(new Blob([
