@@ -35,8 +35,8 @@ import { resolveUrl } from '../common.js';
       if (cssContentType.test(contentType))
         return res.text()
         .then(function (source) {
-          source = source.replace(/url\(\s*(["'])?((?:\\.|[^\s,"'()\\])+)\1\s*\)/g, function (match, quotes, relUrl) {
-            return 'url(' + quotes + resolveUrl(relUrl, url) + quotes + ')';
+          source = source.replace(/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g, function (match, quotes, relUrl1, relUrl2) {
+            return 'url(' + quotes + resolveUrl(relUrl1 || relUrl2, url) + quotes + ')';
           });
           return new Response(new Blob([
             'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'
