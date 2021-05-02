@@ -1,3 +1,5 @@
+import { resolveUrl } from '../common.js';
+
 /*
  * Loads JSON, CSS, Wasm module types based on file extension
  * filters and content type verifications
@@ -33,6 +35,9 @@
       if (cssContentType.test(contentType))
         return res.text()
         .then(function (source) {
+          source = source.replace(/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g, function (match, quotes, relUrl1, relUrl2) {
+            return 'url(' + quotes + resolveUrl(relUrl1 || relUrl2, url) + quotes + ')';
+          });
           return new Response(new Blob([
             'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'
           ], {
