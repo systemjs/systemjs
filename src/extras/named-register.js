@@ -35,7 +35,7 @@
         firstNamedDefine = null;
       });
     }
-    return register.apply(deps, declare);
+    return register.apply(this, [deps, declare]);
   };
 
   var resolve = systemJSPrototype.resolve;
