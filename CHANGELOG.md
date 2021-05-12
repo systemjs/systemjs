@@ -1,3 +1,9 @@
+SystemJS 6.9.0
+* Fix named-register.js - omit name from register call. Resolves #2293. (https://github.com/systemjs/systemjs/pull/2329 @joeldenning)
+* Fix the relative path problem of CSS url() in CSSStyleSheet() (https://github.com/systemjs/systemjs/pull/2326 @liufei)
+* Onerror Callback Support for Errors Fetching External Import Map (https://github.com/systemjs/systemjs/pull/2324 @kykwak)
+* Fixed importmap example code (https://github.com/systemjs/systemjs/pull/2309 @maurer2)
+
 SystemJS 6.8.3
 * Allow deletion of uninstantiated modules whose top level parent import finished. (https://github.com/systemjs/systemjs/pull/2291)
 

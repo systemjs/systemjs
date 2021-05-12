@@ -1,5 +1,5 @@
 /*
-* SJS 6.8.3
+* SJS 6.9.0
 * Minimal SystemJS Build
 */
 (function () {
@@ -543,6 +543,9 @@
         }).catch(function (err) {
           err.message = errMsg('W4',  script.src ) + '\n' + err.message;
           console.warn(err);
+          if (typeof script.onerror === 'function') {
+              script.onerror();
+          }
           return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {

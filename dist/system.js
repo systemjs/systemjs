@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.8.3
+* SystemJS 6.9.0
 */
 (function () {
 
@@ -549,6 +549,9 @@
         }).catch(function (err) {
           err.message = errMsg('W4',  'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
           console.warn(err);
+          if (typeof script.onerror === 'function') {
+              script.onerror();
+          }
           return '{}';
         }) : script.innerHTML;
         importMapPromise = importMapPromise.then(function () {
@@ -853,6 +856,9 @@
         if (cssContentType.test(contentType))
           return res.text()
           .then(function (source) {
+            source = source.replace(/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g, function (match, quotes, relUrl1, relUrl2) {
+              return 'url(' + quotes + resolveUrl(relUrl1 || relUrl2, url) + quotes + ')';
+            });
             return new Response(new Blob([
               'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'
             ], {
