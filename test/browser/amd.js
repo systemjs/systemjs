@@ -82,4 +82,11 @@ suite('AMD tests', function () {
       assert.equal(m.default, false);
     });
   });
+
+  // https://github.com/systemjs/systemjs/issues/2332
+  test('loading an AMD module that sets module.exports to null', function () {
+    return System.import('fixtures/amd-null-module.js').then(function (m) {
+      assert.equal(m.default, null);
+    });
+  });
 });
