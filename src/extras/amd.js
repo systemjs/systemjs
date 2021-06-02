@@ -63,44 +63,44 @@ import { errMsg } from '../err-msg.js';
   }
 
   global.define = function (arg1, arg2, arg3) {
-    var isNamedRegister = typeof arg1 === 'string'
+    var isNamedRegister = typeof arg1 === 'string';
     var name = isNamedRegister ? arg1 : null;
-    var depArg = isNamedRegister ? arg2 : arg1
-    var execArg = isNamedRegister ? arg3 : arg2
+    var depArg = isNamedRegister ? arg2 : arg1;
+    var execArg = isNamedRegister ? arg3 : arg2;
 
     // The System.register(deps, exec) arguments
-    var deps, exec
+    var deps, exec;
 
     // define([], function () {})
     if (Array.isArray(depArg)) {
       deps = depArg;
-      exec = execArg
+      exec = execArg;
     }
     // define({})
     else if (typeof depArg === 'object') {
-      deps = []
-      exec = function () { return depArg }
+      deps = [];
+      exec = function () { return depArg };
     }
     // define(function () {})
     else if (typeof depArg === 'function') {
-      deps = requireExportsModule
+      deps = requireExportsModule;
       exec = depArg;
     } else {
       // TODO: create new error number and documentation for invalid call to define()
     }
 
-    var amdRegister = createAMDRegister(deps, exec)
+    var amdRegister = createAMDRegister(deps, exec);
 
     if (isNamedRegister) {
       if (System.registerRegistry) {
         System.registerRegistry[name] = amdRegister;
-        System.register(name, amdRegister[0], amdRegister[1])
+        System.register(name, amdRegister[0], amdRegister[1]);
       } else {
         // TODO: create new warning number and documentation for using named define without named-register extra
-        System.register(amdRegister[0], amdRegister[1])
+        System.register(amdRegister[0], amdRegister[1]);
       }
     } else {
-      System.register(amdRegister[0], amdRegister[1])
+      System.register(amdRegister[0], amdRegister[1]);
     }
   };
   global.define.amd = {};
