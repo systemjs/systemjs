@@ -30,7 +30,7 @@
       // hook the _export function to note the default export
       var defaultExport, hasDefaultExport = false;
       var declaration = registerDeclare.call(this, function (name, value) {
-        if (typeof name === 'object' && name.__useDefault)
+        if (typeof name === 'object' && name && name.__useDefault)
           defaultExport = name.default, hasDefaultExport = true;
         else if (name === 'default')
           defaultExport = value;
