@@ -56,6 +56,7 @@ import { errMsg } from '../err-msg.js';
           var amdResult = amdExec.apply(exports, depModules);
           if (amdResult !== undefined)
             module.exports = amdResult;
+          // https://github.com/systemjs/systemjs/issues/2332
           if (module.exports !== null)
             _export(module.exports);
           _export('default', module.exports);
