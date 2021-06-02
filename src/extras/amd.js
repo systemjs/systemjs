@@ -95,13 +95,11 @@ import { errMsg } from '../err-msg.js';
       if (System.registerRegistry) {
         System.registerRegistry[name] = amdRegister;
         System.register(name, amdRegister[0], amdRegister[1]);
-      } else {
+      } else
         // TODO: create new warning number and documentation for using named define without named-register extra
         System.register(amdRegister[0], amdRegister[1]);
-      }
-    } else {
+    } else
       System.register(amdRegister[0], amdRegister[1]);
-    }
   };
   global.define.amd = {};
 })(typeof self !== 'undefined' ? self : global);
