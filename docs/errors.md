@@ -167,11 +167,11 @@ To fix this warning, you may either use [import maps](/docs/import-maps.md) or [
 
 ### Invalid call to AMD define
 
-SystemJS Error #9 occurs when a the global variable `define` was called with invalid arguments.
+SystemJS Error #9 occurs when the global `define` function was called with invalid arguments.
 
 `window.define` is a global variable available in [AMD environments](https://en.wikipedia.org/wiki/Asynchronous_module_definition), and is created by the SystemJS [amd.js extra](https://github.com/systemjs/systemjs/blob/master/dist/extras/amd.js). It is a function called by modules in AMD or UMD format.
 
-With SystemJS, the valid calls to define() are valid:
+With SystemJS, the following calls to define() are valid:
 
 ```js
 // First argument is array of dependencies.
