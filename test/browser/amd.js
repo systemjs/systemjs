@@ -83,6 +83,13 @@ suite('AMD tests', function () {
     });
   });
 
+  // https://github.com/systemjs/systemjs/issues/2332
+  test('loading an AMD module that sets module.exports to null', function () {
+    return System.import('fixtures/amd-null-module.js').then(function (m) {
+      assert.equal(m.default, null);
+    });
+  });
+
   test('Throws an error when define() is called incorrectly', () => {
     try {
       define("strings are invalid amd modules");
