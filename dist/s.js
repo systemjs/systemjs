@@ -1,5 +1,5 @@
 /*
-* SJS 6.9.0
+* SJS 6.10.0
 * Minimal SystemJS Build
 */
 (function () {
@@ -302,7 +302,7 @@
             }
           }
 
-          if (name.__esModule) {
+          if (name && name.__esModule) {
             ns.__esModule = name.__esModule;
           }
         }

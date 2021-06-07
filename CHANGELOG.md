@@ -1,3 +1,8 @@
+SystemJS 6.10.0
+* Add package.json to package exports (https://github.com/systemjs/systemjs/pull/2317 @mk-pmb)
+* Refactor amd.js to only call System.register. Resolves #2331. (#2335)
+* Do not throw errors when _export(null) is called. Resolves #2332. (#2334)
+
 SystemJS 6.9.0
 * Fix named-register.js - omit name from register call. Resolves #2293. (https://github.com/systemjs/systemjs/pull/2329 @joeldenning)
 * Fix the relative path problem of CSS url() in CSSStyleSheet() (https://github.com/systemjs/systemjs/pull/2326 @liufei)

@@ -4,17 +4,9 @@
  * Support for AMD loading
  */
 (function (global) {
-  var systemPrototype = global.System.constructor.prototype;
-
-  var emptyInstantiation = [[], function () { return {} }];
-
   function unsupportedRequire () {
     throw Error( errMsg(5, 'AMD require not supported.'));
   }
-
-  var tmpRegister, firstNamedDefine;
-
-  function emptyFn () {}
 
   var requireExportsModule = ['require', 'exports', 'module'];
 
@@ -70,104 +62,45 @@
     }
   }
 
-  // hook System.register to know the last declaration binding
-  var lastRegisterDeclare;
-  var systemRegister = systemPrototype.register;
-  systemPrototype.register = function (name, deps, declare) {
-    lastRegisterDeclare = typeof name === 'string' ? declare : deps;
-    systemRegister.apply(this, arguments);
-  };
+  global.define = function (arg1, arg2, arg3) {
+    var isNamedRegister = typeof arg1 === 'string';
+    var name = isNamedRegister ? arg1 : null;
+    var depArg = isNamedRegister ? arg2 : arg1;
+    var execArg = isNamedRegister ? arg3 : arg2;
 
-  var instantiate = systemPrototype.instantiate;
-  systemPrototype.instantiate = function() {
-    // Reset "currently executing script"
-    amdDefineDeps = null;
-    return instantiate.apply(this, arguments);
-  };
+    // The System.register(deps, exec) arguments
+    var deps, exec;
 
-  var getRegister = systemPrototype.getRegister;
-  systemPrototype.getRegister = function () {
-    if (tmpRegister)
-      return tmpRegister;
-
-    var _firstNamedDefine = firstNamedDefine;
-    firstNamedDefine = null;
-
-    var register = getRegister.call(this);
-    // if its an actual System.register leave it
-    if (register && register[1] === lastRegisterDeclare)
-      return register;
-
-    var _amdDefineDeps = amdDefineDeps;
-    amdDefineDeps = null;
-
-    // If the script registered a named module, return that module instead of re-instantiating it.
-    if (_firstNamedDefine)
-      return _firstNamedDefine;
-
-    // otherwise AMD takes priority
-    // no registration -> attempt AMD detection
-    if (!_amdDefineDeps)
-      return register || emptyInstantiation;
-
-    return createAMDRegister(_amdDefineDeps, amdDefineExec);
-  };
-  var amdDefineDeps, amdDefineExec;
-  global.define = function (name, deps, execute) {
-    var depsAndExec;
-    // define('', [], function () {})
-    if (typeof name === 'string') {
-      depsAndExec = getDepsAndExec(deps, execute);
-      if (amdDefineDeps) {
-        if (!System.registerRegistry) {
-          throw Error( errMsg(6, 'Include the named register extension for SystemJS named AMD support.'));
-        }
-        addToRegisterRegistry(name, createAMDRegister(depsAndExec[0], depsAndExec[1]));
-        amdDefineDeps = [];
-        amdDefineExec = emptyFn;
-        return;
-      }
-      else {
-        if (System.registerRegistry)
-          addToRegisterRegistry(name, createAMDRegister([].concat(depsAndExec[0]), depsAndExec[1]));
-        name = deps;
-        deps = execute;
-      }
-    }
-    depsAndExec = getDepsAndExec(name, deps);
-    amdDefineDeps = depsAndExec[0];
-    amdDefineExec = depsAndExec[1];
-  };
-  global.define.amd = {};
-
-  function getDepsAndExec(arg1, arg2) {
     // define([], function () {})
-    if (arg1 instanceof Array) {
-      return [arg1, arg2];
+    if (Array.isArray(depArg)) {
+      deps = depArg;
+      exec = execArg;
     }
     // define({})
-    else if (typeof arg1 === 'object') {
-      return [[], function () { return arg1 }];
+    else if (typeof depArg === 'object') {
+      deps = [];
+      exec = function () { return depArg };
     }
     // define(function () {})
-    else if (typeof arg1 === 'function') {
-      return [requireExportsModule, arg1];
-    }
-  }
-
-  function addToRegisterRegistry(name, define) {
-    if (!firstNamedDefine) {
-      firstNamedDefine = define;
-      Promise.resolve().then(function () {
-        firstNamedDefine = null;
-      });
+    else if (typeof depArg === 'function') {
+      deps = requireExportsModule;
+      exec = depArg;
+    } else {
+      throw Error( errMsg(9, 'Invalid call to AMD define()'));
     }
 
-    // We must call System.getRegister() here to give other extras, such as the named-exports extra,
-    // a chance to modify the define before it's put into the registerRegistry.
-    // See https://github.com/systemjs/systemjs/issues/2073
-    tmpRegister = define;
-    System.registerRegistry[name] = System.getRegister();
-    tmpRegister = null;
-  }
+    var amdRegister = createAMDRegister(deps, exec);
+
+    if (isNamedRegister) {
+      if (System.registerRegistry) {
+        System.registerRegistry[name] = amdRegister;
+        System.register(name, amdRegister[0], amdRegister[1]);
+      } else
+        console.warn( errMsg('W6', 'Include named-register.js for full named define support'));
+        // TODO: create new warning number and documentation for using named define without named-register extra
+        System.register(amdRegister[0], amdRegister[1]);
+    } else
+      System.register(amdRegister[0], amdRegister[1]);
+  };
+  global.define.amd = {};
 })(typeof self !== 'undefined' ? self : global);}());
