@@ -163,6 +163,69 @@ To fix this warning, you may either use [import maps](/docs/import-maps.md) or [
 </script>
 ```
 
+## 9
+
+### Invalid call to AMD define
+
+SystemJS Error #9 occurs when a the global variable `define` was called with invalid arguments.
+
+`window.define` is a global variable available in [AMD environments](https://en.wikipedia.org/wiki/Asynchronous_module_definition), and is created by the SystemJS [amd.js extra](https://github.com/systemjs/systemjs/blob/master/dist/extras/amd.js). It is a function called by modules in AMD or UMD format.
+
+With SystemJS, the valid calls to define() are valid:
+
+```js
+// First argument is array of dependencies.
+// Second argument is the execution function that
+// returns the module's exports.
+define(['lodash'], function(lodash) {
+  return {
+    myExport: 'val1'
+  };
+});
+
+// First argument is array of dependencies - "exports" is a special AMD dependency.
+// Second argument is the execution function that modifies the exports variable.
+define(['exports'], function(exports) {
+  exports.myExport = 'val1'
+});
+
+// First argument is a function. This is a shorthand for
+// define([], function () {})
+// Useful for modules without any dependencies.
+define(function () {
+  return {
+    myExport: 'val1'
+  };
+});
+
+// First argument is object. Each property on the object represents an exported value
+// from the module.
+define({
+  myExport: 'val1'
+});
+
+// Including a string module name as the first argument is valid
+// This is a "named define". Include the named-register.js extra
+// to be able to load modules by their name.
+define("my-module", [], function () {});
+define("my-module", function () {});
+define("my-module", {
+  myExport: 'val1'
+});
+```
+
+SystemJS Error #9 occurs when the arguments passed to define do not match any of the above valid patterns. For example, calling define with a string or number as its first argument is invalid:
+
+```js
+// INVALID
+// A number is not a valid argument to define()
+define(123);
+
+// INVALID
+// A string is not a valid argument to define()
+define("asdfasdf");
+```
+
 # SystemJS Warnings
 
 This sections lists the SystemJS warnings that you may encounter.
@@ -265,3 +328,21 @@ A common mistake that causes this a trailing comma on the last module in the imp
 
 Note that this error also can occur for external import maps (those with `src=""` attribute). Check the network tab of your browser devtools to verify that the response body for the external import map is valid json.
 
+## W6
+
+### Include named-register.js for full named define support
+
+SystemJS Warning W6 occurs when a named [AMD module](https://en.wikipedia.org/wiki/Asynchronous_module_definition) is registered with SystemJS without having included the [SystemJS named-register.js extra](https://github.com/systemjs/systemjs/blob/master/dist/extras/named-register.js).
+
+An AMD module is one that calls the global `define()` function to register itself as a module. A named AMD module is one that calls `define()` with a string name as its first argument.
+
+```js
+// A named AMD module called my-module-name
+define('my-module-name', [], function () {});
+```
+
+If you're only using named AMD modules as part of a script loaded by System.import() that contains exactly one module, then you do not need to include the named-register.js extra. However, if named AMD modules are created separately from a System.import() call, or if there are multiple named AMD modules in the same file, then you'll need the named-register.js extra to be able to access all of the named modules.
+
+The reason for this is that SystemJS generally identifies modules by their URLs - one URL per module. Import Maps are the primary method to alias a bare specifier to a URL, but it's also possible to identify modules by a name without specifying a URL for each module, by creating named System.register or named AMD modules.
+
+When the SystemJS amd.js extra's `define` function is given a named AMD module, the module is identified by the URL of the currently executing script, if the script was loaded via `System.import()`. However, if the script was not loaded by `System.import()` or if there are multiple defines in the same script, then the module(s) will not have a URL associated with them and therefore will not be accessible by any identifier. To solve this problem, the named-register.js tracks all named modules (including named AMD modules and named System.register modules) by name, rather than by URL. This makes it possible to have one script that registers multiple named modules.

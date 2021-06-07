@@ -86,7 +86,7 @@ import { errMsg } from '../err-msg.js';
       deps = requireExportsModule;
       exec = depArg;
     } else {
-      // TODO: create new error number and documentation for invalid call to define()
+      throw Error(process.env.SYSTEM_PRODUCTION ? errMsg(9) : errMsg(9, 'Invalid call to AMD define()'));
     }
 
     var amdRegister = createAMDRegister(deps, exec);
@@ -96,6 +96,7 @@ import { errMsg } from '../err-msg.js';
         System.registerRegistry[name] = amdRegister;
         System.register(name, amdRegister[0], amdRegister[1]);
       } else
+        console.warn(process.env.SYSTEM_PRODUCTION ? errMsg('W6') : errMsg('W6', 'Include named-register.js for full named define support'));
         // TODO: create new warning number and documentation for using named define without named-register extra
         System.register(amdRegister[0], amdRegister[1]);
     } else

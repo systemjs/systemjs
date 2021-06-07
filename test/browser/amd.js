@@ -82,4 +82,20 @@ suite('AMD tests', function () {
       assert.equal(m.default, false);
     });
   });
+
+  test('Throws an error when define() is called incorrectly', () => {
+    try {
+      define("strings are invalid amd modules");
+      assert.fail("define(str) should throw");
+    } catch (err) {
+      assert.equal(err.message.indexOf('Invalid call to AMD define') >= 0, true);
+    }
+
+    try {
+      define(1234);
+      assert.fail("define(num) should throw");
+    } catch (err) {
+      assert.equal(err.message.indexOf('Invalid call to AMD define') >= 0, true);
+    }
+  });
 });
