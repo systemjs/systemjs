@@ -105,10 +105,14 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       }
       else {
         for (var p in name) {
-          var value = name[p];
-          if (!(p in ns) || ns[p] !== value) {
-            ns[p] = value;
-            changed = true;
+          try {
+            var value = name[p];
+            if (!(p in ns) || ns[p] !== value) {
+              ns[p] = value;
+              changed = true;
+            }
+          } catch(err) {
+            console.warn(err);
           }
         }
 
