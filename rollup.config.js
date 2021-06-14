@@ -119,7 +119,8 @@ function extrasConfig(isMin) {
       plugins: [
         isMin && terser(terserOptions),
         replace({
-          'process.env.SYSTEM_PRODUCTION': isMin ? 'true' : 'false'
+          'process.env.SYSTEM_PRODUCTION': isMin ? 'true' : 'false',
+	  'process.env.SYSTEM_BROWSER': true
         })
       ]
     };

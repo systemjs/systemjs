@@ -15,12 +15,6 @@ if (!baseUrl && typeof location !== 'undefined') {
     baseUrl = baseUrl.slice(0, lastSepIndex + 1);
 }
 
-if (!process.env.SYSTEM_BROWSER && !baseUrl && typeof process !== 'undefined') {
-  var cwd = process.cwd();
-  // TODO: encoding edge cases
-  baseUrl = 'file://' + (cwd[0] === '/' ? '' : '/') + cwd.replace(/\\/g, '/') + '/';
-}
-
 var backslashRegEx = /\\/g;
 function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
   if (relUrl.indexOf('\\') !== -1)
