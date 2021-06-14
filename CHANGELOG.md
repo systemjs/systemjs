@@ -1,3 +1,6 @@
+SystemJS 6.10.1
+* Fixes module-types usage process reference issue (https://github.com/systemjs/systemjs/pull/2343)
+
 SystemJS 6.10.0
 * Add package.json to package exports (https://github.com/systemjs/systemjs/pull/2317 @mk-pmb)
 * Refactor amd.js to only call System.register. Resolves #2331. (#2335)

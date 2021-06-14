@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.10.0
+* SystemJS 6.10.1
 */
 (function () {
 
