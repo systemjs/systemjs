@@ -9,7 +9,7 @@
     },
     "./s.js": "./dist/s.min.js",
     "./package.json": "./package.json",
-    "./dist/*": "./dist/"
+    "./dist/*": "./dist/*"
   },
   "description": "Dynamic ES module loader",
   "repository": {
