@@ -1,3 +1,6 @@
+SystemJS 6.10.2
+* Fix warning with node 16 (https://github.com/systemjs/systemjs/pull/2343 @JJ)
+
 SystemJS 6.10.1
 * Fixes module-types usage process reference issue (https://github.com/systemjs/systemjs/pull/2343)
 
