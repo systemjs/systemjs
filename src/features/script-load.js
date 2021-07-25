@@ -76,7 +76,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
         reject(lastWindowError);
       }
       else {
-        var register = loader.getRegister();
+        var register = loader.getRegister(url);
         // Clear any auto import registration for dynamic import scripts during load
         if (register && register[0] === lastAutoImportDeps)
           clearTimeout(lastAutoImportTimeout);

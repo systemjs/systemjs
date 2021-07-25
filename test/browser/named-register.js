@@ -171,4 +171,30 @@ suite('Named System.register', function() {
       assert.equal(m.b, 'b');
     });
   });
+
+  // https://github.com/systemjs/systemjs/issues/2349
+  test('Bundles with named register do not instantiate last module more than once', function () {
+    // First import the module via URL
+    return System.import('./fixtures/browser/named-instantiate-count.js').then(function (urlModule) {
+      // Then import the same module via named register name
+      return System.import('named-instantiate-count').then(function (namedModule) {
+        assert.equal(urlModule.getInstantiateCount(), 1);
+        assert.equal(namedModule.getInstantiateCount(), 1);
+        assert.equal(urlModule, namedModule);
+      });
+    });
+  });
+
+  // https://github.com/systemjs/systemjs/issues/2349
+  test('Named bundles that self import', function () {
+    // First import the module via URL
+    return System.import('./fixtures/browser/named-self-import.js').then(function (urlModule) {
+      // Then import the same module via named register name
+      return System.import('named-self-import').then(function (namedModule) {
+        assert.equal(urlModule.getInstantiateCount(), 1);
+        assert.equal(namedModule.getInstantiateCount(), 1);
+        assert.equal(urlModule, namedModule);
+      });
+    });
+  });
 });
