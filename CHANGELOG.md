@@ -1,3 +1,7 @@
+SystemJS 6.10.3
+* Avoid double instantiation of named registers. (https://github.com/systemjs/systemjs/pull/2352)
+* Always return the first named register from a file. (https://github.com/systemjs/systemjs/pull/2352)
+
 SystemJS 6.10.2
 * Fix warning with node 16 (https://github.com/systemjs/systemjs/pull/2343 @JJ)
 

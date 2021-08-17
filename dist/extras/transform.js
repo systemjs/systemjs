@@ -25,7 +25,7 @@
     })
     .then(function (source) {
       (0, eval)(source + '\n//# sourceURL=' + url);
-      return loader.getRegister();
+      return loader.getRegister(url);
     });
   };
 

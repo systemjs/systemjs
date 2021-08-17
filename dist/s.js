@@ -1,5 +1,5 @@
 /*
-* SJS 6.10.2
+* SJS 6.10.3
 * Minimal SystemJS Build
 */
 (function () {
@@ -641,7 +641,7 @@
           reject(lastWindowError);
         }
         else {
-          var register = loader.getRegister();
+          var register = loader.getRegister(url);
           // Clear any auto import registration for dynamic import scripts during load
           if (register && register[0] === lastAutoImportDeps)
             clearTimeout(lastAutoImportTimeout);
@@ -681,7 +681,7 @@
         if (source.indexOf('//# sourceURL=') < 0)
           source += '\n//# sourceURL=' + url;
         (0, eval)(source);
-        return loader.getRegister();
+        return loader.getRegister(url);
       });
     });
   };
@@ -714,7 +714,7 @@
       var loader = this;
       return Promise.resolve().then(function () {
         importScripts(url);
-        return loader.getRegister();
+        return loader.getRegister(url);
       });
     };
 
