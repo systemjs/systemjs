@@ -9,6 +9,6 @@ if (hasSelf && typeof importScripts === 'function')
     var loader = this;
     return Promise.resolve().then(function () {
       importScripts(url);
-      return loader.getRegister();
+      return loader.getRegister(url);
     });
   };

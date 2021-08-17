@@ -57,7 +57,7 @@ This function downloads and executes the code for a module. The promise must res
 
 The default system.js implementation is to append a script tag that downloads and executes the module's code, subsequently resolving the promise with the most recent register: `resolve(System.getRegister())`. [Example](https://github.com/systemjs/systemjs/blob/master/src/features/script-load.js).
 
-#### getRegister() -> [deps: String[], declare: Function]
+#### getRegister(url) -> [deps: String[], declare: Function]
 
 > This hook is intended for custom module format integrations only.
 
