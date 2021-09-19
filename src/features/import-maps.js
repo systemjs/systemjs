@@ -24,6 +24,7 @@ if (hasDocument) {
   window.addEventListener('DOMContentLoaded', processScripts);
 }
 
+export var inlineScripts = {}
 function processScripts () {
   [].forEach.call(document.querySelectorAll('script'), function (script) {
     if (script.sp) // sp marker = systemjs processed
@@ -31,8 +32,16 @@ function processScripts () {
     // TODO: deprecate systemjs-module in next major now that we have auto import
     if (script.type === 'systemjs-module') {
       script.sp = true;
-      if (!script.src)
-        return;
+      var scriptSrc = script.src
+      var importUrl
+      if (scriptSrc) {
+        importUrl = scriptSrc.slice(0, 7) === "import:"
+            ? scriptSrc.slice(7)
+            : resolveUrl(scriptSrc, baseUrl)
+      } else {
+        importUrl = document.location.href + "_inline_script_" + index
+        inlineScripts[importUrl] = script.textContent
+      }
       System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
         // if there is a script load error, dispatch an "error" event
         // on the script tag.

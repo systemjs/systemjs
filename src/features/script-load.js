@@ -4,7 +4,7 @@
 import { hasDocument } from '../common.js';
 import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
-import { importMap } from './import-maps.js';
+import { importMap, inlineScripts } from './import-maps.js';
 
 if (hasDocument) {
   window.addEventListener('error', function (evt) {
@@ -63,6 +63,15 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return autoImportRegistration;
   }
   var loader = this;
+
+  var inlineScriptContent = inlineScripts[url]
+  if (typeof inlineScriptContent === "string") {
+    if (inlineScriptContent.indexOf("//# sourceURL=") < 0)
+      inlineScriptContent += "\n//# sourceURL=" + url
+    ;(0, eval)(inlineScriptContent)
+    return loader.getRegister(url)
+  }
+
   return new Promise(function (resolve, reject) {
     var script = systemJSPrototype.createScript(url);
     script.addEventListener('error', function () {
