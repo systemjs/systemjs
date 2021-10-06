@@ -33,7 +33,7 @@ function processScripts () {
       script.sp = true;
       if (!script.src)
         return;
-      System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
+      systemJSPrototype.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
         // if there is a script load error, dispatch an "error" event
         // on the script tag.
         if (e.message.indexOf('https://git.io/JvFET#3') > -1) {
