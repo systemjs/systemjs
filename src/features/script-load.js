@@ -2,8 +2,8 @@
  * Script instantiation loading
  */
 import { hasDocument } from '../common.js';
-import { systemJSPrototype } from '../system-core.js';
 import { errMsg } from '../err-msg.js';
+import { systemJSPrototype } from '../system-core.js';
 import { importMap } from './import-maps.js';
 
 if (hasDocument) {
@@ -63,8 +63,8 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return autoImportRegistration;
   }
   var loader = this;
-  return new Promise(function (resolve, reject) {
-    var script = systemJSPrototype.createScript(url);
+  return new Promise(async function (resolve, reject) {
+    var script = await systemJSPrototype.createScript(url);
     script.addEventListener('error', function () {
       reject(Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
     });
@@ -84,5 +84,11 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
       }
     });
     document.head.appendChild(script);
+
+    // Note: when you use a script without `src`, the onload is not triggered after
+    // the script was added to the DOM.
+    if (!script.src) {
+      script.dispatchEvent(new Event("load"));
+    }
   });
 };
