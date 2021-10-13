@@ -87,7 +87,6 @@ SystemJS is designed for production modules performance roughly only around a fa
 | ---- | -------- | ------ |
 | Native modules | 1668ms | 49ms |
 | SystemJS | 2334ms | 81ms |
-| es-module-shims | 2671ms | 602ms |
 
 ## Getting Started
 
