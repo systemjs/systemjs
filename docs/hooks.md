@@ -35,13 +35,15 @@ System.constructor.prototype.createContext = function (url) {
 };
 ```
 
-#### createScript(url) -> HTMLScriptElement
+#### createScript(url) -> Promise\<HTMLScriptElement>
 
 When SystemJS loads a module, it creates a `<script>` tag and injects it into the head.
 
 `createScript` allows hooking this script tag creation, will by default implement `return Object.assign(document.createElement('script'), { url, crossOrigin: 'anonymous' })`.
 
 This allows, for example, including custom integrity or authentication attributes.
+
+This hook could be asynchronous and you can fetch asynchronously some data and return your script tag.
 
 Note that this hook does not apply to [module types](module-types.md), which use the default browser fetch implementation.
 

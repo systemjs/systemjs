@@ -2,8 +2,8 @@
  * Script instantiation loading
  */
 import { hasDocument } from '../common.js';
-import { errMsg } from '../err-msg.js';
 import { systemJSPrototype } from '../system-core.js';
+import { errMsg } from '../err-msg.js';
 import { importMap } from './import-maps.js';
 
 if (hasDocument) {
@@ -63,32 +63,27 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
     return autoImportRegistration;
   }
   var loader = this;
-  return new Promise(async function (resolve, reject) {
-    var script = await systemJSPrototype.createScript(url);
-    script.addEventListener('error', function () {
-      reject(Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
-    });
-    script.addEventListener('load', function () {
-      document.head.removeChild(script);
-      // Note that if an error occurs that isn't caught by this if statement,
-      // that getRegister will return null and a "did not instantiate" error will be thrown.
-      if (lastWindowErrorUrl === url) {
-        reject(lastWindowError);
-      }
-      else {
-        var register = loader.getRegister(url);
-        // Clear any auto import registration for dynamic import scripts during load
-        if (register && register[0] === lastAutoImportDeps)
-          clearTimeout(lastAutoImportTimeout);
-        resolve(register);
-      }
-    });
-    document.head.appendChild(script);
-
-    // Note: when you use a script without `src`, the onload is not triggered after
-    // the script was added to the DOM.
-    if (!script.src) {
-      script.dispatchEvent(new Event("load"));
-    }
+  return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
+    return new Promise(function (resolve, reject) {
+      script.addEventListener('error', function () {
+        reject(Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+      });
+      script.addEventListener('load', function () {
+        document.head.removeChild(script);
+        // Note that if an error occurs that isn't caught by this if statement,
+        // that getRegister will return null and a "did not instantiate" error will be thrown.
+        if (lastWindowErrorUrl === url) {
+          reject(lastWindowError);
+        }
+        else {
+          var register = loader.getRegister(url);
+          // Clear any auto import registration for dynamic import scripts during load
+          if (register && register[0] === lastAutoImportDeps)
+            clearTimeout(lastAutoImportTimeout);
+          resolve(register);
+        }
+      });
+      document.head.appendChild(script);
+    })
   });
 };
