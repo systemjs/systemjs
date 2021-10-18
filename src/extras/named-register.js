@@ -34,7 +34,7 @@
       firstNamedDefine = define;
       firstName = name;
     }
-    setTimeout(function () {
+    Promise.resolve().then(function () {
       firstNamedDefine = null;
       firstName = null;
     });
