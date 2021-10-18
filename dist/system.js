@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.10.3
+* SystemJS 6.11.0
 */
 (function () {
 
@@ -634,27 +634,28 @@
       return autoImportRegistration;
     }
     var loader = this;
-    return new Promise(function (resolve, reject) {
-      var script = systemJSPrototype.createScript(url);
-      script.addEventListener('error', function () {
-        reject(Error(errMsg(3,  'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+    return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
+      return new Promise(function (resolve, reject) {
+        script.addEventListener('error', function () {
+          reject(Error(errMsg(3,  'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+        });
+        script.addEventListener('load', function () {
+          document.head.removeChild(script);
+          // Note that if an error occurs that isn't caught by this if statement,
+          // that getRegister will return null and a "did not instantiate" error will be thrown.
+          if (lastWindowErrorUrl === url) {
+            reject(lastWindowError);
+          }
+          else {
+            var register = loader.getRegister(url);
+            // Clear any auto import registration for dynamic import scripts during load
+            if (register && register[0] === lastAutoImportDeps)
+              clearTimeout(lastAutoImportTimeout);
+            resolve(register);
+          }
+        });
+        document.head.appendChild(script);
       });
-      script.addEventListener('load', function () {
-        document.head.removeChild(script);
-        // Note that if an error occurs that isn't caught by this if statement,
-        // that getRegister will return null and a "did not instantiate" error will be thrown.
-        if (lastWindowErrorUrl === url) {
-          reject(lastWindowError);
-        }
-        else {
-          var register = loader.getRegister(url);
-          // Clear any auto import registration for dynamic import scripts during load
-          if (register && register[0] === lastAutoImportDeps)
-            clearTimeout(lastAutoImportTimeout);
-          resolve(register);
-        }
-      });
-      document.head.appendChild(script);
     });
   };
 

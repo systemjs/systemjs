@@ -1,3 +1,7 @@
+SystemJS 6.11.0
+* Add the possibility to use an async createScript hook (https://github.com/systemjs/systemjs/pull/2362 @legarsjules)
+* Use Promise.resolve in named-register. Resolves #2359. (https://github.com/systemjs/systemjs/pull/2363)
+
 SystemJS 6.10.3
 * Avoid double instantiation of named registers. (https://github.com/systemjs/systemjs/pull/2352)
 * Always return the first named register from a file. (https://github.com/systemjs/systemjs/pull/2352)
