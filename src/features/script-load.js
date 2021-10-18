@@ -84,6 +84,6 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
         }
       });
       document.head.appendChild(script);
-    })
+    });
   });
 };
