@@ -35,7 +35,7 @@ System.constructor.prototype.createContext = function (url) {
 };
 ```
 
-#### createScript(url) -> Promise\<HTMLScriptElement>
+#### createScript(url) -> HTMLScriptElement | Promise\<HTMLScriptElement>
 
 When SystemJS loads a module, it creates a `<script>` tag and injects it into the head.
 
