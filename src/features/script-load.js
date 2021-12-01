@@ -39,7 +39,7 @@ systemJSPrototype.register = function (deps, declare) {
     var scripts = document.querySelectorAll('script[src]');
     var lastScript = scripts[scripts.length - 1];
     lastAutoImportDeps = deps;
-    if (lastScript.src) {
+    if (lastScript && lastScript.src) {
       lastAutoImportUrl = lastScript.src;
     }
     else {
