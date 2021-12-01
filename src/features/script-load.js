@@ -30,7 +30,7 @@ systemJSPrototype.createScript = function (url) {
 };
 
 // Auto imports -> script tags can be inlined directly for load phase
-var lastAutoImportDeps, lastAutoImportTimeout;
+var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
 var autoImportCandidates = {};
 var systemRegister = systemJSPrototype.register;
 var inlineScriptCount = 0;
@@ -38,13 +38,12 @@ systemJSPrototype.register = function (deps, declare) {
   if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
     var scripts = document.querySelectorAll('script[src]');
     var lastScript = scripts[scripts.length - 1];
-    var lastAutoImportUrl;
     lastAutoImportDeps = deps;
-    if (lastScript) {
+    if (lastScript.src) {
       lastAutoImportUrl = lastScript.src;
     }
     else {
-      inlineScriptCount++
+      inlineScriptCount++;
       lastAutoImportUrl = document.location.href + "__inline_script__" + inlineScriptCount;
     }
     // if this is already a System load, then the instantiate has already begun
