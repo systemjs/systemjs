@@ -319,7 +319,7 @@ suite('SystemJS Standard Tests', function() {
   });
 
   test('Calls the fetch hook when fetching import maps', function () {
-    const importMapSrc = 'https://example.com/importmap-test.js'
+    const importMapSrc = 'https://example.com/importmap-test.js';
     const scriptElement = document.createElement('script');
     scriptElement.type = 'systemjs-importmap';
     scriptElement.src = importMapSrc;
