@@ -318,6 +318,33 @@ suite('SystemJS Standard Tests', function() {
     );
   });
 
+  test('Calls the fetch hook when fetching import maps', function () {
+    const importMapSrc = 'https://example.com/importmap-test.js'
+    const scriptElement = document.createElement('script');
+    scriptElement.type = 'systemjs-importmap';
+    scriptElement.src = importMapSrc;
+    document.head.appendChild(scriptElement);
+
+    const originalFetch = System.constructor.prototype.fetch;
+
+    let fetchHookCalled = false;
+
+    System.constructor.prototype.fetch = function(url) {
+      if (url === importMapSrc) {
+        fetchHookCalled = true;
+      }
+
+      return originalFetch.apply(this, arguments);
+    }
+
+    // Reprocess import maps
+    System.prepareImport(true);
+
+    System.constructor.prototype.fetch = originalFetch;
+
+    assert.ok(fetchHookCalled);
+  });
+
   var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;
 
   function isCSSStyleSheet(obj) {
