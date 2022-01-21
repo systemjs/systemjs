@@ -1,5 +1,8 @@
-SystemJS 6.12.0
+SystemJS 6.12.1
 * Call fetch hook when retrieving external import maps. Resolves #2374. (https://github.com/systemjs/systemjs/pull/2376)
+
+SystemJS 6.12.0
+* This version was published in error. Please use 6.12.1 instead.
 
 SystemJS 6.11.0
 * Add the possibility to use an async createScript hook (https://github.com/systemjs/systemjs/pull/2362 @legarsjules)

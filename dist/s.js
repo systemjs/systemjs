@@ -1,5 +1,5 @@
 /*
-* SJS 6.11.0
+* SJS 6.12.1
 * Minimal SystemJS Build
 */
 (function () {
@@ -536,7 +536,8 @@
       }
       else if (script.type === 'systemjs-importmap') {
         script.sp = true;
-        var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
+        // The passThrough property is for letting the module types fetch implementation know that this is not a SystemJS module.
+        var fetchPromise = script.src ? (System.fetch || fetch)(script.src, { integrity: script.integrity, passThrough: true }).then(function (res) {
           if (!res.ok)
             throw Error(res.status );
           return res.text();

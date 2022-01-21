@@ -1,5 +1,5 @@
 /*
-* SystemJS 6.11.0
+* SystemJS 6.12.1
 */
 (function () {
 
@@ -542,7 +542,8 @@
       }
       else if (script.type === 'systemjs-importmap') {
         script.sp = true;
-        var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
+        // The passThrough property is for letting the module types fetch implementation know that this is not a SystemJS module.
+        var fetchPromise = script.src ? (System.fetch || fetch)(script.src, { integrity: script.integrity, passThrough: true }).then(function (res) {
           if (!res.ok)
             throw Error('Invalid status code: ' + res.status);
           return res.text();
@@ -841,6 +842,9 @@
     systemJSPrototype.fetch = function (url, options) {
       return fetch(url, options)
       .then(function (res) {
+        if (options.passThrough)
+          return res;
+
         if (!res.ok)
           return res;
         var contentType = res.headers.get('content-type');

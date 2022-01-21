@@ -126,6 +126,9 @@ function resolveUrl (relUrl, parentUrl) {
   systemJSPrototype.fetch = function (url, options) {
     return fetch(url, options)
     .then(function (res) {
+      if (options.passThrough)
+        return res;
+
       if (!res.ok)
         return res;
       var contentType = res.headers.get('content-type');
