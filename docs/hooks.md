@@ -91,7 +91,7 @@ System.shouldFetch = function () { return true; };
 
 will enforce loading all JS files through `fetch`, allowing custom fetch hook implementation behaviours.
 
-#### fetch(url) -> Promise<Response>
+#### fetch(url, options) -> Promise<Response>
 
 The default fetch implementation used in SystemJS is simply `System.fetch = window.fetch`, which can be further hooked to enable
 arbitrary transformation.
