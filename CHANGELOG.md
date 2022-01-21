@@ -1,3 +1,6 @@
+SystemJS 6.12.0
+* Call fetch hook when retrieving external import maps. Resolves #2374. (https://github.com/systemjs/systemjs/pull/2376)
+
 SystemJS 6.11.0
 * Add the possibility to use an async createScript hook (https://github.com/systemjs/systemjs/pull/2362 @legarsjules)
 * Use Promise.resolve in named-register. Resolves #2359. (https://github.com/systemjs/systemjs/pull/2363)

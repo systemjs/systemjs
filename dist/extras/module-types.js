@@ -178,4 +178,4 @@ function resolveUrl (relUrl, parentUrl) {
       return res;
     });
   };
-})(typeof self !== 'undefined' ? self : global);}());
+})(typeof self !== 'undefined' ? self : global);})();

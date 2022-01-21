@@ -13,4 +13,4 @@ new MutationObserver(function (mutations) {
       }
     }
   }
-}).observe(document, { childList: true, subtree: true });}());
+}).observe(document, { childList: true, subtree: true });})();

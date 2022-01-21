@@ -78,4 +78,4 @@
     firstName = null;
     return result;
   };
-})(typeof self !== 'undefined' ? self : global);}());
+})(typeof self !== 'undefined' ? self : global);})();

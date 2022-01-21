@@ -180,7 +180,7 @@
   }
 
   function targetWarning (code, match, target, msg) {
-    console.warn(errMsg(code,  [target, match].join(', ') ));
+    console.warn(errMsg(code, [target, match].join(', ') ));
   }
 
   function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -282,7 +282,7 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw Error(errMsg(2,  id ));
+        throw Error(errMsg(2, id ));
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
@@ -538,10 +538,10 @@
         script.sp = true;
         var fetchPromise = script.src ? fetch(script.src, { integrity: script.integrity }).then(function (res) {
           if (!res.ok)
-            throw Error( res.status );
+            throw Error(res.status );
           return res.text();
         }).catch(function (err) {
-          err.message = errMsg('W4',  script.src ) + '\n' + err.message;
+          err.message = errMsg('W4', script.src ) + '\n' + err.message;
           console.warn(err);
           if (typeof script.onerror === 'function') {
               script.onerror();
@@ -562,7 +562,7 @@
     try {
       newMap = JSON.parse(newMapText);
     } catch (err) {
-      console.warn(Error(( errMsg('W5')  )));
+      console.warn(Error((errMsg('W5')  )));
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
@@ -595,7 +595,7 @@
   };
 
   // Auto imports -> script tags can be inlined directly for load phase
-  var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
+  var lastAutoImportDeps, lastAutoImportTimeout;
   var autoImportCandidates = {};
   var systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
@@ -603,7 +603,6 @@
       var scripts = document.querySelectorAll('script[src]');
       var lastScript = scripts[scripts.length - 1];
       if (lastScript) {
-        lastAutoImportUrl = lastScript.src;
         lastAutoImportDeps = deps;
         // if this is already a System load, then the instantiate has already begun
         // so this re-import has no consequence
@@ -631,7 +630,7 @@
     return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
       return new Promise(function (resolve, reject) {
         script.addEventListener('error', function () {
-          reject(Error(errMsg(3,  [url, firstParentUrl].join(', ') )));
+          reject(Error(errMsg(3, [url, firstParentUrl].join(', ') )));
         });
         script.addEventListener('load', function () {
           document.head.removeChild(script);
@@ -674,10 +673,10 @@
     })
     .then(function (res) {
       if (!res.ok)
-        throw Error(errMsg(7,  [res.status, res.statusText, url, parent].join(', ') ));
+        throw Error(errMsg(7, [res.status, res.statusText, url, parent].join(', ') ));
       var contentType = res.headers.get('content-type');
       if (!contentType || !jsContentTypeRegEx.test(contentType))
-        throw Error(errMsg(4,  contentType ));
+        throw Error(errMsg(4, contentType ));
       return res.text().then(function (source) {
         if (source.indexOf('//# sourceURL=') < 0)
           source += '\n//# sourceURL=' + url;
@@ -689,16 +688,16 @@
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || !true  || baseUrl;
-    return resolveImportMap(( importMap), resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+    return resolveImportMap((importMap), resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error(errMsg(8,  [id, parentUrl].join(', ') ));
+    throw Error(errMsg(8, [id, parentUrl].join(', ') ));
   }
 
   var systemInstantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    var preloads = ( importMap).depcache[url];
+    var preloads = (importMap).depcache[url];
     if (preloads) {
       for (var i = 0; i < preloads.length; i++)
         getOrCreateLoad(this, this.resolve(preloads[i], url), url);
@@ -719,4 +718,4 @@
       });
     };
 
-}());
+})();

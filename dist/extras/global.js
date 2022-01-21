@@ -93,4 +93,4 @@
       || !isNaN(p) && p < global.length
       || isIE11 && global[p] && typeof window !== 'undefined' && global[p].parent === window;
   }
-})(typeof self !== 'undefined' ? self : global);}());
+})(typeof self !== 'undefined' ? self : global);})();

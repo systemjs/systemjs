@@ -60,4 +60,4 @@
     };
     return register;
   };
-})(typeof self !== 'undefined' ? self : global);}());
+})(typeof self !== 'undefined' ? self : global);})();

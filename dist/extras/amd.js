@@ -5,7 +5,7 @@
  */
 (function (global) {
   function unsupportedRequire () {
-    throw Error( errMsg(5, 'AMD require not supported.'));
+    throw Error(errMsg(5, 'AMD require not supported.'));
   }
 
   var requireExportsModule = ['require', 'exports', 'module'];
@@ -86,7 +86,7 @@
       deps = requireExportsModule;
       exec = depArg;
     } else {
-      throw Error( errMsg(9, 'Invalid call to AMD define()'));
+      throw Error(errMsg(9, 'Invalid call to AMD define()'));
     }
 
     var amdRegister = createAMDRegister(deps, exec);
@@ -96,11 +96,11 @@
         System.registerRegistry[name] = amdRegister;
         System.register(name, amdRegister[0], amdRegister[1]);
       } else
-        console.warn( errMsg('W6', 'Include named-register.js for full named define support'));
+        console.warn(errMsg('W6', 'Include named-register.js for full named define support'));
         // TODO: create new warning number and documentation for using named define without named-register extra
         System.register(amdRegister[0], amdRegister[1]);
     } else
       System.register(amdRegister[0], amdRegister[1]);
   };
   global.define.amd = {};
-})(typeof self !== 'undefined' ? self : global);}());
+})(typeof self !== 'undefined' ? self : global);})();
