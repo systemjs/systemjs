@@ -200,15 +200,20 @@ export function getPathVars (moduleId) {
 }
 
 var commentRegEx = /(^|[^\\])(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
-var stringRegEx = /("[^"\\\n\r]*(\\.[^"\\\n\r]*)*"|'[^'\\\n\r]*(\\.[^'\\\n\r]*)*')/g;
+
+/** This regex is used to find strings, comments and regex expressions that should be excluded from the deps search.
+ * All the different kinds are used as alternatives so that they can be detected in a mutually exclusive way without interfering with eachother
+ * Here is an example of how this expression handles complex js: https://regex101.com/r/r4A4is/1
+ *                        ( double quoted string | single quoted string | string literal      | comment    | multi-line comment      | regular expression      ) */
+var depExclusionsRegEx = /("(?:\\.|[^"\\\n\r]*)*"|'(?:\\.|[^'\\\n\r]*)*'|\`(?:\\.|[^\`\\]*)*\`|\/\/[^\n\r]*|\/\*(?:\*[^\/]|[^*])*\*\/|\/(?:\\.|[^\/\\\n\r]*)*\/)/g;
 
 // used to support leading #!/usr/bin/env in scripts as supported in Node
 var hashBangRegEx = /^\#\!.*/;
 
 // extract CJS dependencies from source text via regex static analysis
-// read require('x') statements not in comments or strings
+// read require('x') statements not in comments or strings or regex expressions
 export function getCJSDeps (source) {
-  cjsRequireRegEx.lastIndex = commentRegEx.lastIndex = stringRegEx.lastIndex = 0;
+  cjsRequireRegEx.lastIndex = depExclusionsRegEx.lastIndex = 0;
 
   var deps = [];
 
@@ -217,29 +222,19 @@ export function getCJSDeps (source) {
   // track string and comment locations for unminified source
   var stringLocations = [], commentLocations = [];
 
-  function inLocation (locations, match) {
+  function inLocation (locations, index) {
     for (var i = 0; i < locations.length; i++)
-      if (locations[i][0] < match.index && locations[i][1] > match.index)
+      if (locations[i][0] < index && locations[i][1] > index)
         return true;
     return false;
   }
 
-  while (match = stringRegEx.exec(source))
+  while (match = depExclusionsRegEx.exec(source))
     stringLocations.push([match.index, match.index + match[0].length]);
 
-  // TODO: track template literals here before comments
-
-  if (source.length / source.split('\n').length < 200) {
-    while (match = commentRegEx.exec(source)) {
-      // only track comments not starting in strings
-      if (!inLocation(stringLocations, match))
-        commentLocations.push([match.index + match[1].length, match.index + match[0].length - 1]);
-    }
-  }
-
-  while (match = cjsRequireRegEx.exec(source)) {
+  while (match = cjsRequireRegEx.exec(source)) {    
     // ensure we're not within a string or comment location
-    if (!inLocation(stringLocations, match) && !inLocation(commentLocations, match)) {
+    if (!inLocation(stringLocations, match.index + 1) ) {
       var dep = match[1].substr(1, match[1].length - 2);
       // skip cases like require('" + file + "')
       if (dep.match(/"|'/))
