@@ -20,7 +20,7 @@ var regexWithString = /asdfasdf " /;
 
 var regexClose = /asdf " */;
 
-// This comment triggered SystemJS to do a require because of this -> require('')
+// This comment should not trigger SystemJS to do a require because of this -> require('comment is not a dep')
 exports.d7 = 'export';
 
 var p = false && require('" + "test" + "');
@@ -30,9 +30,11 @@ var p = false && require('" + "test" + "');
 
 exports.d8 = `string literal require("string literal not a dep")`;
 
+var regexWithRequireText = /  require('regex string not a dep') /;
+
 /*
 
-Unsolved breaking cases:
+Mixed exclusion blocks are handled correctly
 
 var regex = /  "  /; var string = "  /* " // one line;
 require('asdf') // <- this will now be skipped as it will be in the '/*' comment
