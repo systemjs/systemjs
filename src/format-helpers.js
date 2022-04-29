@@ -219,8 +219,8 @@ export function getCJSDeps (source) {
 
   var match;
 
-  // track string and comment locations for unminified source
-  var stringLocations = [], commentLocations = [];
+  // track exclusion locations
+  var exclusionLocations = [];
 
   function inLocation (locations, index) {
     for (var i = 0; i < locations.length; i++)
@@ -230,11 +230,12 @@ export function getCJSDeps (source) {
   }
 
   while (match = depExclusionsRegEx.exec(source))
-    stringLocations.push([match.index, match.index + match[0].length]);
+    exclusionLocations.push([match.index, match.index + match[0].length]);
 
-  while (match = cjsRequireRegEx.exec(source)) {    
+  while (match = cjsRequireRegEx.exec(source)) {
     // ensure we're not within a string or comment location
-    if (!inLocation(stringLocations, match.index + 1) ) {
+    // 1 is added to the match index to align with the `require` word
+    if (!inLocation(exclusionLocations, match.index + 1) ) {
       var dep = match[1].substr(1, match[1].length - 2);
       // skip cases like require('" + file + "')
       if (dep.match(/"|'/))
