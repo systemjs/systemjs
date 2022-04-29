@@ -224,12 +224,12 @@ export function getCJSDeps (source) {
     return false;
   }
 
+  while (match = stringRegEx.exec(source))
+    stringLocations.push([match.index, match.index + match[0].length]);
+
+  // TODO: track template literals here before comments
+
   if (source.length / source.split('\n').length < 200) {
-    while (match = stringRegEx.exec(source))
-      stringLocations.push([match.index, match.index + match[0].length]);
-
-    // TODO: track template literals here before comments
-
     while (match = commentRegEx.exec(source)) {
       // only track comments not starting in strings
       if (!inLocation(stringLocations, match))
