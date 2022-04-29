@@ -15,6 +15,7 @@ exports.d3 = "require('not a dep')"; exports.d4 = "text/* require('still not a d
 exports.d5 = 'text \'quote\' require("yet still not a dep")'; // ################################################################################################################################################
 var stringLikeRegex = /asdfasdf \' ' /;exports.d6 = 'in single quoted text require("also not a dep 1")'; exports.d6a = require('./commonjs-d.js'); var stringLikeRegexClose = /asdf ' /; // #######################
 var stringLikeRegex = /asdfasdf \" " /;exports.d7 = "in double quoted text require('also not a dep 2')"; exports.d7a = require('./commonjs-d.js'); var stringLikeRegexClose = /asdf " /; // #######################
-var regexWithComment = /  \/* /; exports.d8 = require('./commonjs-d.js'); var regexWithCommentClose = /asdf " */;
+var stringLikeRegex = /asdfasdf ` /;exports.d8 = `in string literal text require('also not a dep 3')`; exports.d8a = require('./commonjs-d.js'); var stringLikeRegexClose = /asdf ` /; // #########################
+var regexWithComment = /  \/* /; exports.d9 = require('./commonjs-d.js'); var regexWithCommentClose = /asdf " */;
 /* Known bug: Comments in minified files can trigger SystemJS to do a require -> require('./commonjs-d.js') */
-exports.d9 = 'end';
+exports.d10 = 'end';

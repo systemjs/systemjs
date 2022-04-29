@@ -636,6 +636,7 @@ suite('SystemJS Standard Tests', function() {
       ok(m.d5 == 'text \'quote\' require("yet still not a dep")');
       ok(m.d6 == 'd6');
       ok(m.d7 == 'export');
+      ok(m.d8 == `string literal require("string literal not a dep")`);
     });
   });
 
@@ -651,8 +652,10 @@ suite('SystemJS Standard Tests', function() {
       assert.equal(m.d6a, 'd');
       assert.equal(m.d7, `in double quoted text require('also not a dep 2')`);
       assert.equal(m.d7a, 'd');
-      assert.equal(m.d8, 'd');
-      assert.equal(m.d9, 'end');
+      assert.equal(m.d8, `in string literal text require('also not a dep 3')`);
+      assert.equal(m.d8a, 'd');
+      assert.equal(m.d9, 'd');
+      assert.equal(m.d10, 'end');
     });
   });
 

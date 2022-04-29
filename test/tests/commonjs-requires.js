@@ -28,6 +28,7 @@ var p = false && require('" + "test" + "');
 // this line shouldn't be detected
 " = require(", "),\n        ";
 
+exports.d8 = `string literal require("string literal not a dep")`;
 
 /*
 
