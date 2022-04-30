@@ -1,5 +1,7 @@
 "format global";
 
+const assert = require('assert');
+
 suite('SystemJS Standard Tests', function() {
 
   function ok(assertion, message) {
@@ -634,6 +636,26 @@ suite('SystemJS Standard Tests', function() {
       ok(m.d5 == 'text \'quote\' require("yet still not a dep")');
       ok(m.d6 == 'd6');
       ok(m.d7 == 'export');
+      ok(m.d8 == `string literal require("string literal not a dep")`);
+    });
+  });
+
+  test('CommonJS require variations in minified files', function () {
+    return System.import('tests/commonjs-minified-requires.js').then(function (m) {
+      assert.equal(m.d0, 'd6');
+      assert.equal(m.d1, 'd');
+      assert.equal(m.d2, 'd');
+      assert.equal(m.d3, "require('not a dep')");
+      assert.equal(m.d4, "text/* require('still not a dep') text");
+      assert.equal(m.d5, 'text \'quote\' require("yet still not a dep")');
+      assert.equal(m.d6, `in single quoted text require("also not a dep 1")`);
+      assert.equal(m.d6a, 'd');
+      assert.equal(m.d7, `in double quoted text require('also not a dep 2')`);
+      assert.equal(m.d7a, 'd');
+      assert.equal(m.d8, `in string literal text require('also not a dep 3')`);
+      assert.equal(m.d8a, 'd');
+      assert.equal(m.d9, 'd');
+      assert.equal(m.d10, 'end');
     });
   });
 
