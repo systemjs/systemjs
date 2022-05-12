@@ -275,6 +275,13 @@ function postOrderExec (loader, load, seen) {
   return doExec();
 
   function doExec () {
+    if (!load.e) {
+      if (load.er)
+        throw load.er;
+      if (load.E)
+        return load.E;
+      return;
+    }
     try {
       var execPromise = load.e.call(nullContext);
       if (execPromise) {

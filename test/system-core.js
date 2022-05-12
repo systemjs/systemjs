@@ -409,6 +409,11 @@ describe('Loading Cases', function() {
   });
 
   describe('Top-level await', function () {
+    it('Should support top-level await with simultaneous imports', async function () {
+      const [m, n] = await Promise.all([loader.import('./tla/main1.js'), loader.import('./tla/main2.js')]);
+      assert.equal(m.passed, true);
+      assert.equal(n.passed, true);
+    });
     it('Should support top-level await', async function () {
       const m = await loader.import('./tla/main.js');
       assert.equal(m.passed, true);
