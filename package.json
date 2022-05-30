@@ -1,5 +1,5 @@
 {
-  "name": "systemjs",
+  "name": "@imperva/systemjs",
   "version": "6.12.1",
   "main": "dist/system-node.cjs",
   "exports": {

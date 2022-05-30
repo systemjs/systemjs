@@ -55,7 +55,7 @@ function processScripts () {
         err.message = errMsg('W4', process.env.SYSTEM_PRODUCTION ? script.src : 'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
         console.warn(err);
         if (typeof script.onerror === 'function') {
-            script.onerror();
+            script.onerror(err);
         }
         return '{}';
       }) : script.innerHTML;

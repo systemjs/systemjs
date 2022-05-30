@@ -1,3 +1,6 @@
+SystemJS 6.13.0
+* Passing the error object to the onerror function. Resolves #2398. (https://github.com/systemjs/systemjs/pull/2398)
+
 SystemJS 6.12.1
 * Call fetch hook when retrieving external import maps. Resolves #2374. (https://github.com/systemjs/systemjs/pull/2376)
 
