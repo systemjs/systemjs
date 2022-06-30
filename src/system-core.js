@@ -242,8 +242,9 @@ var nullContext = Object.freeze(Object.create(null));
 // returns a promise if and only if a top-level await subgraph
 // throws on sync errors
 function postOrderExec (loader, load, seen) {
-  if (seen[load.id])
-    return;
+  if (seen[load.id]) {
+    return load.E;
+  }
   seen[load.id] = true;
 
   if (!load.e) {
@@ -270,9 +271,9 @@ function postOrderExec (loader, load, seen) {
     }
   });
   if (depLoadPromises)
-    return Promise.all(depLoadPromises).then(doExec);
+    return load.E = Promise.all(depLoadPromises).then(doExec);
 
-  return doExec();
+  return load.E = doExec();
 
   function doExec () {
     try {
@@ -288,7 +289,7 @@ function postOrderExec (loader, load, seen) {
           if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
           throw err;
         });
-        return load.E = execPromise;
+        return execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;

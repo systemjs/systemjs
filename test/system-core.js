@@ -5,6 +5,7 @@ import { resolveIfNotPlainOrUrl, IMPORT_MAP } from '../src/common.js';
 import '../src/features/registry.js';
 import { REGISTRY } from '../src/system-core.js';
 import '../src/features/resolve.js';
+import { pathToFileURL } from 'url';
 
 const SystemLoader = System.constructor;
 
@@ -282,7 +283,7 @@ describe('Loading Cases', function() {
   loader.instantiate = async function (path) {
     const source = await new Promise((resolve, reject) => fs.readFile(path, (err, source) => err ? reject(err) : resolve(source.toString())));
     global.System = loader;
-    eval(source + '//# sourceURL=' + path);
+    eval(source + '//# sourceURL=' + pathToFileURL(path).href);
     return this.getRegister();
   };
 
@@ -453,6 +454,65 @@ describe('Loading Cases', function() {
 
       const m = await loader.import('main');
       assert.equal(m.default, 42);
+    });
+    it('Bugfix: should wait for dependency who has already been seen', async function () {
+        const loader = new SystemLoader();
+        loader.resolve = function (id) { return id };
+        loader.instantiate = function (id) {
+            switch (id) {
+                // import './dep-a';
+                // import b from './dep-b';
+                // export default b;
+                case 'main': return [
+                    ['dep-a', 'dep-b'],
+                    function(_export, _context) {
+                        var _dep_b;
+                        return {
+                            setters: [null, function(dep_b){
+                                _dep_b = dep_b;
+                            }],
+                            execute: function () {
+                                _export('default', _dep_b.default);
+                            },
+                        };
+                    },
+                ];
+                // await new Promise((resolve) => setTimeout(resolve));
+                // export default class A { constructor() { this.value = 6; } });
+                case 'dep-a': return [
+                    [],
+                    function(_export, _context) {
+                        return {
+                            setters: [],
+                            execute: async function() {
+                                await new Promise((resolve) => setTimeout(resolve));
+                                _export('default', class A { constructor() { this.value = 6; } });
+                            },
+                        };
+                    }
+                ];
+                // import A from './dep-a';
+                // export default new A().value;
+                case 'dep-b': return [
+                    ['dep-a'],
+                    function(_export, _context) {
+                        var _dep_a;
+                        return {
+                            setters: [function(dep_a){
+                                _dep_a = dep_a;
+                            }],
+                            execute: function() {
+                                var A = _dep_a.default;
+                                _export('default', new A().value);
+                            },
+                        };
+                    }
+                ];
+            }
+        };
+
+        const m = await loader.import('main');
+        assert.equal(m.default, 6);
     });
   });
 
