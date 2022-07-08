@@ -271,9 +271,16 @@ function postOrderExec (loader, load, seen) {
     }
   });
   if (depLoadPromises)
-    return load.E = Promise.all(depLoadPromises).then(doExec);
+    return load.E = Promise.all(depLoadPromises).then(doExec).finally(function() {
+        load.E = null;
+    });
 
-  return load.E = doExec();
+  var execPromise = doExec();
+  if (execPromise) {
+    return load.E = execPromise.finally(function() {
+        load.E = null;
+    });
+  }
 
   function doExec () {
     try {
@@ -281,11 +288,9 @@ function postOrderExec (loader, load, seen) {
       if (execPromise) {
         execPromise = execPromise.then(function () {
           load.C = load.n;
-          load.E = null; // indicates completion
           if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
         }, function (err) {
           load.er = err;
-          load.E = null;
           if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
           throw err;
         });
