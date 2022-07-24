@@ -254,6 +254,16 @@ function postOrderExec (loader, load, seen) {
     return;
   }
 
+  // From here we're about to execute the load.
+  // Because the execution may be async, we pop the `load.e` first.
+  // So `load.e === null` always means the load has been executed or is executing.
+  // To inspect the state:
+  // - If `load.er` is truthy, the execution has threw or has been rejected;
+  // - otherwise, either the `load.E` is a promise, means it's under async execution, or
+  // - the `load.E` is null, means the load has completed the execution or has been async resolved.
+  const exec = load.e;
+  load.e = null;
+
   // deps execute first, unless circular
   var depLoadPromises;
   load.d.forEach(function (depLoad) {
@@ -263,7 +273,6 @@ function postOrderExec (loader, load, seen) {
         (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
     catch (err) {
-      load.e = null;
       load.er = err;
       if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, false);
       throw err;
@@ -276,7 +285,7 @@ function postOrderExec (loader, load, seen) {
 
   function doExec () {
     try {
-      var execPromise = load.e.call(nullContext);
+      var execPromise = exec.call(nullContext);
       if (execPromise) {
         execPromise = execPromise.then(function () {
           load.C = load.n;
@@ -299,7 +308,6 @@ function postOrderExec (loader, load, seen) {
       throw err;
     }
     finally {
-      load.e = null;
       if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, load.er, true);
     }
   }

@@ -454,6 +454,15 @@ describe('Loading Cases', function() {
       const m = await loader.import('main');
       assert.equal(m.default, 42);
     });
+    it('Concurrent top level import threads', async function() {
+        // Use two different top level entry is on purpose:
+        // currently top level lop would be cached.
+        const thread1 = loader.import('./tla/concurrent-top-level-import-threads/main.js');
+        const thread2 = loader.import('./tla/concurrent-top-level-import-threads/dep.js');
+        const main = await thread1;
+        const dep = await thread2;
+        assert.equal(main.stamp, dep.stamp);
+    });
   });
 
   describe('Export variations', function () {
