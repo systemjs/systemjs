@@ -1,6 +1,6 @@
-/*
-* SystemJS 6.12.1
-*/
+/*!
+ * SystemJS 6.12.1
+ */
 (function () {
 
   function errMsg(errCode, msg) {
@@ -610,6 +610,7 @@
       var scripts = document.querySelectorAll('script[src]');
       var lastScript = scripts[scripts.length - 1];
       if (lastScript) {
+        lastScript.src;
         lastAutoImportDeps = deps;
         // if this is already a System load, then the instantiate has already begun
         // so this re-import has no consequence

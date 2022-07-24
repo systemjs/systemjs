@@ -1,5 +1,5 @@
 const http = require('http');
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 const { once } = require('events');
 const { pathToFileURL, fileURLToPath } = require('url');
@@ -67,9 +67,8 @@ http.createServer(async function (req, res) {
     return;
   }
 
-  const fileStream = fs.createReadStream(filePath);
   try {
-    await once(fileStream, 'readable');
+    var source = await fs.readFile(filePath);
   }
   catch (e) {
     if (e.code === 'EISDIR' || e.code === 'ENOENT') {
@@ -89,13 +88,14 @@ http.createServer(async function (req, res) {
   else
     mime = mimes[path.extname(filePath)] || 'text/plain';
 
+  if (mime !== 'application/wasm')
+    source = source.toString('utf8').replace(/\r\n/g, '\n')
+
   const headers = filePath.endsWith('content-type-none.json') ?
     {} : { 'content-type': mime, 'Cache-Control': 'no-cache' }
 
   res.writeHead(200, headers);
-  fileStream.pipe(res);
-  await once(fileStream, 'end');
-  res.end();
+  res.end(source);
 }).listen(port);
 
 console.log(`Test server listening on http://localhost:${port}\n`);
