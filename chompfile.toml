@@ -102,13 +102,13 @@ deps = ['test:browser', 'test:internal', 'test:node']
 
 [[task]]
 name = 'test:browser:watch'
-deps = ['dist/system.js', 'dist/extras/*.js']
+deps = ['dist/system.js', 'dist/extras/*.js', 'npm:install']
 env = { WATCH_MODE = 'true' }
 run = 'node test/server.mjs'
 
 [[task]]
 name = 'test:browser'
-deps = ['dist/system.js', 'dist/extras/*.js']
+deps = ['dist/system.js', 'dist/extras/*.js', 'npm:install']
 run = 'node test/server.mjs'
 
 [[task]]
