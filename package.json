@@ -22,20 +22,23 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "test": "chomp test",
+    "build": "chomp build"
+  },
   "devDependencies": {
     "@jsenv/file-size-impact": "^5.2.0",
     "@rollup/plugin-json": "^4.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-replace": "^2.3.1",
-    "@zeit/ncc": "^0.22.1",
+    "@vercel/ncc": "^0.34.0",
     "bluebird": "^3.7.2",
-    "concurrently": "^5.1.0",
     "construct-style-sheets-polyfill": "^2.3.5",
-    "cross-env": "^7.0.2",
+    "kleur": "^4.1.5",
     "mkdirp": "^1.0.4",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
-    "open": "^7.0.3",
+    "open": "^8.4.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.33.3",
     "rollup-plugin-terser": "^5.3.0",
@@ -43,21 +46,6 @@
     "symbol-es6": "^0.1.2",
     "terser": "^5.5.0",
     "whatwg-fetch": "^3.0.0"
-  },
-  "scripts": {
-    "build": "rimraf dist && mkdirp dist && concurrently -n w: 'npm:build:*'",
-    "build:node": "node --experimental-modules build-node.mjs",
-    "build:browser": "rollup -c",
-    "build-browser-dev": "rollup -c --environment dev",
-    "footprint": "concurrently -n w: 'npm:footprint:*'",
-    "footprint:systemjs": "cat dist/system.min.js | gzip -9f | wc -c",
-    "footprint:sjs": "cat dist/s.min.js | gzip -9f | wc -c",
-    "test": "concurrently -n w: 'npm:test:*'",
-    "test:internals": "cross-env NODE_OPTIONS=\"--unhandled-rejections=none\" mocha -b test/import-map.js test/system-core.js test/url-resolution.js",
-    "test:node": "cross-env NODE_OPTIONS=--experimental-modules mocha --timeout 5000 -b test/system-node.js",
-    "test:browser": "node test/server.cjs",
-    "test-browser-watch": "cross-env WATCH_MODE=true node test/server.cjs",
-    "prepublish": "npm run build"
   },
   "collective": {
     "type": "opencollective",

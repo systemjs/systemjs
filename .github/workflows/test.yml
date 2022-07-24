@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Chomp
+        uses: guybedford/chomp-action@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+      - name: Setup Firefox
+        uses: browser-actions/setup-firefox@latest
+        with:
+          firefox-version: '89.0'
+      - name: Chomp Test
+        run: chomp test
+        env:
+          CI_BROWSER: /opt/hostedtoolcache/firefox/89.0/x64/firefox
+          CI_BROWSER_FLAGS: -headless
