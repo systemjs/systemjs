@@ -22,6 +22,10 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "test": "chomp test",
+    "build": "chomp build"
+  },
   "devDependencies": {
     "@jsenv/file-size-impact": "^5.2.0",
     "@rollup/plugin-json": "^4.0.2",

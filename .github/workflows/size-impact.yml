@@ -16,11 +16,11 @@ jobs:
       - name: Setup git
         uses: actions/checkout@v2
       - name: Setup node ${{ matrix.node }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-      - name: Setup npm
-        run: npm install
+      - name: Setup Chomp
+        uses: guybedford/chomp-action@v1
       - name: Report file size impact
         run: node ./.github/workflows/size-impact/report-size-impact.mjs
         env:
