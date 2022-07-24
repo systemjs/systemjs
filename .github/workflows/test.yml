@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        firefox: ['89.0']
     steps:
       - uses: actions/checkout@v2
       - name: Setup Chomp
@@ -20,4 +23,5 @@ jobs:
       - name: Chomp Test
         run: chomp test
         env:
+          CI_BROWSER: /opt/hostedtoolcache/firefox/${{ matrix.firefox }}/x64/firefox
           MOZ_HEADLESS: 1

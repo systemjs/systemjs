@@ -99,5 +99,5 @@ http.createServer(async function (req, res) {
 }).listen(port);
 
 console.log(`Test server listening on http://localhost:${port}\n`);
-const openOptions = process.env.CI ? { app: ['firefox'] } : {};
+const openOptions = process.env.CI ? { app: process.env.CI_BROWSER || 'firefox' } : {};
 open(`http://localhost:${port}/test/test.html`, openOptions);
