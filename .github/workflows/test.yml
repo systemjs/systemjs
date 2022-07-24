@@ -9,9 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        firefox: ['89.0']
     steps:
       - uses: actions/checkout@v2
       - name: Setup Chomp
@@ -20,6 +17,8 @@ jobs:
         uses: actions/setup-node@v2
       - name: Setup Firefox
         uses: browser-actions/setup-firefox@latest
+        with:
+          firefox-version: '89.0'
       - name: Chomp Test
         run: chomp test
         env:
