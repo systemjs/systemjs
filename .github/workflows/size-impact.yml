@@ -21,6 +21,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Setup Chomp
         uses: guybedford/chomp-action@v1
+      - run: npm install
       - name: Report file size impact
         run: node ./.github/workflows/size-impact/report-size-impact.mjs
         env:
