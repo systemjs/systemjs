@@ -22,5 +22,5 @@ jobs:
       - name: Chomp Test
         run: chomp test
         env:
-          CI_BROWSER: /opt/hostedtoolcache/firefox/${{ matrix.firefox }}/x64/firefox
+          CI_BROWSER: /opt/hostedtoolcache/firefox/89.0/x64/firefox
           MOZ_HEADLESS: 1
