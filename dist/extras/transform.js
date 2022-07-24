@@ -1,7 +1,7 @@
 (function () {
 
   function errMsg(errCode, msg) {
-    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
+    return (msg || "") + " (SystemJS https://git.io/JvFET#" + errCode + ")";
   }
 
   /*
@@ -21,7 +21,7 @@
       return fetch(url, { credentials: 'same-origin' })
       .then(function (res) {
         if (!res.ok)
-          throw Error(errMsg(7, 'Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : '')));
+          throw Error(errMsg(7, [res.status, res.statusText, parent].join(', ') ));
         return res.text();
       })
       .then(function (source) {

@@ -25,7 +25,7 @@ format = 'iife'
 strict = false
 [[task.template-options.plugin]]
 package = '@rollup/plugin-replace'
-"process.env.SYSTEM_PRODUCTION" = 'false'
+"process.env.SYSTEM_PRODUCTION" = 'true'
 "process.env.SYSTEM_BROWSER" = 'true'
 
 [[task]]
