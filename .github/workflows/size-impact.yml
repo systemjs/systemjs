@@ -7,7 +7,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [14.5.0]
     runs-on: ${{ matrix.os }}
     name: size impact
     env:
@@ -15,10 +14,8 @@ jobs:
     steps:
       - name: Setup git
         uses: actions/checkout@v2
-      - name: Setup node ${{ matrix.node }}
+      - name: Setup node
         uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node }}
       - name: Setup Chomp
         uses: guybedford/chomp-action@v1
       - run: npm install
