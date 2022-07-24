@@ -1,6 +1,5 @@
 # SystemJS
 
-[![Build Status](https://travis-ci.com/systemjs/systemjs.svg?branch=master)](https://travis-ci.com/systemjs/systemjs)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/systemjs/systemjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Backers on Open Collective](https://opencollective.com/systemjs/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/systemjs/sponsors/badge.svg)](#sponsors)
@@ -256,6 +255,3 @@ For the changelog, see [CHANGELOG.md](CHANGELOG.md).
 ## License
 
 MIT
-
-[travis-url]: https://travis-ci.org/systemjs/systemjs
-[travis-image]: https://travis-ci.org/systemjs/systemjs.svg?branch=master
