@@ -23,4 +23,4 @@ jobs:
         run: chomp test
         env:
           CI_BROWSER: /opt/hostedtoolcache/firefox/89.0/x64/firefox
-          MOZ_HEADLESS: 1
+          CI_BROWSER_FLAGS: -headless

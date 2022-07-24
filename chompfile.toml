@@ -15,20 +15,6 @@ name = 'build'
 deps = ['dist/system.js', 'dist/system.min.js', 'dist/s.js', 'dist/s.min.js', 'dist/system-node.cjs', 'dist/extras/*.js']
 
 [[task]]
-deps = ['src/extras/#.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
-target = 'dist/extras/#.js'
-template = 'rollup'
-[task.template-options]
-onwarn = false
-[task.template-options.output]
-format = 'iife'
-strict = false
-[[task.template-options.plugin]]
-package = '@rollup/plugin-replace'
-"process.env.SYSTEM_PRODUCTION" = 'true'
-"process.env.SYSTEM_BROWSER" = 'true'
-
-[[task]]
 target = 'dist/system.js'
 deps = ['src/system.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
 template = 'rollup'
@@ -60,6 +46,20 @@ strict = false
 [[task.template-options.plugin]]
 package = '@rollup/plugin-replace'
 "process.env.SYSTEM_PRODUCTION" = 'true'
+"process.env.SYSTEM_BROWSER" = 'true'
+
+[[task]]
+deps = ['src/extras/#.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
+target = 'dist/extras/#.js'
+template = 'rollup'
+[task.template-options]
+onwarn = false
+[task.template-options.output]
+format = 'iife'
+strict = false
+[[task.template-options.plugin]]
+package = '@rollup/plugin-replace'
+"process.env.SYSTEM_PRODUCTION" = 'false'
 "process.env.SYSTEM_BROWSER" = 'true'
 
 [[task]]
@@ -104,19 +104,19 @@ deps = ['test:browser', 'test:internal', 'test:node']
 name = 'test:browser:watch'
 deps = ['dist/system.js', 'dist/extras/*.js']
 env = { WATCH_MODE = 'true' }
-run = 'node test/server.cjs'
+run = 'node test/server.mjs'
 
 [[task]]
 name = 'test:browser'
 deps = ['dist/system.js', 'dist/extras/*.js']
-run = 'node test/server.cjs'
+run = 'node test/server.mjs'
 
 [[task]]
 name = 'test:internal'
 env = { NODE_OPTIONS = '--unhandled-rejections=none' }
-run = 'mocha -b test/import-map.js test/system-core.js test/url-resolution.js'
+run = 'mocha -b test/import-map.mjs test/system-core.mjs test/url-resolution.mjs'
 
 [[task]]
 name = 'test:node'
 dep = 'dist/system-node.cjs'
-run = 'mocha --timeout 5000 -b test/system-node.js'
+run = 'mocha --timeout 5000 -b test/system-node.mjs'
