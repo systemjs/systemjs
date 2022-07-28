@@ -9,7 +9,7 @@ import { resolveUrl } from '../common.js';
 
   var moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
   systemJSPrototype.shouldFetch = function (url) {
-    return moduleTypesRegEx.test(url);
+    return this.eval || moduleTypesRegEx.test(url);
   };
 
   var jsonContentType = /^application\/json(;|$)/;

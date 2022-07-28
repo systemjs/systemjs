@@ -30,7 +30,7 @@ systemJSPrototype.instantiate = function (url, parent) {
     return res.text().then(function (source) {
       if (source.indexOf('//# sourceURL=') < 0)
         source += '\n//# sourceURL=' + url;
-      (0, eval)(source);
+        loader.eval ? (0, loader.eval)(source) : (0, eval)(source);
       return loader.getRegister(url);
     });
   });
