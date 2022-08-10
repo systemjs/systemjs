@@ -1,10 +1,10 @@
 /*!
- * SystemJS 6.12.1
+ * SystemJS 6.12.2
  */
 (function () {
 
   function errMsg(errCode, msg) {
-    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
+    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://github.com/systemjs/systemjs/blob/main/docs/errors.md#" + errCode + ")";
   }
 
   var hasSymbol = typeof Symbol !== 'undefined';
@@ -444,6 +444,16 @@
       return;
     }
 
+    // From here we're about to execute the load.
+    // Because the execution may be async, we pop the `load.e` first.
+    // So `load.e === null` always means the load has been executed or is executing.
+    // To inspect the state:
+    // - If `load.er` is truthy, the execution has threw or has been rejected;
+    // - otherwise, either the `load.E` is a promise, means it's under async execution, or
+    // - the `load.E` is null, means the load has completed the execution or has been async resolved.
+    const exec = load.e;
+    load.e = null;
+
     // deps execute first, unless circular
     var depLoadPromises;
     load.d.forEach(function (depLoad) {
@@ -453,7 +463,6 @@
           (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
       }
       catch (err) {
-        load.e = null;
         load.er = err;
         triggerOnload(loader, load, err, false);
         throw err;
@@ -466,7 +475,7 @@
 
     function doExec () {
       try {
-        var execPromise = load.e.call(nullContext);
+        var execPromise = exec.call(nullContext);
         if (execPromise) {
           execPromise = execPromise.then(function () {
             load.C = load.n;
@@ -489,7 +498,6 @@
         throw err;
       }
       finally {
-        load.e = null;
         triggerOnload(loader, load, load.er, true);
       }
     }
@@ -532,7 +540,7 @@
         System.import(script.src.slice(0, 7) === 'import:' ? script.src.slice(7) : resolveUrl(script.src, baseUrl)).catch(function (e) {
           // if there is a script load error, dispatch an "error" event
           // on the script tag.
-          if (e.message.indexOf('https://git.io/JvFET#3') > -1) {
+          if (e.message.indexOf('https://github.com/systemjs/systemjs/blob/main/docs/errors.md#3') > -1) {
             var event = document.createEvent('Event');
             event.initEvent('error', false, false);
             script.dispatchEvent(event);

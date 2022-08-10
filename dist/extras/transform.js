@@ -1,7 +1,7 @@
 (function () {
 
   function errMsg(errCode, msg) {
-    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://git.io/JvFET#" + errCode + ")";
+    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://github.com/systemjs/systemjs/blob/main/docs/errors.md#" + errCode + ")";
   }
 
   /*
