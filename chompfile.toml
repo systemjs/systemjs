@@ -115,7 +115,7 @@ run = 'node test/server.mjs'
 name = 'test:internal'
 dep = 'npm:install'
 env = { NODE_OPTIONS = '--unhandled-rejections=none' }
-run = 'mocha -b test/import-map.mjs test/system-core.mjs test/url-resolution.mwjs'
+run = 'mocha -b test/import-map.mjs test/system-core.mjs test/url-resolution.mjs'
 
 [[task]]
 name = 'test:node'
