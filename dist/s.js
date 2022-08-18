@@ -1,10 +1,10 @@
 /*!
- * SystemJS 6.12.3
+ * SJS 6.12.3
  */
 (function () {
 
   function errMsg(errCode, msg) {
-    return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://github.com/systemjs/systemjs/blob/main/docs/errors.md#" + errCode + ")";
+    return (msg || "") + " (SystemJS https://github.com/systemjs/systemjs/blob/main/docs/errors.md#" + errCode + ")";
   }
 
   var hasSymbol = typeof Symbol !== 'undefined';
@@ -130,7 +130,7 @@
         continue;
       var mapped = resolveImportMap(parentMap, resolveIfNotPlainOrUrl(rhs, baseUrl) || rhs, parentUrl);
       if (!mapped) {
-        targetWarning('W1', p, rhs, 'bare specifier did not resolve');
+        targetWarning('W1', p, rhs);
       }
       else
         outPackages[resolvedLhs] = mapped;
@@ -171,7 +171,7 @@
       var pkg = packages[pkgName];
       if (pkg === null) return;
       if (id.length > pkgName.length && pkg[pkg.length - 1] !== '/') {
-        targetWarning('W2', pkgName, pkg, "should have a trailing '/'");
+        targetWarning('W2', pkgName, pkg);
       }
       else
         return pkg + id.slice(pkgName.length);
@@ -179,7 +179,7 @@
   }
 
   function targetWarning (code, match, target, msg) {
-    console.warn(errMsg(code, "Package target " + msg + ", resolving target '" + target + "' for " + match));
+    console.warn(errMsg(code, [target, match].join(', ') ));
   }
 
   function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -211,7 +211,7 @@
    * System.prototype.instantiate implementations
    */
 
-  var toStringTag$1 = hasSymbol && Symbol.toStringTag;
+  var toStringTag = hasSymbol && Symbol.toStringTag;
   var REGISTRY = hasSymbol ? Symbol() : '@';
 
   function SystemJS () {
@@ -242,9 +242,6 @@
       }
     };
   };
-
-  // onLoad(err, id, deps) provided for tracing / hot-reloading
-  systemJSPrototype.onload = function () {};
   function loadToId (load) {
     return load.id;
   }
@@ -275,8 +272,8 @@
 
     var importerSetters = [];
     var ns = Object.create(null);
-    if (toStringTag$1)
-      Object.defineProperty(ns, toStringTag$1, { value: 'Module' });
+    if (toStringTag)
+      Object.defineProperty(ns, toStringTag, { value: 'Module' });
     
     var instantiatePromise = Promise.resolve()
     .then(function () {
@@ -284,7 +281,7 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw Error(errMsg(2, 'Module ' + id + ' did not instantiate'));
+        throw Error(errMsg(2, id ));
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
@@ -326,7 +323,6 @@
     }, function (err) {
       load.e = null;
       load.er = err;
-      triggerOnload(loader, load, err, true);
       throw err;
     });
 
@@ -410,7 +406,6 @@
         if (load.er)
           throw err;
         load.e = null;
-        triggerOnload(loader, load, err, false);
         throw err;
       });
     }
@@ -464,7 +459,6 @@
       }
       catch (err) {
         load.er = err;
-        triggerOnload(loader, load, err, false);
         throw err;
       }
     });
@@ -480,11 +474,11 @@
           execPromise = execPromise.then(function () {
             load.C = load.n;
             load.E = null; // indicates completion
-            if (!false) triggerOnload(loader, load, null, true);
+            if (!true) ;
           }, function (err) {
             load.er = err;
             load.E = null;
-            if (!false) triggerOnload(loader, load, err, true);
+            if (!true) ;
             throw err;
           });
           return load.E = execPromise;
@@ -498,7 +492,6 @@
         throw err;
       }
       finally {
-        triggerOnload(loader, load, load.er, true);
       }
     }
   }
@@ -553,10 +546,10 @@
         // The passThrough property is for letting the module types fetch implementation know that this is not a SystemJS module.
         var fetchPromise = script.src ? (System.fetch || fetch)(script.src, { integrity: script.integrity, passThrough: true }).then(function (res) {
           if (!res.ok)
-            throw Error('Invalid status code: ' + res.status);
+            throw Error(res.status );
           return res.text();
         }).catch(function (err) {
-          err.message = errMsg('W4', 'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
+          err.message = errMsg('W4', script.src ) + '\n' + err.message;
           console.warn(err);
           if (typeof script.onerror === 'function') {
               script.onerror();
@@ -577,7 +570,7 @@
     try {
       newMap = JSON.parse(newMapText);
     } catch (err) {
-      console.warn(Error((errMsg('W5', "systemjs-importmap contains invalid JSON") + '\n\n' + newMapText + '\n' )));
+      console.warn(Error((errMsg('W5')  )));
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
@@ -646,7 +639,7 @@
     return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
       return new Promise(function (resolve, reject) {
         script.addEventListener('error', function () {
-          reject(Error(errMsg(3, 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+          reject(Error(errMsg(3, [url, firstParentUrl].join(', ') )));
         });
         script.addEventListener('load', function () {
           document.head.removeChild(script);
@@ -689,10 +682,10 @@
     })
     .then(function (res) {
       if (!res.ok)
-        throw Error(errMsg(7, res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
+        throw Error(errMsg(7, [res.status, res.statusText, url, parent].join(', ') ));
       var contentType = res.headers.get('content-type');
       if (!contentType || !jsContentTypeRegEx.test(contentType))
-        throw Error(errMsg(4, 'Unknown Content-Type "' + contentType + '", loading ' + url + (parent ? ' from ' + parent : '')));
+        throw Error(errMsg(4, contentType ));
       return res.text().then(function (source) {
         if (source.indexOf('//# sourceURL=') < 0)
           source += '\n//# sourceURL=' + url;
@@ -708,7 +701,7 @@
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error(errMsg(8, "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
+    throw Error(errMsg(8, [id, parentUrl].join(', ') ));
   }
 
   var systemInstantiate = systemJSPrototype.instantiate;
@@ -733,293 +726,5 @@
         return loader.getRegister(url);
       });
     };
-
-  /*
-   * SystemJS global script loading support
-   * Extra for the s.js build only
-   * (Included by default in system.js build)
-   */
-  (function (global) {
-    var systemJSPrototype = global.System.constructor.prototype;
-
-    // safari unpredictably lists some new globals first or second in object order
-    var firstGlobalProp, secondGlobalProp, lastGlobalProp;
-    function getGlobalProp (useFirstGlobalProp) {
-      var cnt = 0;
-      var foundLastProp, result;
-      for (var p in global) {
-        // do not check frames cause it could be removed during import
-        if (shouldSkipProperty(p))
-          continue;
-        if (cnt === 0 && p !== firstGlobalProp || cnt === 1 && p !== secondGlobalProp)
-          return p;
-        if (foundLastProp) {
-          lastGlobalProp = p;
-          result = useFirstGlobalProp && result || p;
-        }
-        else {
-          foundLastProp = p === lastGlobalProp;
-        }
-        cnt++;
-      }
-      return result;
-    }
-
-    function noteGlobalProps () {
-      // alternatively Object.keys(global).pop()
-      // but this may be faster (pending benchmarks)
-      firstGlobalProp = secondGlobalProp = undefined;
-      for (var p in global) {
-        // do not check frames cause it could be removed during import
-        if (shouldSkipProperty(p))
-          continue;
-        if (!firstGlobalProp)
-          firstGlobalProp = p;
-        else if (!secondGlobalProp)
-          secondGlobalProp = p;
-        lastGlobalProp = p;
-      }
-      return lastGlobalProp;
-    }
-
-    var impt = systemJSPrototype.import;
-    systemJSPrototype.import = function (id, parentUrl) {
-      noteGlobalProps();
-      return impt.call(this, id, parentUrl);
-    };
-
-    var emptyInstantiation = [[], function () { return {} }];
-
-    var getRegister = systemJSPrototype.getRegister;
-    systemJSPrototype.getRegister = function () {
-      var lastRegister = getRegister.call(this);
-      if (lastRegister)
-        return lastRegister;
-
-      // no registration -> attempt a global detection as difference from snapshot
-      // when multiple globals, we take the global value to be the last defined new global object property
-      // for performance, this will not support multi-version / global collisions as previous SystemJS versions did
-      // note in Edge, deleting and re-adding a global does not change its ordering
-      var globalProp = getGlobalProp(this.firstGlobalProp);
-      if (!globalProp)
-        return emptyInstantiation;
-
-      var globalExport;
-      try {
-        globalExport = global[globalProp];
-      }
-      catch (e) {
-        return emptyInstantiation;
-      }
-
-      return [[], function (_export) {
-        return {
-          execute: function () {
-            _export(globalExport);
-            _export({ default: globalExport, __useDefault: true });
-          }
-        };
-      }];
-    };
-
-    var isIE11 = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Trident') !== -1;
-
-    function shouldSkipProperty(p) {
-      return !global.hasOwnProperty(p)
-        || !isNaN(p) && p < global.length
-        || isIE11 && global[p] && typeof window !== 'undefined' && global[p].parent === window;
-    }
-  })(typeof self !== 'undefined' ? self : global);
-
-  /*
-   * Loads JSON, CSS, Wasm module types based on file extension
-   * filters and content type verifications
-   */
-  (function(global) {
-    var systemJSPrototype = global.System.constructor.prototype;
-
-    var moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
-    systemJSPrototype.shouldFetch = function (url) {
-      return moduleTypesRegEx.test(url);
-    };
-
-    var jsonContentType = /^application\/json(;|$)/;
-    var cssContentType = /^text\/css(;|$)/;
-    var wasmContentType = /^application\/wasm(;|$)/;
-
-    var fetch = systemJSPrototype.fetch;
-    systemJSPrototype.fetch = function (url, options) {
-      return fetch(url, options)
-      .then(function (res) {
-        if (options.passThrough)
-          return res;
-
-        if (!res.ok)
-          return res;
-        var contentType = res.headers.get('content-type');
-        if (jsonContentType.test(contentType))
-          return res.json()
-          .then(function (json) {
-            return new Response(new Blob([
-              'System.register([],function(e){return{execute:function(){e("default",' + JSON.stringify(json) + ')}}})'
-            ], {
-              type: 'application/javascript'
-            }));
-          });
-        if (cssContentType.test(contentType))
-          return res.text()
-          .then(function (source) {
-            source = source.replace(/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g, function (match, quotes, relUrl1, relUrl2) {
-              return 'url(' + quotes + resolveUrl(relUrl1 || relUrl2, url) + quotes + ')';
-            });
-            return new Response(new Blob([
-              'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'
-            ], {
-              type: 'application/javascript'
-            }));
-          });
-        if (wasmContentType.test(contentType))
-          return (WebAssembly.compileStreaming ? WebAssembly.compileStreaming(res) : res.arrayBuffer().then(WebAssembly.compile))
-          .then(function (module) {
-            if (!global.System.wasmModules)
-              global.System.wasmModules = Object.create(null);
-            global.System.wasmModules[url] = module;
-            // we can only set imports if supported (eg early Safari doesnt support)
-            var deps = [];
-            var setterSources = [];
-            if (WebAssembly.Module.imports)
-              WebAssembly.Module.imports(module).forEach(function (impt) {
-                var key = JSON.stringify(impt.module);
-                if (deps.indexOf(key) === -1) {
-                  deps.push(key);
-                  setterSources.push('function(m){i[' + key + ']=m}');
-                }
-              });
-            return new Response(new Blob([
-              'System.register([' + deps.join(',') + '],function(e){var i={};return{setters:[' + setterSources.join(',') +
-              '],execute:function(){return WebAssembly.instantiate(System.wasmModules[' + JSON.stringify(url) +
-              '],i).then(function(m){e(m.exports)})}}})'
-            ], {
-              type: 'application/javascript'
-            }));
-          });
-        return res;
-      });
-    };
-  })(typeof self !== 'undefined' ? self : global);
-
-  var toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
-
-  systemJSPrototype.get = function (id) {
-    var load = this[REGISTRY][id];
-    if (load && load.e === null && !load.E) {
-      if (load.er)
-        return null;
-      return load.n;
-    }
-  };
-
-  systemJSPrototype.set = function (id, module) {
-    {
-      try {
-        // No page-relative URLs allowed
-        new URL(id);
-      } catch (err) {
-        console.warn(Error(errMsg('W3', '"' + id + '" is not a valid URL to set in the module registry')));
-      }
-    }
-    var ns;
-    if (toStringTag && module[toStringTag] === 'Module') {
-      ns = module;
-    }
-    else {
-      ns = Object.assign(Object.create(null), module);
-      if (toStringTag)
-        Object.defineProperty(ns, toStringTag, { value: 'Module' });
-    }
-
-    var done = Promise.resolve(ns);
-
-    var load = this[REGISTRY][id] || (this[REGISTRY][id] = {
-      id: id,
-      i: [],
-      h: false,
-      d: [],
-      e: null,
-      er: undefined,
-      E: undefined
-    });
-
-    if (load.e || load.E)
-      return false;
-    
-    Object.assign(load, {
-      n: ns,
-      I: undefined,
-      L: undefined,
-      C: done
-    });
-    return ns;
-  };
-
-  systemJSPrototype.has = function (id) {
-    var load = this[REGISTRY][id];
-    return !!load;
-  };
-
-  // Delete function provided for hot-reloading use cases
-  systemJSPrototype.delete = function (id) {
-    var registry = this[REGISTRY];
-    var load = registry[id];
-    // in future we can support load.E case by failing load first
-    // but that will require TLA callbacks to be implemented
-    if (!load || (load.p && load.p.e !== null) || load.E)
-      return false;
-
-    var importerSetters = load.i;
-    // remove from importerSetters
-    // (release for gc)
-    if (load.d)
-      load.d.forEach(function (depLoad) {
-        var importerIndex = depLoad.i.indexOf(load);
-        if (importerIndex !== -1)
-          depLoad.i.splice(importerIndex, 1);
-      });
-    delete registry[id];
-    return function () {
-      var load = registry[id];
-      if (!load || !importerSetters || load.e !== null || load.E)
-        return false;
-      // add back the old setters
-      importerSetters.forEach(function (setter) {
-        load.i.push(setter);
-        setter(load.n);
-      });
-      importerSetters = null;
-    };
-  };
-
-  var iterator = typeof Symbol !== 'undefined' && Symbol.iterator;
-
-  systemJSPrototype.entries = function () {
-    var loader = this, keys = Object.keys(loader[REGISTRY]);
-    var index = 0, ns, key;
-    var result = {
-      next: function () {
-        while (
-          (key = keys[index++]) !== undefined && 
-          (ns = loader.get(key)) === undefined
-        );
-        return {
-          done: key === undefined,
-          value: key !== undefined && [key, ns]
-        };
-      }
-    };
-
-    result[iterator] = function() { return this };
-
-    return result;
-  };
 
 })();
