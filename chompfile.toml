@@ -5,7 +5,7 @@ default-task = 'build'
 extensions = [
   'chomp@0.1:npm',
   'chomp@0.1:footprint',
-  './terser.js',
+  'chomp@0.1:terser',
   'chomp@0.1:rollup',
   'chomp@0.1:ncc'
 ]
