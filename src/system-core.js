@@ -261,7 +261,7 @@ function postOrderExec (loader, load, seen) {
   // - If `load.er` is truthy, the execution has threw or has been rejected;
   // - otherwise, either the `load.E` is a promise, means it's under async execution, or
   // - the `load.E` is null, means the load has completed the execution or has been async resolved.
-  const exec = load.e;
+  var exec = load.e;
   load.e = null;
 
   // deps execute first, unless circular
