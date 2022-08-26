@@ -16,7 +16,7 @@ deps = ['dist/system.js', 'dist/system.min.js', 'dist/s.js', 'dist/s.min.js', 'd
 
 [[task]]
 target = 'dist/system.js'
-deps = ['src/system.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
+deps = ['src/system.js', 'src/system-core.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
 template = 'rollup'
 [task.template-options]
 onwarn = false
@@ -33,7 +33,7 @@ package = '@rollup/plugin-replace'
 
 [[task]]
 target = 'dist/s.js'
-deps = ['src/s.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
+deps = ['src/s.js', 'src/system-core.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
 template = 'rollup'
 [task.template-options]
 onwarn = false
@@ -85,7 +85,7 @@ unsafe = true
 
 [[task]]
 target = 'dist/system-node.cjs'
-deps = ['src/system-node.js', 'package.json', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
+deps = ['src/system-node.js', 'package.json', 'src/system-core.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
 template = 'ncc'
 [task.template-options]
 assets = false
