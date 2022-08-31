@@ -1,5 +1,5 @@
 /*!
- * SystemJS 6.12.4
+ * SystemJS 6.12.5
  */
 (function () {
 
@@ -179,7 +179,7 @@
   }
 
   function targetWarning (code, match, target, msg) {
-    console.warn(errMsg(code, "Package target " + msg + ", resolving target '" + target + "' for " + match));
+    console.warn(errMsg(code,  "Package target " + msg + ", resolving target '" + target + "' for " + match));
   }
 
   function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
@@ -211,7 +211,7 @@
    * System.prototype.instantiate implementations
    */
 
-  var toStringTag$1 = hasSymbol && Symbol.toStringTag;
+  var toStringTag = hasSymbol && Symbol.toStringTag;
   var REGISTRY = hasSymbol ? Symbol() : '@';
 
   function SystemJS () {
@@ -275,8 +275,8 @@
 
     var importerSetters = [];
     var ns = Object.create(null);
-    if (toStringTag$1)
-      Object.defineProperty(ns, toStringTag$1, { value: 'Module' });
+    if (toStringTag)
+      Object.defineProperty(ns, toStringTag, { value: 'Module' });
     
     var instantiatePromise = Promise.resolve()
     .then(function () {
@@ -284,7 +284,7 @@
     })
     .then(function (registration) {
       if (!registration)
-        throw Error(errMsg(2, 'Module ' + id + ' did not instantiate'));
+        throw Error(errMsg(2,  'Module ' + id + ' did not instantiate'));
       function _export (name, value) {
         // note if we have hoisted exports (including reexports)
         load.h = true;
@@ -553,10 +553,10 @@
         // The passThrough property is for letting the module types fetch implementation know that this is not a SystemJS module.
         var fetchPromise = script.src ? (System.fetch || fetch)(script.src, { integrity: script.integrity, passThrough: true }).then(function (res) {
           if (!res.ok)
-            throw Error('Invalid status code: ' + res.status);
+            throw Error( 'Invalid status code: ' + res.status);
           return res.text();
         }).catch(function (err) {
-          err.message = errMsg('W4', 'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
+          err.message = errMsg('W4',  'Error fetching systemjs-import map ' + script.src) + '\n' + err.message;
           console.warn(err);
           if (typeof script.onerror === 'function') {
               script.onerror();
@@ -577,7 +577,7 @@
     try {
       newMap = JSON.parse(newMapText);
     } catch (err) {
-      console.warn(Error((errMsg('W5', "systemjs-importmap contains invalid JSON") + '\n\n' + newMapText + '\n' )));
+      console.warn(Error(( errMsg('W5', "systemjs-importmap contains invalid JSON") + '\n\n' + newMapText + '\n' )));
     }
     resolveAndComposeImportMap(newMap, newMapUrl, importMap);
   }
@@ -610,7 +610,7 @@
   };
 
   // Auto imports -> script tags can be inlined directly for load phase
-  var lastAutoImportDeps, lastAutoImportTimeout;
+  var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
   var autoImportCandidates = {};
   var systemRegister = systemJSPrototype.register;
   systemJSPrototype.register = function (deps, declare) {
@@ -618,7 +618,7 @@
       var scripts = document.querySelectorAll('script[src]');
       var lastScript = scripts[scripts.length - 1];
       if (lastScript) {
-        lastScript.src;
+        lastAutoImportUrl = lastScript.src;
         lastAutoImportDeps = deps;
         // if this is already a System load, then the instantiate has already begun
         // so this re-import has no consequence
@@ -646,7 +646,7 @@
     return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
       return new Promise(function (resolve, reject) {
         script.addEventListener('error', function () {
-          reject(Error(errMsg(3, 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+          reject(Error(errMsg(3,  'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
         });
         script.addEventListener('load', function () {
           document.head.removeChild(script);
@@ -689,10 +689,10 @@
     })
     .then(function (res) {
       if (!res.ok)
-        throw Error(errMsg(7, res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
+        throw Error(errMsg(7,  res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : '')));
       var contentType = res.headers.get('content-type');
       if (!contentType || !jsContentTypeRegEx.test(contentType))
-        throw Error(errMsg(4, 'Unknown Content-Type "' + contentType + '", loading ' + url + (parent ? ' from ' + parent : '')));
+        throw Error(errMsg(4,  'Unknown Content-Type "' + contentType + '", loading ' + url + (parent ? ' from ' + parent : '')));
       return res.text().then(function (source) {
         if (source.indexOf('//# sourceURL=') < 0)
           source += '\n//# sourceURL=' + url;
@@ -704,16 +704,16 @@
 
   systemJSPrototype.resolve = function (id, parentUrl) {
     parentUrl = parentUrl || !true  || baseUrl;
-    return resolveImportMap((importMap), resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
+    return resolveImportMap(( importMap), resolveIfNotPlainOrUrl(id, parentUrl) || id, parentUrl) || throwUnresolved(id, parentUrl);
   };
 
   function throwUnresolved (id, parentUrl) {
-    throw Error(errMsg(8, "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
+    throw Error(errMsg(8,  "Unable to resolve bare specifier '" + id + (parentUrl ? "' from " + parentUrl : "'")));
   }
 
   var systemInstantiate = systemJSPrototype.instantiate;
   systemJSPrototype.instantiate = function (url, firstParentUrl) {
-    var preloads = (importMap).depcache[url];
+    var preloads = ( importMap).depcache[url];
     if (preloads) {
       for (var i = 0; i < preloads.length; i++)
         getOrCreateLoad(this, this.resolve(preloads[i], url), url);
@@ -908,7 +908,7 @@
     };
   })(typeof self !== 'undefined' ? self : global);
 
-  var toStringTag = typeof Symbol !== 'undefined' && Symbol.toStringTag;
+  var toStringTag$1 = typeof Symbol !== 'undefined' && Symbol.toStringTag;
 
   systemJSPrototype.get = function (id) {
     var load = this[REGISTRY][id];
@@ -929,13 +929,13 @@
       }
     }
     var ns;
-    if (toStringTag && module[toStringTag] === 'Module') {
+    if (toStringTag$1 && module[toStringTag$1] === 'Module') {
       ns = module;
     }
     else {
       ns = Object.assign(Object.create(null), module);
-      if (toStringTag)
-        Object.defineProperty(ns, toStringTag, { value: 'Module' });
+      if (toStringTag$1)
+        Object.defineProperty(ns, toStringTag$1, { value: 'Module' });
     }
 
     var done = Promise.resolve(ns);
@@ -1022,4 +1022,4 @@
     return result;
   };
 
-})();
+}());
