@@ -67,4 +67,17 @@ suite('Dynamic import maps', function () {
       return importAfterImportMap(moduleId);
     });
   });
+
+  test('Loading manually added import map', function () {
+    const moduleId = 'manual-map-1';
+    return importNonExistent(moduleId)
+    .then(function () {
+      System.addImportMap({
+        "imports": {
+          [moduleId]: "./fixtures/browser/esm.js"
+        }
+      })
+      return importAfterImportMap(moduleId);
+    });
+  });
 });

@@ -23,6 +23,9 @@ systemJSPrototype.resolve = function () {
   }
   return originalResolve.apply(this, arguments);
 };
+systemJSPrototype.addImportMap = function (newMap, mapBase){
+  applyImportMap(this, newMap, mapBase)
+}
 
 export function applyImportMap(loader, newMap, mapBase) {
   ensureValidSystemLoader(loader);

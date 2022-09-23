@@ -23,6 +23,9 @@ if (hasDocument) {
   processScripts();
   window.addEventListener('DOMContentLoaded', processScripts);
 }
+systemJSPrototype.addImportMap = function (newMap, mapBase) {
+  resolveAndComposeImportMap(newMap, mapBase || baseUrl, importMap);
+}
 
 function processScripts () {
   [].forEach.call(document.querySelectorAll('script'), function (script) {

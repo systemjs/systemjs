@@ -139,3 +139,16 @@ for (const [id, ns] of System.entries()) {
   console.log(ns); // { exportName: 'value' }
 };
 ```
+
+#### System.addImportMap(map [, base])
+Type: `Function`
+
+Allows you to add import-map without DOM interop.
+
+```js
+System.addImportMap({
+  "imports": {
+    "y": "/path/to/y.js",
+  }
+})
+```
