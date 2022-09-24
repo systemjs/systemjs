@@ -37,7 +37,7 @@ describe('NodeJS version of SystemJS', () => {
 
   describe('import maps', () => {
     it('can load a module from the network', async () => {
-      applyImportMap(System, {imports: {"rxjs": "https://unpkg.com/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});
+      applyImportMap(System, {imports: {"rxjs": "https://cdn.jsdelivr.net/npm/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});
       const rxjs = await System.import("rxjs");
       assert.ok(rxjs.Observable);
     });
