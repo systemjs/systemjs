@@ -200,6 +200,21 @@ Any existing mappings are replaced, although in future this may be an error.
 
 Previous versions of the import maps spec had support for multiple import maps in a single web page ([explanation](https://github.com/WICG/import-maps/issues/199)). SystemJS added support for multiple import maps during that time and has decided to keep support for multiple import maps as an experimental feature ([discussion](https://github.com/systemjs/systemjs/issues/2095)). Note that the Chrome implementation of import maps does not yet allow for multiple maps, and use of multiple import maps within SystemJS should be considered experimental and subject to change.
 
+### Dynamically add Import Maps
+
+> Non-standard Extension
+
+The `addImportMap` method is available to dynamically extend additional mappings into the import map at any time:
+
+```js
+System.addImportMap({
+  "imports": {
+    "y": "/path/to/y.js",
+  }
+})
+```
+
+Any existing map entries will be overridden with the new values.
 ### Handling Import Map Errors
 
 For handling errors when fetching external import maps (specifically for [SystemJS Warning #W4](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#w4)), we can use the `onerror` attribute in the `<script type="systemjs-importmap">` tag.
