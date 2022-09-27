@@ -143,7 +143,7 @@ for (const [id, ns] of System.entries()) {
 #### System.addImportMap(map [, base])
 Type: `Function`
 
-Allows you to add import-map without DOM interop.
+Allows adding an import map without using the DOM.
 
 ```js
 System.addImportMap({

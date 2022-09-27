@@ -202,11 +202,9 @@ Previous versions of the import maps spec had support for multiple import maps i
 
 ### Dynamically add Import Maps
 
-> **Note** Non-standard Extension
-> 
-> This may override existing import maps, for more details, please check https://github.com/guybedford/es-module-shims#overriding-import-map-entries
+> Non-standard Extension
 
-To dynamically add import maps, a non-spec API is available to extend additional mappings into the import map at any time:
+The `addImportMap` method is available to dynamically extend additional mappings into the import map at any time:
 
 ```js
 System.addImportMap({
@@ -216,6 +214,7 @@ System.addImportMap({
 })
 ```
 
+Any existing map entries will be overridden with the new values.
 ### Handling Import Map Errors
 
 For handling errors when fetching external import maps (specifically for [SystemJS Warning #W4](https://github.com/systemjs/systemjs/blob/master/docs/errors.md#w4)), we can use the `onerror` attribute in the `<script type="systemjs-importmap">` tag.
