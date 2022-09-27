@@ -202,7 +202,11 @@ Previous versions of the import maps spec had support for multiple import maps i
 
 ### Dynamically add Import Maps
 
-Standard import map is based on dom operation, for SystemJS, you can use `System.addImportMap` to add import map dynamically for browser and node.
+> **Note** Non-standard Extension
+> 
+> This may override existing import maps, for more details, please check https://github.com/guybedford/es-module-shims#overriding-import-map-entries
+
+To dynamically add import maps, a non-spec API is available to extend additional mappings into the import map at any time:
 
 ```js
 System.addImportMap({
