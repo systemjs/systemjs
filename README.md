@@ -202,6 +202,7 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
 * [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
 * [esm-bundle](https://github.com/esm-bundle) - list of System.register versions for major libraries, including documentation on how to create a System.register bundle for any npm package.
+* [@wener/system](https://github.com/wenerme/wode/tree/main/packages/system) - hooks to make System works with npm registry & package.json
 
 ## Compatibility with Webpack
 
