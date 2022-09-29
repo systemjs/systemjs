@@ -118,8 +118,9 @@
     var systemJSPrototype = global.System.constructor.prototype;
 
     var moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
+    var _shouldFetch = systemJSPrototype.shouldFetch.bind(systemJSPrototype);
     systemJSPrototype.shouldFetch = function (url) {
-      return moduleTypesRegEx.test(url);
+      return _shouldFetch(url) || moduleTypesRegEx.test(url);
     };
 
     var jsonContentType = /^application\/json(;|$)/;
@@ -187,4 +188,4 @@
     };
   })(typeof self !== 'undefined' ? self : global);
 
-}());
+})();
