@@ -1,6 +1,6 @@
 /*
  * SystemJS Core
- * 
+ *
  * Provides
  * - System.import
  * - System.register support for
@@ -10,7 +10,7 @@
  * - Symbol.toStringTag support in Module objects
  * - Hookable System.createContext to customize import.meta
  * - System.onload(err, id, deps) handler for tracing / hot-reloading
- * 
+ *
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
@@ -27,14 +27,15 @@ function SystemJS () {
 
 var systemJSPrototype = SystemJS.prototype;
 
-systemJSPrototype.import = function (id, parentUrl) {
+systemJSPrototype.import = function (id, parentUrl, meta) {
   var loader = this;
+  (parentUrl && typeof parentUrl === 'object') && (meta = parentUrl, parentUrl = undefined);
   return Promise.resolve(loader.prepareImport())
   .then(function() {
-    return loader.resolve(id, parentUrl);
+    return loader.resolve(id, parentUrl, meta);
   })
   .then(function (id) {
-    var load = getOrCreateLoad(loader, id);
+    var load = getOrCreateLoad(loader, id, undefined, meta);
     return load.C || topLevelLoad(loader, load);
   });
 };
@@ -76,7 +77,7 @@ systemJSPrototype.getRegister = function () {
   return _lastRegister;
 };
 
-export function getOrCreateLoad (loader, id, firstParentUrl) {
+export function getOrCreateLoad (loader, id, firstParentUrl, meta) {
   var load = loader[REGISTRY][id];
   if (load)
     return load;
@@ -85,10 +86,10 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
   var ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
-  
+
   var instantiatePromise = Promise.resolve()
   .then(function () {
-    return loader.instantiate(id, firstParentUrl);
+    return loader.instantiate(id, firstParentUrl, meta);
   })
   .then(function (registration) {
     if (!registration)
@@ -124,8 +125,8 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       return value;
     }
     var declared = registration[1](_export, registration[1].length === 2 ? {
-      import: function (importId) {
-        return loader.import(importId, id);
+      import: function (importId, meta) {
+        return loader.import(importId, id, meta);
       },
       meta: loader.createContext(id)
     } : undefined);
@@ -174,6 +175,9 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
     i: importerSetters,
     // module namespace object
     n: ns,
+    // extra module information for import assertion
+    // shape like: { assert: { type: 'xyz' } }
+    m: meta,
 
     // instantiate
     I: instantiatePromise,
@@ -269,7 +273,7 @@ function postOrderExec (loader, load, seen) {
   load.d.forEach(function (depLoad) {
     try {
       var depLoadPromise = postOrderExec(loader, depLoad, seen);
-      if (depLoadPromise) 
+      if (depLoadPromise)
         (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
     catch (err) {
