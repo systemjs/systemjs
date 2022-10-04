@@ -63,8 +63,8 @@ function triggerOnload (loader, load, err, isErrSource) {
 }
 
 var lastRegister;
-systemJSPrototype.register = function (deps, declare) {
-  lastRegister = [deps, declare];
+systemJSPrototype.register = function (deps, declare, metas) {
+  lastRegister = [deps, declare, metas];
 };
 
 /*
@@ -130,7 +130,7 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
       meta: loader.createContext(id)
     } : undefined);
     load.e = declared.execute || function () {};
-    return [registration[0], declared.setters || []];
+    return [registration[0], declared.setters || [], registration[2] || []];
   }, function (err) {
     load.e = null;
     load.er = err;
@@ -142,9 +142,10 @@ export function getOrCreateLoad (loader, id, firstParentUrl) {
   .then(function (instantiation) {
     return Promise.all(instantiation[0].map(function (dep, i) {
       var setter = instantiation[1][i];
+      var meta = instantiation[2][i];
       return Promise.resolve(loader.resolve(dep, id))
       .then(function (depId) {
-        var depLoad = getOrCreateLoad(loader, depId, id);
+        var depLoad = getOrCreateLoad(loader, depId, id, meta);
         // depLoad.I may be undefined for already-evaluated
         return Promise.resolve(depLoad.I)
         .then(function () {
