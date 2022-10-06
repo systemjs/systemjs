@@ -227,6 +227,22 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('should load a.txt as css module by assert', function () {
+    return System.import('fixturesbase/css-modules/a.txt', {assert: {type: 'css'}}).then(function (m) {
+      assert.ok(m);
+      assert.ok(isCSSStyleSheet(m.default));
+      document.adoptedStyleSheets = document.adoptedStyleSheets.concat(m.default);
+    });
+  });
+
+  test('should load a as css module by assert', function () {
+    return System.import('fixturesbase/css-modules/a', {assert: {type: 'css'}}).then(function (m) {
+      assert.ok(m);
+      assert.ok(isCSSStyleSheet(m.default));
+      document.adoptedStyleSheets = document.adoptedStyleSheets.concat(m.default);
+    });
+  });
+
   test('should support application/javascript css module override', function () {
     return System.import('fixturesbase/css-modules/javascript.css').then(function (m) {
       assert.ok(m);
