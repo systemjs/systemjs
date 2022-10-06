@@ -38,7 +38,7 @@
       firstNamedDefine = null;
       firstName = null;
     });
-    return register.apply(this, [deps, declare]);
+    return register.apply(this, [deps, declare, metas]);
   };
 
   var resolve = systemJSPrototype.resolve;
@@ -55,13 +55,13 @@
   };
 
   var instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl, meta) {
     var result = this.registerRegistry[url];
     if (result) {
       this.registerRegistry[url] = null;
       return result;
     } else {
-      return instantiate.call(this, url, firstParentUrl);
+      return instantiate.call(this, url, firstParentUrl, meta);
     }
   };
 
