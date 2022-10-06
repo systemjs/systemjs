@@ -9,9 +9,9 @@ import { errMsg } from '../err-msg.js';
   var systemJSPrototype = global.System.constructor.prototype;
 
   var instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, parent) {
+  systemJSPrototype.instantiate = function (url, parent, meta) {
     if (url.slice(-5) === '.wasm')
-      return instantiate.call(this, url, parent);
+      return instantiate.call(this, url, parent, meta);
 
     var loader = this;
     return fetch(url, { credentials: 'same-origin' })

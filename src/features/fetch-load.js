@@ -13,13 +13,14 @@ if (typeof fetch !== 'undefined')
 
 var instantiate = systemJSPrototype.instantiate;
 var jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
-systemJSPrototype.instantiate = function (url, parent) {
+systemJSPrototype.instantiate = function (url, parent, meta) {
   var loader = this;
-  if (!this.shouldFetch(url))
+  if (!this.shouldFetch(url, parent, meta))
     return instantiate.apply(this, arguments);
   return this.fetch(url, {
     credentials: 'same-origin',
-    integrity: importMap.integrity[url]
+    integrity: importMap.integrity[url],
+    meta
   })
   .then(function (res) {
     if (!res.ok)
