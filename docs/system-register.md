@@ -11,6 +11,7 @@ This format provides support for:
 * Top-level await
 * Live bindings updates, including through reexports, star exports and namespace imports, and any combination of these
 * Circular references including function hoisting (where functions in non-executed modules can be used in circular reference cases)
+* import assertions
 
 By ensuring we cover all of these semantics, the guarantee is that if code works in browsers in ES modules, the associated
 System.register code can work with s.js providing a legacy fallback workflow that doesn't randomly break at semantic edge cases.
@@ -34,7 +35,9 @@ System.register(['dependency'], function (_export, _context) {
       });
     }
   };
-});
+},/*optional metas*/ [
+  /*optional meta for dependency*/ {assert: {type: 'javascript'}},
+]);
 ```
 
 A global callback is used to fully support CSP policies in browsers.
@@ -94,7 +97,7 @@ System.register([...deps...], function (_export, _context) {
 
     }
   };
-});
+}, [...metas...],);
 ```
 
 where:
@@ -107,6 +110,8 @@ where:
 * `_export: ({ [name: String]: any }) => value` - The bulk form of the export function allows setting an object of exports. This is not just sugar, but improves performance by calling fewer setter functions when used, so should be used whenever possible by implementations over the direct export form.
 * `_context.meta: Object` - This is an object representing the value of `import.meta` for a module execution. By default it will have `import.meta.url` present in SystemJS.
 * `_context.import: (id: String) => Promise<Module>` This is the contextual dynamic import function available to the module as the replacement for `import()`.
+* `metas: Object[]` - The metadata attached to the module dependency, indexed in the same order as `deps`. This is an optional argument.
+  * for import assert the metadata is `{assert: {type: 'javascript'}}`
 
 > Note as of SystemJS 2.0 support for named `System.register(name, deps, declare)` is no longer supported, as instead code optimization approaches that combine modules
   like with [Rollup's code-splitting workflows](https://rollupjs.org/guide/en#experimental-code-splitting) are recommended instead.
@@ -241,3 +246,49 @@ Could be written:
 ```
 
 Although in the case of not having any dependencies, it could be equally valid to omit hoisting entirely.
+
+#### Import assertions
+
+```js
+import a from './a.json' assert { type: 'json' };
+import b from 'b'
+import c from './c.css' assert { type: 'css' };
+
+const { d } = await import('d')
+const { e } = await import('e',{assert: {type: 'javascript'}})
+```
+
+->
+
+```js
+System.register(['./a.json', 'b', './a.css'], function ($__export, $__moduleContext) {
+  var a, b, c
+
+  return {
+    setters: [
+      function (m) {
+        a = m["default"];
+      },
+      function (m) {
+        b = m["default"];
+      },
+      function (m) {
+        c = m["default"];
+      }
+    ],
+    execute: async function () {
+      const {d} = await $__moduleContext.import('d')
+      const {e} = await $__moduleContext.import('e', {assert: {type: 'javascript'}})
+    }
+  };
+}, [
+  {assert: {type: 'json'}},
+  /*just omit or use undefined if not needed*/ undefined,
+  {assert: {type: 'css'}},
+]);
+```
+
+Import assertion used to ensure the module is loaded with the correct type. The import assertion is passed to the loader's `import` method. The loader can use the import assertion to determine the correct module format to load. The import assertion is also passed to the module's `resolve` hook.
+
+> **Note**
+> More about import assertions https://github.com/tc39/proposal-import-assertions
