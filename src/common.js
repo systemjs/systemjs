@@ -183,8 +183,15 @@ function applyPackages (id, packages) {
       else
         targetWarning('W2', pkgName, pkg, "should have a trailing '/'");
     }
-    else
-      return pkg + id.slice(pkgName.length);
+    else {
+      var url = pkg + id.slice(pkgName.length);
+
+      if (!url.includes('.js') && pkgName[pkgName.length - 1] === '/') {
+        url += '.js'
+      }
+
+      return url;
+    }
   }
 }
 
