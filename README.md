@@ -205,7 +205,7 @@ A list of projects that use or work with SystemJS in providing modular browser w
 * [@wener/system](https://github.com/wenerme/wode/tree/main/packages/system) - hooks to make System works with npm registry & package.json}
 * [beyondjs.com](https://beyondjs.com) -TypeScript first meta-framework for universal microfrontends/micronservices.
 
-## Compatibility with WebpackZ
+## Compatibility with Webpack
 
 Code-splitting builds on top of native ES modules, like Rollup offers, are an alternative to the Webpack-style chunking approach - offering a way to utilize the native module loader for loading shared and dynamic chunks instead of using a custom registry and loader as Webpack bundles include. Scope-level optimizations can be performed on ES modules when they are combined, while ensuring no duplicate code is loaded through dynamic loading and code-sharing in the module registry, using the features of the native module loader and its dynamic runtime nature.
 
