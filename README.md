@@ -195,14 +195,16 @@ This can be worked around by adding `crossorigin="anonymous"` as an attribute to
 
 A list of projects that use or work with SystemJS in providing modular browser workflows. [Post a PR](https://github.com/systemjs/systemjs/edit/master/README.md).
 
+* [beyondjs.com](https://beyondjs.com) -TypeScript first meta-framework for universal microfrontends/micronservices.
+* [esm-bundle](https://github.com/esm-bundle) - list of System.register versions for major libraries, including documentation on how to create a System.register bundle for any npm package.
 * [es-dev-server](https://github.com/open-wc/open-wc/tree/master/packages/es-dev-server) - A web server for developing without a build step.
 * [import map overrides](https://github.com/joeldenning/import-map-overrides/) - Dynamically inject an import map stored in local storage so that you can override the URL for any module. Can be useful for running development modules on localhost against the server.
 * [js-env](https://github.com/jsenv/jsenv-core) - Collection of development tools providing a unified workflow to write JavaScript for the web, node.js or both at the same time.
 * [jspm.org](https://jspm.org) - Package manager for native modules, using SystemJS for backwards compatibility.
 * [single-spa](https://single-spa.js.org/) - JavaScript framework for front-end microservices.
 * [systemjs-webpack-interop](https://github.com/joeldenning/systemjs-webpack-interop) - npm lib for setting webpack public path and creating webpack configs that work well with SystemJS.
-* [esm-bundle](https://github.com/esm-bundle) - list of System.register versions for major libraries, including documentation on how to create a System.register bundle for any npm package.
-* [@wener/system](https://github.com/wenerme/wode/tree/main/packages/system) - hooks to make System works with npm registry & package.json
+* [@wener/system](https://github.com/wenerme/wode/tree/main/packages/system) - hooks to make System works with npm registry & package.json}
+
 
 ## Compatibility with Webpack
 
