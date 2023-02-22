@@ -50,5 +50,8 @@
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/systemjs"
+  },
+  "dependencies": {
+    "chomp": "^0.2.12"
   }
 }

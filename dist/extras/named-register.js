@@ -3,7 +3,7 @@
   /*
    * SystemJS named register extension
    * Supports System.register('name', [..deps..], function (_export, _context) { ... })
-   * 
+   *
    * Names are written to the registry as-is
    * System.register('x', ...) can be imported as System.import('x')
    */
@@ -27,10 +27,10 @@
     }
 
     var register = systemJSPrototype.register;
-    systemJSPrototype.register = function (name, deps, declare) {
+    systemJSPrototype.register = function (name, deps, declare, metas) {
       if (typeof name !== 'string')
         return register.apply(this, arguments);
-      var define = [deps, declare];
+      var define = [deps, declare, metas];
       this.registerRegistry[name] = define;
       if (!firstNamedDefine) {
         firstNamedDefine = define;
@@ -40,7 +40,7 @@
         firstNamedDefine = null;
         firstName = null;
       });
-      return register.apply(this, [deps, declare]);
+      return register.apply(this, [deps, declare, metas]);
     };
 
     var resolve = systemJSPrototype.resolve;
@@ -57,13 +57,13 @@
     };
 
     var instantiate = systemJSPrototype.instantiate;
-    systemJSPrototype.instantiate = function (url, firstParentUrl) {
+    systemJSPrototype.instantiate = function (url, firstParentUrl, meta) {
       var result = this.registerRegistry[url];
       if (result) {
         this.registerRegistry[url] = null;
         return result;
       } else {
-        return instantiate.call(this, url, firstParentUrl);
+        return instantiate.call(this, url, firstParentUrl, meta);
       }
     };
 
