@@ -8,7 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        chrome: [
+          'latest'
+        ]
     steps:
       - uses: actions/checkout@v3
       - name: Setup Chomp
@@ -17,12 +22,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Node.js
         uses: actions/setup-node@v3
-      - name: Setup Firefox
-        uses: browser-actions/setup-firefox@latest
+      - name: Setup Chrome ${{ matrix.chrome }}
+        uses: browser-actions/setup-chrome@latest
         with:
-          firefox-version: '89.0'
+          chrome-version: ${{ matrix.chrome }}
+      - name: npm install
+        run: npm install
       - name: Chomp Test
         run: chomp test
         env:
-          CI_BROWSER: /opt/hostedtoolcache/firefox/89.0/x64/firefox
-          CI_BROWSER_FLAGS: -headless
+          CI_BROWSER: C:\hostedtoolcache\windows\chromium\${{ matrix.chrome }}\x64\chrome.exe
+          CI_BROWSER_FLAGS:
