@@ -1504,6 +1504,20 @@ const isDomainOrSubdomain = function isDomainOrSubdomain(destination, original) 
 };
 
 /**
+ * isSameProtocol reports whether the two provided URLs use the same protocol.
+ *
+ * Both domains must already be in canonical form.
+ * @param {string|URL} original
+ * @param {string|URL} destination
+ */
+const isSameProtocol = function isSameProtocol(destination, original) {
+	const orig = new URL$1(original).protocol;
+	const dest = new URL$1(destination).protocol;
+
+	return orig === dest;
+};
+
+/**
  * Fetch function
  *
  * @param   Mixed    url   Absolute url or Request instance
@@ -1534,7 +1548,7 @@ function fetch(url, opts) {
 			let error = new AbortError('The user aborted a request.');
 			reject(error);
 			if (request.body && request.body instanceof Stream.Readable) {
-				request.body.destroy(error);
+				destroyStream(request.body, error);
 			}
 			if (!response || !response.body) return;
 			response.body.emit('error', error);
@@ -1575,8 +1589,42 @@ function fetch(url, opts) {
 
 		req.on('error', function (err) {
 			reject(new FetchError(`request to ${request.url} failed, reason: ${err.message}`, 'system', err));
+
+			if (response && response.body) {
+				destroyStream(response.body, err);
+			}
+
 			finalize();
 		});
+
+		fixResponseChunkedTransferBadEnding(req, function (err) {
+			if (signal && signal.aborted) {
+				return;
+			}
+
+			if (response && response.body) {
+				destroyStream(response.body, err);
+			}
+		});
+
+		/* c8 ignore next 18 */
+		if (parseInt(process.version.substring(1)) < 14) {
+			// Before Node.js 14, pipeline() does not fully support async iterators and does not always
+			// properly handle when the socket close/end events are out of order.
+			req.on('socket', function (s) {
+				s.addListener('close', function (hadError) {
+					// if a data listener is still present we didn't end cleanly
+					const hasDataListener = s.listenerCount('data') > 0;
+
+					// if end happened before close but the socket didn't emit an error, do it now
+					if (response && hasDataListener && !hadError && !(signal && signal.aborted)) {
+						const err = new Error('Premature close');
+						err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+						response.body.emit('error', err);
+					}
+				});
+			});
+		}
 
 		req.on('response', function (res) {
 			clearTimeout(reqTimeout);
@@ -1649,7 +1697,7 @@ function fetch(url, opts) {
 							size: request.size
 						};
 
-						if (!isDomainOrSubdomain(request.url, locationURL)) {
+						if (!isDomainOrSubdomain(request.url, locationURL) || !isSameProtocol(request.url, locationURL)) {
 							for (const name of ['authorization', 'www-authenticate', 'cookie', 'cookie2']) {
 								requestOpts.headers.delete(name);
 							}
@@ -1742,6 +1790,13 @@ function fetch(url, opts) {
 					response = new Response(body, response_options);
 					resolve(response);
 				});
+				raw.on('end', function () {
+					// some old IIS servers return zero-length OK deflate responses, so 'data' is never emitted.
+					if (!response) {
+						response = new Response(body, response_options);
+						resolve(response);
+					}
+				});
 				return;
 			}
 
@@ -1761,6 +1816,41 @@ function fetch(url, opts) {
 		writeToStream(req, request);
 	});
 }
+function fixResponseChunkedTransferBadEnding(request, errorCallback) {
+	let socket;
+
+	request.on('socket', function (s) {
+		socket = s;
+	});
+
+	request.on('response', function (response) {
+		const headers = response.headers;
+
+		if (headers['transfer-encoding'] === 'chunked' && !headers['content-length']) {
+			response.once('close', function (hadError) {
+				// if a data listener is still present we didn't end cleanly
+				const hasDataListener = socket.listenerCount('data') > 0;
+
+				if (hasDataListener && !hadError) {
+					const err = new Error('Premature close');
+					err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+					errorCallback(err);
+				}
+			});
+		}
+	});
+}
+
+function destroyStream(stream, err) {
+	if (stream.destroy) {
+		stream.destroy(err);
+	} else {
+		// node < 8
+		stream.emit('error', err);
+		stream.end();
+	}
+}
+
 /**
  * Redirect code matching
  *
@@ -8159,7 +8249,7 @@ function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
 ;// CONCATENATED MODULE: ./src/system-core.js
 /*
  * SystemJS Core
- * 
+ *
  * Provides
  * - System.import
  * - System.register support for
@@ -8169,7 +8259,7 @@ function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
  * - Symbol.toStringTag support in Module objects
  * - Hookable System.createContext to customize import.meta
  * - System.onload(err, id, deps) handler for tracing / hot-reloading
- * 
+ *
  * Core comes with no System.prototype.resolve or
  * System.prototype.instantiate implementations
  */
@@ -8186,14 +8276,15 @@ function SystemJS () {
 
 var systemJSPrototype = SystemJS.prototype;
 
-systemJSPrototype.import = function (id, parentUrl) {
+systemJSPrototype.import = function (id, parentUrl, meta) {
   var loader = this;
+  (parentUrl && typeof parentUrl === 'object') && (meta = parentUrl, parentUrl = undefined);
   return Promise.resolve(loader.prepareImport())
   .then(function() {
-    return loader.resolve(id, parentUrl);
+    return loader.resolve(id, parentUrl, meta);
   })
   .then(function (id) {
-    var load = getOrCreateLoad(loader, id);
+    var load = getOrCreateLoad(loader, id, undefined, meta);
     return load.C || topLevelLoad(loader, load);
   });
 };
@@ -8222,8 +8313,8 @@ function triggerOnload (loader, load, err, isErrSource) {
 }
 
 var lastRegister;
-systemJSPrototype.register = function (deps, declare) {
-  lastRegister = [deps, declare];
+systemJSPrototype.register = function (deps, declare, metas) {
+  lastRegister = [deps, declare, metas];
 };
 
 /*
@@ -8235,7 +8326,7 @@ systemJSPrototype.getRegister = function () {
   return _lastRegister;
 };
 
-function getOrCreateLoad (loader, id, firstParentUrl) {
+function getOrCreateLoad (loader, id, firstParentUrl, meta) {
   var load = loader[REGISTRY][id];
   if (load)
     return load;
@@ -8244,10 +8335,10 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   var ns = Object.create(null);
   if (toStringTag)
     Object.defineProperty(ns, toStringTag, { value: 'Module' });
-  
+
   var instantiatePromise = Promise.resolve()
   .then(function () {
-    return loader.instantiate(id, firstParentUrl);
+    return loader.instantiate(id, firstParentUrl, meta);
   })
   .then(function (registration) {
     if (!registration)
@@ -8283,13 +8374,13 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
       return value;
     }
     var declared = registration[1](_export, registration[1].length === 2 ? {
-      import: function (importId) {
-        return loader.import(importId, id);
+      import: function (importId, meta) {
+        return loader.import(importId, id, meta);
       },
       meta: loader.createContext(id)
     } : undefined);
     load.e = declared.execute || function () {};
-    return [registration[0], declared.setters || []];
+    return [registration[0], declared.setters || [], registration[2] || []];
   }, function (err) {
     load.e = null;
     load.er = err;
@@ -8301,9 +8392,10 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   .then(function (instantiation) {
     return Promise.all(instantiation[0].map(function (dep, i) {
       var setter = instantiation[1][i];
+      var meta = instantiation[2][i];
       return Promise.resolve(loader.resolve(dep, id))
       .then(function (depId) {
-        var depLoad = getOrCreateLoad(loader, depId, id);
+        var depLoad = getOrCreateLoad(loader, depId, id, meta);
         // depLoad.I may be undefined for already-evaluated
         return Promise.resolve(depLoad.I)
         .then(function () {
@@ -8333,6 +8425,9 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
     i: importerSetters,
     // module namespace object
     n: ns,
+    // extra module information for import assertion
+    // shape like: { assert: { type: 'xyz' } }
+    m: meta,
 
     // instantiate
     I: instantiatePromise,
@@ -8428,7 +8523,7 @@ function postOrderExec (loader, load, seen) {
   load.d.forEach(function (depLoad) {
     try {
       var depLoadPromise = postOrderExec(loader, depLoad, seen);
-      if (depLoadPromise) 
+      if (depLoadPromise)
         (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
     }
     catch (err) {
@@ -8708,13 +8803,14 @@ if (typeof fetch !== 'undefined')
 
 var instantiate = systemJSPrototype.instantiate;
 var jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
-systemJSPrototype.instantiate = function (url, parent) {
+systemJSPrototype.instantiate = function (url, parent, meta) {
   var loader = this;
-  if (!this.shouldFetch(url))
+  if (!this.shouldFetch(url, parent, meta))
     return instantiate.apply(this, arguments);
   return this.fetch(url, {
     credentials: 'same-origin',
-    integrity: importMap.integrity[url]
+    integrity: importMap.integrity[url],
+    meta
   })
   .then(function (res) {
     if (!res.ok)
@@ -8833,9 +8929,9 @@ global.System.constructor.prototype.fetch = async url => {
   }
 
   var impt = systemJSPrototype.import;
-  systemJSPrototype.import = function (id, parentUrl) {
+  systemJSPrototype.import = function (id, parentUrl, meta) {
     noteGlobalProps();
-    return impt.call(this, id, parentUrl);
+    return impt.call(this, id, parentUrl, meta);
   };
 
   var emptyInstantiation = [[], function () { return {} }];

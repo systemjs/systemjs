@@ -196,7 +196,7 @@
 
   /*
    * SystemJS Core
-   * 
+   *
    * Provides
    * - System.import
    * - System.register support for
@@ -206,7 +206,7 @@
    * - Symbol.toStringTag support in Module objects
    * - Hookable System.createContext to customize import.meta
    * - System.onload(err, id, deps) handler for tracing / hot-reloading
-   * 
+   *
    * Core comes with no System.prototype.resolve or
    * System.prototype.instantiate implementations
    */
@@ -220,14 +220,15 @@
 
   var systemJSPrototype = SystemJS.prototype;
 
-  systemJSPrototype.import = function (id, parentUrl) {
+  systemJSPrototype.import = function (id, parentUrl, meta) {
     var loader = this;
+    (parentUrl && typeof parentUrl === 'object') && (meta = parentUrl, parentUrl = undefined);
     return Promise.resolve(loader.prepareImport())
     .then(function() {
-      return loader.resolve(id, parentUrl);
+      return loader.resolve(id, parentUrl, meta);
     })
     .then(function (id) {
-      var load = getOrCreateLoad(loader, id);
+      var load = getOrCreateLoad(loader, id, undefined, meta);
       return load.C || topLevelLoad(loader, load);
     });
   };
@@ -255,8 +256,8 @@
   }
 
   var lastRegister;
-  systemJSPrototype.register = function (deps, declare) {
-    lastRegister = [deps, declare];
+  systemJSPrototype.register = function (deps, declare, metas) {
+    lastRegister = [deps, declare, metas];
   };
 
   /*
@@ -268,7 +269,7 @@
     return _lastRegister;
   };
 
-  function getOrCreateLoad (loader, id, firstParentUrl) {
+  function getOrCreateLoad (loader, id, firstParentUrl, meta) {
     var load = loader[REGISTRY][id];
     if (load)
       return load;
@@ -277,10 +278,10 @@
     var ns = Object.create(null);
     if (toStringTag$1)
       Object.defineProperty(ns, toStringTag$1, { value: 'Module' });
-    
+
     var instantiatePromise = Promise.resolve()
     .then(function () {
-      return loader.instantiate(id, firstParentUrl);
+      return loader.instantiate(id, firstParentUrl, meta);
     })
     .then(function (registration) {
       if (!registration)
@@ -316,13 +317,13 @@
         return value;
       }
       var declared = registration[1](_export, registration[1].length === 2 ? {
-        import: function (importId) {
-          return loader.import(importId, id);
+        import: function (importId, meta) {
+          return loader.import(importId, id, meta);
         },
         meta: loader.createContext(id)
       } : undefined);
       load.e = declared.execute || function () {};
-      return [registration[0], declared.setters || []];
+      return [registration[0], declared.setters || [], registration[2] || []];
     }, function (err) {
       load.e = null;
       load.er = err;
@@ -334,9 +335,10 @@
     .then(function (instantiation) {
       return Promise.all(instantiation[0].map(function (dep, i) {
         var setter = instantiation[1][i];
+        var meta = instantiation[2][i];
         return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
-          var depLoad = getOrCreateLoad(loader, depId, id);
+          var depLoad = getOrCreateLoad(loader, depId, id, meta);
           // depLoad.I may be undefined for already-evaluated
           return Promise.resolve(depLoad.I)
           .then(function () {
@@ -364,6 +366,9 @@
       i: importerSetters,
       // module namespace object
       n: ns,
+      // extra module information for import assertion
+      // shape like: { assert: { type: 'xyz' } }
+      m: meta,
 
       // instantiate
       I: instantiatePromise,
@@ -459,7 +464,7 @@
     load.d.forEach(function (depLoad) {
       try {
         var depLoadPromise = postOrderExec(loader, depLoad, seen);
-        if (depLoadPromise) 
+        if (depLoadPromise)
           (depLoadPromises = depLoadPromises || []).push(depLoadPromise);
       }
       catch (err) {
@@ -682,13 +687,14 @@
 
   var instantiate = systemJSPrototype.instantiate;
   var jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
-  systemJSPrototype.instantiate = function (url, parent) {
+  systemJSPrototype.instantiate = function (url, parent, meta) {
     var loader = this;
-    if (!this.shouldFetch(url))
+    if (!this.shouldFetch(url, parent, meta))
       return instantiate.apply(this, arguments);
     return this.fetch(url, {
       credentials: 'same-origin',
-      integrity: importMap.integrity[url]
+      integrity: importMap.integrity[url],
+      meta
     })
     .then(function (res) {
       if (!res.ok)
@@ -715,13 +721,13 @@
   }
 
   var systemInstantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl, meta) {
     var preloads = (importMap).depcache[url];
     if (preloads) {
       for (var i = 0; i < preloads.length; i++)
         getOrCreateLoad(this, this.resolve(preloads[i], url), url);
     }
-    return systemInstantiate.call(this, url, firstParentUrl);
+    return systemInstantiate.call(this, url, firstParentUrl, meta);
   };
 
   /*
@@ -786,9 +792,9 @@
     }
 
     var impt = systemJSPrototype.import;
-    systemJSPrototype.import = function (id, parentUrl) {
+    systemJSPrototype.import = function (id, parentUrl, meta) {
       noteGlobalProps();
-      return impt.call(this, id, parentUrl);
+      return impt.call(this, id, parentUrl, meta);
     };
 
     var emptyInstantiation = [[], function () { return {} }];
