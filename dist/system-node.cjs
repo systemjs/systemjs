@@ -6491,7 +6491,7 @@ systemJSPrototype.instantiate = function (url, parent, meta) {
   return this.fetch(url, {
     credentials: 'same-origin',
     integrity: importMap.integrity[url],
-    meta
+    meta: meta,
   })
   .then(function (res) {
     if (!res.ok)

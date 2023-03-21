@@ -1,5 +1,5 @@
 /*!
- * SJS 6.14.0
+ * SJS 6.14.1
  */
 (function () {
 
@@ -687,7 +687,7 @@
     return this.fetch(url, {
       credentials: 'same-origin',
       integrity: importMap.integrity[url],
-      meta
+      meta: meta,
     })
     .then(function (res) {
       if (!res.ok)
