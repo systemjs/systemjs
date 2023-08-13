@@ -18,6 +18,8 @@ jobs:
         uses: actions/setup-node@v3
       - name: Setup Chomp
         uses: guybedford/chomp-action@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm install
       - name: Report file size impact
         run: node ./.github/workflows/size-impact/report-size-impact.mjs
