@@ -1,5 +1,5 @@
 /*!
- * SystemJS 6.14.1
+ * SystemJS 6.14.2
  */
 (function () {
 
@@ -880,7 +880,7 @@
           return res.text()
           .then(function (source) {
             source = source.replace(/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g, function (match, quotes, relUrl1, relUrl2) {
-              return 'url(' + quotes + resolveUrl(relUrl1 || relUrl2, url) + quotes + ')';
+              return ['url(', quotes, resolveUrl(relUrl1 || relUrl2, url), quotes, ')'].join('');
             });
             return new Response(new Blob([
               'System.register([],function(e){return{execute:function(){var s=new CSSStyleSheet();s.replaceSync(' + JSON.stringify(source) + ');e("default",s)}}})'
