@@ -227,6 +227,17 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('should handle css modules with urls without quotes', function () {
+    return System.import('fixturesbase/css-modules/url-without-quotes.css').then(function (m) {
+      assert.ok(m);
+      assert.ok(isCSSStyleSheet(m.default));
+      assert.equal(m.default.cssRules[0].cssText,'.hello { background-image: url("http://localhost:8080/test/fixtures/css-modules/path/to/image.png"); }')
+      assert.equal(m.default.cssRules[1].cssText,'.world { background-image: url("http://localhost:8080/test/fixtures/css-modules/path/to/image.png"); }')
+      assert.equal(m.default.cssRules[2].cssText,'body { background-image: url("http://localhost:8080/test/fixtures/css-modules/path/to/image.png"); }')
+      document.adoptedStyleSheets = document.adoptedStyleSheets.concat(m.default);
+    });
+  });
+
   test('should support application/javascript css module override', function () {
     return System.import('fixturesbase/css-modules/javascript.css').then(function (m) {
       assert.ok(m);

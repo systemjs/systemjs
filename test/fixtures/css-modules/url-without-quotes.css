@@ -1,0 +1,9 @@
+.hello {
+  background-image: url(./path/to/image.png);
+}
+.world {
+  background-image: url('./path/to/image.png');
+}
+body {
+  background-image: url("./path/to/image.png");
+}
