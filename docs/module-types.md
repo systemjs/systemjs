@@ -12,11 +12,21 @@ SystemJS supports loading modules that are in the following formats:
 | [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
 | [UMD](https://github.com/umdjs/umd) | [AMD extra](/dist/extras/amd.js) | [AMD extra](/dist/extras/amd.js) | * |
 
-### File Extension Limitations
+### Module type detection
 
 When loading JSON modules, CSS modules and Web Assembly modules, the browser specifications require interpreting these modules based on checking their MIME type. Since SystemJS has to choose upfront whether to append a script element (for JS modules) or make a fetch request (for a JSON/CSS/Wasm module), it needs to know the module type upfront at resolution time.
 
 Instead of reading the MIME type, the file extension is thus used specifically for the JSON, CSS and Web Assembly module cases.
+
+If module type is specified by import, the mime is acceptable as the module type, will use the specified module type.
+
+e.g.
+
+```js
+System.import('https://example.com/my-module.txt', {assert: {type: 'css'}});
+```
+
+This will force resolve the module as a CSS module, even if the file extension is `.txt` and the MIME type is `text/plain`.
 
 ## JSON Modules
 
