@@ -9,7 +9,7 @@ This means module specifiers like `"lodash"` can be mapped to exact URLs for loa
 ### Loading Import Maps
 
 Import maps can be loaded inline or from a separate URL using a `<script type="systemjs-importmap">` tag:
-
+ 
 ```html
 <!-- Separate src: -->
 <script type="systemjs-importmap" src="/path/to/importmap.json">
