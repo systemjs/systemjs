@@ -47,6 +47,12 @@ This hook could be asynchronous and you can fetch asynchronously some data and r
 
 Note that this hook does not apply to [module types](module-types.md), which use the default browser fetch implementation.
 
+#### getCurrentScript() -> HTMLScriptElement | null
+
+This function returns `document.currentScript` if it's defined, else it tries to look for the last script tag.  
+
+This is used when a SystemJS module is being loaded and registered with the `<script>` tag, such that SystemJS needs to get the element to the script to get its `src` attribute. 
+
 #### prepareImport() -> Promise
 
 This function is called before any `System.import` or dynamic import, returning a Promise that is resolved before continuing to perform the import.

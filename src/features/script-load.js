@@ -29,14 +29,26 @@ systemJSPrototype.createScript = function (url) {
   return script;
 };
 
+systemJSPrototype.getCurrentScript = function() {
+  if (hasDocument) {
+    var lastScript = document.currentScript;
+    if (!lastScript) {
+      var scripts = document.querySelectorAll('script[src]');
+      lastScript = scripts[scripts.length - 1];
+    }
+    return lastScript;
+  }
+
+  return null;
+}
+
 // Auto imports -> script tags can be inlined directly for load phase
 var lastAutoImportUrl, lastAutoImportDeps, lastAutoImportTimeout;
 var autoImportCandidates = {};
 var systemRegister = systemJSPrototype.register;
 systemJSPrototype.register = function (deps, declare) {
   if (hasDocument && document.readyState === 'loading' && typeof deps !== 'string') {
-    var scripts = document.querySelectorAll('script[src]');
-    var lastScript = scripts[scripts.length - 1];
+    var lastScript = this.getCurrentScript();
     if (lastScript) {
       lastAutoImportUrl = lastScript.src;
       lastAutoImportDeps = deps;
