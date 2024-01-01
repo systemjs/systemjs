@@ -81,7 +81,7 @@ hoist_funs = true
 keep_fargs = false
 pure_getters = true
 passes = 2
-unsafe = true
+unsafe = false
 
 [[task]]
 target = 'dist/system-node.cjs'
