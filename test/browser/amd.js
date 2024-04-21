@@ -90,6 +90,13 @@ suite('AMD tests', function () {
     });
   });
 
+  test('Has access to module.uri (context meta)', function () {
+    return System.import('fixtures/amd-module-meta.js').then(function (m) {
+      assert.ok(m.default);
+      assert.equal(m.default.uri, baseURL+'fixtures/browser/amd-module-meta.js');
+    });
+  });
+
   test('Throws an error when define() is called incorrectly', () => {
     try {
       define("strings are invalid amd modules");
