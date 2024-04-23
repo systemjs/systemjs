@@ -21,7 +21,7 @@ systemJSPrototype.prepareImport = function (doProcessScripts) {
 };
 
 systemJSPrototype.getImportMap = function () {
-  return importMap;
+  return JSON.parse(JSON.stringify(importMap));
 };
 
 if (hasDocument) {
