@@ -8501,6 +8501,11 @@ systemJSPrototype.prepareImport = function (doProcessScripts) {
   }
   return importMapPromise;
 };
+
+systemJSPrototype.getImportMap = function () {
+  return JSON.parse(JSON.stringify(importMap));
+};
+
 if (hasDocument) {
   processScripts();
   window.addEventListener('DOMContentLoaded', processScripts);
@@ -8532,7 +8537,7 @@ function processScripts () {
     else if (script.type === 'systemjs-importmap') {
       script.sp = true;
       // The passThrough property is for letting the module types fetch implementation know that this is not a SystemJS module.
-      var fetchPromise = script.src ? (System.fetch || fetch)(script.src, { integrity: script.integrity, passThrough: true }).then(function (res) {
+      var fetchPromise = script.src ? (System.fetch || fetch)(script.src, { integrity: script.integrity, priority: script.fetchPriority, passThrough: true }).then(function (res) {
         if (!res.ok)
           throw Error(process.env.SYSTEM_PRODUCTION ? res.status : 'Invalid status code: ' + res.status);
         return res.text();
