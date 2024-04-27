@@ -272,6 +272,17 @@ describe('Core API', function () {
 
       assert([...loader.entries()].some(entry => entry[0] === 'http://i' && entry[1].a === 'b'));
     })
+
+    it('Supports System.getImportMap', function () {
+      const importMap = loader.getImportMap();
+
+      assert(
+        Object.hasOwn(importMap, 'imports') && 
+        Object.hasOwn(importMap, 'scopes') && 
+        Object.hasOwn(importMap, 'depcache') && 
+        Object.hasOwn(importMap, 'integrity')
+      );
+    })
   });
 });
 

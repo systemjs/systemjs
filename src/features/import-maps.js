@@ -19,6 +19,11 @@ systemJSPrototype.prepareImport = function (doProcessScripts) {
   }
   return importMapPromise;
 };
+
+systemJSPrototype.getImportMap = function () {
+  return JSON.parse(JSON.stringify(importMap));
+};
+
 if (hasDocument) {
   processScripts();
   window.addEventListener('DOMContentLoaded', processScripts);
