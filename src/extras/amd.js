@@ -40,11 +40,12 @@ import { errMsg } from '../err-msg.js';
     if (splice)
       amdDefineDeps.length -= splice;
     var amdExec = amdDefineExec;
-    return [amdDefineDeps, function (_export) {
+    return [amdDefineDeps, function (_export, _context) {
       _export({ default: exports, __useDefault: true });
       return {
         setters: setters,
         execute: function () {
+          module.uri = _context.meta.url;
           var amdResult = amdExec.apply(exports, depModules);
           if (amdResult !== undefined)
             module.exports = amdResult;
