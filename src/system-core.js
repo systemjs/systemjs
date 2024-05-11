@@ -248,7 +248,7 @@ var nullContext = Object.freeze(Object.create(null));
 // throws on sync errors
 function postOrderExec (loader, load, seen) {
   if (seen[load.id])
-    return;
+    return load.E;
   seen[load.id] = true;
 
   if (!load.e) {
@@ -283,26 +283,31 @@ function postOrderExec (loader, load, seen) {
       throw err;
     }
   });
-  if (depLoadPromises)
-    return Promise.all(depLoadPromises).then(doExec);
+  if (depLoadPromises) {
+    return load.E = Promise.all(depLoadPromises).then(doExec).finally(function() {
+      load.E = null;
+    });
+  }
 
-  return doExec();
-
+  var execPromise = doExec();
+  if (execPromise) {
+    return load.E = execPromise.finally(function() {
+      load.E = null;
+    });
+  }
   function doExec () {
     try {
       var execPromise = exec.call(nullContext);
       if (execPromise) {
         execPromise = execPromise.then(function () {
           load.C = load.n;
-          load.E = null; // indicates completion
           if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, null, true);
         }, function (err) {
           load.er = err;
-          load.E = null;
           if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, err, true);
           throw err;
         });
-        return load.E = execPromise;
+        return execPromise;
       }
       // (should be a promise, but a minify optimization to leave out Promise.resolve)
       load.C = load.n;
@@ -313,7 +318,7 @@ function postOrderExec (loader, load, seen) {
       throw err;
     }
     finally {
-      if (!process.env.SYSTEM_PRODUCTION) triggerOnload(loader, load, load.er, true);
+      triggerOnload(loader, load, load.er, true);
     }
   }
 }
