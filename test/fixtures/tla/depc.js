@@ -2,7 +2,7 @@ System.register([], function (_export) {
   var reporter;
 
   var state = 0;
-  var expected = ['c', 'b', 'c', 'b', 'a', 'a', 'main', 'main'];
+  var expected = ['c', 'c', 'b', 'b', 'a', 'a', 'main', 'main'];
   var failed = false;
   function reporter (name) {
     if (expected[state++] !== name)

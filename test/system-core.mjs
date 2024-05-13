@@ -474,6 +474,10 @@ describe('Loading Cases', function() {
         const dep = await thread2;
         assert.equal(main.stamp, dep.stamp);
     });
+    it('Concurrent top level async dependency ordering', async function() {
+        const main = await loader.import('./tla/top-level-async-import/main.js');
+        assert.equal(main.default, 6);
+    });
   });
 
   describe('Export variations', function () {
