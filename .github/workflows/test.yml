@@ -30,6 +30,6 @@ jobs:
         run: npm install
       - name: Chomp Test
         run: chomp test
-        env:
-          CI_BROWSER: C:\hostedtoolcache\windows\chromium\${{ matrix.chrome }}\x64\chrome.exe
+        env: 
+          CI_BROWSER: C:\hostedtoolcache\windows\setup-chrome\chromium\latest\x64\chrome.exe
           CI_BROWSER_FLAGS:
