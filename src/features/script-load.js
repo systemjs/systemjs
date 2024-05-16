@@ -69,7 +69,7 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
         reject(Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
       });
       script.addEventListener('load', function () {
-        document.head.removeChild(script);
+        script.remove();
         // Note that if an error occurs that isn't caught by this if statement,
         // that getRegister will return null and a "did not instantiate" error will be thrown.
         if (lastWindowErrorUrl === url) {
