@@ -51,6 +51,10 @@ import { errMsg } from '../err-msg.js';
             module.exports = amdResult;
           _export(module.exports);
           _export('default', module.exports);
+          // Vue2 like
+          if (typeof amdResult === 'function') {
+            _export('__esModule', true);
+          }
         }
       };
     }];
