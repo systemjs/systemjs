@@ -66,7 +66,15 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
   return Promise.resolve(systemJSPrototype.createScript(url)).then(function (script) {
     return new Promise(function (resolve, reject) {
       script.addEventListener('error', function () {
-        reject(Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''))));
+        try {
+          throw new Error(errMsg(3, process.env.SYSTEM_PRODUCTION ? [url, firstParentUrl].join(', ') : 'Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
+        } catch (error) {
+          setTimeout(() => {
+            throw error;
+          });
+          const emptyInstantiation = [[], function () { return {} }];
+          resolve(emptyInstantiation);
+        }
       });
       script.addEventListener('load', function () {
         document.head.removeChild(script);
