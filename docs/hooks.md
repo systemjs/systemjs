@@ -111,3 +111,7 @@ For tracing functionality this is called on completion or failure of each and ev
 `isErrSource` is used to indicate if `id` is the error source or not.
 
 Such tracing can be used for analysis and to clear the loader registry using the `System.delete(url)` API to enable reloading and hot reloading workflows.
+
+#### getImportMap() (sync)
+
+Returns the import map.
