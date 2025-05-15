@@ -12,4 +12,13 @@ suite('Context Resolve', function () {
       assert.equal(type, 'string');
     });
   });
+
+  test('Updated resolve returns a original properties', function () {
+    return System.import('fixtures/resolve.js').then(function (m) {
+      return m.url
+    }).then(function (url) {
+      const test = url.match(/(\/resolve\.js)$/);
+      assert.equal(test[0], '/resolve.js');
+    });
+  });
 })

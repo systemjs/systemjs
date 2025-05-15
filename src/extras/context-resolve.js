@@ -16,12 +16,11 @@
   systemJSPrototype.createContext = function (parentId) {
     const loader = this;
     const context = createContext.call(this, parentId);
-    return {
-      ...context,
+    return Object.assign(context, {
       resolve: function (id, parentUrl) {
         return loader.resolve(id, parentUrl || parentId)
       }
-    }
+    });
   }
 })(typeof self !== 'undefined' ? self : global)
 
