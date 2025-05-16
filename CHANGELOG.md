@@ -1,3 +1,6 @@
+SystemJS 6.12.2
+* New Extra updating import.meta.resolve to return a string instead of Promise<string>. Resolves #2503. (https://github.com/systemjs/systemjs/pull/2504)
+
 SystemJS 6.12.1
 * Call fetch hook when retrieving external import maps. Resolves #2374. (https://github.com/systemjs/systemjs/pull/2376)
 

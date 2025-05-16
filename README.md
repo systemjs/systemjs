@@ -69,6 +69,7 @@ The following extras are included in system.js loader by default, and can be add
 
 * [Global loading](dist/extras/global.js) support for loading global scripts and detecting the defined global as the default export. Useful for loading common library scripts from CDN like `System.import('//unpkg.com/lodash')`.
 * [Module Types](dist/extras/module-types.js) `.css`, `.wasm`, `.json` [module type](docs/module-types.md) loading support in line with the existing modules specifications.
+* [Context Resolve](dist/extras/context-resolve.js) Updates the resolve function on `import.meta.resolve` to return a string instead of Promise<string> to align with current Node and Browser implementations.
 
 Since all loader features are hookable, custom extensions can be easily made following the same approach as the bundled extras. See the [hooks documentation](docs/hooks.md) for more information.
 
