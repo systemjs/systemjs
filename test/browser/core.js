@@ -59,20 +59,14 @@ suite('SystemJS Standard Tests', function() {
 
   test('import.meta.resolve package maps', function () {
     return System.import('fixtures/resolve.js').then(function (m) {
-      return m.resolve('a')
+      assert.equal(m.resolve('a'), rootURL + 'b');
     })
-    .then(function (resolved) {
-      assert.equal(resolved, rootURL + 'b');
-    });
   });
 
   test('import.meta.resolve package maps paths', function () {
     return System.import('fixtures/resolve.js').then(function (m) {
-      return m.resolve('a/')
+      assert.equal(m.resolve('a/'), baseURL + 'fixtures/browser/a/');
     })
-    .then(function (resolved) {
-      assert.equal(resolved, baseURL + 'fixtures/browser/a/');
-    });
   });
 
   test('Contextual package maps', function () {
@@ -84,10 +78,10 @@ suite('SystemJS Standard Tests', function() {
 
   test('import.meta.resolve contextual package maps', function () {
     return System.import('fixtures/resolve.js').then(function (m) {
-      return m.resolve('maptest', baseURL + 'fixtures/browser/scope-test/index.js')
-    })
-    .then(function (resolved) {
-      assert.equal(resolved, baseURL + 'fixtures/browser/contextual-map-dep.js');
+      assert.equal(
+        m.resolve('maptest', baseURL + 'fixtures/browser/scope-test/index.js'),
+        baseURL + 'fixtures/browser/contextual-map-dep.js'
+      );
     });
   });
 
@@ -279,10 +273,7 @@ suite('SystemJS Standard Tests', function() {
 
   test('import.meta.resolve', function () {
     return System.import('fixtures/resolve.js').then(function (m) {
-      return m.resolve('./test.js')
-    })
-    .then(function (resolved) {
-      assert.equal(resolved, baseURL + 'fixtures/browser/test.js');
+      assert.equal(m.resolve('./test.js'), baseURL + 'fixtures/browser/test.js');
     });
   });
 

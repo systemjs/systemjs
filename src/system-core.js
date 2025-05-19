@@ -46,7 +46,7 @@ systemJSPrototype.createContext = function (parentId) {
   return {
     url: parentId,
     resolve: function (id, parentUrl) {
-      return Promise.resolve(loader.resolve(id, parentUrl || parentId));
+      return loader.resolve(id, parentUrl || parentId);
     }
   };
 };
