@@ -12,7 +12,7 @@ extensions = [
 
 [[task]]
 name = 'build'
-deps = ['dist/system.js', 'dist/system.min.js', 'dist/s.js', 'dist/s.min.js', 'dist/system-node.cjs', 'dist/extras/*.js']
+deps = ['dist/system.js', 'dist/system.min.js', 'dist/s-trim.js', 'dist/s-trim.min.js', 'dist/s.js', 'dist/s.min.js', 'dist/system-node.cjs', 'dist/extras/*.js']
 
 [[task]]
 target = 'dist/system.js'
@@ -30,6 +30,24 @@ strict = false
 package = '@rollup/plugin-replace'
 "process.env.SYSTEM_PRODUCTION" = 'false'
 "process.env.SYSTEM_BROWSER" = 'true'
+
+[[task]]
+target = 'dist/s-trim.js'
+deps = ['src/s-trim.js', 'src/system-core.js', 'src/common.js', 'src/err-msg.js', 'src/features/*.js']
+template = 'rollup'
+[task.template-options]
+onwarn = false
+[task.template-options.output]
+banner = '''/*!
+ * SJS #PJSON_VERSION
+ */'''
+format = 'iife'
+strict = false
+[[task.template-options.plugin]]
+package = '@rollup/plugin-replace'
+"process.env.SYSTEM_PRODUCTION" = 'true'
+"process.env.SYSTEM_BROWSER" = 'true'
+
 
 [[task]]
 target = 'dist/s.js'
