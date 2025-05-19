@@ -65,18 +65,16 @@ This is useful for referencing assets by URL in a way that is supported in many 
 const assetUrl = new URL('./asset.ext', import.meta.url);
 ```
 
-#### import.meta.resolve: (id, parentUrl?) => Promise<String>
+#### import.meta.resolve: (id, parentUrl?) => String
 
-> `import.meta.resolve` currently has no specification or browser implementation and may still change.
-
-`_context.meta.resolve` implements `import.meta.resolve` similarly to Node.js.
+`_context.meta.resolve` implements `import.meta.resolve` similarly to Node.js 18+
 
 This can be used to resolve import map resolutions or assets:
 
 ```js
-const resolvedDep = await import.meta.resolve('dep');
-const localAsset = await import.meta.resolve('./asset.ext');
-const depPath = await import.meta.resolve('dep/');
+const resolvedDep = import.meta.resolve('dep');
+const localAsset = import.meta.resolve('./asset.ext');
+const depPath = import.meta.resolve('dep/');
 ```
 
 #### Top-level await
