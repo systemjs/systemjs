@@ -46,7 +46,14 @@ The [4.2KB system.js loader](dist/system.min.js) adds the following features in 
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 * Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
 
-#### 3. system-node.cjs loader
+#### 3. s-trim.js loader, removes all extras
+
+The [3.7kb s-trim.js loader](dist/s-trim.min.js) includes the tracing and registery  feature of system.js, but does not include the module-types or global extras.
+
+* A middle ground between s.js and system.js loader.
+* Allows Registry features to be retained without requiring any extras.
+
+#### 4. system-node.cjs loader
 
 The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where System modules need to be executed on the server like SSR. It has the following features:
 
