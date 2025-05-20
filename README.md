@@ -51,7 +51,7 @@ The [4.2KB system.js loader](dist/system.min.js) adds the following features in 
 The [3.7kb s-trim.js loader](dist/s-trim.min.js) includes the tracing and registery  feature of system.js, but does not include the module-types or global extras.
 
 * A middle ground between s.js and system.js loader.
-* Allows Registry features to be maintained without requiring any extras.
+* Allows Registry features to be retained without requiring any extras.
 
 #### 4. system-node.cjs loader
 
