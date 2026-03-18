@@ -1,6 +1,7 @@
 import './features/resolve.js';
 import './features/registry.js';
 import './features/fetch-load.js';
+import './features/node-sourcemap.js';
 import './features/node-fetch.js';
 import './extras/global.js';
 
