@@ -17,6 +17,7 @@ reportFileSizeImpact({
     },
     node: {
       "./dist/system-node.cjs": true,
+      "./dist/system-node.mjs": true,
     },
     extras: {
       "./dist/extras/**/*.js": false,
