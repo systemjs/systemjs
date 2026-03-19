@@ -1,0 +1,1 @@
+{"version":3,"sources":["sourcemap-original.js"],"names":["originalThrow"],"mappings":";;;;;;;MAMEA","file":"sourcemap-throwing.js","sourcesContent":["// This is the \"original source\" that the source map points to.\n// Line 1: comment\n// Line 2: comment\n// Line 3: comment\n// Line 4: comment\nfunction originalThrow() {\n  throw new Error(\"source map test error\");\n}\n"]}

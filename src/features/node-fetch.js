@@ -1,15 +1,16 @@
-import sourceMapSupport from 'source-map-support';
-import fetch from 'node-fetch';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
-
-sourceMapSupport.install();
+import { addSourceMapUrl } from './node-sourcemap.js';
 
 global.System.constructor.prototype.shouldFetch = () => true;
 global.System.constructor.prototype.fetch = async url => {
   if (url.startsWith('file:')) {
     try {
-      const source = await fs.readFile(fileURLToPath(url.toString()));
+      const source = await fs.readFile(fileURLToPath(url.toString()), 'utf-8');
+
+      // Cache the source map URL for lazy loading on error
+      addSourceMapUrl(url, source);
+
       return {
         ok: true,
         status: 200,
@@ -23,10 +24,10 @@ global.System.constructor.prototype.fetch = async url => {
           }
         },
         async text () {
-          return source.toString();
+          return source;
         },
         async json () {
-          return JSON.parse(source.toString());
+          return JSON.parse(source);
         }
       };
     }
@@ -37,6 +38,8 @@ global.System.constructor.prototype.fetch = async url => {
         return { status: 500, statusText: e.toString() };
     }
   } else {
+    if (typeof fetch === 'undefined')
+      throw new Error('SystemJS requires Node.js 18.13 or later for native fetch. For older versions, override System.constructor.prototype.fetch (see docs/nodejs.md).');
     return fetch(url);
   }
 };
