@@ -46,9 +46,14 @@
     return lastGlobalProp;
   }
 
+  // Hookable flag to disable global detection per-instance
+  // Set System.shouldDetectGlobals = false to skip global property enumeration
+  systemJSPrototype.shouldDetectGlobals = true;
+
   var impt = systemJSPrototype.import;
   systemJSPrototype.import = function (id, parentUrl, meta) {
-    noteGlobalProps();
+    if (this.shouldDetectGlobals)
+      noteGlobalProps();
     return impt.call(this, id, parentUrl, meta);
   };
 
@@ -59,6 +64,9 @@
     var lastRegister = getRegister.call(this);
     if (lastRegister)
       return lastRegister;
+
+    if (!this.shouldDetectGlobals)
+      return emptyInstantiation;
 
     // no registration -> attempt a global detection as difference from snapshot
     // when multiple globals, we take the global value to be the last defined new global object property

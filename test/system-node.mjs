@@ -100,6 +100,46 @@ describe('NodeJS version of SystemJS', () => {
     });
   });
 
+  describe('shouldDetectGlobals', () => {
+    it('defaults to true', () => {
+      assert.equal(System.shouldDetectGlobals, true);
+    });
+
+    it('loads System.register modules when set to false', async () => {
+      System.shouldDetectGlobals = false;
+      System.addImportMap({imports: {"foo": 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/export.js')}});
+      const foo = await System.import('foo');
+      assert.equal(foo.p, 5);
+    });
+
+    it('is per-instance', () => {
+      const system1 = new globalSystem.constructor();
+      const system2 = new globalSystem.constructor();
+      system1.shouldDetectGlobals = false;
+      assert.equal(system1.shouldDetectGlobals, false);
+      assert.equal(system2.shouldDetectGlobals, true);
+    });
+
+    it('detects global scripts when enabled', async () => {
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/browser/global.js');
+      const mod = await System.import(url);
+      assert.ok(mod.default, 'Expected global script to export a default');
+      // Clean up the globals set by the fixture
+      delete globalThis.jjQuery;
+      delete globalThis.another;
+    });
+
+    it('does not detect global scripts when disabled', async () => {
+      System.shouldDetectGlobals = false;
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/browser/global.js');
+      const mod = await System.import(url);
+      assert.equal(mod.default, undefined, 'Expected no default export when global detection is disabled');
+      // Clean up the globals set by the fixture
+      delete globalThis.jjQuery;
+      delete globalThis.another;
+    });
+  });
+
   describe('import maps', () => {
     it('can load a module from the network', async () => {
       applyImportMap(System, {imports: {"rxjs": "https://cdn.jsdelivr.net/npm/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});

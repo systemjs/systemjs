@@ -56,6 +56,31 @@ window.b = 'b';
 
 Setting `System.firstGlobalProp = true` would ensure the above returns `{ default: 'a' }`.
 
+#### System.shouldDetectGlobals: boolean
+Type: `Boolean`
+
+Applies to the global loading extra.
+
+Setting `System.shouldDetectGlobals = false` disables global script detection for that instance. This skips the `for..in` enumeration of the global object on every `System.import()` call, which can improve performance when only loading `System.register` modules.
+
+```js
+System.shouldDetectGlobals = false;
+
+// Global scripts will no longer be auto-detected
+// Only System.register modules will load correctly
+System.import('./my-register-module.js');
+```
+
+Per-instance, so separate instances can have different settings:
+
+```js
+const system1 = new System.constructor();
+system1.shouldDetectGlobals = false; // no global detection
+
+const system2 = new System.constructor();
+// system2.shouldDetectGlobals is true (default)
+```
+
 > Note: This will likely be the default in the next major release.
 
 ### Registry API (system.js only)
