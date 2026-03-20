@@ -76,6 +76,33 @@ In both s.js and system.js, resolve is implemented as a synchronous function.
 
 Resolve should return a fully-valid URL for specification compatibility, but this is not enforced.
 
+#### evaluate(source, url) (sync)
+
+This hook is called to execute module source code that has been fetched via the `fetch` hook. It must be synchronous — `getRegister()` is called immediately after to retrieve the module registration, and any async delay would result in uncertainty over which evaluation produced the registration.
+
+- `source` — the module source code string
+- `url` — the fully resolved URL of the module
+
+The default implementation uses indirect eval with a `sourceURL` annotation:
+
+```js
+System.constructor.prototype.evaluate = function (source, url) {
+  if (source.indexOf('//# sourceURL=') < 0)
+    source += '\n//# sourceURL=' + url;
+  (0, eval)(source);
+};
+```
+
+This hook can be overridden to customize code evaluation, for example to implement sandboxing or source transformations. In Node.js, you can use `vm.runInThisContext` for cleaner stack traces (without `eval at` wrapper frames):
+
+```js
+const { runInThisContext } = require('vm');
+
+System.constructor.prototype.evaluate = function (source, url) {
+  runInThisContext(source, { filename: url });
+};
+```
+
 #### shouldFetch(url) -> Boolean
 
 This hook is used to determine if a module should be loaded by adding a `<script>` tag to the page (the normal SystemJS behaviour which is the fastest and supports CSP), or if the module should be loaded by using `fetch` and `eval` instead.

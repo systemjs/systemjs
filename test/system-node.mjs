@@ -100,6 +100,79 @@ describe('NodeJS version of SystemJS', () => {
     });
   });
 
+  describe('evaluate hook', () => {
+    it('can be overridden to use vm.runInThisContext for cleaner stack traces', async () => {
+      const { runInThisContext } = await import('vm');
+
+      const origEvaluate = System.constructor.prototype.evaluate;
+      System.constructor.prototype.evaluate = function (source, url) {
+        runInThisContext(source, { filename: url });
+      };
+
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/deperror.js');
+      try {
+        await System.import(url);
+        assert.fail('should have thrown');
+      } catch (e) {
+        assert.ok(
+          e.stack.includes(url),
+          'Expected stack trace to include the file URL but got:\n' + e.stack
+        );
+        // vm.runInThisContext should not have eval wrapper frames
+        assert.ok(
+          !e.stack.includes('at eval'),
+          'Expected no eval wrapper frames but got:\n' + e.stack
+        );
+      } finally {
+        System.constructor.prototype.evaluate = origEvaluate;
+      }
+    });
+
+    it('default evaluate uses eval with sourceURL', async () => {
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/deperror.js');
+      try {
+        await System.import(url);
+        assert.fail('should have thrown');
+      } catch (e) {
+        assert.ok(
+          e.stack.includes(url),
+          'Expected stack trace to include the file URL but got:\n' + e.stack
+        );
+      }
+    });
+
+    it('vm.runInThisContext vs eval stack trace comparison', async () => {
+      const { runInThisContext } = await import('vm');
+
+      const source = 'throw new Error("test")';
+      const fakeUrl = 'http://example.com/module.js';
+
+      // vm.runInThisContext — clean: "at http://example.com/module.js:1:7"
+      var vmStack;
+      try {
+        runInThisContext(source, { filename: fakeUrl });
+      } catch (e) {
+        vmStack = e.stack;
+      }
+
+      // eval — wrapped: "at eval (http://example.com/module.js:1:7)" + "at eval (<anonymous>)"
+      var evalStack;
+      try {
+        (0, eval)(source + '\n//# sourceURL=' + fakeUrl);
+      } catch (e) {
+        evalStack = e.stack;
+      }
+
+      // Both reference the URL
+      assert.ok(vmStack.includes(fakeUrl), 'vm stack should include filename:\n' + vmStack);
+      assert.ok(evalStack.includes(fakeUrl), 'eval stack should include sourceURL:\n' + evalStack);
+
+      // eval wraps in "at eval" frames, vm does not
+      assert.ok(evalStack.includes('at eval'), 'eval stack should contain eval frames:\n' + evalStack);
+      assert.ok(!vmStack.includes('at eval'), 'vm stack should not contain eval frames:\n' + vmStack);
+    });
+  });
+
   describe('import maps', () => {
     it('can load a module from the network', async () => {
       applyImportMap(System, {imports: {"rxjs": "https://cdn.jsdelivr.net/npm/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});

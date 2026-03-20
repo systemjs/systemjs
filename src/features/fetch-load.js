@@ -3,13 +3,19 @@ import { importMap } from '../features/import-maps.js';
 import { systemJSPrototype } from '../system-core.js';
 
 /*
- * Fetch loader, sets up shouldFetch and fetch hooks
+ * Fetch loader, sets up shouldFetch, fetch and evaluate hooks
  */
 systemJSPrototype.shouldFetch = function () {
   return false;
 };
 if (typeof fetch !== 'undefined')
   systemJSPrototype.fetch = fetch;
+
+systemJSPrototype.evaluate = function (source, url) {
+  if (source.indexOf('//# sourceURL=') < 0)
+    source += '\n//# sourceURL=' + url;
+  (0, eval)(source);
+};
 
 var instantiate = systemJSPrototype.instantiate;
 var jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
@@ -29,9 +35,7 @@ systemJSPrototype.instantiate = function (url, parent, meta) {
     if (!contentType || !jsContentTypeRegEx.test(contentType))
       throw Error(errMsg(4, process.env.SYSTEM_PRODUCTION ? contentType : 'Unknown Content-Type "' + contentType + '", loading ' + url + (parent ? ' from ' + parent : '')));
     return res.text().then(function (source) {
-      if (source.indexOf('//# sourceURL=') < 0)
-        source += '\n//# sourceURL=' + url;
-      (0, eval)(source);
+      loader.evaluate(source, url);
       return loader.getRegister(url);
     });
   });
