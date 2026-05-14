@@ -35,6 +35,71 @@ describe('NodeJS version of SystemJS', () => {
     });
   });
 
+  describe('source map support', () => {
+    it('remaps stack traces for modules with source maps', async () => {
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/sourcemap-throwing.js');
+      const mod = await System.import(url);
+      try {
+        mod.throwError();
+        assert.fail('should have thrown');
+      } catch (e) {
+        assert.equal(e.message, 'source map test error');
+        assert.ok(
+          e.stack.includes('sourcemap-original.js'),
+          'Expected stack trace to reference sourcemap-original.js but got:\n' + e.stack
+        );
+      }
+    });
+
+    it('evicts source map cache on System.delete', async () => {
+      const { readFileSync, writeFileSync } = await import('fs');
+      const mapPath = path.join(process.cwd(), 'test/fixtures/register-modules/sourcemap-throwing.js.map');
+      const originalMap = readFileSync(mapPath, 'utf-8');
+
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/sourcemap-throwing.js');
+
+      // First import — triggers source map URL caching
+      const mod1 = await System.import(url);
+      try { mod1.throwError(); } catch (e) {
+        assert.ok(e.stack.includes('sourcemap-original.js'), 'Initial source map should work');
+      }
+
+      // Swap the .map file to point to a different source name
+      const altMap = originalMap.replace('sourcemap-original.js', 'sourcemap-alt.js');
+      writeFileSync(mapPath, altMap);
+
+      try {
+        // Delete — should evict caches
+        System.delete(url);
+
+        // Re-import — should re-cache the URL and lazily read the modified .map
+        const mod2 = await System.import(url);
+        try { mod2.throwError(); } catch (e) {
+          assert.ok(
+            e.stack.includes('sourcemap-alt.js'),
+            'Expected stack trace to reference sourcemap-alt.js (proving cache was evicted) but got:\n' + e.stack
+          );
+        }
+      } finally {
+        // Restore original .map file
+        writeFileSync(mapPath, originalMap);
+      }
+    });
+
+    it('preserves stack traces for modules without source maps', async () => {
+      const url = 'file://' + path.join(process.cwd(), 'test/fixtures/register-modules/deperror.js');
+      try {
+        await System.import(url);
+        assert.fail('should have thrown');
+      } catch (e) {
+        assert.ok(
+          e.stack.includes('deperror.js'),
+          'Expected stack trace to reference deperror.js but got:\n' + e.stack
+        );
+      }
+    });
+  });
+
   describe('import maps', () => {
     it('can load a module from the network', async () => {
       applyImportMap(System, {imports: {"rxjs": "https://cdn.jsdelivr.net/npm/@esm-bundle/rxjs@6.5.4-fix.0/system/rxjs.min.js"}});

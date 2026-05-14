@@ -1,6 +1,10 @@
 # NodeJS Loader
 
-The `system-node.cjs` build adds support for loading modules in NodeJS.
+The `system-node.cjs` and `system-node.mjs` builds add support for loading modules in NodeJS. Requires **Node.js 18.13 or later**.
+
+* **Node.js 18.13+** — Full functionality with native `fetch` for HTTP module loading.
+* **Node.js 20+** — Adds source map support for improved stack traces (via built-in `module.SourceMap`).
+* **Older Node.js** — File loading works. HTTP loading requires overriding [`System.constructor.prototype.fetch`](#custom-fetch-hook).
 
 ## Installation
 
@@ -12,7 +16,11 @@ yarn add systemjs
 ```
 
 ```js
+// CommonJS
 const { System, applyImportMap, setBaseUrl } = require('systemjs');
+
+// ESM
+import { System, applyImportMap, setBaseUrl } from 'systemjs';
 
 System.import('file:///Users/name/some-module.js').then(module => {
   console.log("The loaded module", module);
@@ -29,7 +37,7 @@ Separate instances of SystemJS, each with their own import map and module regist
 
 Additionally, [global loading](/README.md#extras), [module types](/docs/module-types.md), and the [SystemJS Registry API](/docs/api.md#registry) are supported. Other extras, such as the AMD extra, have not been thoroughly tested but are presumed to work.
 
-Modules loaded over HTTP will be loaded via [node-fetch](https://github.com/node-fetch/node-fetch).
+Modules loaded over HTTP are loaded using Node's native `fetch` API. Source map support for improved stack traces is provided using Node's built-in `module.SourceMap` when available.
 
 ## API
 
@@ -106,4 +114,23 @@ setBaseUrl(System, 'https://example.com/base/');
 // Use a file URL as the base
 setBaseUrl(System, 'file:///Users/name/some-dir/');
 setBaseUrl(System, pathToFileURL(path.join(process.cwd(), 'some-dir')) + path.sep);
+```
+
+### Custom fetch hook
+
+The built-in fetch handler supports `file://` URLs via the filesystem and HTTP/HTTPS URLs via Node's native `fetch` (Node.js 18.13+). You can override the fetch hook to customize network loading, for example to use `node-fetch` on older Node versions or to add custom headers:
+
+```js
+const { System } = require('systemjs');
+const originalFetch = System.constructor.prototype.fetch;
+
+System.constructor.prototype.fetch = function (url, options) {
+  // Let file:// URLs use the built-in handler
+  if (url.startsWith('file:'))
+    return originalFetch.call(this, url, options);
+
+  // Custom network fetch (e.g., using node-fetch for older Node versions)
+  const nodeFetch = require('node-fetch');
+  return nodeFetch(url, options);
+};
 ```

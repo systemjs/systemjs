@@ -1,8 +1,6 @@
-Object.defineProperty(exports, '__esModule', { value: true });
-
-var fs = require('fs');
-var url = require('url');
-var module$1 = require('module');
+import { readFileSync, promises } from 'fs';
+import { fileURLToPath } from 'url';
+import { SourceMap } from 'module';
 
 function errMsg(errCode, msg) {
   return (msg || "") + " (SystemJS Error#" + errCode + " " + "https://github.com/systemjs/systemjs/blob/main/docs/errors.md#" + errCode + ")";
@@ -765,7 +763,7 @@ systemJSPrototype.instantiate = function (url, parent, meta) {
   });
 };
 
-var hasSourceMapSupport = typeof module$1.SourceMap === 'function';
+var hasSourceMapSupport = typeof SourceMap === 'function';
 
 if (hasSourceMapSupport) {
   var sourceMapUrls = Object.create(null);
@@ -776,8 +774,8 @@ if (hasSourceMapSupport) {
     var mapUrl = sourceMapUrls[fileName];
     if (!mapUrl) return;
     try {
-      var mapSource = fs.readFileSync(url.fileURLToPath(mapUrl), 'utf-8');
-      sourceMapCache[fileName] = new module$1.SourceMap(JSON.parse(mapSource));
+      var mapSource = readFileSync(fileURLToPath(mapUrl), 'utf-8');
+      sourceMapCache[fileName] = new SourceMap(JSON.parse(mapSource));
       return sourceMapCache[fileName];
     } catch (e) {
       // Remove bad entry so we don't retry
@@ -845,13 +843,13 @@ var addSourceMapUrl = hasSourceMapSupport
   : function () {};
 
 global.System.constructor.prototype.shouldFetch = () => true;
-global.System.constructor.prototype.fetch = async url$1 => {
-  if (url$1.startsWith('file:')) {
+global.System.constructor.prototype.fetch = async url => {
+  if (url.startsWith('file:')) {
     try {
-      const source = await fs.promises.readFile(url.fileURLToPath(url$1.toString()), 'utf-8');
+      const source = await promises.readFile(fileURLToPath(url.toString()), 'utf-8');
 
       // Cache the source map URL for lazy loading on error
-      addSourceMapUrl(url$1, source);
+      addSourceMapUrl(url, source);
 
       return {
         ok: true,
@@ -882,7 +880,7 @@ global.System.constructor.prototype.fetch = async url$1 => {
   } else {
     if (typeof fetch === 'undefined')
       throw new Error('SystemJS requires Node.js 18.13 or later for native fetch. For older versions, override System.constructor.prototype.fetch (see docs/nodejs.md).');
-    return fetch(url$1);
+    return fetch(url);
   }
 };
 
@@ -1020,6 +1018,4 @@ function ensureValidSystemLoader (loader) {
     throw new Error('A valid SystemJS instance must be provided');
 }
 
-exports.System = System$1;
-exports.applyImportMap = applyImportMap;
-exports.setBaseUrl = setBaseUrl;
+export { System$1 as System, applyImportMap, setBaseUrl };

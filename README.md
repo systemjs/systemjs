@@ -46,14 +46,15 @@ The [4.2KB system.js loader](dist/system.min.js) adds the following features in 
 * Supports loading Wasm, CSS and JSON [module types](docs/module-types.md).
 * Includes the [global loading extra](#extras) for loading global scripts, useful for loading library dependencies traditionally loaded with script tags.
 
-#### 3. system-node.cjs loader
+#### 3. system-node.cjs / system-node.mjs loader
 
-The [system-node.cjs](/dist/system-node.cjs) loader is a version of SystemJS build designed to run in Node.js, typically for workflows where System modules need to be executed on the server like SSR. It has the following features:
+The [system-node.cjs](/dist/system-node.cjs) and [system-node.mjs](/dist/system-node.mjs) loaders are versions of SystemJS designed to run in Node.js (requires **Node.js 18.13+**), typically for workflows where System modules need to be executed on the server like SSR. They have the following features:
 
-* Loading System modules from disk (via `file://` urls) or the network, with included caching that respects the Content-Type header.
+* Loading System modules from disk (via `file://` urls) or the network, with Content-Type based module handling.
 * Import Maps (via the `applyImportMap` api).
 * [Tracing hooks](docs/hooks.md#trace-hooks) and [registry deletion API](docs/api.md#registry) for reloading workflows.
 * Loading global modules with the included [global loading extra](#extras).
+* Source map support for improved stack traces (Node.js 20+, using built-in `module.SourceMap`).
 
 _Loading CommonJS modules is not currently supported in this loader and likely won't be. If you find you need them it is more advisable to use [Node.js native module support](https://nodejs.org/dist/latest/docs/api/esm.html) where possible instead of the SystemJS Node.js loader._
 

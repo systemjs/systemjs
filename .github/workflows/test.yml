@@ -23,6 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
       - name: Setup Chrome ${{ matrix.chrome }}
+        id: setup-chrome
         uses: browser-actions/setup-chrome@latest
         with:
           chrome-version: ${{ matrix.chrome }}
@@ -31,5 +32,5 @@ jobs:
       - name: Chomp Test
         run: chomp test
         env: 
-          CI_BROWSER: C:\hostedtoolcache\windows\setup-chrome\chromium\latest\x64\chrome.exe
+          CI_BROWSER: ${{ steps.setup-chrome.outputs.chrome-path }}
           CI_BROWSER_FLAGS:
