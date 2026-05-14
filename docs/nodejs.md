@@ -118,7 +118,7 @@ setBaseUrl(System, pathToFileURL(path.join(process.cwd(), 'some-dir')) + path.se
 
 ### Custom fetch hook
 
-The built-in fetch handler supports `file://` URLs via the filesystem and HTTP/HTTPS URLs via Node's native `fetch` (Node 20+). You can override the fetch hook to customize network loading, for example to use `node-fetch` on older Node versions or to add custom headers:
+The built-in fetch handler supports `file://` URLs via the filesystem and HTTP/HTTPS URLs via Node's native `fetch` (Node.js 18.13+). You can override the fetch hook to customize network loading, for example to use `node-fetch` on older Node versions or to add custom headers:
 
 ```js
 const { System } = require('systemjs');

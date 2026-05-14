@@ -37,8 +37,8 @@ if (hasSourceMapSupport) {
 
     var mappedStack = callSites.map(function (callSite) {
       var fileName = callSite.getScriptNameOrSourceURL();
-      var lineNumber = callSite.getLineNumber();
-      var columnNumber = callSite.getColumnNumber();
+      var lineNumber = callSite.getLineNumber() || 0;
+      var columnNumber = callSite.getColumnNumber() || 0;
       var sm = fileName && getSourceMap(fileName);
 
       if (sm) {
